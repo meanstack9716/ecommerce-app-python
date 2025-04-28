@@ -19,7 +19,7 @@
         {% include "admin/users/userformsteps/business_info.html" %}
 
         <!-- Business Details Step -->
-        {% include "admin/users/userformsteps/business_details.html" %}
+        {% include "admin/users/userformsteps/business_document_info.html" %}
       </form>
 
       <div class="pt-6 flex justify-between">
@@ -69,14 +69,13 @@
     function validateCurrentStep() {
       switch (currentStepIndex) {
         case 0: // Personal Information
-          // const personalInfo = validatePersonalInfo();
-          const personalInfo = true
+          const personalInfo = validatePersonalInfo();
           if (personalInfo) {
             formData.personalInfo = personalInfo;
             return true;
           }
           return false;
-        case 1: // Business Information
+        case 1:
           const businessInfo = validateBusinessInfo();
           if (businessInfo) {
             formData.businessInfo = businessInfo;
@@ -118,35 +117,31 @@
 
     async function submitForm() {
       if (!validateCurrentStep()) return;
-
       try {
-        // Combine all form data
+
         const submissionData = {
           ...formData.personalInfo,
           ...formData.businessInfo,
           ...formData.businessDetails
         };
 
-        // Here you would make the actual API call
-        // const response = await fetch('/user/add/seller', {
-        //   method: 'POST',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //   },
-        //   body: JSON.stringify(submissionData)
-        // });
+        const response = await fetch('/user/add/seller', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(submissionData)
+        });
 
-        // const result = await response.json();
-        // if (response.ok) {
-        //   alert('Seller registered successfully!');
-        //   form.reset();
-        // } else {
-        //   throw new Error(result.message || 'Failed to register seller');
-        // }
+        const result = await response.json();
+        if (response.ok) {
+          form.reset();
+        } else {
+          throw new Error(result.message || 'Failed to register seller');
+        }
 
         // For demo purposes:
         console.log('Form would submit:', submissionData);
-        alert('Form submitted successfully (demo)');
         form.reset();
         currentStepIndex = 0;
         initForm();
@@ -156,7 +151,6 @@
       }
     }
 
-    // Initialize the form
     initForm();
   });
 </script>

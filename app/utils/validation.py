@@ -24,11 +24,19 @@ def validate_password(password):
 def validate_required_fields(data, fields, custom_errors=None):
     errors = {}
     for field in fields:
-        field_value = data.get(field, '').strip()
-        if not field_value:
+        keys = field.split('.')
+        value = data
+        for key in keys:
+            if isinstance(value, dict):
+                value = value.get(key)
+            else:
+                value = None
+                break
+
+        if value is None or (isinstance(value, str) and not value.strip()):
             error_message = custom_errors.get(field, f"The {field} field is required.") if custom_errors else f"The {field} field is required."
             errors[field] = error_message
-    
+
     if errors:
         return False, errors
     return True, {}

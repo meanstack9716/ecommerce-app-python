@@ -139,7 +139,7 @@ function validateBusinessInfo() {
     businessEmail: fields.businessEmail.value.trim(),
     businessMobile: fields.businessMobile.value.trim(),
     gstNumber: fields.gstNumber.value.trim(),
-    address: {
+    businessAddress: {
       streetLine1: fields.streetLine1.value.trim(),
       streetLine2: fields.streetLine2.value.trim(),
       city: fields.city.value.trim(),
@@ -150,24 +150,40 @@ function validateBusinessInfo() {
   }
 }
 
-// Optional GST number validation
-function validateGSTNumber(field) {
-  if (!field.value.trim()) {
-    return true
-  }
-  const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/
-  if (!gstRegex.test(field.value.trim())) {
-    showErrorMessage(field, "Please enter a valid GST number")
-    return false
+function validateBusinessDetails() {
+  const fields = {
+    panNumber: document.getElementById("pan_card_number"),
+    panCardFront: document.getElementById("pan_card_front"),
+    panCardBack: document.getElementById("pan_card_back"),
+    addressProofIdType: document.getElementById("address_proof_id_type"),
+    idNumber: document.getElementById("id_number"),
+    addressProofFront: document.getElementById("address_proof_front"),
+    addressProofBack: document.getElementById("address_proof_back"),
   }
 
-  removeErrorMessage(field)
-  return true
-}
-function validateBusinessDetails() {
-  // Add business details validation logic here
-  // For now just return empty object
-  return {}
+  // Validate all required fields
+  const isValid = [
+    validators.required(fields.panNumber, "PAN number"),
+    validators.required(fields.panCardFront, "PAN Card Front Photo"),
+    validators.required(fields.panCardBack, "PAN Card Back Photo"),
+    validators.required(fields.addressProofIdType, "Address Proof ID Type"),
+    validators.required(fields.idNumber, "Id Number"),
+    validators.required(fields.addressProofFront, "Address Proof Front Photo"),
+    validators.required(fields.addressProofBack, "Address Proof Back Photo"),
+    validatePANNumber(fields.panNumber),
+  ].every((result) => result === true)
+
+  if (!isValid) return false
+
+  // Return the validated data
+  return {
+    panNumber: fields.panNumber.value.trim(),
+    panCardFront: fields.panCardFront.files[0] || null,
+    panCardBack: fields.panCardBack.files[0] || null,
+    addressProofIdType: fields.addressProofIdType.value,
+    addressProofFront: fields.addressProofFront.files[0] || null,
+    addressProofBack: fields.addressProofBack.files[0] || null,
+  }
 }
 
 // Add event listeners to clear errors when user starts typing
@@ -185,4 +201,31 @@ function initFieldValidation() {
   allFields.forEach((field) => {
     setupFieldValidation(field)
   })
+}
+
+// Optional GST number validation
+function validateGSTNumber(field) {
+  if (!field.value.trim()) {
+    return true
+  }
+  const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/
+  if (!gstRegex.test(field.value.trim())) {
+    showErrorMessage(field, "Please enter a valid GST number")
+    return false
+  }
+
+  removeErrorMessage(field)
+  return true
+}
+
+function validatePANNumber(field) {
+//   const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/
+//   const value = field.value.trim()
+
+//   if (!panRegex.test(field)) {
+//     showErrorMessage(field, "Please enter a valid PAN number.")
+//     return false
+//   }
+//   removeErrorMessage(field)
+  return true
 }

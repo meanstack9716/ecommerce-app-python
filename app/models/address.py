@@ -8,4 +8,4 @@ class Address(db.Document):
     state = db.StringField(required=True)
     postal_code = db.StringField(required=True)
     country = db.StringField(required=True)
-    type = db.StringField(choices=['Office', 'Home', 'Work', 'Store', 'Other'], required=True)
+    type = db.StringField(choices=['Office', 'Home', 'Work', 'Store', 'Other', 'Business'], required=True)

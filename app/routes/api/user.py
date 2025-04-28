@@ -4,6 +4,8 @@ from app.models import User, Role, Seller, Address
 import cloudinary.uploader
 from constants import GET_USER_PROFILE, UPDATE_PROFILE, UPDATE_PROFILE_PIC, DELETE_PROFILE_PIC, ADD_SELLER
 from app.utils.validation import validate_email, validate_password, validate_required_fields
+from app import db
+from mongoengine import ValidationError
 
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
@@ -111,16 +113,19 @@ def delete_profile_picture():
     except Exception as e:
         return jsonify({'message': 'Deletion failed', 'error': str(e)}), 500
 
-# Add seller api
-from app import db
-from mongoengine import ValidationError
-from flask import jsonify
-
 @user_bp.route(ADD_SELLER, methods=['POST'])
 def add_seller():
     data = request.get_json()
 
-    required_fields = ['email', 'password', 'first_name', 'last_name', 'phone_number', 'store_name', 'line1', 'city', 'state', 'country', 'pincode', 'gst_number', 'address_type']
+    required_fields = [
+        'email', 'password', 'first_name', 'last_name', 'phoneNumber',
+        'address.streetLine1', 'address.city', 'address.state', 'address.country', 'address.pincode', 'address.type',
+        'businessName', 'businessType', 'businessEmail', 'businessMobile',
+        'gstNumber', 'businessAddress.streetLine1', 'businessAddress.city', 'businessAddress.state', 'businessAddress.country', 'businessAddress.pincode', 'businessAddress.type',
+        'panNumber', 'panCardFront', 'panCardBack', 
+        'addressProofIdType', 'idNumber', 'addressProofFront', 'addressProofBack'
+    ]
+
     is_valid, errors = validate_required_fields(data, required_fields)
     if not is_valid:
         return jsonify({"errors": errors}), 400
@@ -144,35 +149,60 @@ def add_seller():
         session.start_transaction()
 
         try:
+            # Create User
             user = User(
                 email=data.get('email'),
                 password=data.get('password'),
                 first_name=data.get('first_name'),
                 last_name=data.get('last_name'),
-                phone_number=data.get('phone_number'),
-                role=default_role
+                phone_number=data.get('phoneNumber'),
+                role=default_role,
+                pan_number=data.get('panNumber'),
+                pan_card_front=data.get('panCardFront'),
+                pan_card_back=data.get('panCardBack'),
+                address_proof_id_type=data.get('addressProofIdType'),
+                id_number=data.get('idNumber'),
+                address_proof_front=data.get('addressProofFront'),
+                address_proof_back=data.get('addressProofBack')
             )
             user.hash_password()
             user.save(session=session)
 
-            address = Address(
+            # Create Personal Address
+            personal_address = Address(
                 user_id=user,
-                line1=data.get('line1'),
-                line2=data.get('line2'),
-                city=data.get('city'),
-                state=data.get('state'),
-                postal_code=data.get('pincode'),
-                country=data.get('country'),
-                type=data.get('address_type')
+                line1=data['address'].get('streetLine1'),
+                line2=data['address'].get('streetLine2'),
+                city=data['address'].get('city'),
+                state=data['address'].get('state'),
+                postal_code=data['address'].get('pincode'),
+                country=data['address'].get('country'),
+                type=data['address'].get('type')
             )
-            address.save(session=session)
+            personal_address.save(session=session)
 
+            # Create Business Address
+            business_address = Address(
+                user_id=user,
+                line1=data['businessAddress'].get('streetLine1'),
+                line2=data['businessAddress'].get('streetLine2'),
+                city=data['businessAddress'].get('city'),
+                state=data['businessAddress'].get('state'),
+                postal_code=data['businessAddress'].get('pincode'),
+                country=data['businessAddress'].get('country'),
+                type=data['businessAddress'].get('type')
+            )
+            business_address.save(session=session)
+
+            # Create Seller
             seller = Seller(
                 user_id=user,
-                store_name=data.get('store_name'),
-                store_logo=data.get('store_logo'),
-                address=address,
-                gst_number=data.get('gst_number'),
+                businessName=data.get('businessName'),
+                businessType=data.get('businessType'),
+                businessEmail=data.get('businessEmail'),
+                businessMobile=data.get('businessMobile'),
+                address=business_address,
+                gst_number=data.get('gstNumber'),
                 is_approved='pending'
             )
             seller.save(session=session)
