@@ -11,7 +11,7 @@ class User(db.Document):
     first_name = db.StringField()
     last_name = db.StringField()
     phone_number = db.StringField()
-    gender = db.StringField(choices=["male", "female", "other"])
+    gender = db.StringField(choices=GENDER_CHOICES)
     role = db.ReferenceField('Role', required=True)
     created_at = db.DateTimeField(default=datetime.utcnow)
     reset_token = db.StringField()

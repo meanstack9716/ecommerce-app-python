@@ -10,10 +10,6 @@ GENDER_FEMALE = "female"
 GENDER_OTHER = "other"
 GENDER_CHOICES = [GENDER_MALE, GENDER_FEMALE, GENDER_OTHER]
 
-# Default admin user credentials
-DEFAULT_ADMIN_EMAIL = "admin@admin.com"
-DEFAULT_ADMIN_PASSWORD = "admin123"
-
 OTP_EXPIRY_MINUTES = 10
 
 
