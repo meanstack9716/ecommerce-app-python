@@ -205,12 +205,12 @@
         address_type: capitalizedAddressType
       };
 
-      if (!formData.email || !validateEmail(formData.email)) {
-        return;
+      if (!formData.email) {
+        return "Please enter a email.";
       }
 
-      if (!formData.password || !validatePassword(formData.password)) {
-        return;
+      if (!formData.password) {
+        return "Please enter a password.";
       }
 
       const response = await sendPostRequest('/user/add/seller', formData);
@@ -229,15 +229,6 @@
         }
       }
     });
-
-    function validateEmail(email) {
-      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return re.test(String(email).toLowerCase());
-    }
-
-    function validatePassword(password) {
-      return password.length >= 8;
-    }
   });
 </script>
 {% endblock %}
