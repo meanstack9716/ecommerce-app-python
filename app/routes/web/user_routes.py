@@ -69,4 +69,4 @@ def all_users():
 def add_user():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
-    return render_template("admin/users/addUser.html")
+    return render_template("admin/users/add_seller.html")

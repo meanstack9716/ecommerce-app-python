@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Add Seller{% endblock %}
+
+{% block admin_content %}
+<div class="min-h-screen py-2 px-4 sm:px-6 lg:px-4">
+  <div class="w-full mx-auto">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden p-6 md:p-8">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Register New Seller</h1>
+        <p class="mt-2 text-sm text-gray-600">Fill in the seller details below to create a new account</p>
+      </div>
+
+      <form id="sellerForm" class="space-y-6">
+        <!-- Personal Information Step -->
+        {% include "admin/users/userformsteps/personal_info.html" %}
+
+        <!-- Business Information Step -->
+        {% include "admin/users/userformsteps/business_info.html" %}
+
+        <!-- Business Details Step -->
+        {% include "admin/users/userformsteps/business_details.html" %}
+      </form>
+
+      <div class="pt-6 flex justify-between">
+        <!-- Back Button -->
+        <button type="button"
+          class="w-48 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          id="backStep">Back</button>
+
+        <!-- Next Button -->
+        <button type="button"
+          class="w-48 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          id="nextStep">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('sellerForm');
+    const steps = document.querySelectorAll('.step');
+    const nextBtn = document.getElementById('nextStep');
+    const backBtn = document.getElementById('backStep');
+    let currentStepIndex = 0;
+    const formData = {};
+
+    function initForm() {
+      showStep(currentStepIndex);
+      updateButtonStates();
+      initFieldValidation();
+    }
+
+    function showStep(index) {
+      steps.forEach((step, idx) => {
+        step.style.display = idx === index ? 'block' : 'none';
+      });
+    }
+
+    function updateButtonStates() {
+      backBtn.style.display = currentStepIndex === 0 ? 'none' : 'block';
+      nextBtn.textContent = currentStepIndex === steps.length - 1 ? 'Register Seller' : 'Next';
+    }
+
+    function validateCurrentStep() {
+      switch (currentStepIndex) {
+        case 0: // Personal Information
+          // const personalInfo = validatePersonalInfo();
+          const personalInfo = true
+          if (personalInfo) {
+            formData.personalInfo = personalInfo;
+            return true;
+          }
+          return false;
+        case 1: // Business Information
+          const businessInfo = validateBusinessInfo();
+          if (businessInfo) {
+            formData.businessInfo = businessInfo;
+            return true;
+          }
+          return false;
+        case 2:
+          const businessDetails = validateBusinessDetails();
+          if (businessDetails) {
+            formData.businessDetails = businessDetails;
+            return true;
+          }
+          return false;
+        default:
+          return true;
+      }
+    }
+
+    // Handle next button click
+    nextBtn.addEventListener('click', function () {
+      if (currentStepIndex < steps.length - 1) {
+        if (validateCurrentStep()) {
+          currentStepIndex++;
+          showStep(currentStepIndex);
+          updateButtonStates();
+        }
+      } else {
+        submitForm();
+      }
+    });
+
+    backBtn.addEventListener('click', function () {
+      if (currentStepIndex > 0) {
+        currentStepIndex--;
+        showStep(currentStepIndex);
+        updateButtonStates();
+      }
+    });
+
+    async function submitForm() {
+      if (!validateCurrentStep()) return;
+
+      try {
+        // Combine all form data
+        const submissionData = {
+          ...formData.personalInfo,
+          ...formData.businessInfo,
+          ...formData.businessDetails
+        };
+
+        // Here you would make the actual API call
+        // const response = await fetch('/user/add/seller', {
+        //   method: 'POST',
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //   },
+        //   body: JSON.stringify(submissionData)
+        // });
+
+        // const result = await response.json();
+        // if (response.ok) {
+        //   alert('Seller registered successfully!');
+        //   form.reset();
+        // } else {
+        //   throw new Error(result.message || 'Failed to register seller');
+        // }
+
+        // For demo purposes:
+        console.log('Form would submit:', submissionData);
+        alert('Form submitted successfully (demo)');
+        form.reset();
+        currentStepIndex = 0;
+        initForm();
+      } catch (error) {
+        console.error('Submission error:', error);
+        alert(`Error: ${error.message}`);
+      }
+    }
+
+    // Initialize the form
+    initForm();
+  });
+</script>
+{% endblock %}
