@@ -1,0 +1,132 @@
+{% block content %}
+<div id="sidebar"
+    class="w-64 overflow-auto h-screen bg-white text-gray-900 fixed flex flex-col py-8 px-4 shadow-xl border-r border-[#f3f3f3] transform transition-transform duration-300 ease-in-out">
+    <nav class="flex flex-col gap-4">
+        <div class="flex flex-col gap-3">
+            <p class="font-semibold text-gray-400">MAIN HOME</p>
+            <a href="{{ url_for('admin_api.dashboard') }}"
+                class="nav-link flex items-center gap-3 {% if request.endpoint == 'admin_api.dashboard' %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300">
+                <span class="material-symbols-outlined">
+                    grid_view
+                </span>
+                <span class="ml-2 font-medium">Dashboard</span>
+            </a>
+        </div>
+
+        <div class="flex flex-col gap-3">
+            <p class="font-semibold text-gray-400">All Page</p>
+            <!-- All user  -->
+            <div>
+                <div
+                    class="toggle-submenu nav-link flex items-center justify-between gap-3 {% if request.endpoint in ['admin_api.all_users', 'admin_api.add_user'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
+                    <div class="flex items-center gap-5">
+                        <span class="material-symbols-outlined">group</span>
+                        <span class="font-medium">All User</span>
+                    </div>
+                    <span
+                        class="material-symbols-outlined submenu-icon transform transition-transform">keyboard_arrow_down</span>
+                </div>
+
+                <!-- Submenu that shows up when toggled -->
+                <div
+                    class="{% if request.endpoint not in ['admin_api.all_users', 'admin_api.add_user'] %}hidden{% endif %} ml-6 mt-1 flex flex-col gap-3 mt-3">
+                    <a href="{{ url_for('admin_api.all_users') }}"
+                        class="{% if request.endpoint == 'admin_api.all_users' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">All
+                        User</a>
+                    <a href="{{ url_for('admin_api.add_user') }}"
+                        class="{% if request.endpoint == 'admin_api.add_user' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">Add
+                        New User</a>
+                </div>
+            </div>
+            <div>
+                <div
+                    class="toggle-submenu nav-link flex justify-between items-center {% if request.endpoint in ['admin_api.add_product', 'admin_api.manage_products'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
+                    <div class="flex items-center gap-5">
+                        <span class="material-symbols-outlined">shopping_cart</span>
+                        <span class="font-medium">Ecommerce</span>
+                    </div>
+                    <span
+                        class="material-symbols-outlined submenu-icon transform transition-transform">keyboard_arrow_down</span>
+                </div>
+                <div
+                    class="{% if request.endpoint not in ['admin_api.add_product', 'admin_api.manage_products'] %}hidden{% endif %} ml-6 mt-1 flex flex-col gap-3 mt-3">
+                    <a href="#"
+                        class="{% if request.endpoint == 'admin_api.add_product' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">Add
+                        Product</a>
+                    <a href="#"
+                        class="{% if request.endpoint == 'admin_api.manage_products' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">Manage
+                        Products</a>
+                </div>
+            </div>
+
+            <div id="categoryLink">
+                <div
+                    class="toggle-submenu nav-link flex items-center justify-between {% if request.endpoint in ['admin_api.category_list', 'admin_api.add_category'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
+                    <div class="flex items-center gap-5">
+                        <span class="material-symbols-outlined">stacks</span>
+                        <span class="font-medium">Category</span>
+                    </div>
+                    <span
+                        class="material-symbols-outlined submenu-icon transform transition-transform">keyboard_arrow_down</span>
+                </div>
+                <div
+                    class="{% if request.endpoint not in ['admin_api.category_list', 'admin_api.add_category'] %}hidden{% endif %} ml-6 mt-1 flex flex-col gap-3 mt-3">
+                    <a href="#"
+                        class="{% if request.endpoint == 'admin_api.category_list' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">Category
+                        List</a>
+                    <a href="#"
+                        class="{% if request.endpoint == 'admin_api.add_category' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">Add
+                        New Category</a>
+                </div>
+            </div>
+
+            <a href="{{ url_for('admin_api.orders') }}"
+                class="flex items-center gap-5 nav-link {% if request.endpoint == 'admin_api.orders' %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
+                <span class="material-symbols-outlined">
+                    list_alt
+                </span>
+                <span class="font-medium">Orders</span>
+            </a>
+
+            <a href="{{ url_for('admin_api.settings') }}"
+                class="flex items-center gap-5 nav-link {% if request.endpoint == 'admin_api.settings' %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
+                <span class="material-symbols-outlined">
+                    settings
+                </span>
+                <span class="font-medium">Settings</span>
+            </a>
+    </nav>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.toggle-submenu').forEach(button => {
+            button.addEventListener('click', function () {
+                const submenu = this.nextElementSibling;
+                const icon = this.querySelector('.submenu-icon');
+
+                submenu.classList.toggle('hidden');
+                icon.classList.toggle('rotate-180');
+            });
+        });
+
+        document.querySelectorAll('.nav-link').forEach(link => {
+            if (link.classList.contains('bg-indigo-700')) {
+                const parentMenu = link.closest('.flex.flex-col.gap-1');
+                if (parentMenu) {
+                    parentMenu.classList.remove('hidden');
+                    const toggleButton = parentMenu.previousElementSibling;
+                    if (toggleButton) {
+                        const icon = toggleButton.querySelector('.submenu-icon');
+                        if (icon) {
+                            icon.classList.add('rotate-180');
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

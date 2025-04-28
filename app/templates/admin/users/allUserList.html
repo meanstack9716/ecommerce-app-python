@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}All Users{% endblock %}
+
+{% block admin_content %}
+<div class="bg-white rounded-lg shadow-lg p-8">
+  <h1 class="text-3xl font-semibold text-gray-800 mb-6">All Users</h1>
+
+  <form method="get" class="flex items-center space-x-4 w-full">
+    <div class="w-full sm:w-1/2 lg:w-full mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Search Users</label>
+      <div class="flex items-center space-x-4">
+        <input type="text" name="search" value="{{ filters.search }}" placeholder="Search by name, email, or role"
+          class="mt-1 block w-full px-4 py-3 border border-gray-300 outline-none rounded-lg shadow-sm sm:text-sm w-72">
+        <button type="submit"
+          class="w-full sm:w-auto inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
+          Search
+        </button>
+        <div class="w-full sm:w-auto mt-2 sm:mt-0">
+          <a href="{{ url_for('admin_api.all_users') }}" class="text-sm text-indigo-600 hover:text-indigo-800">Clear
+            Search</a>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- Table -->
+  <table class="min-w-full divide-y divide-gray-200">
+    <thead class="bg-gray-50">
+      <tr>
+        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">First Name</th>
+        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Last Name</th>
+        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Email</th>
+        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Role</th>
+        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Phone number</th>
+        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for userData in allUsersList %}
+      <tr class="border-t text-center">
+        <tr class="border-t text-center">
+          <td class="px-6 py-4">{{ userData['first_name'] }}</td>
+          <td class="px-6 py-4">{{ userData['last_name'] }}</td>
+          <td class="px-6 py-4">{{ userData['email'] }}</td>
+          <td class="px-6 py-4">{{ userData['role'] }}</td>
+
+          
+          <td class="px-6 py-4">{{ userData['phone_number'] }}</td>
+          <td class="px-6 py-4 flex justify-center gap-3">
+            <a href="#" class="text-indigo-600 hover:text-green-900">View Details</a>
+          </td>
+        </tr>
+      </tr>
+      {% endfor %}
+      
+    </tbody>
+  </table>
+
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="verify-container">
+    <div class="verify-box">
+        <h1 class="title">Verify OTP</h1>
+        <p class="subtitle">Enter the OTP sent to your email to continue.</p>
+
+        <div id="otp-message" class="message hidden"></div>
+
+        <form id="otp-form">
+            <input type="hidden" id="email">
+
+            <div class="input-group">
+                <label for="otp" class="input-label">OTP</label>
+                <input type="text" id="otp" placeholder="Enter OTP" class="input-field" required>
+                <div id="otp-error" class="field-error hidden"></div>
+            </div>
+
+            <button type="submit" class="submit-btn">
+                <span class="btn-text">Verify OTP</span>
+                <div class="loader hidden"></div>
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const email = urlParams.get('email');
+        const emailInput = document.getElementById('email');
+        if (email) emailInput.value = email;
+
+        const otpForm = document.getElementById('otp-form');
+        const otpField = document.getElementById('otp');
+        const otpError = document.getElementById('otp-error');
+        const otpMessage = document.getElementById('otp-message');
+        const submitBtn = document.querySelector('.submit-btn');
+        const loader = submitBtn.querySelector('.loader');
+        const btnText = submitBtn.querySelector('.btn-text');
+
+        otpForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            otpError.textContent = '';
+            otpError.classList.add('hidden');
+            otpMessage.textContent = '';
+            otpMessage.classList.add('hidden');
+
+            btnText.classList.add('hidden');
+            loader.classList.remove('hidden');
+
+            const payload = {
+                email: emailInput.value.trim(),
+                code: otpField.value.trim()
+            };
+
+            const { success, message } = await sendPostRequest('/auth/verify-email-code', payload);
+
+            loader.classList.add('hidden');
+            btnText.classList.remove('hidden');
+
+            if (success) {
+                otpMessage.textContent = message || 'OTP verified successfully.';
+                otpMessage.classList.remove('hidden');
+
+                setTimeout(() => {
+                    const encodedEmail = encodeURIComponent(payload.email);
+                    const encodedCode = encodeURIComponent(payload.code);
+                    window.location.href = `/reset-password?email=${encodedEmail}&code=${encodedCode}`;
+                }, 1500);
+            } else {
+                otpError.textContent = message || 'Verification failed.';
+                otpError.classList.remove('hidden');
+            }
+        });
+
+    });
+</script>
+{% endblock %}
