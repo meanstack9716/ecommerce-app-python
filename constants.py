@@ -44,3 +44,5 @@ ADD_SELLER = f'/add_new_seller'
 # Category API Endpoint Constants
 ADD_NEW_CATEGORY = f'/add_new_category'
 GET_CATEGORY_LIST = f'/category_list'
+GET_SUBCATEGORY_LIST = '/subcategories'
+ADD_NEW_SUBCATEGORY = '/add_subcategory'

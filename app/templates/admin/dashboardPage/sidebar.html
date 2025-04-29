@@ -59,7 +59,8 @@
                 </div>
 
                 <!-- Submenu that shows up when toggled -->
-                <div id="submenu" class="ml-6 mt-1 flex flex-col gap-3 mt-3 {% if request.endpoint in ['admin_api.add_new_seller'] %}block{% else %}hidden{% endif %}">
+                <div id="submenu"
+                    class="ml-6 mt-1 flex flex-col gap-3 mt-3 {% if request.endpoint in ['admin_api.add_new_seller'] %}block{% else %}hidden{% endif %}">
                     <a href="#"
                         class="text-gray-700 hover:text-indigo-700 hover:bg-indigo-100 px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
                         <span class="material-symbols-outlined">
@@ -99,7 +100,7 @@
 
             <div id="categoryLink">
                 <div
-                    class="toggle-submenu nav-link flex items-center justify-between {% if request.endpoint in ['admin_api.category_list', 'admin_api.add_new_category'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
+                    class="toggle-submenu nav-link flex items-center justify-between {% if request.endpoint in ['category_bp.get_category_list', 'category_bp.add_new_category'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
                     <div class="flex items-center gap-5">
                         <span class="material-symbols-outlined">
                             category
@@ -110,7 +111,7 @@
                         class="material-symbols-outlined submenu-icon transform transition-transform">keyboard_arrow_down</span>
                 </div>
                 <div
-                    class="{% if request.endpoint not in ['category_bp.get_category_list', 'category_bp.add_new_category'] %}hidden{% endif %} ml-6 mt-1 flex flex-col gap-3 mt-3">
+                    class="{% if request.endpoint not in ['category_bp.get_category_list', 'category_bp.add_new_category', 'subcategory_bp.add_new_subcategory'] %}hidden{% endif %} ml-6 mt-1 flex flex-col gap-3 mt-3">
                     <a href="{{ url_for('category_bp.get_category_list') }}"
                         class="{% if request.endpoint == 'category_bp.get_category_list' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
                         <span class="material-symbols-outlined">
@@ -124,6 +125,14 @@
                             add_circle
                         </span>
                         <span> Add New Category</span>
+                    </a>
+                    <!-- Add sub category  -->
+                    <a href="{{ url_for('subcategory_bp.add_new_subcategory') }}"
+                        class="{% if request.endpoint == 'subcategory_bp.add_new_subcategory' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-2 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
+                        <span class="material-symbols-outlined">
+                            library_add
+                            </span>
+                        <span> Add Sub-Category</span>
                     </a>
                 </div>
             </div>

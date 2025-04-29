@@ -3,7 +3,7 @@ from werkzeug.utils import secure_filename
 from flask import current_app
 from .validation import validate_required_fields
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -16,7 +16,7 @@ def upload_image(image):
         filename = secure_filename(image.filename)
         upload_folder = current_app.config['UPLOAD_FOLDER']
         image.save(os.path.join(upload_folder, filename))
-        return os.path.join(upload_folder, filename), None
+        return filename, None
     return None, None
 
 def validate_fields(data, required_fields):

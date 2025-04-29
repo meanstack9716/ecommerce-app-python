@@ -32,12 +32,14 @@ def create_app(config_class=Config):
     from app.routes.web.category_routes import category_bp
     from app.routes.web import admin_api
     from app.routes.api.user import user_bp
+    from app.routes.web.subcategory_routes import subcategory_bp
 
     # Register blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_api)
     app.register_blueprint(user_bp)
     app.register_blueprint(category_bp)
+    app.register_blueprint(subcategory_bp)
 
     @app.before_request
     def before_request():
