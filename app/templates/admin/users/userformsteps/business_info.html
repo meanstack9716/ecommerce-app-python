@@ -64,58 +64,110 @@
 
   <hr class="my-6">
 
-   <!-- Business Address Information Section -->
-   <div class="address-info-section space-y-4">
+  <!-- Business Address Information Section -->
+  <div class="address-info-section space-y-4">
     <h3 class="text-xl font-medium text-gray-900 mb-4">Business Address Details</h3>
+
+    <!-- Business Address Type -->
+    <div id="business_address_type_container">
+      <label class="block text-base font-medium text-gray-700 mb-2">
+        Business Address Type <span class="text-red-500">*</span>
+      </label>
+      <div class="flex flex-wrap gap-4">
+        <label class="cursor-pointer">
+          <input type="radio" name="business_address_type" value="Office" class="sr-only peer">
+          <div
+            class="px-6 py-2 rounded-full border border-gray-300 peer-checked:bg-indigo-500 peer-checked:text-white transition">
+            Office
+          </div>
+        </label>
+        <label class="cursor-pointer">
+          <input type="radio" name="business_address_type" value="Home" class="sr-only peer">
+          <div
+            class="px-6 py-2 rounded-full border border-gray-300 peer-checked:bg-indigo-500 peer-checked:text-white transition">
+            Home
+          </div>
+        </label>
+        <label class="cursor-pointer">
+          <input type="radio" name="business_address_type" value="Work" class="sr-only peer">
+          <div
+            class="px-6 py-2 rounded-full border border-gray-300 peer-checked:bg-indigo-500 peer-checked:text-white transition">
+            Work
+          </div>
+        </label>
+        <label class="cursor-pointer">
+          <input type="radio" name="business_address_type" value="Store" class="sr-only peer">
+          <div
+            class="px-6 py-2 rounded-full border border-gray-300 peer-checked:bg-indigo-500 peer-checked:text-white transition">
+            Store
+          </div>
+        </label>
+        <label class="cursor-pointer">
+          <input type="radio" name="business_address_type" value="Business" class="sr-only peer">
+          <div
+            class="px-6 py-2 rounded-full border border-gray-300 peer-checked:bg-indigo-500 peer-checked:text-white transition">
+            Business
+          </div>
+        </label>
+        <label class="cursor-pointer">
+          <input type="radio" name="business_address_type" value="Other" class="sr-only peer">
+          <div
+            class="px-6 py-2 rounded-full border border-gray-300 peer-checked:bg-indigo-500 peer-checked:text-white transition">
+            Other
+          </div>
+        </label>
+      </div>
+    </div>
+
 
     <!-- Grid Layout for Address Fields -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
-        <!-- Street Line 1 -->
-        <div>
-            <label for="business_street_line1" class="block text-base font-medium text-gray-700 mb-1">Street Line 1 <span
-                    class="text-red-500">*</span></label>
-            <input type="text" id="business_street_line1" name="business_street_line1" autocomplete="off"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200">
-        </div>
+      <!-- Street Line 1 -->
+      <div>
+        <label for="business_street_line1" class="block text-base font-medium text-gray-700 mb-1">Street Line 1 <span
+            class="text-red-500">*</span></label>
+        <input type="text" id="business_street_line1" name="business_street_line1" autocomplete="off"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200">
+      </div>
 
-        <!-- Street Line 2 -->
-        <div>
-            <label for="business_street_line2" class="block text-base font-medium text-gray-700 mb-1">Street Line 2</label>
-            <input type="text" id="business_street_line2" name="business_street_line2" autocomplete="off"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200">
-        </div>
+      <!-- Street Line 2 -->
+      <div>
+        <label for="business_street_line2" class="block text-base font-medium text-gray-700 mb-1">Street Line 2</label>
+        <input type="text" id="business_street_line2" name="business_street_line2" autocomplete="off"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200">
+      </div>
 
-        <!-- City -->
-        <div>
-            <label for="business_city" class="block text-base font-medium text-gray-700 mb-1">City <span
-                    class="text-red-500">*</span></label>
-            <input type="text" id="business_city" name="business_city" autocomplete="off"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200">
-        </div>
+      <!-- City -->
+      <div>
+        <label for="business_city" class="block text-base font-medium text-gray-700 mb-1">City <span
+            class="text-red-500">*</span></label>
+        <input type="text" id="business_city" name="business_city" autocomplete="off"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200">
+      </div>
 
-        <!-- State -->
-        <div>
-            <label for="business_state" class="block text-base font-medium text-gray-700 mb-1">State <span
-                    class="text-red-500">*</span></label>
-            <input type="text" id="business_state" name="business_state" autocomplete="off"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200">
-        </div>
+      <!-- State -->
+      <div>
+        <label for="business_state" class="block text-base font-medium text-gray-700 mb-1">State <span
+            class="text-red-500">*</span></label>
+        <input type="text" id="business_state" name="business_state" autocomplete="off"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200">
+      </div>
 
-        <!-- Pincode -->
-        <div>
-            <label for="business_pincode" class="block text-base font-medium text-gray-700 mb-1">Pincode <span
-                    class="text-red-500">*</span></label>
-            <input type="text" id="business_pincode" name="business_pincode" autocomplete="off"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200">
-        </div>
+      <!-- Pincode -->
+      <div>
+        <label for="business_pincode" class="block text-base font-medium text-gray-700 mb-1">Pincode <span
+            class="text-red-500">*</span></label>
+        <input type="text" id="business_pincode" name="business_pincode" autocomplete="off"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200">
+      </div>
 
-        <!-- Country -->
-        <div>
-            <label for="business_country" class="block text-base font-medium text-gray-700 mb-1">Country <span
-                    class="text-red-500">*</span></label>
-            <input type="text" id="business_country" name="business_country" autocomplete="off"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200">
-        </div>
+      <!-- Country -->
+      <div>
+        <label for="business_country" class="block text-base font-medium text-gray-700 mb-1">Country <span
+            class="text-red-500">*</span></label>
+        <input type="text" id="business_country" name="business_country" autocomplete="off"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200">
+      </div>
     </div>
-</div>
+  </div>
 </div>

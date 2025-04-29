@@ -55,6 +55,18 @@ const validators = {
     removeErrorMessage(field)
     return true
   },
+  requiredRadioGroup: function (fieldName, fieldSelector) {
+    const field = document.querySelector(fieldSelector);
+    const checked = document.querySelector(`input[name="${fieldName}"]:checked`);
+    
+    if (!checked) {
+      showErrorMessage(field, `${fieldName.replace(/_/g, ' ')} is required`);
+      return false;
+    }
+    
+    removeErrorMessage(field);
+    return true;
+  }  
 }
 
 // Validation personal details functions
@@ -106,6 +118,7 @@ function validateBusinessInfo() {
     businessEmail: document.getElementById("business_email"),
     businessMobile: document.getElementById("business_mobile_number"),
     gstNumber: document.getElementById("gst_number"),
+    businessAddressType: document.querySelector('input[name="business_address_type"]:checked'),
     streetLine1: document.getElementById("business_street_line1"),
     streetLine2: document.getElementById("business_street_line2"),
     city: document.getElementById("business_city"),
@@ -122,6 +135,7 @@ function validateBusinessInfo() {
     validators.phone(fields.businessMobile, "Business mobile number"),
     validators.required(fields.streetLine1, "Street address"),
     validators.required(fields.gstNumber, "GST number"),
+    validators.requiredRadioGroup("business_address_type", "#business_address_type_container"),
     validators.required(fields.city, "City"),
     validators.required(fields.state, "State"),
     validators.required(fields.pincode, "Pincode"),
@@ -146,6 +160,7 @@ function validateBusinessInfo() {
       state: fields.state.value.trim(),
       pincode: fields.pincode.value.trim(),
       country: fields.country.value.trim(),
+      type: fields.businessAddressType.value.trim(),
     },
   }
 }
