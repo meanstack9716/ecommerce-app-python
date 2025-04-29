@@ -16,6 +16,7 @@ def create_app(config_class=Config):
     from app.models.role import Role
     from app.models.seller import Seller
     from app.models.address import Address
+    from app.models.identification import Identification
 
     Role.initialize_roles()
     User.create_default_admin()

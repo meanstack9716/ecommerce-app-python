@@ -20,13 +20,6 @@ class User(db.Document):
     profile_pic = db.StringField()
     cloudinary_id = db.StringField()
     is_admin = db.BooleanField(default=False)
-    panNumber = db.StringField()
-    panCardFront = db.StringField()
-    panCardBack = db.StringField()
-    addressProofIdType = db.StringField()
-    idNumber = db.StringField()
-    addressProofFront = db.StringField()
-    addressProofBack = db.StringField()
 
     def hash_password(self):
         self.password = generate_password_hash(self.password).decode('utf8')

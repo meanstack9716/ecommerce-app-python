@@ -5,8 +5,8 @@ class Seller(db.Document):
     user_id = db.ReferenceField('User', required=True)
     businessName = db.StringField(required=True)
     businessType = db.StringField()
-    businessEmail = db.StringField()  # NEW
-    businessMobile = db.StringField()  # NEW
+    businessEmail = db.StringField()
+    businessMobile = db.StringField()
     address = db.ReferenceField('Address', required=True)
     businessAddress = db.ReferenceField('Address', required=False)
     gst_number = db.StringField()
