@@ -65,7 +65,7 @@ def all_users():
     return render_template("admin/users/allUserList.html", allUsersList=users_data, filters={'search': search})
 
 
-@admin_api.route('/users/add/seller')
+@admin_api.route('/users/add_new_seller')
 def add_new_seller():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))

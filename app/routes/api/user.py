@@ -116,13 +116,11 @@ def delete_profile_picture():
     except Exception as e:
         return jsonify({'message': 'Deletion failed', 'error': str(e)}), 500
 
-from flask import request, jsonify
-import os
-
 @user_bp.route(ADD_SELLER, methods=['POST'])
 def add_seller():
-    data = request.form
-    files = request.files
+    # Get form data
+    data = request.form  # This will contain the text form fields
+    files = request.files  # This will contain the files uploaded
     
     required_fields = [
         'email', 'first_name', 'last_name', 'phoneNumber',
@@ -203,10 +201,10 @@ def add_seller():
             seller.save(session=session)
 
             # Handle File Uploads
-            pan_card_front_url = save_file(files.get('panCardFront'))  # Saving panCardFront
-            pan_card_back_url = save_file(files.get('panCardBack'))    # Saving panCardBack
-            address_proof_front_url = save_file(files.get('addressProofFront'))  # Saving addressProofFront
-            address_proof_back_url = save_file(files.get('addressProofBack'))   # Saving addressProofBack
+            pan_card_front_url = save_file(files.get('panCardFront'))  # Replace with your actual file upload function
+            pan_card_back_url = save_file(files.get('panCardBack'))
+            address_proof_front_url = save_file(files.get('addressProofFront'))
+            address_proof_back_url = save_file(files.get('addressProofBack'))
 
             # Identification
             identification = Identification(
@@ -238,13 +236,18 @@ def add_seller():
 
 
 def save_file(file, folder_path='uploads/images'):
+    # Check if the folder exists, if not create it
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
     
+    # Secure the filename to avoid issues with special characters
     filename = secure_filename(file.filename)
     
+    # Define the full file path
     file_path = os.path.join(folder_path, filename)
     
+    # Save the file to the defined folder
     file.save(file_path)
     
+    # Return the file path (or a URL if you upload it to cloud storage)
     return file_path

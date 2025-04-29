@@ -1,6 +1,6 @@
 {% block content %}
 <div id="sidebar"
-    class="w-64 overflow-auto h-screen bg-white text-gray-900 fixed flex flex-col py-8 px-4 shadow-xl border-r border-[#f3f3f3] transform transition-transform duration-300 ease-in-out">
+    class="w-72 overflow-auto h-screen bg-white text-gray-900 fixed flex flex-col py-8 px-4 shadow-xl border-r border-[#f3f3f3] transform transition-transform duration-300 ease-in-out">
     <nav class="flex flex-col gap-4">
         <div class="flex flex-col gap-3">
             <p class="font-semibold text-gray-400">MAIN HOME</p>
@@ -20,7 +20,9 @@
                 <div
                     class="toggle-submenu nav-link flex items-center justify-between gap-3 {% if request.endpoint in ['admin_api.all_users', 'admin_api'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
                     <div class="flex items-center gap-5">
-                        <span class="material-symbols-outlined">group</span>
+                        <span class="material-symbols-outlined">
+                            person
+                        </span>
                         <span class="font-medium">All User</span>
                     </div>
                     <span
@@ -31,17 +33,23 @@
                 <div
                     class="{% if request.endpoint not in ['admin_api.all_users', 'admin_api.add_user'] %}hidden{% endif %} ml-6 mt-1 flex flex-col gap-3 mt-3">
                     <a href="{{ url_for('admin_api.all_users') }}"
-                        class="{% if request.endpoint == 'admin_api.all_users' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">All
-                        User</a>
+                        class="{% if request.endpoint == 'admin_api.all_users' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
+                        <span class="material-symbols-outlined">
+                            patient_list
+                        </span>
+                        <span>All User</span>
+                    </a>
                     <a href="#"
-                        class="text-gray-700 hover:text-indigo-700 hover:bg-indigo-100 px-5 py-3 rounded transition duration-200 font-medium">Add
-                        New User</a>
+                        class="text-gray-700 hover:text-indigo-700 hover:bg-indigo-100 px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
+                        <span class="material-symbols-outlined">person_add</span>
+                        <span>Add New User</span>
+                    </a>
                 </div>
             </div>
 
             <div>
                 <div
-                    class="toggle-submenu nav-link flex items-center justify-between gap-3 hover:bg-indigo-700 hover:text-white rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
+                    class="toggle-submenu nav-link flex items-center justify-between gap-3 {% if request.endpoint in ['admin_api.add_new_seller'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} hover:bg-indigo-700 hover:text-white rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
                     <div class="flex items-center gap-5">
                         <span class="material-symbols-outlined">group</span>
                         <span class="font-medium">Seller</span>
@@ -51,13 +59,19 @@
                 </div>
 
                 <!-- Submenu that shows up when toggled -->
-                <div id="submenu" class="ml-6 mt-1 flex flex-col gap-3 mt-3 hidden">
-                    <a href="{{ url_for('admin_api.all_users') }}"
-                        class="{% if request.endpoint == 'admin_api.all_users' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">Seller
-                        List</a>
+                <div id="submenu" class="ml-6 mt-1 flex flex-col gap-3 mt-3 {% if request.endpoint in ['admin_api.add_new_seller'] %}block{% else %}hidden{% endif %}">
+                    <a href="#"
+                        class="text-gray-700 hover:text-indigo-700 hover:bg-indigo-100 px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
+                        <span class="material-symbols-outlined">
+                            groups
+                        </span>
+                        <span>Seller List</span></a>
                     <a href="{{ url_for('admin_api.add_new_seller') }}"
-                        class="{% if request.endpoint == 'admin_api.add_new_seller' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">
-                        Add Seller
+                        class="{% if request.endpoint == 'admin_api.add_new_seller' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
+                        <span class="material-symbols-outlined">
+                            person_add
+                        </span>
+                        <span>Add Seller</span>
                     </a>
                 </div>
             </div>
@@ -87,20 +101,30 @@
                 <div
                     class="toggle-submenu nav-link flex items-center justify-between {% if request.endpoint in ['admin_api.category_list', 'admin_api.add_new_category'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
                     <div class="flex items-center gap-5">
-                        <span class="material-symbols-outlined">stacks</span>
+                        <span class="material-symbols-outlined">
+                            category
+                        </span>
                         <span class="font-medium">Category</span>
                     </div>
                     <span
                         class="material-symbols-outlined submenu-icon transform transition-transform">keyboard_arrow_down</span>
                 </div>
                 <div
-                    class="{% if request.endpoint not in ['admin_api.category_list', 'admin_api.add_new_category'] %}hidden{% endif %} ml-6 mt-1 flex flex-col gap-3 mt-3">
-                    <a href="#"
-                        class="{% if request.endpoint == 'admin_api.category_list' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">Category
-                        List</a>
-                    <a href="{{ url_for('admin_api.add_new_category') }}"
-                        class="{% if request.endpoint == 'admin_api.add_new_category' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">Add
-                        New Category</a>
+                    class="{% if request.endpoint not in ['category_bp.get_category_list', 'category_bp.add_new_category'] %}hidden{% endif %} ml-6 mt-1 flex flex-col gap-3 mt-3">
+                    <a href="{{ url_for('category_bp.get_category_list') }}"
+                        class="{% if request.endpoint == 'category_bp.get_category_list' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
+                        <span class="material-symbols-outlined">
+                            format_list_bulleted
+                        </span>
+                        <span> Category List</span>
+                    </a>
+                    <a href="{{ url_for('category_bp.add_new_category') }}"
+                        class="{% if request.endpoint == 'category_bp.add_new_category' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-2 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
+                        <span class="material-symbols-outlined">
+                            add_circle
+                        </span>
+                        <span> Add New Category</span>
+                    </a>
                 </div>
             </div>
 

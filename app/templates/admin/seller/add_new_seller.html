@@ -138,10 +138,10 @@
         });
 
         for (let [key, value] of formDataObj.entries()) {
-  console.log(`${key}: ${value}`);
-}
+          console.log(`${key}: ${value}`);
+        }
 
-        const response = await fetch('/user/add/seller', {
+        const response = await fetch('/user/add_new_seller', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

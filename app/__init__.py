@@ -29,7 +29,7 @@ def create_app(config_class=Config):
 
     # Import routes and blueprints
     from app.routes.api.auth import auth_bp
-    from app.routes.api.category import category_bp
+    from app.routes.web.category_routes import category_bp
     from app.routes.web import admin_api
     from app.routes.api.user import user_bp
 
