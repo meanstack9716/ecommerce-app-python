@@ -33,6 +33,10 @@
           class="w-48 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           id="nextStep">Next</button>
       </div>
+
+      <div id="errorMessage" class="hidden bg-red-500 text-white p-4 rounded-lg my-4" role="alert">
+        <strong>Error: </strong> <span id="errorText"></span>
+      </div>
     </div>
   </div>
 </div>
@@ -69,14 +73,14 @@
     function validateCurrentStep() {
       switch (currentStepIndex) {
         case 0:
-          const personalInfo = validatePersonalInfo();
+          const personalInfo = true
           if (personalInfo) {
             formData.personalInfo = personalInfo;
             return true;
           }
           return false;
         case 1:
-          const businessInfo = validateBusinessInfo();
+          const businessInfo = true
           if (businessInfo) {
             formData.businessInfo = businessInfo;
             return true;
@@ -118,36 +122,58 @@
     async function submitForm() {
       if (!validateCurrentStep()) return;
       try {
-        const submissionData = {
-          ...formData.personalInfo,
-          ...formData.businessInfo,
-          ...formData.businessDetails
-        };
+        const formDataObj = new FormData();
 
-        console.log(submissionData, ">>>>>>");
+        // Flatten formData into the FormData object
+        Object.keys(formData.personalInfo).forEach((key) => {
+          formDataObj.append(`personalInfo[${key}]`, formData.personalInfo[key]);
+        });
 
-        const response = await fetch('/user/add/seller', {  // Ensure this URL matches your backend endpoint
+        Object.keys(formData.businessInfo).forEach((key) => {
+          formDataObj.append(`businessInfo[${key}]`, formData.businessInfo[key]);
+        });
+
+        Object.keys(formData.businessDetails).forEach((key) => {
+          formDataObj.append(`businessDetails[${key}]`, formData.businessDetails[key]);
+        });
+
+        for (let [key, value] of formDataObj.entries()) {
+  console.log(`${key}: ${value}`);
+}
+
+        const response = await fetch('/user/add/seller', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(submissionData),
+          body: formDataObj,
         });
 
         const result = await response.json();
 
         if (response.ok) {
-          // If the seller was registered successfully, reset the form and reinitialize the form
           form.reset();
           currentStepIndex = 0;
           initForm();
         } else {
-          throw new Error(result.message || 'Failed to register seller');
+          if (result.error && result.error.includes("email already exists")) {
+            displayError("A user with this email already exists.");
+          } else {
+            throw new Error(result.message || 'Failed to register seller');
+          }
         }
       } catch (error) {
         console.error('Submission error:', error);
-        alert(`Error: ${error}`);
+        displayError(error.message);
       }
+    }
+
+
+    function displayError(message) {
+      const errorMessageElement = document.getElementById('errorMessage');
+      const errorText = document.getElementById('errorText');
+      errorText.textContent = message;
+      errorMessageElement.classList.remove('hidden');
     }
 
 

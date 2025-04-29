@@ -7,6 +7,8 @@ from app.utils.validation import validate_email, validate_password, validate_req
 from app.utils.utils import generate_random_password
 from app import db
 from mongoengine import ValidationError
+from werkzeug.utils import secure_filename
+import os
 
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
@@ -114,27 +116,32 @@ def delete_profile_picture():
     except Exception as e:
         return jsonify({'message': 'Deletion failed', 'error': str(e)}), 500
 
+from flask import request, jsonify
+import os
+
 @user_bp.route(ADD_SELLER, methods=['POST'])
 def add_seller():
-    data = request.get_json()
-    print(data, ">>>>>>>>")
+    data = request.form
+    files = request.files
+    
     required_fields = [
         'email', 'first_name', 'last_name', 'phoneNumber',
-        'address.streetLine1', 'address.city', 'address.state', 'address.country', 'address.pincode',
+        'address[streetLine1]', 'address[city]', 'address[state]', 'address[country]', 'address[pincode]',
         'businessName', 'businessType', 'businessEmail', 'businessMobile',
-        'gstNumber', 'businessAddress.streetLine1', 'businessAddress.city', 'businessAddress.state', 'businessAddress.country', 'businessAddress.pincode', 'businessAddress.type',
+        'gstNumber', 'businessAddress[streetLine1]', 'businessAddress[city]', 'businessAddress[state]', 'businessAddress[country]', 'businessAddress[pincode]', 'businessAddress[type]',
         'panNumber', 'panCardFront', 'panCardBack',
         'addressProofIdType', 'idNumber', 'addressProofFront', 'addressProofBack'
     ]
-
+    
+    # Validate required fields
     is_valid, errors = validate_required_fields(data, required_fields)
     if not is_valid:
         return jsonify({"errors": errors}), 400
 
+    # Validate email format
     is_valid, email_error = validate_email(data.get('email'))
     if not is_valid:
         return jsonify({"error": email_error}), 400
-
 
     if User.objects(email=data.get('email')).first():
         return jsonify({"error": "User with this email already exists"}), 400
@@ -162,21 +169,21 @@ def add_seller():
             personal_address = Address(
                 user_id=user,
                 personal_address=AddressDetail(
-                    line1=data['address'].get('streetLine1'),
-                    line2=data['address'].get('streetLine2'),
-                    city=data['address'].get('city'),
-                    state=data['address'].get('state'),
-                    postal_code=data['address'].get('pincode'),
-                    country=data['address'].get('country'),
+                    line1=data['address[streetLine1]'],
+                    line2=data.get('address[streetLine2]', ''),
+                    city=data['address[city]'],
+                    state=data['address[state]'],
+                    postal_code=data['address[pincode]'],
+                    country=data['address[country]'],
                 ),
                 business_address=AddressDetail(
-                    line1=data['businessAddress'].get('streetLine1'),
-                    line2=data['businessAddress'].get('streetLine2'),
-                    city=data['businessAddress'].get('city'),
-                    state=data['businessAddress'].get('state'),
-                    postal_code=data['businessAddress'].get('pincode'),
-                    country=data['businessAddress'].get('country'),
-                    type=data['businessAddress'].get('type')
+                    line1=data['businessAddress[streetLine1]'],
+                    line2=data.get('businessAddress[streetLine2]', ''),
+                    city=data['businessAddress[city]'],
+                    state=data['businessAddress[state]'],
+                    postal_code=data['businessAddress[pincode]'],
+                    country=data['businessAddress[country]'],
+                    type=data['businessAddress[type]']
                 )
             )
 
@@ -195,11 +202,11 @@ def add_seller():
             )
             seller.save(session=session)
 
-            # Upload docs (placeholder URLs)
-            pan_card_front_url = data.get('panCardFront')  # replace with upload_file(data['panCardFront'])
-            pan_card_back_url = data.get('panCardBack')
-            address_proof_front_url = data.get('addressProofFront')
-            address_proof_back_url = data.get('addressProofBack')
+            # Handle File Uploads
+            pan_card_front_url = save_file(files.get('panCardFront'))  # Saving panCardFront
+            pan_card_back_url = save_file(files.get('panCardBack'))    # Saving panCardBack
+            address_proof_front_url = save_file(files.get('addressProofFront'))  # Saving addressProofFront
+            address_proof_back_url = save_file(files.get('addressProofBack'))   # Saving addressProofBack
 
             # Identification
             identification = Identification(
@@ -228,3 +235,21 @@ def add_seller():
         except Exception as e:
             session.abort_transaction()
             return jsonify({"error": "Error occurred: " + str(e)}), 500
+
+
+def save_file(file, folder_path='uploads/images'):
+    # Check if the folder exists, if not create it
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    
+    # Secure the filename to avoid issues with special characters
+    filename = secure_filename(file.filename)
+    
+    # Define the full file path
+    file_path = os.path.join(folder_path, filename)
+    
+    # Save the file to the defined folder
+    file.save(file_path)
+    
+    # Return the file path (or a URL if you upload it to cloud storage)
+    return file_path
