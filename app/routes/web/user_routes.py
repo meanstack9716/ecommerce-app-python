@@ -66,7 +66,7 @@ def all_users():
 
 
 @admin_api.route('/users/add/seller')
-def add_user():
+def add_new_seller():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
     return render_template("admin/users/add_seller.html")

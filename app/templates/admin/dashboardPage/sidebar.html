@@ -18,7 +18,7 @@
             <!-- All user  -->
             <div>
                 <div
-                    class="toggle-submenu nav-link flex items-center justify-between gap-3 {% if request.endpoint in ['admin_api.all_users', 'admin_api.add_user'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
+                    class="toggle-submenu nav-link flex items-center justify-between gap-3 {% if request.endpoint in ['admin_api.all_users', 'admin_api'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
                     <div class="flex items-center gap-5">
                         <span class="material-symbols-outlined">group</span>
                         <span class="font-medium">All User</span>
@@ -33,11 +33,38 @@
                     <a href="{{ url_for('admin_api.all_users') }}"
                         class="{% if request.endpoint == 'admin_api.all_users' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">All
                         User</a>
-                    <a href="{{ url_for('admin_api.add_user') }}"
-                        class="{% if request.endpoint == 'admin_api.add_user' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">Add
+                        <a href="#"
+                        class="text-gray-700 hover:text-indigo-700 hover:bg-indigo-100 px-5 py-3 rounded transition duration-200 font-medium">Add
                         New User</a>
                 </div>
             </div>
+
+            <div>
+                <div
+                    class="toggle-submenu nav-link flex items-center justify-between gap-3 {% if request.endpoint in ['admin_api.all_users', 'admin_api.add_new_seller'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
+                    <div class="flex items-center gap-5">
+                        <span class="material-symbols-outlined">group</span>
+                        <span class="font-medium">Seller</span>
+                    </div>
+                    <span
+                        class="material-symbols-outlined submenu-icon transform transition-transform">keyboard_arrow_down</span>
+                </div>
+
+                <!-- Submenu that shows up when toggled -->
+                <div
+                    class=" ml-6 mt-1 flex flex-col gap-3 mt-3">
+                    <a href="{{ url_for('admin_api.all_users') }}"
+                        class="{% if request.endpoint == 'admin_api.all_users' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">Seller
+                        List</a>
+                        <a href="{{ url_for('admin_api.add_new_seller') }}"
+                        class="{% if request.endpoint == 'admin_api.add_new_seller' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium">
+                        Add Seller
+                     </a>
+                     
+                </div>
+            </div>
+
+
             <div>
                 <div
                     class="toggle-submenu nav-link flex justify-between items-center {% if request.endpoint in ['admin_api.add_product', 'admin_api.manage_products'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
