@@ -69,7 +69,7 @@
     function validateCurrentStep() {
       switch (currentStepIndex) {
         case 0:
-          const personalInfo = true;
+          const personalInfo = validatePersonalInfo();
           if (personalInfo) {
             formData.personalInfo = personalInfo;
             return true;
@@ -118,40 +118,38 @@
     async function submitForm() {
       if (!validateCurrentStep()) return;
       try {
-
         const submissionData = {
           ...formData.personalInfo,
           ...formData.businessInfo,
           ...formData.businessDetails
-        };  
+        };
 
-        console.log(submissionData, ">>>>>>")
+        console.log(submissionData, ">>>>>>");
 
-        // const response = await fetch('/user/add/seller', {
-        //   method: 'POST',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //   },
-        //   body: JSON.stringify(submissionData)
-        // });
+        const response = await fetch('/user/add/seller', {  // Ensure this URL matches your backend endpoint
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(submissionData),
+        });
 
-        // const result = await response.json();
-        // if (response.ok) {
-        //   form.reset();
-        // } else {
-        //   throw new Error(result.message || 'Failed to register seller');
-        // }
+        const result = await response.json();
 
-        // // For demo purposes:
-        // console.log('Form would submit:', submissionData);
-        // form.reset();
-        // currentStepIndex = 0;
-        // initForm();
+        if (response.ok) {
+          // If the seller was registered successfully, reset the form and reinitialize the form
+          form.reset();
+          currentStepIndex = 0;
+          initForm();
+        } else {
+          throw new Error(result.message || 'Failed to register seller');
+        }
       } catch (error) {
         console.error('Submission error:', error);
-        alert(`Error: ${error.message}`);
+        alert(`Error: ${error}`);
       }
     }
+
 
     initForm();
   });

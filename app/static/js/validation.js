@@ -7,7 +7,7 @@ function createErrorMessage(message) {
 }
 
 function showErrorMessage(field, message) {
-  removeErrorMessage(field) // Clear any existing error first
+  removeErrorMessage(field)
   const errorMessage = createErrorMessage(message)
   field.classList.add("border-red-500")
   field.classList.remove("border-gray-300")
@@ -56,17 +56,18 @@ const validators = {
     return true
   },
   requiredRadioGroup: function (fieldName, fieldSelector) {
+    console.log(fieldName, fieldSelector)
     const field = document.querySelector(fieldSelector);
     const checked = document.querySelector(`input[name="${fieldName}"]:checked`);
-    
+  
     if (!checked) {
       showErrorMessage(field, `${fieldName.replace(/_/g, ' ')} is required`);
       return false;
     }
-    
+  
     removeErrorMessage(field);
     return true;
-  }  
+  }
 }
 
 // Validation personal details functions
@@ -98,16 +99,18 @@ function validatePersonalInfo() {
   if (!isValid) return false
 
   return {
-    firstName: fields.firstName.value.trim(),
-    lastName: fields.lastName.value.trim(),
+    first_name: fields.firstName.value.trim(),
+    last_name: fields.lastName.value.trim(),
     email: fields.email.value.trim(),
     phoneNumber: fields.phoneNumber.value.trim(),
-    streetLine1: fields.streetLine1.value.trim(),
-    streetLine2: document.getElementById("street_line2")?.value.trim() || "",
-    city: fields.city.value.trim(),
-    state: fields.state.value.trim(),
-    pincode: fields.pincode.value.trim(),
-    country: fields.country.value.trim(),
+    address: {
+      streetLine1: fields.streetLine1.value.trim(),
+      streetLine2: document.getElementById("street_line2")?.value.trim() || "",
+      city: fields.city.value.trim(),
+      state: fields.state.value.trim(),
+      pincode: fields.pincode.value.trim(),
+      country: fields.country.value.trim(),
+    }
   }
 }
 
@@ -133,9 +136,9 @@ function validateBusinessInfo() {
     validators.required(fields.businessType, "Business type"),
     validators.email(fields.businessEmail, "Business email"),
     validators.phone(fields.businessMobile, "Business mobile number"),
+    validators.requiredRadioGroup("business_address_type", "#business_address_type_container"),
     validators.required(fields.streetLine1, "Street address"),
     validators.required(fields.gstNumber, "GST number"),
-    validators.requiredRadioGroup("business_address_type", "#business_address_type_container"),
     validators.required(fields.city, "City"),
     validators.required(fields.state, "State"),
     validators.required(fields.pincode, "Pincode"),
@@ -195,6 +198,7 @@ function validateBusinessDetails() {
     panNumber: fields.panNumber.value.trim(),
     panCardFront: fields.panCardFront.files[0] || null,
     panCardBack: fields.panCardBack.files[0] || null,
+    idNumber: fields.idNumber.value,
     addressProofIdType: fields.addressProofIdType.value,
     addressProofFront: fields.addressProofFront.files[0] || null,
     addressProofBack: fields.addressProofBack.files[0] || null,
