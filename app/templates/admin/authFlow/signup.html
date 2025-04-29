@@ -139,36 +139,43 @@
       signupText.classList.add('hidden');
       loadingSpinner.classList.remove('hidden');
 
-      const result = await sendPostRequest('/auth/register', {
-        email,
-        password,
-        password_confirmation: passwordConfirmation
-      });
+      // Create FormData from the form
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('password', password);
+      formData.append('password_confirmation', passwordConfirmation);
 
-      signupText.classList.remove('hidden');
-      loadingSpinner.classList.add('hidden');
+      try {
+        const result = await sendPostRequest('/auth/register', formData);
 
-      if (result.success) {
-        signupForm.reset();
-        window.location.href = '/login';
-      } else {
-        const { errors, message } = result || {};
+        signupText.classList.remove('hidden');
+        loadingSpinner.classList.add('hidden');
 
-        if (errors) {
-          Object.keys(errors).forEach(field => {
-            const errorEl = document.getElementById(`${field}-error`);
-            if (errorEl) {
-              errorEl.textContent = errors[field];
-              errorEl.classList.remove('hidden');
-            }
-          });
+        if (result.success) {
+          signupForm.reset();
+          window.location.href = '/login';
         } else {
-          errorMessage.textContent = message || 'An error occurred, please try again.';
-          errorMessage.classList.remove('hidden');
+          const { errors, message } = result || {};
+
+          if (errors) {
+            Object.keys(errors).forEach(field => {
+              const errorEl = document.getElementById(`${field}-error`);
+              if (errorEl) {
+                errorEl.textContent = errors[field];
+                errorEl.classList.remove('hidden');
+              }
+            });
+          } else {
+            errorMessage.textContent = message || 'An error occurred, please try again.';
+            errorMessage.classList.remove('hidden');
+          }
         }
+      } catch (error) {
+        console.error(error);
+        signupText.classList.remove('hidden');
+        loadingSpinner.classList.add('hidden');
       }
     });
-
   });
 
   function togglePassword(fieldId, toggleElement) {
@@ -185,5 +192,6 @@
       icon.classList.add("bi-eye");
     }
   }
+
 </script>
 {% endblock %}

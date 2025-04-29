@@ -61,12 +61,11 @@
             btnText.classList.add('hidden');
             loader.classList.remove('hidden');
 
-            const payload = {
-                email: emailInput.value.trim(),
-                code: otpField.value.trim()
-            };
+            const formData = new FormData();
+            formData.append('email', emailInput.value.trim());
+            formData.append('code', otpField.value.trim());
 
-            const { success, message } = await sendPostRequest('/auth/verify-email-code', payload);
+            const { success, message } = await sendPostRequest('/auth/verify-email-code', formData);
 
             loader.classList.add('hidden');
             btnText.classList.remove('hidden');
@@ -76,8 +75,8 @@
                 otpMessage.classList.remove('hidden');
 
                 setTimeout(() => {
-                    const encodedEmail = encodeURIComponent(payload.email);
-                    const encodedCode = encodeURIComponent(payload.code);
+                    const encodedEmail = encodeURIComponent(formData.get('email'));
+                    const encodedCode = encodeURIComponent(formData.get('code'));
                     window.location.href = `/reset-password?email=${encodedEmail}&code=${encodedCode}`;
                 }, 1500);
             } else {
@@ -86,5 +85,6 @@
             }
         });
     });
+
 </script>
 {% endblock %}

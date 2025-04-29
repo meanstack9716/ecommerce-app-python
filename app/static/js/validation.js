@@ -55,6 +55,7 @@ const validators = {
     removeErrorMessage(field)
     return true
   },
+  
   requiredRadioGroup: function (fieldName, fieldSelector) {
     console.log(fieldName, fieldSelector)
     const field = document.querySelector(fieldSelector);

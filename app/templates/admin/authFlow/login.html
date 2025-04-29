@@ -103,10 +103,15 @@
       loadingSpinner.classList.remove('hidden');
 
       try {
-        const result = await sendPostRequest('/auth/login', { email, password });
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('password', password);
+
+        const result = await sendPostRequest('/auth/login', formData);
 
         loginText.classList.remove('hidden');
         loadingSpinner.classList.add('hidden');
+
         if (result.success) {
           loginForm.reset();
           window.location.href = '/dashboard';
@@ -115,8 +120,6 @@
             emailErrorEl.textContent = result.errors.email;
             emailErrorEl.classList.remove('hidden');
           }
-
-          // Check for password error and display the message
           if (result.errors.password) {
             passwordErrorEl.textContent = result.errors.password;
             passwordErrorEl.classList.remove('hidden');
@@ -129,6 +132,7 @@
       } catch (error) {
         console.error(error);
       }
+
     });
 
   });

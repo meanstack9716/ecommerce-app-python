@@ -238,18 +238,13 @@ def add_seller():
 
 
 def save_file(file, folder_path='uploads/images'):
-    # Check if the folder exists, if not create it
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
     
-    # Secure the filename to avoid issues with special characters
     filename = secure_filename(file.filename)
     
-    # Define the full file path
     file_path = os.path.join(folder_path, filename)
     
-    # Save the file to the defined folder
     file.save(file_path)
     
-    # Return the file path (or a URL if you upload it to cloud storage)
     return file_path

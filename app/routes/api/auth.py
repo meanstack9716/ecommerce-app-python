@@ -12,40 +12,42 @@ from app.models.role import Role
 from app.utils.validation import validate_email, validate_password, validate_required_fields
 from app.utils.utils import create_error_response
 from constants import OTP_EXPIRY_MINUTES, REGISTER, LOGIN, FORGOT_PASSWORD, VERIFY_OTP, RESET_PASSWORD, LOGOUT
+from flask import session
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
-
 @auth_bp.route(REGISTER, methods=['POST'])
 def register():
-    data = request.get_json()
+    email = request.form.get('email')
+    password = request.form.get('password')
+    password_confirmation = request.form.get('password_confirmation')
 
-    is_valid, errors = validate_required_fields(data, ['email', 'password', 'password_confirmation'])
+    is_valid, errors = validate_required_fields({'email': email, 'password': password, 'password_confirmation': password_confirmation}, ['email', 'password', 'password_confirmation'])
     if not is_valid:
         return create_error_response(errors, 400)
 
-    is_valid_email, email_error = validate_email(data.get('email', ''))
+    is_valid_email, email_error = validate_email(email)
     if not is_valid_email:
         return create_error_response({"email": email_error}, 400)
 
-    is_valid_password, password_error = validate_password(data.get('password', ''))
+    is_valid_password, password_error = validate_password(password)
     if not is_valid_password:
         return create_error_response({"password": password_error}, 400)
 
-    if data.get('password') != data.get('password_confirmation'):
+    if password != password_confirmation:
         return create_error_response({"password_confirmation": "Password and confirmation do not match."}, 400)
 
-    if User.objects(email=data.get('email')).first():
+    if User.objects(email=email).first():
         return create_error_response({"email": "Email already exists"}, 409)
 
-    role_name = data.get('role', 'user')
+    role_name = request.form.get('role', 'user')
     role = Role.objects(name=role_name).first()
 
     if not role:
         return create_error_response({"role": "Invalid role"}, 400)
 
     user = User(
-        email=data.get('email'),
-        password=data.get('password'),
+        email=email,
+        password=password,
         role=role
     )
     user.hash_password()
@@ -68,28 +70,28 @@ def register():
         'access_token': access_token
     }), 200
 
-
-# Login API
-from flask import session
-
 @auth_bp.route(LOGIN, methods=['POST'])
 def login():
-    data = request.get_json()
+    email = request.form.get('email', '').strip()
+    password = request.form.get('password', '').strip()
 
-    is_valid, errors = validate_required_fields(data, ['email', 'password'])
-    if not is_valid:
+    errors = {}
+    if not email:
+        errors['email'] = 'Email is required.'
+    if not password:
+        errors['password'] = 'Password is required.'
+    if errors:
         return create_error_response(errors, 400)
 
-    is_valid_email, email_error = validate_email(data.get('email'))
+    is_valid_email, email_error = validate_email(email)
     if not is_valid_email:
         return create_error_response({"email": email_error}, 400)
 
-    user = User.objects(email=data.get('email')).first()
-
+    user = User.objects(email=email).first()
     if not user:
         return create_error_response({"email": "User with this email does not exist"}, 404)
 
-    if not user.check_password(data.get('password')):
+    if not user.check_password(password):
         return create_error_response({"password": "Invalid password"}, 401)
 
     access_token = create_access_token(identity=str(user.id), additional_claims={'role': user.role.name})
@@ -103,12 +105,9 @@ def login():
     }), 200
 
 
-
-# Forgot Password API (Send OTP)
 @auth_bp.route(FORGOT_PASSWORD, methods=['POST'])
 def forgot_password():
-    data = request.get_json()
-    email = data.get('email')
+    email = request.form.get('email')
 
     if not email:
         return jsonify({'message': 'Email is required'}), 400
@@ -138,12 +137,13 @@ def forgot_password():
         print(f"Error sending email: {e}")
         return jsonify({'message': 'Failed to send OTP email'}), 500
 
-# Verify OTP API
+from flask import request, jsonify
+from datetime import datetime
+
 @auth_bp.route(VERIFY_OTP, methods=['POST'])
 def verify_email_code():
-    data = request.get_json()
-    email = data.get('email')
-    otp = data.get('code')
+    email = request.form.get('email')
+    otp = request.form.get('code')
 
     if not email or not otp:
         return jsonify({'errors': 'Email and OTP are required'}), 400
@@ -165,27 +165,20 @@ def verify_email_code():
 
     return jsonify({'message': 'OTP verified successfully'}), 200
 
-# Reset Password API
+
 @auth_bp.route(RESET_PASSWORD, methods=['POST'])
 def reset_password():
-    data = request.get_json()
-    email = data.get('email')
-    otp = data.get('code')
-    new_password = data.get('password')
+    email = request.form.get('email')
+    new_password = request.form.get('password')
 
-    if not email or not otp or not new_password:
-        return jsonify({'errors': 'Email, OTP, and new password are required'}), 400
+    if not email or not new_password:
+        return jsonify({'errors': 'Email, and new password are required'}), 400
 
     user = User.objects(email=email).first()
     if not user:
         return jsonify({'message': 'User not found'}), 404
 
-    if user.reset_otp != otp:
-        return jsonify({'message': 'Invalid OTP'}), 400
-
-    if user.otp_expiry and user.otp_expiry < datetime.utcnow():
-        return jsonify({'message': 'OTP has expired'}), 400
-
+    # Reset password
     user.password = new_password
     user.hash_password()
     user.reset_otp = None
