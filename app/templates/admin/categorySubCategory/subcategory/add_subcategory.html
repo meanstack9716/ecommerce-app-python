@@ -10,7 +10,6 @@
                 <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Add Subcategory</h1>
                 <p class="mt-2 text-sm text-gray-600">Fill in the details below to create a new subcategory</p>
             </div>
-
             <form id="subcategoryForm" method="POST" enctype="multipart/form-data" class="space-y-6"
                 onsubmit="event.preventDefault(); submitForm();">
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8">
@@ -19,20 +18,21 @@
                             Subcategory Name <span class="text-red-500">*</span>
                         </label>
                         <input type="text" id="name" name="name"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200 placeholder:text-sm"
+                            class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm"
                             placeholder="Enter subcategory name">
                     </div>
-
                     <div>
                         <label for="category" class="block text-base font-medium text-gray-700 mb-1">
                             Parent Category <span class="text-red-500">*</span>
                         </label>
                         <div class="relative">
                             <select id="category" name="category"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200 pr-10 appearance-none">
+                                class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm appearance-none">
                                 <option value="" disabled selected class="text-xs">Select a category</option>
-                                {% for category in categories %}
-                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}" {% if request.form.get('category')==cat.id|string %}selected{% endif %}>
+                                    {{ cat.name }}
+                                </option>
                                 {% endfor %}
                             </select>
                             <span
@@ -41,15 +41,13 @@
                             </span>
                         </div>
                     </div>
-
                 </div>
-
                 <div>
                     <label for="description" class="block text-base font-medium text-gray-700 mb-1">
                         Description <span class="text-red-500">*</span>
                     </label>
                     <textarea id="description" name="description" rows="4"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition duration-200 placeholder:text-sm"
+                        class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm"
                         placeholder="Enter subcategory description"></textarea>
                 </div>
 
@@ -71,6 +69,7 @@
                     </button>
                 </div>
             </form>
+
         </div>
     </div>
 </div>
@@ -89,7 +88,7 @@
         const isNameValid = validators.required(nameField, 'Subcategory Name');
         const isCategoryValid = validators.required(categoryField, 'Parent Category');
         const isDescriptionValid = validators.required(descriptionField, 'Description');
-        const isImageValid = validators.required(imageField, 'Image');
+        const isImageValid = validators.required(imageField, 'Image') && validateImage(imageField);
 
         if (!isNameValid || !isCategoryValid || !isDescriptionValid || !isImageValid) {
             return;
@@ -97,13 +96,18 @@
 
         const formData = new FormData(form);
         const url = '{{ url_for("subcategory_bp.add_new_subcategory") }}';
-        const result = await sendPostRequest(url, formData);
+        try {
+            const result = await sendPostRequest(url, formData);
 
-        if (result.success) {
-            showToast(result.message, 'success');
-            form.reset();
-        } else {
-            showToast(result.errors || 'An error occurred. Please try again.', 'error');
+            if (result.success) {
+                showToast(result.message, 'success');
+                form.reset();
+                window.location.href = '{{ url_for("admin_api.get_subcategory_list_page") }}';
+            } else {
+                showToast(result.errors || 'An error occurred. Please try again.', 'error');
+            }
+        } catch (error) {
+            showToast('An unexpected error occurred. Please try again.', 'error');
         }
     }
 

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Subcategory List{% endblock %}
+
+{% block admin_content %}
+<div class="bg-white rounded-lg shadow p-6 max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">Subcategory List</h1>
+
+    <!-- Filter Form -->
+    <form method="GET" class="flex xl:items-end justify-between flex-col xl:flex-row gap-y-3 gap-x-8">
+        <div class="flex items-center space-x-6">
+            <!-- Search by Name -->
+            <div class="flex flex-col items-start gap-2 w-full xl:w-auto">
+                <p class="m-0 text-gray-600 font-medium">Search Category</p>
+                <div class="relative w-full sm:min-w-72">
+                    <input type="text" name="search" value="{{ request.args.get('search', '') }}"
+                        placeholder="Search by name..."
+                        class="border border-gray-300 rounded-lg px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                    <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-4 text-gray-500">
+                        search
+                    </span>
+                </div>
+            </div>
+
+            <!-- Filter by Category -->
+            <div class="flex flex-col items-start gap-2 w-full xl:w-auto">
+                <p class="m-0 text-gray-600 font-medium">Search by Category</p>
+                <div class="relative w-full sm:min-w-64">
+                    <select name="categoryId"
+                        class="border border-gray-300 cursor-pointer rounded-lg px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
+                        <option value="">All Categories</option>
+                        {% for cat in subcategories %}
+                        <option value="{{ cat.id }}" {% if request.args.get('categoryId')==cat.id|string %}selected{%
+                            endif %}>
+                            {{ cat.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <span
+                        class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">
+                        chevron_right
+                    </span>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Buttons -->
+        <div class="flex items-center gap-5 mt-4 xl:mt-0">
+            <button type="submit"
+                class="bg-[#334a8b] text-white px-4 py-3 rounded-lg text-sm hover:bg-blue-800 font-medium transition">
+                Apply Filters
+            </button>
+            {% if request.args.get('search') or request.args.get('categoryId') %}
+            <a href="{{ url_for('admin_api.get_subcategory_list_page') }}"
+                class="text-sm font-medium px-4 py-3 border border-red-500 rounded-lg text-red-500 hover:bg-red-50 transition">
+                Clear Filter
+            </a>
+            {% endif %}
+        </div>
+
+    </form>
+
+
+    <!-- Subcategory Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+        {% for subcategory in subcategories %}
+        <div class="bg-white border rounded-lg shadow-lg p-4 w-full h-96 relative">
+            <!-- Subcategory Image -->
+            <div class="mb-4 h-40">
+                <img src="/static/uploads/{{ subcategory.img_path }}" alt="{{ subcategory.name }}"
+                    class="w-full h-full object-contain rounded-t-lg">
+            </div>
+
+            <!-- Subcategory Content -->
+            <div class="flex flex-col items-center text-center px-2">
+                <p class="text-sm text-gray-600 mb-2">{{ subcategory.category.name }}</p>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ subcategory.name }}</h3>
+
+                <!-- Description with truncation and tooltip -->
+                <p class="text-sm text-gray-600 mb-4 relative group">
+                    {{ subcategory.description.split()[:20] | join(' ') }}{% if subcategory.description.split()|length >
+                    20 %}...{% endif %}
+                    <span
+                        class="absolute hidden group-hover:block w-64 bg-black text-white text-xs rounded p-2 z-10 shadow-lg left-1/2 -translate-x-1/2 top-full mt-2">
+                        {{ subcategory.description }}
+                    </span>
+                </p>
+
+                <!-- Actions -->
+                <div class="flex justify-between w-full mt-auto">
+                    <a href="#" class="text-blue-600 hover:underline text-sm">Edit</a>
+                    <button type="button" class="text-red-600 hover:underline text-sm" data-bs-toggle="modal"
+                        data-bs-target="#subcategoryModal{{ subcategory.id }}">Delete</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if subcategories|length == 0 %}
+    <p class="text-center text-gray-500 mt-10">No subcategories found.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block js %}
+{% endblock %}

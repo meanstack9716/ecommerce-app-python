@@ -248,3 +248,26 @@ function validatePANNumber(field) {
 //   removeErrorMessage(field)
   return true
 }
+
+
+
+
+function validateImage(imageField) {
+  const file = imageField.files[0];
+  if (!file) return false;
+
+  const validTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+  if (!validTypes.includes(file.type)) {
+      showToast('Invalid image type. Only PNG, JPG, or GIF allowed.', 'error');
+      return false;
+  }
+
+  const maxSize = 2 * 1024 * 1024; // 2MB
+  if (file.size > maxSize) {
+      showToast('Image size exceeds 2MB.', 'error');
+      return false;
+  }
+
+  return true;
+}
+

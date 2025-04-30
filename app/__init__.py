@@ -22,6 +22,7 @@ def create_app(config_class=Config):
     from app.models.seller import Seller
     from app.models.address import Address, AddressDetail
     from app.models.identification import Identification
+    from app.models.category_modal import Category, SubCategory, ProductType
 
     # Initialize roles and default admin
     Role.initialize_roles()
@@ -29,10 +30,11 @@ def create_app(config_class=Config):
 
     # Import routes and blueprints
     from app.routes.api.auth import auth_bp
-    from app.routes.web.category_routes import category_bp
     from app.routes.web import admin_api
     from app.routes.api.user import user_bp
-    from app.routes.web.subcategory_routes import subcategory_bp
+    from app.routes.api.category import category_bp
+    from app.routes.api.subcategory import subcategory_bp
+    from app.routes.api.product_type import product_type_bp
 
     # Register blueprints
     app.register_blueprint(auth_bp)
@@ -40,6 +42,7 @@ def create_app(config_class=Config):
     app.register_blueprint(user_bp)
     app.register_blueprint(category_bp)
     app.register_blueprint(subcategory_bp)
+    app.register_blueprint(product_type_bp)
 
     @app.before_request
     def before_request():

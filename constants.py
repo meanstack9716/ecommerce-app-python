@@ -30,6 +30,12 @@ VERIFY_OTP_WEB_URL= f'/verify-otp'
 RESET_PASSWORD_WEB_URL = f'/reset-password'
 DASHBOARD_WEB_URL = f'/dashboard'
 ALL_USER_LIST_WEB_URL = f'/all-users-list'
+CATEGORY_LIST_WEB_URL = '/category-list'
+ADD_CATEGORY_WEB_URL = '/add-new-category'
+SUBCATEGORY_LIST_WEB_URL = f'/subcategories-list'
+Add_SUBCATEGORY_LIST_WEB_URL = f'/subcategories/add'
+PRODUCT_LIST_WEB_URL = f'/product-list'
+PRODUCT_ADD_WEB_URL = f'products/add'
 
 # User API Endpoint Constants
 GET_USER_PROFILE = f'/me'
@@ -42,7 +48,11 @@ ADD_SELLER = f'/add_new_seller'
 
 
 # Category API Endpoint Constants
-ADD_NEW_CATEGORY = f'/add_new_category'
-GET_CATEGORY_LIST = f'/category_list'
-GET_SUBCATEGORY_LIST = '/subcategories'
-ADD_NEW_SUBCATEGORY = '/add_subcategory'
+API_CATEGORY_LIST = '/api/categories/list'
+API_ADD_CATEGORY = '/api/categories/add'
+API_SUBCATEGORY_LIST = '/api/subcategories/list'
+API_ADD_SUBCATEGORY = '/api/subcategories/add'
+API_GET_SUBCATEGORIES_BY_CATEGORY_ID = '/api/get-subcategories/<category_id>'
+
+API_PRODUCTTYPE_LIST = '/api/product-types'
+API_ADD_PRODUCTTYPE = '/api/add-product-type'

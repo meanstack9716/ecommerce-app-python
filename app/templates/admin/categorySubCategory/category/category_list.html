@@ -3,11 +3,11 @@
 {% block title %}Category List{% endblock %}
 
 {% block admin_content %}
-<div class="bg-white rounded-lg shadow p-6 max-w-6xl mx-auto mt-8">
+<div class="bg-white rounded-lg shadow p-6 max-w-6xl mx-auto">
     <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">Category List</h1>
 
     <!-- Filter Form -->
-    <form method="GET" action="{{ url_for('category_bp.get_category_list') }}"
+    <form method="GET" action="{{ url_for('admin_api.get_category_list_page') }}"
         class="flex flex-col sm:flex-row justify-between sm:items-end gap-3 mb-6">
         <div class="flex xl:items-center flex-col xl:flex-row gap-y-3 gap-x-8">
 
@@ -53,7 +53,7 @@
                 Apply Filters
             </button>
             {% if request.args.get('search') or request.args.get('categoryId') %}
-            <a href="{{ url_for('category_bp.get_category_list') }}"
+            <a href="{{ url_for('admin_api.get_category_list_page') }}"
                 class="text-sm font-medium px-4 py-3 border border-red-500 rounded-lg text-red-500">
                 Clear Filter
             </a>
@@ -65,7 +65,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {% for category in categories %}
         <div class="bg-gray-50 rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105">
-            <img src="/static/uploads/{{ category.image_path }}" alt="Category Image"
+            <img src="/static/uploads/{{ category.img_path }}" alt="Category Image"
                 class="w-full h-48 object-contain bg-white p-4">
             <div class="p-4">
                 <h2 class="text-xl font-semibold text-gray-800 mb-2">{{ category.name }}</h2>

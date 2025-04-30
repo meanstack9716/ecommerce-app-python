@@ -1,5 +1,5 @@
 from flask import render_template, redirect, url_for, session, Blueprint, request, jsonify
-from constants import GET_SUBCATEGORY_LIST, ADD_NEW_SUBCATEGORY
+from constants import API_SUBCATEGORY_LIST, API_ADD_SUBCATEGORY, API_GET_SUBCATEGORIES_BY_CATEGORY_ID
 from app.models import SubCategory, Category
 from app.utils.validation import validate_required_fields
 from app.utils.image_upload import upload_image, validate_fields
@@ -8,22 +8,44 @@ from bson import ObjectId
 
 subcategory_bp = Blueprint('subcategory_bp', __name__)
 
-@subcategory_bp.route(GET_SUBCATEGORY_LIST)
+@subcategory_bp.route(API_SUBCATEGORY_LIST)
 def get_subcategory_list():
     if 'user_id' not in session:
-        return redirect(url_for('admin_api.login_page'))
+        return jsonify({"error": "Unauthorized"}), 401
 
     search_query = request.args.get('search', '').strip()
+    category_id = request.args.get('categoryId', '').strip()
+
+    query = SubCategory.objects
 
     if search_query:
-        subcategories = SubCategory.objects(name__icontains=search_query)
-    else:
-        subcategories = SubCategory.objects.all()
+        query = query(name__icontains=search_query)
 
-    return render_template("admin/subcategory/subcategory_list.html", subcategories=subcategories)
+    if category_id:
+        query = query(category=category_id)
+
+    subcategories = query.all()
+
+    subcategories_json = []
+    for subcat in subcategories:
+        subcategories_json.append({
+            "id": str(subcat.id),
+            "name": subcat.name,
+            "description": subcat.description,
+            "img_path": subcat.img_path,
+            "created_at": subcat.created_at.isoformat(),
+            "category": {
+                "id": str(subcat.category.id) if subcat.category else None,
+                "name": subcat.category.name if subcat.category else None,
+                "description": subcat.category.description if subcat.category else None,
+                "img_path": subcat.category.img_path if subcat.category else None,
+            }
+        })
+
+    return jsonify({"subcategories": subcategories_json}), 200
 
 
-@subcategory_bp.route(ADD_NEW_SUBCATEGORY, methods=['GET', 'POST'])
+@subcategory_bp.route(API_ADD_SUBCATEGORY, methods=['GET', 'POST'])
 def add_new_subcategory():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
@@ -58,7 +80,7 @@ def add_new_subcategory():
             name=name,
             description=description,
             category=category,
-            image_path=image_filename
+            img_path=image_filename
         )
         new_subcategory.save()
 
@@ -69,11 +91,18 @@ def add_new_subcategory():
                 'name': new_subcategory.name,
                 'description': new_subcategory.description,
                 'category': new_subcategory.category.name,
-                'image_path': new_subcategory.image_path
+                'img_path': new_subcategory.img_path
             }
         })
 
-    return render_template('admin/subcategory/add_new_subcategory.html', categories=categories)
+@subcategory_bp.route(API_GET_SUBCATEGORIES_BY_CATEGORY_ID, methods=['GET'])
+def get_subcategories_by_category(category_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    subcategories = SubCategory.objects(category=category_id)
+    subcategory_list = [{"id": str(sub.id), "name": sub.name} for sub in subcategories]
+    return jsonify(subcategory_list)
 
 
 @subcategory_bp.route('/delete_subcategory/<string:subcategory_id>', methods=['POST'])
