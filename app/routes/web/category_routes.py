@@ -80,8 +80,5 @@ def product_list_page():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
     
-    # Fetch product types from the database
-    product_types = ProductType.objects.all()
     categories = Category.objects.all()
-    subcategories = SubCategory.objects.all()
-    return render_template('admin/categorySubCategory/products/product_list.html', product_types=product_types, categories=categories, subcategories=subcategories)
+    return render_template('admin/categorySubCategory/products/product_list.html', categories=categories)

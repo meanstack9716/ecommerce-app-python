@@ -23,7 +23,7 @@ class SubCategory(db.Document):
 class ProductType(db.Document):
     name = db.StringField(required=True, max_length=255)
     description = db.StringField()
-    category_id = db.ReferenceField(Category, required=True)  # <-- added
+    category_id = db.ReferenceField(Category, required=True)
     sub_category_id = db.ReferenceField(SubCategory, required=True)
     img_path = db.StringField()
     created_at = db.DateTimeField(default=datetime.utcnow)

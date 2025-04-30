@@ -3,38 +3,9 @@ from app.models import ProductType, SubCategory, Category
 from app.utils.image_upload import upload_image, validate_fields
 from app.utils.utils import create_error_response
 from bson import ObjectId
-from constants import API_PRODUCTTYPE_LIST, API_ADD_PRODUCTTYPE, API_GET_PRODUCT_TYPE_BY_SUBCATEGORY_ID
+from constants import API_ADD_PRODUCTTYPE, API_GET_PRODUCT_TYPE_BY_SUBCATEGORY_ID
 
 product_type_bp = Blueprint('product_type_bp', __name__)
-
-@product_type_bp.route(API_PRODUCTTYPE_LIST)
-def get_product_type_list():
-    if 'user_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    subcategory_id = request.args.get('subcategoryId', '').strip()
-
-    query = ProductType.objects
-    if subcategory_id:
-        query = query(subcategory=subcategory_id)
-
-    product_types = query.all()
-
-    result = []
-    for pt in product_types:
-        result.append({
-            "id": str(pt.id),
-            "name": pt.name,
-            "description": pt.description,
-            "img_path": pt.img_path,
-            "created_at": pt.created_at.isoformat(),
-            "subcategory": {
-                "id": str(pt.subcategory.id),
-                "name": pt.subcategory.name
-            }
-        })
-
-    return jsonify({"productTypes": result}), 200
 
 
 @product_type_bp.route(API_ADD_PRODUCTTYPE, methods=['POST'])
@@ -93,7 +64,7 @@ def add_product_type():
     })
 
 
-@product_type_bp.route(API_GET_PRODUCT_TYPE_BY_SUBCATEGORY_ID)
+@product_type_bp.route(API_GET_PRODUCT_TYPE_BY_SUBCATEGORY_ID, methods=['GET'])
 def get_product_types(subcategory_id):
     product_types = ProductType.objects(sub_category_id=subcategory_id)
     return jsonify([

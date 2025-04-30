@@ -96,7 +96,7 @@
         const cardsContainer = document.getElementById('productTypeCards');
         cardsContainer.innerHTML = '';
 
-        const { success, data } = await sendGetRequest(`/api/get_product_types/${subCategoryId}`);
+        const { success, data } = await sendGetRequest(`/api/get-product-types/${subCategoryId}`);
         if (success) {
             renderProductTypeCards(data);
         } else {
