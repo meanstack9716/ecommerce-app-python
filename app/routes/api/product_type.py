@@ -3,7 +3,7 @@ from app.models import ProductType, SubCategory, Category
 from app.utils.image_upload import upload_image, validate_fields
 from app.utils.utils import create_error_response
 from bson import ObjectId
-from constants import API_PRODUCTTYPE_LIST, API_ADD_PRODUCTTYPE
+from constants import API_PRODUCTTYPE_LIST, API_ADD_PRODUCTTYPE, API_GET_PRODUCT_TYPE_BY_SUBCATEGORY_ID
 
 product_type_bp = Blueprint('product_type_bp', __name__)
 
@@ -91,3 +91,16 @@ def add_product_type():
             'img_path': new_ptype.img_path
         }
     })
+
+
+@product_type_bp.route(API_GET_PRODUCT_TYPE_BY_SUBCATEGORY_ID)
+def get_product_types(subcategory_id):
+    product_types = ProductType.objects(sub_category_id=subcategory_id)
+    return jsonify([
+        {
+            'name': pt.name,
+            'img_path': pt.img_path,
+            'category': pt.category_id.name,
+            'subcategory': pt.sub_category_id.name
+        } for pt in product_types
+    ])

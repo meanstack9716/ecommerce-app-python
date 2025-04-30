@@ -56,3 +56,4 @@ API_GET_SUBCATEGORIES_BY_CATEGORY_ID = '/api/get-subcategories/<category_id>'
 
 API_PRODUCTTYPE_LIST = '/api/product-types'
 API_ADD_PRODUCTTYPE = '/api/add-product-type'
+API_GET_PRODUCT_TYPE_BY_SUBCATEGORY_ID = '/api/get_product_types/<subcategory_id>'

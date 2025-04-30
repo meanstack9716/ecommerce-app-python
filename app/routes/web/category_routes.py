@@ -1,7 +1,7 @@
 from flask import render_template, redirect, url_for, session, request
 from constants import CATEGORY_LIST_WEB_URL, ADD_CATEGORY_WEB_URL, SUBCATEGORY_LIST_WEB_URL, Add_SUBCATEGORY_LIST_WEB_URL, PRODUCT_LIST_WEB_URL, PRODUCT_ADD_WEB_URL
 from . import admin_api
-from app.models import Category, SubCategory
+from app.models import Category, SubCategory, ProductType
 
 @admin_api.route(CATEGORY_LIST_WEB_URL, methods=['GET'])
 def get_category_list_page():
@@ -80,4 +80,8 @@ def product_list_page():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
     
-    return render_template('admin/categorySubCategory/products/product_list.html')
+    # Fetch product types from the database
+    product_types = ProductType.objects.all()
+    categories = Category.objects.all()
+    subcategories = SubCategory.objects.all()
+    return render_template('admin/categorySubCategory/products/product_list.html', product_types=product_types, categories=categories, subcategories=subcategories)
