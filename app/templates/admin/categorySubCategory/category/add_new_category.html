@@ -3,7 +3,7 @@
 {% block title %}Add New Category{% endblock %}
 
 {% block admin_content %}
-<div class="bg-white rounded-lg max-w-3xl mx-auto p-6">
+<div class="bg-white rounded-lg mx-auto p-6">
     <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">Add New Category</h1>
     <form id="categoryForm" method="POST" enctype="multipart/form-data">
         <div class="mb-6">
@@ -16,8 +16,11 @@
         <div class="mb-6">
             <label for="image" class="block text-base font-medium text-gray-700">Image <span
                     class="text-red-500">*</span></label>
-            <input type="file" name="image" id="image"
-                class="block w-full text-sm mt-2 text-gray-700 bg-indigo-50 border border-gray-300 rounded-md cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out file:py-3 file:px-6 file:border-0 file:bg-indigo-100 file:text-indigo-700">
+            <div class="mt-1 flex items-start flex-col">
+                <input type="file" id="image" name="image" accept="image/*"
+                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-8 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition duration-150 ease-in-out">
+            </div>
+            <p class="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
         </div>
 
         <div class="mb-6">
@@ -30,15 +33,15 @@
 
         <div class="pt-4 flex justify-end">
             <button type="submit"
-            class="w-48 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-            <span id="btn-text" class="btn-text">Add Category</span>
-            <!-- Loader spinner -->
-            <div id="loader"
-                class="loader hidden animate-spin h-5 w-5 border-t-2 border-white border-solid rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            </div>
-        </button>
+                class="w-48 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                <span id="btn-text" class="btn-text">Add Category</span>
+                <!-- Loader spinner -->
+                <div id="loader"
+                    class="loader hidden animate-spin h-5 w-5 border-t-2 border-white border-solid rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                </div>
+            </button>
         </div>
-        
+
     </form>
 </div>
 {% endblock %}
