@@ -69,6 +69,7 @@ def get_product_types(subcategory_id):
     product_types = ProductType.objects(sub_category_id=subcategory_id)
     return jsonify([
         {
+            'id': str(pt.id),
             'name': pt.name,
             'img_url': pt.img_url,
             'description': pt.description,

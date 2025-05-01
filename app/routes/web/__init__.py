@@ -10,3 +10,4 @@ from .settings_routes import *
 from .category_routes import *
 from .sub_category_routes import *
 from .product_types_routes import *
+from .ads_products_routes import *

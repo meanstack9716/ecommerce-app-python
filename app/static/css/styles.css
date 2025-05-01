@@ -53,3 +53,7 @@ body {
 .skeleton {
   @apply animate-pulse bg-gray-200 rounded-md;
 }
+
+select{
+  font-size: 14px !important;
+}

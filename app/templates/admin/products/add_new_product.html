@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Product Add{% endblock %}
+
+{% block admin_content %}
+<div id="product-add" class="bg-white rounded-lg mx-auto p-6 shadow-md">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Add New Product</h1>
+        <p class="mt-2 text-sm text-gray-600">Fill in the details below to create a new product.</p>
+    </div>
+
+    <!-- STEP 1: Select Category -->
+    {% include "admin/products/ads_product_steps/product_step1_select_category.html" %}
+
+    <!-- STEP 2: Select Subcategory -->
+    {% include "admin/products/ads_product_steps/product_step2_select_subcategory.html" %}
+
+    <!-- Navigation buttons -->
+    <div class="flex justify-between mt-8">
+        <button id="back-button" type="button" class="text-blue-600 hover:underline hidden">Back</button>
+        <button id="next-button" type="button" disabled
+            class="w-32 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:text-gray-700 disabled:opacity-30">
+            Next</button>
+        <button id="submit-button" type="submit" form="step-2"
+            class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition hidden">Submit</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const categorySelect = document.getElementById('category_id');
+        const subCategorySelect = document.getElementById('sub_category_id');
+        const productTypeSelect = document.getElementById('product_type_id');
+
+        const backButton = document.getElementById('back-button');
+        const nextButton = document.getElementById('next-button');
+        const submitButton = document.getElementById('submit-button');
+
+        const step1 = document.getElementById('step-1');
+        const step2 = document.getElementById('step-2');
+
+        const hiddenCategoryId = document.getElementById('hidden-category-id');
+        const hiddenSubCategoryId = document.getElementById('hidden-sub-category-id');
+        const hiddenProductTypeId = document.getElementById('hidden-product-type-id');
+
+        let currentStep = 1;
+
+        function updateUI() {
+            [step1, step2].forEach(step => step.classList.add('hidden'));
+            backButton.classList.remove('hidden');
+            nextButton.classList.remove('hidden');
+            submitButton.classList.add('hidden');
+
+            if (currentStep === 1) {
+                step1.classList.remove('hidden');
+                backButton.classList.add('hidden');
+            } else if (currentStep === 2) {
+                step2.classList.remove('hidden');
+                nextButton.classList.add('hidden');
+                submitButton.classList.remove('hidden');
+            }
+
+            updateNextButtonState();
+        }
+
+        function updateNextButtonState() {
+            if (currentStep === 1) {
+                nextButton.disabled = !categorySelect.value || !subCategorySelect.value || !productTypeSelect.value;
+            } else if (currentStep === 2) {
+                nextButton.disabled = !subCategorySelect.value || !productTypeSelect.value;
+            }
+        }
+
+        categorySelect.addEventListener('change', async () => {
+            const categoryId = categorySelect.value;
+            updateNextButtonState();
+
+            subCategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+            productTypeSelect.innerHTML = '<option value="">Select Product Type</option>';
+            productTypeSelect.disabled = true; // disable product type until subcategory selected
+
+            if (categoryId) {
+                const { success, data } = await sendGetRequest(`/api/sub-categories/${categoryId}`);
+                if (success && Array.isArray(data)) {
+                    data.forEach(sub => {
+                        const option = document.createElement('option');
+                        option.value = sub.id;
+                        option.textContent = sub.name;
+                        subCategorySelect.appendChild(option);
+                    });
+                    subCategorySelect.disabled = false;
+                }
+            } else {
+                subCategorySelect.disabled = true;
+                productTypeSelect.disabled = true;
+            }
+        });
+
+        subCategorySelect.addEventListener('change', async () => {
+            const subCategoryId = subCategorySelect.value;
+            updateNextButtonState();
+
+            productTypeSelect.innerHTML = '<option value="">Select Product Type</option>';
+
+            if (subCategoryId) {
+                const { success, data } = await sendGetRequest(`/api/product-types/${subCategoryId}`);
+                if (success && Array.isArray(data)) {
+                    data.forEach(pt => {
+                        const option = document.createElement('option');
+                        option.value = pt.id;
+                        option.textContent = pt.name;
+                        productTypeSelect.appendChild(option);
+                    });
+                    productTypeSelect.disabled = false;
+                }
+            } else {
+                productTypeSelect.disabled = true;
+            }
+        });
+
+        productTypeSelect.addEventListener('change', updateNextButtonState);
+
+        nextButton.addEventListener('click', () => {
+            if (currentStep === 1) {
+                hiddenCategoryId.value = categorySelect.value;
+                hiddenSubCategoryId.value = subCategorySelect.value;
+                hiddenProductTypeId.value = productTypeSelect.value;
+                currentStep = 2;
+                updateUI();
+            }
+        });
+
+        backButton.addEventListener('click', () => {
+            if (currentStep === 2) {
+                currentStep = 1;
+                updateUI();
+            }
+        });
+
+        document.getElementById('step-2').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            hiddenCategoryId.value = categorySelect.value;
+            hiddenSubCategoryId.value = subCategorySelect.value;
+            hiddenProductTypeId.value = productTypeSelect.value;
+
+            const imageField = document.getElementById('images');
+            const isImageValid = validateImage(imageField);
+
+            const formData = new FormData(this);
+            formData.append('category', hiddenCategoryId.value);
+            formData.append('subcategory', hiddenSubCategoryId.value);
+            formData.append('product_type', hiddenProductTypeId.value);
+
+            const result = await sendPostRequest('/api/products/add', formData);
+
+            if (result.success) {
+                showToast(result.message, 'success');
+                this.reset();
+            } else {
+                Object.keys(result.errors).forEach(field => {
+                    const fieldError = result.errors[field];
+                    const fieldElement = document.getElementById(field);
+                    if (field === 'exception') {
+                        showToast('An exception occurred, please try again later.', 'error');
+                    } else {
+                        showToast(fieldError, 'error');
+                    }
+                });
+
+                console.error('Error:', result.errors || result.message || result.exception);
+            }
+        });
+
+        updateUI();
+    });
+</script>
+
+{% endblock %}

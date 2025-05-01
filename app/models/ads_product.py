@@ -1,6 +1,7 @@
 from app.extensions import db
 from datetime import datetime
 from app.models import Category, SubCategory, ProductType
+from constants import ALLOWED_SIZES, ALLOWED_GENDERS
 
 class AdsProduct(db.Document):
     title = db.StringField(required=True, max_length=255)
@@ -12,9 +13,9 @@ class AdsProduct(db.Document):
     sku = db.StringField(unique=True, required=True)
     brand = db.StringField()
     color = db.ListField(db.StringField())
-    size = db.ListField(db.StringField())
+    size = db.ListField(db.StringField(choices=ALLOWED_SIZES))
     material = db.StringField()
-    gender = db.StringField(choices=['Men', 'Women', 'Unisex', 'Kids'])
+    gender = db.StringField(choices=ALLOWED_GENDERS)
     
     stock = db.IntField(default=0)
     images = db.ListField(db.StringField())

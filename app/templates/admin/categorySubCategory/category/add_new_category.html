@@ -4,27 +4,30 @@
 
 {% block admin_content %}
 <div class="bg-white rounded-lg mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">Add New Category</h1>
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-center text-gray-800">Add New Category</h1>
+        <p class="mt-2 text-sm text-gray-600">Fill in the details below to create a new category</p>
+    </div>
     <form id="categoryForm" method="POST" enctype="multipart/form-data">
         <div class="mb-6">
-            <label for="name" class="block text-base font-medium text-gray-700">Title <span
+            <label for="name" class="block text-base font-medium text-black">Title <span
                     class="text-red-500">*</span></label>
             <input type="text" name="name" id="name"
                 class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
         </div>
 
         <div class="mb-6">
-            <label for="image" class="block text-base font-medium text-gray-700">Image <span
+            <label for="image" class="block text-base font-medium text-black">Image <span
                     class="text-red-500">*</span></label>
             <div class="mt-1 flex items-start flex-col">
-                <input type="file" id="image" name="image" accept="image/*"
+                <input type="file" id="image" name="image" accept=".png,.jpeg,.jpg,.pdf"
                     class="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-8 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition duration-150 ease-in-out">
             </div>
             <p class="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
         </div>
 
         <div class="mb-6">
-            <label for="description" class="block text-base font-medium text-gray-700">Description <span
+            <label for="description" class="block text-base font-medium text-black">Description <span
                     class="text-red-500">*</span></label>
             <textarea name="description" id="description"
                 class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out"

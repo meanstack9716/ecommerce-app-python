@@ -4,7 +4,7 @@
 
 {% block admin_content %}
 <div class="bg-white rounded-lg shadow p-6 max-w-6xl mx-auto">
-    <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">Category List</h1>
+    <h1 class="text-3xl font-bold mb-8 text-center text-black">Category List</h1>
 
     <!-- Filter Form -->
     <form method="GET" action="{{ url_for('admin_api.get_category_list_page') }}"
@@ -13,7 +13,7 @@
 
             <!-- Search by Name -->
             <div class="flex flex-col items-start gap-2 w-full xl:w-auto">
-                <p class="m-0 text-gray-600 font-medium">Search Category</p>
+                <p class="m-0 text-black font-medium">Search Category</p>
                 <div class="relative w-full sm:min-w-72">
                     <input type="text" name="search" value="{{ request.args.get('search', '') }}"
                         placeholder="Search by name..."

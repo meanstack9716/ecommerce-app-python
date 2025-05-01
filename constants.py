@@ -12,6 +12,9 @@ GENDER_CHOICES = [GENDER_MALE, GENDER_FEMALE, GENDER_OTHER]
 
 OTP_EXPIRY_MINUTES = 10
 
+# Allowed Size and Allowed Gender constants 
+ALLOWED_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+ALLOWED_GENDERS = ['Men', 'Women', 'Unisex', 'Kids']
 
 # API Endpoint Constants
 BASE_URL = ''
@@ -39,8 +42,9 @@ ADD_CATEGORY_WEB_URL = '/add-new-category'
 SUBCATEGORY_LIST_WEB_URL = f'/sub-categories/list'
 Add_SUBCATEGORY_LIST_WEB_URL = f'/subcategories/add'
 
-PRODUCT_LIST_WEB_URL = f'/product-list'
+PRODUCT_TYPES_LIST_WEB_URL = f'/product-list'
 ADD_PRODUCT_TYPE_WEB_URL = f'product-type/add'
+
 ADD_NEW_PRODUCT_WEB_URL = f'products/add'
 
 # WEB Endpoint Constants End
@@ -68,5 +72,7 @@ API_GET_SUBCATEGORIES_BY_CATEGORY_ID = '/api/sub-categories/<category_id>'
 # Product type API Endpoint Constants
 API_ADD_PRODUCTTYPE = '/api/add-product-type'
 API_GET_PRODUCT_TYPE_BY_SUBCATEGORY_ID = '/api/product-types/<subcategory_id>'
+
+ADD_NEW_PRODUCT = f'/api/products/add'
 
 # API Endpoint Constants End

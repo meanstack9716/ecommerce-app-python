@@ -1,0 +1,57 @@
+{% block Content %}
+<div id="step-1" class="space-y-4 hidden">
+
+    <div>
+        <label for="category_id" class="block text-base font-medium text-black">Select Category <span
+            class="text-red-500">*</span></label>
+
+        <div class="relative mt-1">
+            <select id="category_id"
+                class="block w-full border rounded-md px-5 py-3 appearance-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
+                <option value="">Select Category</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}" class="text-base">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+            <span
+                class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                expand_more
+            </span>
+        </div>
+    </div>
+
+    <div>
+        <label for="sub_category_id" class="block text-base font-medium text-black">Select Subcategory <span
+            class="text-red-500">*</span></label>
+
+        <div class="relative mt-1">
+            <select id="sub_category_id" disabled
+                class="block w-full border rounded-md px-5 py-3 appearance-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
+                <option value="">Select Subcategory</option>
+            </select>
+            <span
+                class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                expand_more
+            </span>
+        </div>
+    </div>
+
+    <div>
+        <label for="product_type_id" class="block text-base font-medium text-black">Select Product Type <span
+            class="text-red-500">*</span></label>
+
+        <div class="relative mt-1">
+            <select id="product_type_id" disabled
+                class="block w-full border rounded-md px-5 py-3 appearance-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
+                <option value="" class="text-xs">Select Product Type</option>
+            </select>
+            <span
+                class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                expand_more
+            </span>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
