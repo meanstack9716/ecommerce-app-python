@@ -22,21 +22,31 @@ FORGOT_PASSWORD = f'{BASE_URL}/send-email-code'
 VERIFY_OTP = f'{BASE_URL}/verify-email-code'
 RESET_PASSWORD = f'{BASE_URL}/reset-password'
 
-# WEB Endpoint Constants
+# WEB Endpoint Constants Start
 Login_WEB_URL = f'/login'
 SIGNUP_WEB_URL = f'/signup'
 FORGOT_PASSWORD_WEB_URL = f'/forgot-password'
 VERIFY_OTP_WEB_URL= f'/verify-otp'
 RESET_PASSWORD_WEB_URL = f'/reset-password'
+
 DASHBOARD_WEB_URL = f'/dashboard'
+
 ALL_USER_LIST_WEB_URL = f'/all-users-list'
+
 CATEGORY_LIST_WEB_URL = '/category-list'
 ADD_CATEGORY_WEB_URL = '/add-new-category'
+
 SUBCATEGORY_LIST_WEB_URL = f'/sub-categories/list'
 Add_SUBCATEGORY_LIST_WEB_URL = f'/subcategories/add'
+
 PRODUCT_LIST_WEB_URL = f'/product-list'
 ADD_PRODUCT_TYPE_WEB_URL = f'product-type/add'
 ADD_NEW_PRODUCT_WEB_URL = f'products/add'
+
+# WEB Endpoint Constants End
+
+
+# API Endpoint Constants Start
 
 # User API Endpoint Constants
 GET_USER_PROFILE = f'/me'
@@ -58,3 +68,5 @@ API_GET_SUBCATEGORIES_BY_CATEGORY_ID = '/api/sub-categories/<category_id>'
 # Product type API Endpoint Constants
 API_ADD_PRODUCTTYPE = '/api/add-product-type'
 API_GET_PRODUCT_TYPE_BY_SUBCATEGORY_ID = '/api/product-types/<subcategory_id>'
+
+# API Endpoint Constants End

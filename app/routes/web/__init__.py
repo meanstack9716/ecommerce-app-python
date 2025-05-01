@@ -8,3 +8,5 @@ from .user_routes import *
 from .order_routes import *
 from .settings_routes import *
 from .category_routes import *
+from .sub_category_routes import *
+from .product_types_routes import *
