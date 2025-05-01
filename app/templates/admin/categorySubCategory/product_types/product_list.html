@@ -52,7 +52,7 @@
         cardsContainer.innerHTML = '';
 
         if (categoryId) {
-            const { success, data } = await sendGetRequest(`/api/subcategories/${categoryId}`);
+            const { success, data } = await sendGetRequest(`/api/sub-categories/${categoryId}`);
             if (success && Array.isArray(data)) {
                 // Create individual subcategory tabs
                 data.forEach(sub => {

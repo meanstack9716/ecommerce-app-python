@@ -32,7 +32,7 @@ DASHBOARD_WEB_URL = f'/dashboard'
 ALL_USER_LIST_WEB_URL = f'/all-users-list'
 CATEGORY_LIST_WEB_URL = '/category-list'
 ADD_CATEGORY_WEB_URL = '/add-new-category'
-SUBCATEGORY_LIST_WEB_URL = f'/subcategories-list'
+SUBCATEGORY_LIST_WEB_URL = f'/sub-categories/list'
 Add_SUBCATEGORY_LIST_WEB_URL = f'/subcategories/add'
 PRODUCT_LIST_WEB_URL = f'/product-list'
 ADD_PRODUCT_TYPE_WEB_URL = f'product-type/add'
@@ -53,7 +53,7 @@ API_ADD_CATEGORY = '/api/categories/add'
 # Sub Category API Endpoint Constants
 API_SUBCATEGORY_LIST = '/api/sub-categories/list'
 API_ADD_SUBCATEGORY = '/api/sub-categories/add'
-API_GET_SUBCATEGORIES_BY_CATEGORY_ID = '/api/subcategories/<category_id>'
+API_GET_SUBCATEGORIES_BY_CATEGORY_ID = '/api/sub-categories/<category_id>'
 
 # Product type API Endpoint Constants
 API_ADD_PRODUCTTYPE = '/api/add-product-type'

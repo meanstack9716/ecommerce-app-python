@@ -25,14 +25,12 @@ def create_app(config_class=Config):
     from app.models.category_modal import Category, SubCategory, ProductType
     from app.models.ads_product import AdsProduct
 
-    # Import the seed function
     from app.seed_data import seed_data
 
-    # Initialize roles, admin, seed categories
     with app.app_context():
         Role.initialize_roles()
         User.create_default_admin()
-        seed_data()  # ✅ run the seeding here
+        seed_data()
 
     # Import routes and blueprints
     from app.routes.api.auth import auth_bp

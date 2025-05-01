@@ -39,20 +39,26 @@ def add_new_category_page():
 
 @admin_api.route(SUBCATEGORY_LIST_WEB_URL, methods=['GET'])
 def get_subcategory_list_page():
-    if 'user_id' not in session:
-        return redirect(url_for('admin_api.login_page'))
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 10, type=int)  # Still using 'limit' from query param
 
-    search_query = request.args.get('search', '').strip()
+    category_id = request.args.get('categoryId', '').strip()
 
-    if search_query:
-        subcategories = SubCategory.objects(name__icontains=search_query)
-    else:
-        subcategories = SubCategory.objects.all()
+    categories = Category.objects.all()
+    subcategories_query = SubCategory.objects()
+
+    if category_id:
+        subcategories_query = subcategories_query.filter(category=category_id)
+
+    # ✅ Correct parameter name here
+    subcategories = subcategories_query.paginate(page=page, per_page=limit)
 
     return render_template(
         "admin/categorySubCategory/subcategory/subcategory_list.html",
-        subcategories=subcategories
+        subcategories=subcategories,
+        categories=categories
     )
+
 
 @admin_api.route(Add_SUBCATEGORY_LIST_WEB_URL, methods=['POST','GET'])
 def add_subcategory_page():

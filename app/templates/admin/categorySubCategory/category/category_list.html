@@ -23,27 +23,6 @@
                     </span>
                 </div>
             </div>
-
-            <!-- Filter by Category (if available) -->
-            <div class="flex flex-col items-start gap-2 w-full xl:w-auto">
-                <p class="m-0 text-gray-600 font-medium">Search by Category</p>
-                <div class="relative w-full sm:min-w-64">
-                    <select name="categoryId"
-                        class="border border-gray-300 cursor-pointer rounded-lg px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
-                        <option value="">All Categories</option>
-                        {% for cat in all_categories %}
-                        <option value="{{ cat.id }}" {% if request.args.get('categoryId')==cat.id|string %}selected{%
-                            endif %}>
-                            {{ cat.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <span
-                        class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">
-                        chevron_right
-                    </span>
-                </div>
-            </div>
         </div>
 
         <!-- Buttons -->

@@ -60,7 +60,7 @@ def seed_data():
             category = Category(
                 name=cat_name,
                 description=f"{cat_name} category description",
-                img_url=f"/images/categoryImage/{cat_name.lower()}.jpg"
+                img_url=f"/seed_images/categories/{cat_name.lower()}.jpg"
             )
             category.save()
             categories[cat_name] = category
@@ -71,7 +71,7 @@ def seed_data():
                     name=subcat_name,
                     description=f"{subcat_name} subcategory description",
                     category=category,
-                    img_url=f"/images/{subcat_name.lower().replace(' ', '_')}.jpg"
+                    img_url=f"/seed_images/subcategories/{subcat_name.lower().replace(' ', '_')}.jpg"
                 )
                 subcategory.save()
                 subcategories[subcat_name] = subcategory
@@ -84,7 +84,7 @@ def seed_data():
                             description=f"{prod_type_name} product type description",
                             category_id=category,
                             sub_category_id=subcategory,
-                            img_url=f"/images/{prod_type_name.lower().replace(' ', '_')}.jpg"
+                            img_url=f"/seed_images/product_types/{prod_type_name.lower().replace(' ', '_')}.jpg"
                         )
                         product_type.save()
 

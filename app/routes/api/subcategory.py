@@ -10,13 +10,9 @@ subcategory_bp = Blueprint('subcategory_bp', __name__)
 
 @subcategory_bp.route(API_SUBCATEGORY_LIST)
 def get_subcategory_list():
-    search_query = request.args.get('search', '').strip()
     category_id = request.args.get('categoryId', '').strip()
-
     query = SubCategory.objects
 
-    if search_query:
-        query = query(name__icontains=search_query)
 
     if category_id:
         query = query(category=category_id)
