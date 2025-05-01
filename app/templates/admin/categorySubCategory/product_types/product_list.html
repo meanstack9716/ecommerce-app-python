@@ -52,7 +52,7 @@
         cardsContainer.innerHTML = '';
 
         if (categoryId) {
-            const { success, data } = await sendGetRequest(`/api/get-subcategories/${categoryId}`);
+            const { success, data } = await sendGetRequest(`/api/subcategories/${categoryId}`);
             if (success && Array.isArray(data)) {
                 // Create individual subcategory tabs
                 data.forEach(sub => {
@@ -96,7 +96,7 @@
         const cardsContainer = document.getElementById('productTypeCards');
         cardsContainer.innerHTML = '';
 
-        const { success, data } = await sendGetRequest(`/api/get-product-types/${subCategoryId}`);
+        const { success, data } = await sendGetRequest(`/api/product-types/${subCategoryId}`);
         if (success) {
             renderProductTypeCards(data);
         } else {
@@ -114,11 +114,12 @@
         data.forEach(pt => {
             const cardHTML = `
             <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <img src="/static/uploads/${pt.img_path}" alt="${pt.name}" class="w-full h-48 object-cover">
+                <img src="/static/${pt.img_url}" alt="${pt.name}" class="w-full h-48 object-cover">
                 <div class="p-4">
                     <h2 class="text-xl font-semibold text-gray-800">${pt.name}</h2>
-                    <p class="text-gray-600 mt-2">${pt.category}</p>
-                    <p class="text-gray-600 mt-1">${pt.subcategory}</p>
+                    <p class="text-black-600 mt-2">${pt.description}</p>
+                    <p class="text-gray-600 mt-2">${pt.categoryName}</p>
+                    <p class="text-gray-600 mt-1">${pt.subcategoryName}</p>
                 </div>
             </div>`;
             cardsContainer.insertAdjacentHTML('beforeend', cardHTML);

@@ -10,9 +10,6 @@ subcategory_bp = Blueprint('subcategory_bp', __name__)
 
 @subcategory_bp.route(API_SUBCATEGORY_LIST)
 def get_subcategory_list():
-    if 'user_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-
     search_query = request.args.get('search', '').strip()
     category_id = request.args.get('categoryId', '').strip()
 
@@ -32,17 +29,17 @@ def get_subcategory_list():
             "id": str(subcat.id),
             "name": subcat.name,
             "description": subcat.description,
-            "img_path": subcat.img_path,
+            "img_url": subcat.img_url,
             "created_at": subcat.created_at.isoformat(),
             "category": {
                 "id": str(subcat.category.id) if subcat.category else None,
                 "name": subcat.category.name if subcat.category else None,
                 "description": subcat.category.description if subcat.category else None,
-                "img_path": subcat.category.img_path if subcat.category else None,
+                "img_url": subcat.category.img_url if subcat.category else None,
             }
         })
 
-    return jsonify({"subcategories": subcategories_json}), 200
+    return jsonify({"data": subcategories_json}), 200
 
 
 @subcategory_bp.route(API_ADD_SUBCATEGORY, methods=['GET', 'POST'])
@@ -80,7 +77,7 @@ def add_new_subcategory():
             name=name,
             description=description,
             category=category,
-            img_path=image_filename
+            img_url=image_filename
         )
         new_subcategory.save()
 
@@ -91,7 +88,7 @@ def add_new_subcategory():
                 'name': new_subcategory.name,
                 'description': new_subcategory.description,
                 'category': new_subcategory.category.name,
-                'img_path': new_subcategory.img_path
+                'img_url': new_subcategory.img_url
             }
         })
 

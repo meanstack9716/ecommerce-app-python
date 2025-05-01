@@ -23,10 +23,16 @@ def create_app(config_class=Config):
     from app.models.address import Address, AddressDetail
     from app.models.identification import Identification
     from app.models.category_modal import Category, SubCategory, ProductType
+    from app.models.ads_product import AdsProduct
 
-    # Initialize roles and default admin
-    Role.initialize_roles()
-    User.create_default_admin()
+    # Import the seed function
+    from app.seed_data import seed_data
+
+    # Initialize roles, admin, seed categories
+    with app.app_context():
+        Role.initialize_roles()
+        User.create_default_admin()
+        seed_data()  # ✅ run the seeding here
 
     # Import routes and blueprints
     from app.routes.api.auth import auth_bp
@@ -35,6 +41,7 @@ def create_app(config_class=Config):
     from app.routes.api.category import category_bp
     from app.routes.api.subcategory import subcategory_bp
     from app.routes.api.product_type import product_type_bp
+    from app.routes.api.ads_product import ads_product_bp
 
     # Register blueprints
     app.register_blueprint(auth_bp)
@@ -43,6 +50,7 @@ def create_app(config_class=Config):
     app.register_blueprint(category_bp)
     app.register_blueprint(subcategory_bp)
     app.register_blueprint(product_type_bp)
+    app.register_blueprint(ads_product_bp)
 
     @app.before_request
     def before_request():

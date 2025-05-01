@@ -4,7 +4,7 @@ from datetime import datetime
 class Category(db.Document):
     name = db.StringField(required=True, max_length=255)
     description = db.StringField()
-    img_path = db.StringField()
+    img_url = db.StringField()
     created_at = db.DateTimeField(default=datetime.utcnow)
 
     def __repr__(self):
@@ -14,7 +14,7 @@ class SubCategory(db.Document):
     name = db.StringField(required=True, max_length=255)
     description = db.StringField()
     category = db.ReferenceField(Category, required=True)
-    img_path = db.StringField()
+    img_url = db.StringField()
     created_at = db.DateTimeField(default=datetime.utcnow)
     
     def __repr__(self):
@@ -25,7 +25,7 @@ class ProductType(db.Document):
     description = db.StringField()
     category_id = db.ReferenceField(Category, required=True)
     sub_category_id = db.ReferenceField(SubCategory, required=True)
-    img_path = db.StringField()
+    img_url = db.StringField()
     created_at = db.DateTimeField(default=datetime.utcnow)
 
     def __repr__(self):

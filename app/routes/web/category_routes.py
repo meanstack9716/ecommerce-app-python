@@ -1,5 +1,5 @@
 from flask import render_template, redirect, url_for, session, request
-from constants import CATEGORY_LIST_WEB_URL, ADD_CATEGORY_WEB_URL, SUBCATEGORY_LIST_WEB_URL, Add_SUBCATEGORY_LIST_WEB_URL, PRODUCT_LIST_WEB_URL, PRODUCT_ADD_WEB_URL
+from constants import CATEGORY_LIST_WEB_URL, ADD_CATEGORY_WEB_URL, SUBCATEGORY_LIST_WEB_URL, Add_SUBCATEGORY_LIST_WEB_URL, PRODUCT_LIST_WEB_URL, ADD_PRODUCT_TYPE_WEB_URL
 from . import admin_api
 from app.models import Category, SubCategory, ProductType
 
@@ -63,7 +63,7 @@ def add_subcategory_page():
     return render_template('admin/categorySubCategory/subcategory/add_subcategory.html', categories=categories)
 
 
-@admin_api.route(PRODUCT_ADD_WEB_URL, methods=['POST', 'GET'])
+@admin_api.route(ADD_PRODUCT_TYPE_WEB_URL, methods=['POST', 'GET'])
 def add_product_type_page():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
@@ -71,7 +71,7 @@ def add_product_type_page():
     categories = Category.objects.all()
     
     return render_template(
-        'admin/categorySubCategory/products/add_products.html',
+        'admin/categorySubCategory/product_types/add_products.html',
         categories=categories,
     )
 
@@ -81,4 +81,4 @@ def product_list_page():
         return redirect(url_for('admin_api.login_page'))
     
     categories = Category.objects.all()
-    return render_template('admin/categorySubCategory/products/product_list.html', categories=categories)
+    return render_template('admin/categorySubCategory/product_types/product_list.html', categories=categories)

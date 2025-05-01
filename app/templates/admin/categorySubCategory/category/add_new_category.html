@@ -76,7 +76,7 @@
             data[key] = value;
         });
 
-        const response = await sendPostRequest('/add-new-category', formData);
+        const response = await sendPostRequest('/api/categories/add', formData);
 
         handleResponse(response);
     });

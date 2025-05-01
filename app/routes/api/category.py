@@ -33,7 +33,7 @@ def add_new_category():
     new_category = Category(
         name=name,
         description=description,
-        img_path=image_filename
+        img_url=image_filename
     )
     new_category.save()
 
@@ -44,15 +44,12 @@ def add_new_category():
             'id': str(new_category.id),
             'name': new_category.name,
             'description': new_category.description,
-            'img_path': new_category.img_path
+            'img_url': new_category.img_url
         }
     })
 
 @category_bp.route(API_CATEGORY_LIST, methods=['GET'])
 def get_category_list():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-
     search_query = request.args.get('search', '').strip()
     
     if search_query:
@@ -64,7 +61,7 @@ def get_category_list():
         'id': str(category.id),
         'name': category.name,
         'description': category.description,
-        'img_path': category.img_path,
+        'img_url': category.img_url,
         'created_at': category.created_at.isoformat() if category.created_at else None,
     } for category in categories]
 

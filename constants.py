@@ -35,7 +35,8 @@ ADD_CATEGORY_WEB_URL = '/add-new-category'
 SUBCATEGORY_LIST_WEB_URL = f'/subcategories-list'
 Add_SUBCATEGORY_LIST_WEB_URL = f'/subcategories/add'
 PRODUCT_LIST_WEB_URL = f'/product-list'
-PRODUCT_ADD_WEB_URL = f'products/add'
+ADD_PRODUCT_TYPE_WEB_URL = f'product-type/add'
+ADD_NEW_PRODUCT_WEB_URL = f'products/add'
 
 # User API Endpoint Constants
 GET_USER_PROFILE = f'/me'
@@ -45,14 +46,15 @@ DELETE_PROFILE_PIC = f'/delete-profile-pic'
 LOGOUT = f'/logout'
 ADD_SELLER = f'/add_new_seller'
 
-
-
 # Category API Endpoint Constants
 API_CATEGORY_LIST = '/api/categories/list'
 API_ADD_CATEGORY = '/api/categories/add'
-API_SUBCATEGORY_LIST = '/api/subcategories/list'
-API_ADD_SUBCATEGORY = '/api/subcategories/add'
-API_GET_SUBCATEGORIES_BY_CATEGORY_ID = '/api/get-subcategories/<category_id>'
 
+# Sub Category API Endpoint Constants
+API_SUBCATEGORY_LIST = '/api/sub-categories/list'
+API_ADD_SUBCATEGORY = '/api/sub-categories/add'
+API_GET_SUBCATEGORIES_BY_CATEGORY_ID = '/api/subcategories/<category_id>'
+
+# Product type API Endpoint Constants
 API_ADD_PRODUCTTYPE = '/api/add-product-type'
-API_GET_PRODUCT_TYPE_BY_SUBCATEGORY_ID = '/api/get-product-types/<subcategory_id>'
+API_GET_PRODUCT_TYPE_BY_SUBCATEGORY_ID = '/api/product-types/<subcategory_id>'

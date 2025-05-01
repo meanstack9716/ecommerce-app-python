@@ -60,12 +60,11 @@
             {% endif %}
         </div>
     </form>
-
     <!-- Category Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {% for category in categories %}
         <div class="bg-gray-50 rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105">
-            <img src="/static/uploads/{{ category.img_path }}" alt="Category Image"
+            <img src="/static/{{ category.img_url }}" alt="Category Image"
                 class="w-full h-48 object-contain bg-white p-4">
             <div class="p-4">
                 <h2 class="text-xl font-semibold text-gray-800 mb-2">{{ category.name }}</h2>

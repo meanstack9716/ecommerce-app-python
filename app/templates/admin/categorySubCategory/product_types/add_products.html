@@ -179,7 +179,7 @@
 
             subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
 
-            const result = await sendGetRequest(`/api/get-subcategories/${categoryId}`);
+            const result = await sendGetRequest(`/api/subcategories/${categoryId}`);
 
             if (result.success) {
                 result.data.forEach(sub => {

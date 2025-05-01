@@ -47,7 +47,7 @@ def add_product_type():
         description=description,
         category_id=category,
         sub_category_id=subcategory,
-        img_path=image_filename
+        img_url=image_filename
     )
     new_ptype.save()
 
@@ -59,7 +59,7 @@ def add_product_type():
             'description': new_ptype.description,
             'category': new_ptype.category_id.name,
             'subcategory': new_ptype.sub_category_id.name,
-            'img_path': new_ptype.img_path
+            'img_url': new_ptype.img_url
         }
     })
 
@@ -70,8 +70,9 @@ def get_product_types(subcategory_id):
     return jsonify([
         {
             'name': pt.name,
-            'img_path': pt.img_path,
-            'category': pt.category_id.name,
-            'subcategory': pt.sub_category_id.name
+            'img_url': pt.img_url,
+            'description': pt.description,
+            'categoryName': pt.category_id.name,
+            'subcategoryName': pt.sub_category_id.name
         } for pt in product_types
     ])

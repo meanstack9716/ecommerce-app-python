@@ -15,8 +15,16 @@ def upload_image(image):
     if image:
         filename = secure_filename(image.filename)
         upload_folder = current_app.config['UPLOAD_FOLDER']
+
+        # Ensure upload folder exists
+        os.makedirs(upload_folder, exist_ok=True)
+
         image.save(os.path.join(upload_folder, filename))
-        return filename, None
+
+        # Return relative path inside static folder
+        relative_path = f"uploads/{filename}"
+        return relative_path, None
+
     return None, None
 
 def validate_fields(data, required_fields):
