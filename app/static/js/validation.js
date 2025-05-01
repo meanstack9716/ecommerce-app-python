@@ -177,23 +177,33 @@ function validateBusinessDetails() {
     idNumber: document.getElementById("id_number"),
     addressProofFront: document.getElementById("address_proof_front"),
     addressProofBack: document.getElementById("address_proof_back"),
-  }
+  };
 
-  // Validate all required fields
-  const isValid = [
+  // Validate required fields
+  const isRequiredValid = [
     validators.required(fields.panNumber, "PAN number"),
     validators.required(fields.panCardFront, "PAN Card Front Photo"),
     validators.required(fields.panCardBack, "PAN Card Back Photo"),
     validators.required(fields.addressProofIdType, "Address Proof ID Type"),
-    validators.required(fields.idNumber, "Id Number"),
+    validators.required(fields.idNumber, "ID Number"),
     validators.required(fields.addressProofFront, "Address Proof Front Photo"),
     validators.required(fields.addressProofBack, "Address Proof Back Photo"),
     validatePANNumber(fields.panNumber),
-  ].every((result) => result === true)
+  ].every((result) => result === true);
 
-  if (!isValid) return false
+  if (!isRequiredValid) return false;
 
-  // Return the validated data
+  // ✅ Validate images (type and size)
+  const areImagesValid = [
+    validateImage(fields.panCardFront),
+    validateImage(fields.panCardBack),
+    validateImage(fields.addressProofFront),
+    validateImage(fields.addressProofBack),
+  ].every((result) => result === true);
+
+  if (!areImagesValid) return false;
+
+  // Return validated data
   return {
     panNumber: fields.panNumber.value.trim(),
     panCardFront: fields.panCardFront.files[0] || null,
@@ -202,7 +212,7 @@ function validateBusinessDetails() {
     addressProofIdType: fields.addressProofIdType.value,
     addressProofFront: fields.addressProofFront.files[0] || null,
     addressProofBack: fields.addressProofBack.files[0] || null,
-  }
+  };
 }
 
 // Add event listeners to clear errors when user starts typing
@@ -262,7 +272,7 @@ function validateImage(imageField) {
       return false;
   }
 
-  const maxSize = 2 * 1024 * 1024; // 2MB
+  const maxSize = 2 * 1024 * 1024;
   if (file.size > maxSize) {
       showToast('Image size exceeds 2MB.', 'error');
       return false;

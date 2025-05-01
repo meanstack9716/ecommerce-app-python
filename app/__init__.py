@@ -36,6 +36,7 @@ def create_app(config_class=Config):
     from app.routes.api.auth import auth_bp
     from app.routes.web import admin_api
     from app.routes.api.user import user_bp
+    from app.routes.api.seller import seller_bp
     from app.routes.api.category import category_bp
     from app.routes.api.subcategory import subcategory_bp
     from app.routes.api.product_type import product_type_bp
@@ -45,6 +46,7 @@ def create_app(config_class=Config):
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_api)
     app.register_blueprint(user_bp)
+    app.register_blueprint(seller_bp)
     app.register_blueprint(category_bp)
     app.register_blueprint(subcategory_bp)
     app.register_blueprint(product_type_bp)

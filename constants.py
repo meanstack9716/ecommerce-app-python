@@ -58,7 +58,7 @@ UPDATE_PROFILE = f'/update-profile'
 UPDATE_PROFILE_PIC = f'/update-profile-pic'
 DELETE_PROFILE_PIC = f'/delete-profile-pic'
 LOGOUT = f'/logout'
-ADD_SELLER = f'/add_new_seller'
+ADD_SELLER = f'/add-new-seller'
 
 # Category API Endpoint Constants
 API_CATEGORY_LIST = '/api/categories/list'

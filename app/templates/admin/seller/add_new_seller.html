@@ -29,14 +29,21 @@
           id="backStep">Back</button>
 
         <!-- Next Button -->
-        <button type="button"
-          class="w-48 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          id="nextStep">Next</button>
+        <button type="submit"
+          class="w-48 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+          <span id="nextStep" class="btn-text">Next</span>
+          <div id="loading-spinner" class="hidden">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+              viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+              </path>
+            </svg>
+          </div>
+        </button>
       </div>
 
-      <div id="errorMessage" class="hidden bg-red-500 text-white p-4 rounded-lg my-4" role="alert">
-        <strong>Error: </strong> <span id="errorText"></span>
-      </div>
     </div>
   </div>
 </div>
@@ -44,12 +51,14 @@
 
 {% block js %}
 <script>
-
   document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('sellerForm');
     const steps = document.querySelectorAll('.step');
-    const nextBtn = document.getElementById('nextStep');
+    const nextBtn = document.querySelector('button[type="submit"]');
     const backBtn = document.getElementById('backStep');
+    const loader = document.getElementById('loading-spinner');
+    const nextBtnText = document.getElementById('nextStep');
+
     let currentStepIndex = 0;
     const formData = {};
 
@@ -67,116 +76,169 @@
 
     function updateButtonStates() {
       backBtn.style.display = currentStepIndex === 0 ? 'none' : 'block';
-      nextBtn.textContent = currentStepIndex === steps.length - 1 ? 'Register Seller' : 'Next';
+      nextBtnText.textContent = currentStepIndex === steps.length - 1 ? 'Register Seller' : 'Next';
     }
 
     function validateCurrentStep() {
+      let isValid = false;
       switch (currentStepIndex) {
         case 0:
-          const personalInfo = true
+          const personalInfo = validatePersonalInfo();
           if (personalInfo) {
             formData.personalInfo = personalInfo;
-            return true;
+            isValid = true;
           }
-          return false;
+          break;
         case 1:
-          const businessInfo = true
+          const businessInfo = validateBusinessInfo();
           if (businessInfo) {
             formData.businessInfo = businessInfo;
-            return true;
+            isValid = true;
           }
-          return false;
+          break;
         case 2:
           const businessDetails = validateBusinessDetails();
           if (businessDetails) {
             formData.businessDetails = businessDetails;
-            return true;
+            isValid = true;
           }
-          return false;
+          break;
         default:
-          return true;
+          isValid = true;
       }
+      return isValid;
     }
 
     // Handle next button click
-    nextBtn.addEventListener('click', function () {
+    nextBtn.addEventListener('click', async function (e) {
+      e.preventDefault(); // Prevent default form submission
+
+      // Validate current step
+      if (!validateCurrentStep()) {
+        return;
+      }
+
+      // If not last step, proceed to next step
       if (currentStepIndex < steps.length - 1) {
-        if (validateCurrentStep()) {
-          currentStepIndex++;
-          showStep(currentStepIndex);
-          updateButtonStates();
+        currentStepIndex++;
+        showStep(currentStepIndex);
+        updateButtonStates();
+      }
+      // If last step, submit the form
+      else {
+        nextBtn.disabled = true;
+        loader.classList.remove('hidden');
+        nextBtnText.classList.add('hidden');
+
+        try {
+          await submitForm();
+        } catch (error) {
+          console.error('Submission error:', error);
+          showToast('Submission error: Please try again later.', 'error');
+        } finally {
+          nextBtn.disabled = false;
+          loader.classList.add('hidden');
+          nextBtnText.classList.remove('hidden');
         }
-      } else {
-        submitForm();
       }
     });
 
-    backBtn.addEventListener('click', function () {
+    backBtn.addEventListener('click', function (e) {
+      e.preventDefault();
       if (currentStepIndex > 0) {
         currentStepIndex--;
         showStep(currentStepIndex);
         updateButtonStates();
       }
     });
-
     async function submitForm() {
       if (!validateCurrentStep()) return;
+
+      // Show the loader (spinner)
+      loader.classList.remove('hidden');
+      nextBtn.classList.add('hidden');
+
       try {
+
         const formDataObj = new FormData();
 
-        // Flatten formData into the FormData object
-        Object.keys(formData.personalInfo).forEach((key) => {
-          formDataObj.append(`personalInfo[${key}]`, formData.personalInfo[key]);
+        // Flat fields
+        formDataObj.append('first_name', formData.personalInfo.first_name);
+        formDataObj.append('last_name', formData.personalInfo.last_name);
+        formDataObj.append('email', formData.personalInfo.email);
+        formDataObj.append('phoneNumber', formData.personalInfo.phoneNumber);
+
+        // Flatten address for backend expectation
+        Object.keys(formData.personalInfo.address).forEach((key) => {
+          formDataObj.append(`address[${key}]`, formData.personalInfo.address[key]);
         });
 
-        Object.keys(formData.businessInfo).forEach((key) => {
-          formDataObj.append(`businessInfo[${key}]`, formData.businessInfo[key]);
+        formDataObj.append('businessName', formData.businessInfo.businessName);
+        formDataObj.append('businessType', formData.businessInfo.businessType);
+        formDataObj.append('businessEmail', formData.businessInfo.businessEmail);
+        formDataObj.append('businessMobile', formData.businessInfo.businessMobile);
+        formDataObj.append('gstNumber', formData.businessInfo.gstNumber);
+
+        // Flatten businessAddress for backend expectation
+        Object.keys(formData.businessInfo.businessAddress).forEach((key) => {
+          formDataObj.append(`businessAddress[${key}]`, formData.businessInfo.businessAddress[key]);
         });
 
-        Object.keys(formData.businessDetails).forEach((key) => {
-          formDataObj.append(`businessDetails[${key}]`, formData.businessDetails[key]);
-        });
+        formDataObj.append('panNumber', formData.businessDetails.panNumber);
+        formDataObj.append('idNumber', formData.businessDetails.idNumber);
+        formDataObj.append('addressProofIdType', formData.businessDetails.addressProofIdType);
+
+        // Add files
+        formDataObj.append('panCardFront', formData.businessDetails.panCardFront);
+        formDataObj.append('panCardBack', formData.businessDetails.panCardBack);
+        formDataObj.append('addressProofFront', formData.businessDetails.addressProofFront);
+        formDataObj.append('addressProofBack', formData.businessDetails.addressProofBack);
 
         for (let [key, value] of formDataObj.entries()) {
           console.log(`${key}: ${value}`);
         }
 
-        const response = await fetch('/user/add_new_seller', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: formDataObj,
-        });
+        const result = await sendPostRequest('/user/add-new-seller', formDataObj);
 
-        const result = await response.json();
+        // Hide the loader (spinner)
+        loader.classList.add('hidden');
+        nextBtn.classList.remove('hidden');
 
-        if (response.ok) {
+        if (result.success) {
           form.reset();
           currentStepIndex = 0;
           initForm();
+          showToast(result.message || 'Seller registered successfully!', 'success');
         } else {
-          if (result.error && result.error.includes("email already exists")) {
-            displayError("A user with this email already exists.");
-          } else {
-            throw new Error(result.message || 'Failed to register seller');
-          }
+          handleErrors(result.errors);
         }
       } catch (error) {
+        loader.classList.add('hidden');
+        nextBtn.classList.remove('hidden');
         console.error('Submission error:', error);
-        displayError(error.message);
+        showToast('Submission error: Please try again later.', 'error');
       }
     }
 
 
-    function displayError(message) {
-      const errorMessageElement = document.getElementById('errorMessage');
-      const errorText = document.getElementById('errorText');
-      errorText.textContent = message;
-      errorMessageElement.classList.remove('hidden');
+    function handleErrors(errors) {
+      if (errors) {
+        Object.keys(errors).forEach(field => {
+          const fieldError = errors[field];
+          const fieldElement = document.getElementById(field);
+          if (field === 'exception') {
+            showToast('An exception occurred, please try again later.', 'error');
+          } else {
+            showToast(fieldError, 'error');
+          }
+        });
+      } else {
+        showToast('An unknown error occurred. Please try again later.', 'error');
+      }
     }
 
 
+    // Rest of your code (submitForm, handleErrors, etc.) remains the same
     initForm();
   });
 </script>
