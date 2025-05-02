@@ -8,7 +8,7 @@
   </div>
 
   <div class="w-full lg:w-1/2 flex items-center justify-center flex-col gap-10 px-6 bg-gray-100">
-    <div class="w-1/2 hidden lg:block">
+    <div class="w-1/2  lg:block">
       <img src="{{ url_for('static', filename='images/mainLogo.png') }}" alt="Login image"
         class="object-cover w-full h-full">
     </div>
@@ -55,7 +55,7 @@
           </div>
         </button>
       </form>
-
+      <div id="api-error" class="text-red-600 text-sm mt-2 text-center hidden"></div>
       <div class="text-center text-sm text-gray-600">
         Don't have an account?
         <a href="{{ url_for('admin_api.signup_page') }}" class="text-blue-600 hover:underline">Create an account</a>
@@ -70,6 +70,7 @@
     const loginForm = document.getElementById('login-form');
     const loginText = document.getElementById('login-text');
     const loadingSpinner = document.getElementById('loading-spinner');
+    const apiErrorEl = document.getElementById('api-error');
 
     loginForm.addEventListener('submit', async function (event) {
       event.preventDefault();
@@ -111,24 +112,25 @@
 
         loginText.classList.remove('hidden');
         loadingSpinner.classList.add('hidden');
-
+        apiErrorEl.classList.add('hidden');
         if (result.success) {
           loginForm.reset();
           window.location.href = '/dashboard';
         } else if (result.errors) {
+          let errorMessages = [];
           if (result.errors.email) {
-            emailErrorEl.textContent = result.errors.email;
-            emailErrorEl.classList.remove('hidden');
+            errorMessages.push(result.errors.email);
           }
           if (result.errors.password) {
-            passwordErrorEl.textContent = result.errors.password;
-            passwordErrorEl.classList.remove('hidden');
+            errorMessages.push(result.errors.password);
           }
-        } else {
-          passwordErrorEl.textContent = result.message || 'Login failed.';
-          passwordErrorEl.classList.remove('hidden');
+          apiErrorEl.textContent = errorMessages.join(' ');
+          apiErrorEl.classList.remove('hidden');
         }
-
+        else {
+          apiErrorEl.textContent = result.message || 'Login failed.';
+          apiErrorEl.classList.remove('hidden');
+        }
       } catch (error) {
         console.error(error);
       }

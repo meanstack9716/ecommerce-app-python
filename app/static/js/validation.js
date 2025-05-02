@@ -43,6 +43,14 @@ const validators = {
     removeErrorMessage(field)
     return true
   },
+  minLength: (field, min, fieldName) => {
+    if (field.value.trim().length < min) {
+      showErrorMessage(field, `${fieldName} must be at least ${min} characters`);
+      return false;
+    }
+    removeErrorMessage(field);
+    return true;
+  },
   phone: (field) => {
     const phoneRegex = /^[0-9]{10,15}$/
     if (!phoneRegex.test(field.value)) {
