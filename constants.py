@@ -42,8 +42,8 @@ ADD_CATEGORY_WEB_URL = '/add-new-category'
 SUBCATEGORY_LIST_WEB_URL = f'/sub-categories/list'
 Add_SUBCATEGORY_LIST_WEB_URL = f'/subcategories/add'
 
-PRODUCT_TYPES_LIST_WEB_URL = f'/product-list'
-ADD_PRODUCT_TYPE_WEB_URL = f'product-type/add'
+SUB_SUB_CATEGORY_LIST_WEB_URL = f'/sub-sub-category-list'
+SUB_SUB_CATEGORY_WEB_URL = f'sub-sub-category/add'
 
 ADD_NEW_PRODUCT_WEB_URL = f'products/add'
 
@@ -69,9 +69,9 @@ API_SUBCATEGORY_LIST = '/api/sub-categories/list'
 API_ADD_SUBCATEGORY = '/api/sub-categories/add'
 API_GET_SUBCATEGORIES_BY_CATEGORY_ID = '/api/sub-categories/<category_id>'
 
-# Product type API Endpoint Constants
-API_ADD_PRODUCTTYPE = '/api/add-product-type'
-API_GET_PRODUCT_TYPE_BY_SUBCATEGORY_ID = '/api/product-types/<subcategory_id>'
+# Sub Sub Category API Endpoint Constants
+SUB_SUB_CATEGORY_ADD_API = '/api/sub-sub-category/add'
+GET_SUBSUBCATEGORIES_BY_SUBCATEGORY_ID_API = '/api/product-types/<subcategory_id>'
 
 ADD_NEW_PRODUCT = f'/api/products/add'
 

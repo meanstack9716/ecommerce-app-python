@@ -3,13 +3,13 @@ from app.models import ProductType, SubCategory, Category
 from app.utils.image_upload import upload_image, validate_fields
 from app.utils.utils import create_error_response
 from bson import ObjectId
-from constants import API_ADD_PRODUCTTYPE, API_GET_PRODUCT_TYPE_BY_SUBCATEGORY_ID
+from constants import SUB_SUB_CATEGORY_ADD_API, GET_SUBSUBCATEGORIES_BY_SUBCATEGORY_ID_API
 
-product_type_bp = Blueprint('product_type_bp', __name__)
+sub_sub_category_bp = Blueprint('sub_sub_category_bp', __name__)
 
 
-@product_type_bp.route(API_ADD_PRODUCTTYPE, methods=['POST'])
-def add_product_type():
+@sub_sub_category_bp.route(SUB_SUB_CATEGORY_ADD_API, methods=['POST'])
+def add_sub_sub_category():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
 
@@ -64,8 +64,8 @@ def add_product_type():
     })
 
 
-@product_type_bp.route(API_GET_PRODUCT_TYPE_BY_SUBCATEGORY_ID, methods=['GET'])
-def get_product_types(subcategory_id):
+@sub_sub_category_bp.route(GET_SUBSUBCATEGORIES_BY_SUBCATEGORY_ID_API, methods=['GET'])
+def get_sub_sub_category(subcategory_id):
     product_types = ProductType.objects(sub_category_id=subcategory_id)
     return jsonify([
         {

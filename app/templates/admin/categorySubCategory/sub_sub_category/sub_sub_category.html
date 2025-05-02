@@ -10,7 +10,7 @@
                 <h1 class="text-2xl sm:text-3xl font-bold text-black">Add New Product Type</h1>
                 <p class="mt-2 text-sm text-gray-600">Fill in the details below to create a new product type.</p>
             </div>
-            <form id="productTypeForm" method="POST" action="{{ url_for('product_type_bp.add_product_type') }}"
+            <form id="productTypeForm" method="POST" action="{{ url_for('sub_sub_category_bp.add_sub_sub_category') }}"
                 enctype="multipart/form-data">
                 <div class="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
@@ -142,7 +142,7 @@
             data[key] = value;
         });
 
-        const response = await sendPostRequest('/api/add-product-type', formData);
+        const response = await sendPostRequest('/api/sub-sub-category/add', formData);
 
         handleResponse(response);
     });

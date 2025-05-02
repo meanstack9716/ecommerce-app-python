@@ -4,4 +4,4 @@ from .seller import Seller
 from .address import Address, AddressDetail
 from .identification import Identification
 from .category_modal import Category, SubCategory, ProductType
-from .ads_product import AdsProduct
+from .add_products import AdsProduct

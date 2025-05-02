@@ -8,9 +8,9 @@ from app.utils.utils import create_error_response
 
 from app.extensions import db
 
-ads_product_bp = Blueprint('ads_product_bp', __name__)
+add_products_bp = Blueprint('add_products_bp', __name__)
 
-@ads_product_bp.route(ADD_NEW_PRODUCT, methods=['POST'])
+@add_products_bp.route(ADD_NEW_PRODUCT, methods=['POST'])
 def create_ad():
     try:
         required_fields = ['title', 'price', 'sku', 'category_id', 'sub_category_id', 'product_type_id']
