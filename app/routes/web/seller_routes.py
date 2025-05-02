@@ -21,22 +21,25 @@ def get_seller_list():
 
     sellers = Seller.objects.all()
 
-    if search_query:
-        sellers = sellers.filter(
-            Q(businessName__icontains=search_query) | 
-            Q(user_id__email__icontains=search_query) | 
-            Q(user_id__phone_number__icontains=search_query)
-        )
-
     if approval_status:
-        sellers = sellers.filter(Seller.is_approved==approval_status)
+        sellers = sellers.filter(is_approved=approval_status)
+
+    filtered_sellers = []
+    for seller in sellers:
+        user = seller.user_id
+        if (
+            (search_query.lower() in seller.businessName.lower()) or
+            (search_query.lower() in user.email.lower()) or
+            (search_query.lower() in user.phone_number.lower())
+        ):
+            filtered_sellers.append(seller)
 
     enriched_sellers = []
-    for seller in sellers:
+    for seller in filtered_sellers:
         user = seller.user_id
         address = seller.address
         identification = Identification.objects(user_id=user).first()
-        
+
         enriched_sellers.append({
             "seller": seller,
             "user": user,
