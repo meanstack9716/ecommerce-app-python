@@ -36,6 +36,8 @@ class User(db.Document):
 
         if not User.objects(email=os.getenv("DEFAULT_ADMIN_EMAIL")).first():
             admin = User(
+                first_name=os.getenv("DEFAULT_ADMIN_FIRST_NAME"),
+                last_name=os.getenv("DEFAULT_ADMIN_LAST_NAME"),
                 email=os.getenv("DEFAULT_ADMIN_EMAIL"),
                 password=os.getenv("DEFAULT_ADMIN_PASSWORD"),
                 role=role,

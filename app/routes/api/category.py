@@ -1,6 +1,6 @@
 from flask import request, jsonify, session, Blueprint
-from constants import API_CATEGORY_LIST, API_ADD_CATEGORY
-from app.models import Category
+from constants import API_CATEGORY_LIST, API_ADD_CATEGORY, API_CATEGORY_LIST_BY_ID
+from app.models import Category, SubCategory, SubSubCategory
 from app.utils.validation import validate_required_fields
 from app.utils.image_upload import upload_image, validate_fields
 from app.utils.utils import create_error_response
@@ -48,6 +48,7 @@ def add_new_category():
         }
     })
 
+# Route to fetch the list of all categories
 @category_bp.route(API_CATEGORY_LIST, methods=['GET'])
 def get_category_list():
     search_query = request.args.get('search', '').strip()
@@ -69,6 +70,58 @@ def get_category_list():
         'status': 'success',
         'data': categories_data,
     })
+
+@category_bp.route(API_CATEGORY_LIST_BY_ID, methods=['GET'])
+def get_category_with_children(category_id):
+    try:
+        category = Category.objects.get(id=category_id)
+    except Category.DoesNotExist:
+        return jsonify({
+            'status': 'error',
+            'message': 'Category not found'
+        }), 404
+
+    # Fetch subcategories for this category
+    subcategories = SubCategory.objects(category=category)
+    
+    subcategories_data = []
+    for subcategory in subcategories:
+        # Fetch sub-subcategories for this subcategory
+        subsubcategories = SubSubCategory.objects(
+            category_id=category,
+            sub_category_id=subcategory
+        )
+        subsubcategories_data = [{
+            'id': str(subsub.id),
+            'name': subsub.name,
+            'description': subsub.description,
+            'img_url': subsub.img_url,
+            'created_at': subsub.created_at.isoformat() if subsub.created_at else None
+        } for subsub in subsubcategories]
+
+        subcategories_data.append({
+            'id': str(subcategory.id),
+            'name': subcategory.name,
+            'description': subcategory.description,
+            'img_url': subcategory.img_url,
+            'created_at': subcategory.created_at.isoformat() if subcategory.created_at else None,
+            'subsubcategories': subsubcategories_data
+        })
+
+    category_data = {
+        'id': str(category.id),
+        'name': category.name,
+        'description': category.description,
+        'img_url': category.img_url,
+        'created_at': category.created_at.isoformat() if category.created_at else None,
+        'subcategories': subcategories_data
+    }
+
+    return jsonify({
+        'status': 'success',
+        'data': category_data
+    })
+
 
 @category_bp.route('/delete_category/<string:category_id>', methods=['POST'])
 def delete_category(category_id):

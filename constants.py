@@ -63,6 +63,7 @@ ADD_SELLER = f'/add-new-seller'
 # Category API Endpoint Constants
 API_CATEGORY_LIST = '/api/categories/list'
 API_ADD_CATEGORY = '/api/categories/add'
+API_CATEGORY_LIST_BY_ID = '/api/categories/list/<string:category_id>'
 
 # Sub Category API Endpoint Constants
 API_SUBCATEGORY_LIST = '/api/sub-categories/list'
