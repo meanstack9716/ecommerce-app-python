@@ -43,12 +43,11 @@ const validators = {
     removeErrorMessage(field)
     return true
   },
-  minLength: (field, min, fieldName) => {
-    if (field.value.trim().length < min) {
-      showErrorMessage(field, `${fieldName} must be at least ${min} characters`);
+  minLength: function(field, minLength, fieldName) {
+    if (field.value.trim().length < minLength) {
+      showErrorMessage(field, `${fieldName} must be at least ${minLength} characters.`);
       return false;
     }
-    removeErrorMessage(field);
     return true;
   },
   phone: (field) => {
@@ -64,7 +63,6 @@ const validators = {
     return true
   },
   requiredRadioGroup: function (fieldName, fieldSelector) {
-    console.log(fieldName, fieldSelector)
     const field = document.querySelector(fieldSelector);
     const checked = document.querySelector(`input[name="${fieldName}"]:checked`);
   
@@ -94,14 +92,20 @@ function validatePersonalInfo() {
 
   const isValid = [
     validators.required(fields.firstName, "First name"),
+    validators.minLength(fields.firstName, 3, "First name"),
     validators.required(fields.lastName, "Last name"),
+    validators.minLength(fields.lastName, 3, "Last name"),
     validators.email(fields.email),
     validators.phone(fields.phoneNumber),
     validators.required(fields.streetLine1, "Street address"),
+    validators.minLength(fields.streetLine1, 8, "Street address"),
     validators.required(fields.city, "City"),
+    validators.minLength(fields.city, 3, "City"),
     validators.required(fields.state, "State"),
+    validators.minLength(fields.state, 3, "State"),
     validators.required(fields.pincode, "Pincode"),
     validators.required(fields.country, "Country"),
+    validators.minLength(fields.country, 3, "Country"),
   ].every((result) => result === true)
 
   if (!isValid) return false
@@ -141,16 +145,20 @@ function validateBusinessInfo() {
   // Validate all required fields
   const isValid = [
     validators.required(fields.businessName, "Business name"),
+    validators.minLength(fields.businessName, 3, "Business name"),
     validators.required(fields.businessType, "Business type"),
     validators.email(fields.businessEmail, "Business email"),
     validators.phone(fields.businessMobile, "Business mobile number"),
     validators.requiredRadioGroup("business_address_type", "#business_address_type_container"),
     validators.required(fields.streetLine1, "Street address"),
+    validators.minLength(fields.streetLine1, 8, "Street address"),
     validators.required(fields.gstNumber, "GST number"),
     validators.required(fields.city, "City"),
+    validators.minLength(fields.city, 3, "City"),
     validators.required(fields.state, "State"),
     validators.required(fields.pincode, "Pincode"),
     validators.required(fields.country, "Country"),
+    validators.minLength(fields.country, 3, "country"),
     // GST number validation can be added if needed
     validateGSTNumber(fields.gstNumber),
   ].every((result) => result === true)
