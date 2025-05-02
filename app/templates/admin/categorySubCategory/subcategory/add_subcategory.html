@@ -30,7 +30,8 @@
                                 class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm appearance-none">
                                 <option value="" disabled selected class="text-xs">Select a category</option>
                                 {% for cat in categories %}
-                                <option value="{{ cat.id }}" {% if request.form.get('category')==cat.id|string %}selected{% endif %}>
+                                <option value="{{ cat.id }}" {% if request.form.get('category')==cat.id|string
+                                    %}selected{% endif %}>
                                     {{ cat.name }}
                                 </option>
                                 {% endfor %}
@@ -85,9 +86,10 @@
         const descriptionField = form.querySelector('#description');
         const imageField = form.querySelector('#image');
 
-        const isNameValid = validators.required(nameField, 'Subcategory Name');
-        const isCategoryValid = validators.required(categoryField, 'Parent Category');
-        const isDescriptionValid = validators.required(descriptionField, 'Description');
+        const isNameValid = validators.required(nameField, 'Subcategory Name') && validators.minLength(nameField, 3, 'Subcategory Name');
+        const isCategoryValid = validators.required(categoryField, 'Parent Category') && validators.minLength(categoryField, 3, 'Parent Category');
+        const isDescriptionValid = validators.required(descriptionField, 'Description') && validators.minLength(descriptionField, 10, 'Description');
+
         const isImageValid = validators.required(imageField, 'Image') && validateImage(imageField);
 
         if (!isNameValid || !isCategoryValid || !isDescriptionValid || !isImageValid) {

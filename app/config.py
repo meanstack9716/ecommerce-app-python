@@ -6,7 +6,7 @@ import cloudinary.uploader
 load_dotenv()
 
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key-here')
+    SECRET_KEY = os.getenv('SESSION_SECRET_KEY', 'your-secret-key-here')
     MONGODB_SETTINGS = {
         'db': os.getenv('MONGO_DB'),
         'host': os.getenv('MONGO_URI')

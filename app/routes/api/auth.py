@@ -89,7 +89,7 @@ def login():
 
     user = User.objects(email=email).first()
     if not user:
-        return create_error_response({"email": "User with this email does not exist"}, 404)
+        return create_error_response({"email": "Email or password is wrong"}, 404)
 
     if not user.check_password(password):
         return create_error_response({"password": "Invalid password"}, 401)
