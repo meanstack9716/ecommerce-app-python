@@ -23,7 +23,7 @@ def create_app(config_class=Config):
     from app.models.address import Address, AddressDetail
     from app.models.identification import Identification
     from app.models.category_modal import Category, SubCategory, SubSubCategory
-    from app.models.add_products import AddProducts
+    from app.models.products import AddProducts
 
     from app.seed_data import seed_data
 
@@ -40,7 +40,7 @@ def create_app(config_class=Config):
     from app.routes.api.category import category_bp
     from app.routes.api.subcategory import subcategory_bp
     from app.routes.api.sub_sub_category import sub_sub_category_bp
-    from app.routes.api.add_products import add_products_bp
+    from app.routes.api.products import products_bp
 
     # Register blueprints
     app.register_blueprint(auth_bp)
@@ -50,7 +50,7 @@ def create_app(config_class=Config):
     app.register_blueprint(category_bp)
     app.register_blueprint(subcategory_bp)
     app.register_blueprint(sub_sub_category_bp)
-    app.register_blueprint(add_products_bp)
+    app.register_blueprint(products_bp)
 
     @app.before_request
     def before_request():

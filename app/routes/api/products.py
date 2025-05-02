@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
-from constants import ADD_NEW_PRODUCT
+from constants import ADD_NEW_PRODUCT_API, PRODUCT_LISTS_API
 from app.models import AddProducts, Category, SubCategory, SubSubCategory
 from app.utils.image_upload import upload_image
 from app.utils.validation import validate_required_fields
@@ -8,23 +8,20 @@ from app.utils.utils import create_error_response
 
 from app.extensions import db
 
-add_products_bp = Blueprint('add_products_bp', __name__)
+products_bp = Blueprint('products_bp', __name__)
 
-@add_products_bp.route(ADD_NEW_PRODUCT, methods=['POST'])
+@products_bp.route(ADD_NEW_PRODUCT_API, methods=['POST'])
 def create_ad():
     try:
-        required_fields = ['title', 'price', 'sku', 'category_id', 'sub_category_id', 'product_type_id']
+        required_fields = ['title', 'price', 'sku', 'category_id', 'sub_category_id', 'product_type_id', 'description', 'stock']
         
         form_data = request.form.to_dict(flat=False)
-        # Flatten single values
         data = {k: v[0] if len(v) == 1 else v for k, v in form_data.items()}
         
-        # Validate required fields
         is_valid, validation_errors = validate_required_fields(data, required_fields)
         if not is_valid:
             return create_error_response(validation_errors)
         
-        # Validate related IDs
         category = Category.objects(id=data['category_id']).first()
         sub_category = SubCategory.objects(id=data['sub_category_id']).first()
         product_type = SubSubCategory.objects(id=data['product_type_id']).first()
@@ -86,6 +83,72 @@ def create_ad():
         ad.save()
         
         return jsonify({"message": "Ad created successfully", "id": str(ad.id)}), 201
+    
+    except Exception as e:
+        return create_error_response({"exception": str(e)}, status_code=500)
+
+
+@products_bp.route(PRODUCT_LISTS_API, methods=['GET'])
+def list_products():
+    try:
+        # Get query parameters for filtering, sorting, and pagination
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 10))
+        category_id = request.args.get('category_id')
+        sub_category_id = request.args.get('sub_category_id')
+        product_type_id = request.args.get('product_type_id')
+        sort_by = request.args.get('sort_by', 'created_at')
+        sort_order = request.args.get('sort_order', 'desc')
+        
+        query = AddProducts.objects()
+        
+        if category_id:
+            query = query.filter(category_id=category_id)
+        if sub_category_id:
+            query = query.filter(sub_category_id=sub_category_id)
+        if product_type_id:
+            query = query.filter(product_type_id=product_type_id)
+        
+        if sort_order == 'desc':
+            query = query.order_by(f'-{sort_by}')
+        else:
+            query = query.order_by(f'+{sort_by}')
+        
+        paginated_products = query.paginate(page=page, per_page=per_page)
+        
+        products_data = []
+        for product in paginated_products.items:
+            products_data.append({
+                'id': str(product.id),
+                'title': product.title,
+                'price': product.price,
+                'final_price': product.final_price,
+                'discount_percent': product.discount_percent,
+                'images': product.images,
+                'category': {
+                    'id': str(product.category_id.id),
+                    'name': product.category_id.name
+                } if product.category_id else None,
+                'sub_category': {
+                    'id': str(product.sub_category_id.id),
+                    'name': product.sub_category_id.name
+                } if product.sub_category_id else None,
+                'product_type': {
+                    'id': str(product.product_type_id.id),
+                    'name': product.product_type_id.name
+                } if product.product_type_id else None,
+                'created_at': product.created_at.isoformat() if product.created_at else None
+            })
+        
+        response = {
+            'products': products_data,
+            'total': paginated_products.total,
+            'pages': paginated_products.pages,
+            'current_page': paginated_products.page,
+            'per_page': paginated_products.per_page
+        }
+        
+        return jsonify(response), 200
     
     except Exception as e:
         return create_error_response({"exception": str(e)}, status_code=500)

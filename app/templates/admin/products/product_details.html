@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.title }} Details{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-6xl mx-auto p-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+        <!-- Product Image -->
+        <div>
+            <img src="/static/{{ product.images[0] if product.images else 'images/placeholder.png' }}"
+                alt="{{ product.title }}" class="w-full h-[500px] object-cover rounded-lg border border-gray-200">
+
+            {% if product.images|length > 1 %}
+            <div class="flex gap-2 mt-4 overflow-x-auto">
+                {% for img in product.images %}
+                <img src="/static/{{ img }}" alt="{{ product.title }}"
+                    class="w-20 h-20 object-cover rounded-lg border hover:border-black cursor-pointer">
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Product Details -->
+        <div>
+            <h1 class="text-3xl font-bold text-black mb-2">{{ product.title }}</h1>
+            <p class="text-sm text-gray-500 mb-4">SKU: {{ product.sku }}</p>
+
+            <div class="flex items-center gap-4 mb-4">
+                <p class="text-2xl font-bold text-black">${{ product.final_price }}</p>
+                {% if product.discount_percent > 0 %}
+                <p class="text-lg line-through text-gray-500">${{ product.price }}</p>
+                <span class="text-green-600 font-semibold">{{ product.discount_percent }}% OFF</span>
+                {% endif %}
+            </div>
+
+            <p id="desc-{{ product.id }}" class="text-gray-700 mb-6"></p>
+
+            {% if product.color %}
+            <div class="mb-4">
+                <p class="font-semibold text-black mb-1">Colors:</p>
+                <div class="flex gap-2">
+                    {% for color in product.color %}
+                    <span class="inline-block w-6 h-6 rounded-full border" style="background-color: {{ color }}"></span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if product.size %}
+            <div class="mb-4">
+                <p class="font-semibold text-black mb-1">Available Sizes:</p>
+                <div class="flex gap-2 flex-wrap">
+                    {% for size in product.size %}
+                    <span class="px-3 py-1 border rounded text-sm text-black">{{ size }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="flex gap-4 mt-6">
+                <button class="bg-black text-white px-6 py-3 rounded hover:bg-gray-800 transition">Add to Cart</button>
+                <button class="border border-black text-black px-6 py-3 rounded hover:bg-gray-100 transition">Buy
+                    Now</button>
+            </div>
+
+            <div class="mt-6">
+                <a href="{{ url_for('admin_api.get_product_lists') }}" class="text-blue-600 hover:underline">← Back to
+                    Product List</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const rawHtml = {{ product.description | tojson
+    }};  
+    document.getElementById('desc-{{ product.id }}').innerHTML = rawHtml;
+    });
+</script>
+
+{% endblock %}

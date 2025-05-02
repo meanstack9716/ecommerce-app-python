@@ -22,7 +22,20 @@
             class="w-32 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:text-gray-700 disabled:opacity-30">
             Next</button>
         <button id="submit-button" type="submit" form="step-2"
-            class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition hidden">Submit</button>
+            class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition hidden flex items-center justify-center min-w-32">
+            <span id="submit-text">Submit</span>
+            <div id="loading-spinner" class="hidden">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+            </div>
+        </button>
+
+
     </div>
 </div>
 {% endblock %}
@@ -62,7 +75,7 @@
         const hiddenCategoryId = document.getElementById('hidden-category-id');
         const hiddenSubCategoryId = document.getElementById('hidden-sub-category-id');
         const hiddenSubSubCategoryId = document.getElementById('hidden-product-type-id');
-        let currentStep = 2;
+        let currentStep = 1;
 
         function updateUI() {
             [step1, step2].forEach(step => step.classList.add('hidden'));
@@ -167,40 +180,58 @@
                 return;
             }
 
-            // Update hidden inputs
-            hiddenCategoryId.value = categorySelect.value;
-            hiddenSubCategoryId.value = subCategorySelect.value;
-            hiddenSubSubCategoryId.value = subSubCategorySelect.value;
+            // Update button to show spinner and hide text
+            const submitText = document.getElementById('submit-text');
+            const submitSpinner = document.getElementById('loading-spinner');
+            const submitButton = document.getElementById('submit-button');
 
-            descriptionInput.value = quill.root.innerHTML;
-
-            const imageInput = document.getElementById('product-images');
-            const isImageValid = validateImage(imageInput);
-            if (!isImageValid) {
-                return;
-            }
-
-            const formData = new FormData(this);
-            formData.append('category', hiddenCategoryId.value);
-            formData.append('subcategory', hiddenSubCategoryId.value);
-            formData.append('product_type', hiddenSubSubCategoryId.value);
+            // Show spinner and hide text
+            submitText.style.display = 'none';
+            submitSpinner.style.display = 'flex';
+            submitButton.disabled = true;
 
             try {
+                // Update hidden inputs
+                hiddenCategoryId.value = categorySelect.value;
+                hiddenSubCategoryId.value = subCategorySelect.value;
+                hiddenSubSubCategoryId.value = subSubCategorySelect.value;
+                descriptionInput.value = quill.root.innerHTML;
+
+                const imageInput = document.getElementById('product-images');
+                const isImageValid = validateImage(imageInput);
+                if (!isImageValid) {
+                    submitText.classList.remove('hidden');
+                    submitSpinner.classList.add('hidden');
+                    submitButton.disabled = false;
+                    return;
+                }
+
+                const formData = new FormData(this);
+                formData.append('category', hiddenCategoryId.value);
+                formData.append('subcategory', hiddenSubCategoryId.value);
+                formData.append('product_type', hiddenSubSubCategoryId.value);
+
+
                 const result = await sendPostRequest('/api/products/add', formData);
 
                 if (result.success) {
                     showToast(result.message, 'success');
-                    // Reset the form
                     this.reset();
-                    // Reset Quill editor
                     quill.root.innerHTML = '';
                     descriptionInput.value = '';
+                    setTimeout(() => {
+                        window.location.href = '/products/list';
+                    }, 1000);
                 } else {
                     handleFormErrors(result);
                 }
             } catch (error) {
                 console.error('Error:', error);
                 showToast('An error occurred, please try again later.', 'error');
+            } finally {
+                submitText.style.display = 'inline';
+                submitSpinner.style.display = 'none';
+                submitButton.disabled = false;
             }
         });
 
@@ -246,7 +277,6 @@
                     if (field === 'exception') {
                         showToast('An exception occurred, please try again later.', 'error');
                     } else {
-                        // Find the field and show error
                         const fieldElement = document.querySelector(`[name="${field}"]`) ||
                             document.getElementById(field);
                         if (fieldElement) {
@@ -262,7 +292,6 @@
             console.error('Error:', result.errors || result.message);
         }
 
-        // Initialize UI
         updateUI();
     });
 </script>

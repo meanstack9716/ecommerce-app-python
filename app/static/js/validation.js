@@ -228,7 +228,7 @@ function validateBusinessDetails() {
     validators.required(fields.addressProofIdType, "Address Proof ID Type"),
     validators.required(fields.idNumber, "ID Number"),
     validators.required(fields.addressProofFront, "Address Proof Front Photo"),
-    validators.required(fields.addressProofBack, "Address Proof Back Photo"),
+    // validators.required(fields.addressProofBack, "Address Proof Back Photo"),
     validatePANNumber(fields.panNumber),
   ].every((result) => result === true)
 

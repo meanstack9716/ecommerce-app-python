@@ -51,8 +51,9 @@ SUB_SUB_CATEGORY_LIST_WEB_URL = f'/sub-sub-category-list'
 SUB_SUB_CATEGORY_WEB_URL = f'sub-sub-category/add'
 
 ADD_NEW_PRODUCT_WEB_URL = f'products/add'
-
+GET_PRODUCT_LIST_WEB_URL = f'products/list'
 # WEB Endpoint Constants End
+
 
 
 # API Endpoint Constants Start
@@ -80,5 +81,6 @@ API_GET_SUBCATEGORIES_BY_CATEGORY_ID = '/api/sub-categories/list/<category_id>'
 SUB_SUB_CATEGORY_ADD_API = '/api/sub-sub-category/add'
 GET_SUBSUBCATEGORIES_BY_CATEGORY_ID_API = '/api/sub-sub-categories/list';
 
-ADD_NEW_PRODUCT = f'/api/products/add'
+ADD_NEW_PRODUCT_API = f'/api/products/add'
+PRODUCT_LISTS_API= f'/api/products/lists'
 # Sub Sub Category API Endpoint Constants End

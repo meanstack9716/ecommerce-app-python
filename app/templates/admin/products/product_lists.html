@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Product List{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto p-6 bg-white rounded-lg shadow">
+    <h1 class="text-3xl font-bold mb-8 text-center text-black">Product List</h1>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        {% for product in products.items %}
+        <a href="{{ url_for('admin_api.product_details', product_id=product.id) }}"
+            class="group block rounded-lg border border-gray-200 hover:shadow-xl transition overflow-hidden bg-white relative">
+
+            <!-- Discount Badge -->
+            {% if product.discount_percent > 0 %}
+            <span class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded z-10">
+                {{ product.discount_percent }}% OFF
+            </span>
+            {% endif %}
+
+            <!-- Swiper Slider -->
+            <div class="swiper mySwiper-{{ product.id }}">
+                <div class="swiper-wrapper">
+                    {% for image in product.images %}
+                    <div class="swiper-slide">
+                        <img src="/static/{{ image }}" alt="{{ product.title }}" class="w-full h-60 object-cover" />
+                    </div>
+                    {% endfor %}
+                    {% if not product.images %}
+                    <div class="swiper-slide">
+                        <img src="/static/images/placeholder.png" alt="No Image" class="w-full h-60 object-cover" />
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="p-4">
+                <h2 class="text-lg font-semibold text-black truncate">{{ product.title }}</h2>
+                <div class="flex items-center gap-2 mt-1">
+                    <p class="text-black font-bold text-base">${{ product.final_price }}</p>
+                    {% if product.discount_percent > 0 %}
+                    <p class="text-sm line-through text-gray-500">${{ product.price }}</p>
+                    {% endif %}
+                </div>
+                <p class="text-xs text-gray-500 mt-1">SKU: {{ product.sku }}</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if not products.items %}
+    <p class="text-center text-gray-500 mt-10">No products available.</p>
+    {% endif %}
+
+    <!-- Pagination -->
+    <!-- Pagination Controls -->
+    <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
+        <!-- Items per page selector -->
+        <div class="flex items-center gap-2 relative w-fit">
+            <span class="text-sm text-gray-600">Items per page:</span>
+            <div class="relative">
+                <select onchange="window.location.href = this.value"
+                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 appearance-none">
+                    {% for amount in [10, 20, 50, 100] %}
+                    <option value="{{ url_for('admin_api.get_product_lists', page=1, limit=amount) }}" {% if
+                        request.args.get('limit', 12)|int==amount %}selected{% endif %}>
+                        {{ amount }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <span
+                    class="material-symbols-outlined pointer-events-none absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500">
+                    expand_more
+                </span>
+            </div>
+        </div>
+
+        <!-- Page Navigation -->
+        <div class="flex items-center gap-2">
+            {% if products.has_prev %}
+            <a href="{{ url_for('admin_api.get_product_lists', page=products.prev_num, limit=request.args.get('limit', 12)) }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition">
+                Previous
+            </a>
+            {% else %}
+            <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed text-sm">Previous</span>
+            {% endif %}
+
+            <span class="px-4 py-2 text-sm">
+                Page {{ products.page }} of {{ products.pages }}
+            </span>
+
+            {% if products.has_next %}
+            <a href="{{ url_for('admin_api.get_product_lists', page=products.next_num, limit=request.args.get('limit', 12)) }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition text-sm">
+                Next
+            </a>
+            {% else %}
+            <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block js %}
+{{ super() }}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        {% for product in products.items %}
+        new Swiper('.mySwiper-{{ product.id }}', {
+            loop: true,
+            autoplay: {
+                delay: 2000,
+                disableOnInteraction: false,
+            },
+            slidesPerView: 1,
+        });
+        {% endfor %}
+    });
+</script>
+{% endblock %}
