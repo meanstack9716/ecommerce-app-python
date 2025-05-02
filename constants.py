@@ -16,6 +16,8 @@ OTP_EXPIRY_MINUTES = 10
 ALLOWED_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
 ALLOWED_GENDERS = ['Men', 'Women', 'Unisex', 'Kids']
 
+APPROVAL_STATUSES = ['pending', 'approved', 'cancelled']
+
 # API Endpoint Constants
 BASE_URL = ''
 
