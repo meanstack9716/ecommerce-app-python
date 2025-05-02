@@ -1,0 +1,231 @@
+{% block Content %}
+<form id="step-2" class="space-y-6 hidden">
+    <input type="hidden" name="category_id" id="hidden-category-id">
+    <input type="hidden" name="sub_category_id" id="hidden-sub-category-id">
+    <input type="hidden" name="product_type_id" id="hidden-product-type-id">
+    <input type="hidden" name="id" id="product-id">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <!-- Column 1 -->
+        <div class="space-y-4">
+            <div>
+                <label for="title" class="block text-black font-medium">Title <span
+                        class="text-red-500">*</span></label>
+                <input type="text" name="title" id="title" placeholder="Enter product title"
+                    class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm">
+            </div>
+
+            <div>
+                <label for="price" class="block text-black font-medium">Price <span
+                        class="text-red-500">*</span></label>
+                <input type="number" name="price" id="price" step="0.01" placeholder="Enter price"
+                    class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm">
+            </div>
+
+            <div>
+                <label for="discount_percent" class="block text-black font-medium">Discount Percent (%)</label>
+                <input type="number" name="discount_percent" id="discount_percent" value="0" step="0.01" min="0"
+                    max="100" placeholder="Enter discount percent"
+                    class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm">
+            </div>
+
+            <div>
+                <label for="sku" class="block text-black font-medium">SKU <span class="text-red-500">*</span></label>
+                <input type="text" name="sku" id="sku" placeholder="Enter SKU"
+                    class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm">
+            </div>
+        </div>
+
+        <!-- Column 2 -->
+        <div class="space-y-4">
+            <div>
+                <label for="stock" class="block text-black font-medium">Stock <span
+                        class="text-red-500">*</span></label>
+                <input type="number" name="stock" id="stock" min="0" placeholder="Enter stock quantity"
+                    class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm">
+            </div>
+
+            <div>
+                <label for="material" class="block text-black font-medium">Material <span
+                        class="text-red-500">*</span></label>
+                <input type="text" name="material" id="material" placeholder="Enter material type"
+                    class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm">
+            </div>
+
+            <div>
+                <label for="brand" class="block text-black font-medium">Brand <span
+                        class="text-red-500">*</span></label>
+                <input type="text" name="brand" id="brand" placeholder="Enter brand name"
+                    class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm">
+            </div>
+
+            <div>
+                <label for="tags" class="block text-black font-medium">Tags (comma separated) <span
+                        class="text-red-500">*</span></label>
+                <input type="text" name="tags" id="tags"
+                    class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm"
+                    placeholder="tag1, tag2, tag3">
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <label for="description" class="block text-black font-medium">Description <span
+                class="text-red-500">*</span></label>
+        <textarea name="description" id="description" rows="3" placeholder="Enter product description"
+            class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm"></textarea>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div>
+            <label for="color" class="block text-black font-medium">Colors (comma separated) <span
+                    class="text-red-500">*</span></label>
+            <input type="text" name="color" id="color"
+                class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm"
+                placeholder="Red, Blue, Green">
+        </div>
+        <div class="relative">
+            <label class="block text-black font-medium">Sizes <span class="text-red-500">*</span></label>
+            <div class="mt-2 relative">
+                <!-- Dropdown trigger button -->
+                <button type="button" id="sizeDropdownButton"
+                    class="w-full flex justify-between items-center px-4 py-3 bg-white border rounded-md shadow-sm text-left focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <span id="sizePlaceholder" class="selected-sizes-text text-sm">Select sizes</span>
+                    <svg class="h-5 w-5 text-gray-400 transition-transform duration-200" id="dropdownArrow"
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </button>
+
+                <!-- Hidden input to store selected sizes -->
+                <input type="hidden" id="sizeInput" name="size">
+
+                <!-- Dropdown with checkboxes -->
+                <div id="sizeDropdown"
+                    class="absolute z-10 hidden mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden transition-all duration-200 origin-top">
+                    <div id="sizeOptions" class="max-h-60 overflow-y-auto py-1">
+                        <!-- Select All option -->
+                        <label class="flex items-center px-4 py-2 bg-gray-50 hover:bg-gray-100 cursor-pointer border-b">
+                            <input type="checkbox" id="selectAll"
+                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-3">
+                            <span class="font-medium">Select All</span>
+                        </label>
+                        <!-- Options will be generated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="w-fit">
+        <label for="images" class="block text-black font-medium">Upload Images <span
+                class="text-red-500">*</span></label>
+        <input type="file" name="images" id="images" multiple accept=".png,.jpeg,.jpg,.pdf"
+            class="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-8 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition duration-150 ease-in-out">
+        <p class="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 2MB (multiple allowed)</p>
+    </div>
+</form>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+
+        // DOM elements
+        const sizeOptionsContainer = document.getElementById('sizeOptions');
+        const sizeDropdown = document.getElementById('sizeDropdown');
+        const sizeDropdownButton = document.getElementById('sizeDropdownButton');
+        const sizePlaceholder = document.getElementById('sizePlaceholder');
+        const dropdownArrow = document.getElementById('dropdownArrow');
+        const selectAllCheckbox = document.getElementById('selectAll');
+
+        // Generate the checkboxes
+        sizes.forEach(size => {
+            const label = document.createElement('label');
+            label.className = 'flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer';
+            label.innerHTML = `
+                <input type="checkbox" value="${size}" 
+                       class="size-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-3">
+                <span>${size}</span>
+            `;
+            sizeOptionsContainer.appendChild(label);
+        });
+
+        // Initialize event listeners
+        setupEventListeners();
+
+        // Toggle dropdown visibility
+        sizeDropdownButton.addEventListener('click', function (e) {
+            e.stopPropagation();
+            sizeDropdown.classList.toggle('hidden');
+            dropdownArrow.classList.toggle('rotate-180');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function () {
+            sizeDropdown.classList.add('hidden');
+            dropdownArrow.classList.remove('rotate-180');
+        });
+
+        // Prevent dropdown from closing when clicking inside it
+        sizeDropdown.addEventListener('click', function (e) {
+            e.stopPropagation();
+        });
+
+        function setupEventListeners() {
+            // Add change event to all size checkboxes
+            document.querySelectorAll('.size-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function () {
+                    updateSelectedSizes();
+                    updateSelectAllCheckbox();
+                });
+            });
+
+            // Add change event to Select All checkbox
+            selectAllCheckbox.addEventListener('change', function () {
+                const isChecked = this.checked;
+                document.querySelectorAll('.size-checkbox').forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+                updateSelectedSizes();
+            });
+        }
+
+        function updateSelectAllCheckbox() {
+            const allCheckboxes = document.querySelectorAll('.size-checkbox');
+            const checkedCount = document.querySelectorAll('.size-checkbox:checked').length;
+
+            if (checkedCount === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (checkedCount === allCheckboxes.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            }
+        }
+    });
+
+    // Update the selected sizes display
+    function updateSelectedSizes() {
+        const checkboxes = document.querySelectorAll('.size-checkbox:checked');
+        const sizePlaceholder = document.getElementById('sizePlaceholder');
+        const sizeInput = document.getElementById('sizeInput');
+
+        // Update placeholder text with selected sizes
+        if (checkboxes.length === 0) {
+            sizePlaceholder.textContent = 'Select sizes';
+        } else {
+            const selectedValues = Array.from(checkboxes).map(cb => cb.value);
+            sizePlaceholder.textContent = selectedValues.join(', ');
+        }
+
+        // Update hidden input value
+        sizeInput.value = Array.from(checkboxes).map(cb => cb.value).join(',');
+    }
+</script>
+{% endblock %}

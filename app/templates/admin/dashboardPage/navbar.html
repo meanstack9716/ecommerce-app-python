@@ -1,0 +1,83 @@
+{% block content %}
+<div
+    class="w-full mx-auto px-3 lg:px-9 py-4 flex justify-between items-center bg-gray-100 bg-white shadow-4xl shadow-[#f3f3f3] border-b border-gray">
+    <div class="flex items-center gap-3">
+        <div id="hamburgerIcon" class="cursor-pointer">
+            <span class="material-symbols-outlined">
+                menu_open
+            </span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <img src="{{ url_for('static', filename='images/mainLogo.png') }}" alt="Logo"
+                class="hidden md:block h-10 w-auto">
+
+            <img src="{{ url_for('static', filename='images/mainBackground.png') }}" alt="Mobile Background"
+                class="md:hidden h-10 w-auto">
+        </div>
+    </div>
+
+
+    <div class="flex items-center space-x-6 md:space-x-10 relative text-gray-800">
+        <i class="bi bi-bell text-md cursor-pointer hover:text-indigo-300 transition duration-300"></i>
+
+        <div class="relative cursor-pointer" id="profileDropdown" onclick="toggleDropdown()">
+            <div class="flex items-center space-x-4">
+                {% if g.current_user is defined and g.current_user.profile_pic %}
+                <img src="{{ user.profile_pic }}" alt="Profile Picture">
+                {% else %}
+                <i class="bi bi-person-circle text-gray-800 text-4xl md:5xl"></i>
+                {% endif %}
+                <div class="flex flex-col">
+                    <span class="ml-1 text-black text-md font-medium">{{ g.current_user.email }}</span>
+                    <span class="ml-1 text-gray-400 text-sm">{{ g.current_user.role.name }}</span>
+                </div>
+            </div>
+
+            <div id="dropdownMenu"
+                class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50 hidden text-gray-700">
+                <a href="/profile" class="block px-4 py-2 hover:bg-gray-100 rounded-md flex items-center gap-3">
+                    <i class="bi bi-person"></i>
+                    <p>Update Profile</p>
+                </a>
+                <button onclick="handleLogout()"
+                    class="block w-full text-left px-4 py-2 hover:bg-gray-100 rounded-md flex items-center gap-3">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <p>Logout</p>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleDropdown() {
+        const menu = document.getElementById('dropdownMenu');
+        menu.classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', function (event) {
+        const dropdown = document.getElementById('profileDropdown');
+        const menu = document.getElementById('dropdownMenu');
+        if (!dropdown.contains(event.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+    async function handleLogout() {
+        console.log("dasdajskdajks")
+        const result = await sendPostRequest('/auth/logout', {}, true);
+
+        if (result.success) {
+            window.location.href = '/login';
+        }
+    }
+
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('hamburgerIcon')?.addEventListener('click', function () {
+            document.getElementById('sidebar')?.classList.toggle('-translate-x-full');
+        });
+    });
+</script>
+{% endblock %}
