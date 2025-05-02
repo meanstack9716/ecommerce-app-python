@@ -3,7 +3,7 @@ from datetime import datetime
 from app.models import Category, SubCategory, SubSubCategory
 from constants import ALLOWED_SIZES, ALLOWED_GENDERS
 
-class AdsProduct(db.Document):
+class AddProducts(db.Document):
     title = db.StringField(required=True, max_length=255)
     description = db.StringField()
     price = db.FloatField(required=True)
@@ -33,4 +33,4 @@ class AdsProduct(db.Document):
     updated_at = db.DateTimeField(default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<AdsProduct {self.title}>'
+        return f'<AddProducts {self.title}>'

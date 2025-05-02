@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 from constants import ADD_NEW_PRODUCT
-from app.models import AdsProduct, Category, SubCategory, SubSubCategory
+from app.models import AddProducts, Category, SubCategory, SubSubCategory
 from app.utils.image_upload import upload_image
 from app.utils.validation import validate_required_fields
 from app.utils.utils import create_error_response
@@ -61,7 +61,7 @@ def create_ad():
         size = request.form.getlist('size')
         tags = request.form.getlist('tags')
         
-        ad = AdsProduct(
+        ad = AddProducts(
             title=data['title'],
             description=data.get('description'),
             price=price,
