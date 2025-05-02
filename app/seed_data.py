@@ -1,7 +1,7 @@
 # app/seed_data.py
 
 from app.extensions import db
-from app.models import Category, SubCategory, ProductType
+from app.models import Category, SubCategory, SubSubCategory
 from datetime import datetime
 
 def seed_data():
@@ -79,7 +79,7 @@ def seed_data():
                 # Create product types for this subcategory
                 if subcat_name in product_type_data:
                     for prod_type_name in product_type_data[subcat_name]:
-                        product_type = ProductType(
+                        product_type = SubSubCategory(
                             name=prod_type_name,
                             description=f"{prod_type_name} product type description",
                             category_id=category,

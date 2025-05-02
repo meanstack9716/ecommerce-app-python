@@ -32,7 +32,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         const categorySelect = document.getElementById('category_id');
         const subCategorySelect = document.getElementById('sub_category_id');
-        const productTypeSelect = document.getElementById('product_type_id');
+        const subSubCategorySelect = document.getElementById('product_type_id');
 
         const backButton = document.getElementById('back-button');
         const nextButton = document.getElementById('next-button');
@@ -43,7 +43,7 @@
 
         const hiddenCategoryId = document.getElementById('hidden-category-id');
         const hiddenSubCategoryId = document.getElementById('hidden-sub-category-id');
-        const hiddenProductTypeId = document.getElementById('hidden-product-type-id');
+        const hiddenSubSubCategoryId = document.getElementById('hidden-product-type-id');
 
         let currentStep = 1;
 
@@ -67,9 +67,9 @@
 
         function updateNextButtonState() {
             if (currentStep === 1) {
-                nextButton.disabled = !categorySelect.value || !subCategorySelect.value || !productTypeSelect.value;
+                nextButton.disabled = !categorySelect.value || !subCategorySelect.value || !subSubCategorySelect.value;
             } else if (currentStep === 2) {
-                nextButton.disabled = !subCategorySelect.value || !productTypeSelect.value;
+                nextButton.disabled = !subCategorySelect.value || !subSubCategorySelect.value;
             }
         }
 
@@ -78,11 +78,11 @@
             updateNextButtonState();
 
             subCategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
-            productTypeSelect.innerHTML = '<option value="">Select Product Type</option>';
-            productTypeSelect.disabled = true; // disable product type until subcategory selected
+            subSubCategorySelect.innerHTML = '<option value="">Select Product Type</option>';
+            subSubCategorySelect.disabled = true;
 
             if (categoryId) {
-                const { success, data } = await sendGetRequest(`/api/sub-categories/${categoryId}`);
+                const { success, data } = await sendGetRequest(`/api/sub-categories/list/${categoryId}`);
                 if (success && Array.isArray(data)) {
                     data.forEach(sub => {
                         const option = document.createElement('option');
@@ -94,7 +94,7 @@
                 }
             } else {
                 subCategorySelect.disabled = true;
-                productTypeSelect.disabled = true;
+                subSubCategorySelect.disabled = true;
             }
         });
 
@@ -102,31 +102,31 @@
             const subCategoryId = subCategorySelect.value;
             updateNextButtonState();
 
-            productTypeSelect.innerHTML = '<option value="">Select Product Type</option>';
+            subSubCategorySelect.innerHTML = '<option value="">Select Product Type</option>';
 
             if (subCategoryId) {
-                const { success, data } = await sendGetRequest(`/api/product-types/${subCategoryId}`);
+                const { success, data } = await sendGetRequest(`/api/sub-sub-categories/list?subCategoryId=${subCategoryId}`);
                 if (success && Array.isArray(data)) {
                     data.forEach(pt => {
                         const option = document.createElement('option');
                         option.value = pt.id;
                         option.textContent = pt.name;
-                        productTypeSelect.appendChild(option);
+                        subSubCategorySelect.appendChild(option);
                     });
-                    productTypeSelect.disabled = false;
+                    subSubCategorySelect.disabled = false;
                 }
             } else {
-                productTypeSelect.disabled = true;
+                subSubCategorySelect.disabled = true;
             }
         });
 
-        productTypeSelect.addEventListener('change', updateNextButtonState);
+        subSubCategorySelect.addEventListener('change', updateNextButtonState);
 
         nextButton.addEventListener('click', () => {
             if (currentStep === 1) {
                 hiddenCategoryId.value = categorySelect.value;
                 hiddenSubCategoryId.value = subCategorySelect.value;
-                hiddenProductTypeId.value = productTypeSelect.value;
+                hiddenSubSubCategoryId.value = subSubCategorySelect.value;
                 currentStep = 2;
                 updateUI();
             }
@@ -144,7 +144,7 @@
 
             hiddenCategoryId.value = categorySelect.value;
             hiddenSubCategoryId.value = subCategorySelect.value;
-            hiddenProductTypeId.value = productTypeSelect.value;
+            hiddenSubSubCategoryId.value = subSubCategorySelect.value;
 
             const imageField = document.getElementById('images');
             const isImageValid = validateImage(imageField);
@@ -152,7 +152,7 @@
             const formData = new FormData(this);
             formData.append('category', hiddenCategoryId.value);
             formData.append('subcategory', hiddenSubCategoryId.value);
-            formData.append('product_type', hiddenProductTypeId.value);
+            formData.append('product_type', hiddenSubSubCategoryId.value);
 
             const result = await sendPostRequest('/api/products/add', formData);
 

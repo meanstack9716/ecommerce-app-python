@@ -2,7 +2,7 @@
 from flask import render_template, redirect, url_for, session, request
 from constants import SUB_SUB_CATEGORY_LIST_WEB_URL,  SUB_SUB_CATEGORY_WEB_URL
 from . import admin_api
-from app.models import Category, ProductType
+from app.models import Category, SubSubCategory
 
 
 @admin_api.route(SUB_SUB_CATEGORY_WEB_URL, methods=['POST', 'GET'])

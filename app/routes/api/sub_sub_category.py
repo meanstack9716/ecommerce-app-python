@@ -1,9 +1,9 @@
 from flask import Blueprint, request, session, jsonify, redirect, url_for
-from app.models import ProductType, SubCategory, Category
+from app.models import SubSubCategory, SubCategory, Category
 from app.utils.image_upload import upload_image, validate_fields
 from app.utils.utils import create_error_response
 from bson import ObjectId
-from constants import SUB_SUB_CATEGORY_ADD_API, GET_SUBSUBCATEGORIES_BY_SUBCATEGORY_ID_API
+from constants import SUB_SUB_CATEGORY_ADD_API, GET_SUBSUBCATEGORIES_BY_CATEGORY_ID_API
 
 sub_sub_category_bp = Blueprint('sub_sub_category_bp', __name__)
 
@@ -42,7 +42,7 @@ def add_sub_sub_category():
     if image_error:
         return create_error_response({'image': image_error}, 400)
 
-    new_ptype = ProductType(
+    new_ptype = SubSubCategory(
         name=name,
         description=description,
         category_id=category,
@@ -53,7 +53,7 @@ def add_sub_sub_category():
 
     return jsonify({
         'status': 'success',
-        'message': 'ProductType created successfully',
+        'message': 'SubSubCategory created successfully',
         'product_type': {
             'name': new_ptype.name,
             'description': new_ptype.description,
@@ -64,9 +64,13 @@ def add_sub_sub_category():
     })
 
 
-@sub_sub_category_bp.route(GET_SUBSUBCATEGORIES_BY_SUBCATEGORY_ID_API, methods=['GET'])
-def get_sub_sub_category(subcategory_id):
-    product_types = ProductType.objects(sub_category_id=subcategory_id)
+@sub_sub_category_bp.route(GET_SUBSUBCATEGORIES_BY_CATEGORY_ID_API, methods=['GET'])
+def get_sub_sub_category():
+    subCategory_id = request.args.get('subCategoryId')
+    if not subCategory_id:
+        return jsonify({'success': False, 'message': 'categoryId is required'}), 400
+
+    product_types = SubSubCategory.objects(sub_category_id=subCategory_id)
     return jsonify([
         {
             'id': str(pt.id),

@@ -1,6 +1,6 @@
 from app.extensions import db
 from datetime import datetime
-from app.models import Category, SubCategory, ProductType
+from app.models import Category, SubCategory, SubSubCategory
 from constants import ALLOWED_SIZES, ALLOWED_GENDERS
 
 class AdsProduct(db.Document):
@@ -23,7 +23,7 @@ class AdsProduct(db.Document):
     
     category_id = db.ReferenceField(Category, required=True)
     sub_category_id = db.ReferenceField(SubCategory, required=True)
-    product_type_id = db.ReferenceField(ProductType, required=True)
+    product_type_id = db.ReferenceField(SubSubCategory, required=True)
     
     rating = db.FloatField(default=0)
     num_reviews = db.IntField(default=0)

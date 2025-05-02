@@ -20,7 +20,7 @@ class SubCategory(db.Document):
     def __repr__(self):
         return f'<SubCategory {self.name}>'
 
-class ProductType(db.Document):
+class SubSubCategory(db.Document):
     name = db.StringField(required=True, max_length=255)
     description = db.StringField()
     category_id = db.ReferenceField(Category, required=True)
@@ -29,4 +29,4 @@ class ProductType(db.Document):
     created_at = db.DateTimeField(default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<ProductType {self.name}>'
+        return f'<SubSubCategory {self.name}>'

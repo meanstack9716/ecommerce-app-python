@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Add Product Type{% endblock %}
+{% block title %}Add Sub-Sub Category{% endblock %}
 
 {% block admin_content %}
 <div class="min-h-screen">
     <div class="w-full mx-auto">
         <div class="bg-white rounded-xl shadow-md overflow-hidden p-6 sm:p-8">
             <div class="text-center mb-8">
-                <h1 class="text-2xl sm:text-3xl font-bold text-black">Add New Product Type</h1>
-                <p class="mt-2 text-sm text-gray-600">Fill in the details below to create a new product type.</p>
+                <h1 class="text-2xl sm:text-3xl font-bold text-black">Add New Sub-Sub Category</h1>
+                <p class="mt-2 text-sm text-gray-600">Fill in the details below to create a new sub-sub category.</p>
             </div>
-            <form id="productTypeForm" method="POST" action="{{ url_for('sub_sub_category_bp.add_sub_sub_category') }}"
+            <form id="subSubCategoryForm" method="POST" action="{{ url_for('sub_sub_category_bp.add_sub_sub_category') }}"
                 enctype="multipart/form-data">
                 <div class="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
@@ -74,7 +74,7 @@
 
                 <div class="mb-6">
                     <label for="image" class="block text-base font-medium text-black mb-1">
-                        Product Type Image
+                        Sub-Sub Category Image
                     </label>
                     <div class="mt-1 flex items-start flex-col">
                         <input type="file" id="image" name="image" accept=".png,.jpeg,.jpg,.pdf"
@@ -86,7 +86,7 @@
                 <div class="pt-4 flex justify-end">
                     <button type="submit"
                         class="w-48 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-                        <span id="btn-text" class="btn-text">Add Product Type</span>
+                        <span id="btn-text" class="btn-text">Add Sub-Sub Category</span>
                         <!-- Loader spinner -->
                         <div id="loading-spinner" class="hidden">
                             <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
@@ -110,7 +110,7 @@
 
 {% block js %}
 <script>
-    document.getElementById('productTypeForm').addEventListener('submit', async function (e) {
+    document.getElementById('subSubCategoryForm').addEventListener('submit', async function (e) {
         e.preventDefault();
 
         document.getElementById('loading-spinner').classList.remove('hidden');
@@ -152,8 +152,8 @@
         document.getElementById('btn-text').classList.remove('hidden');
 
         if (response.success) {
-            showToast('Product Type Added Successfully!', 'success');
-            document.getElementById('productTypeForm').reset();
+            showToast('Sub-Sub Category Added Successfully!', 'success');
+            document.getElementById('subSubCategoryForm').reset();
         } else {
             if (response.errors) {
                 Object.keys(response.errors).forEach(field => {
@@ -162,7 +162,7 @@
                     showToast(fieldError, 'error');
                 });
             } else {
-                showToast(response.errors || 'Failed to add product type.', 'error');
+                showToast(response.errors || 'Failed to add sub-sub category.', 'error');
             }
         }
     }
@@ -179,7 +179,7 @@
 
             subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
 
-            const result = await sendGetRequest(`/api/sub-categories/${categoryId}`);
+            const result = await sendGetRequest(`/api/sub-categories/list/${categoryId}`);
 
             if (result.success) {
                 result.data.forEach(sub => {

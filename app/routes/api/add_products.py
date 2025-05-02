@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 from constants import ADD_NEW_PRODUCT
-from app.models import AdsProduct, Category, SubCategory, ProductType
+from app.models import AdsProduct, Category, SubCategory, SubSubCategory
 from app.utils.image_upload import upload_image
 from app.utils.validation import validate_required_fields
 from app.utils.utils import create_error_response
@@ -27,7 +27,7 @@ def create_ad():
         # Validate related IDs
         category = Category.objects(id=data['category_id']).first()
         sub_category = SubCategory.objects(id=data['sub_category_id']).first()
-        product_type = ProductType.objects(id=data['product_type_id']).first()
+        product_type = SubSubCategory.objects(id=data['product_type_id']).first()
         
         if not category or not sub_category or not product_type:
             id_errors = {}

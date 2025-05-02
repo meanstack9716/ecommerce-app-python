@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}Product Type List{% endblock %}
+{% block title %}Sub-Sub Category List{% endblock %}
 
 {% block admin_content %}
 <div class="bg-white rounded-lg shadow p-6 max-w-6xl mx-auto">
-    <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">Product Type List</h1>
+    <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">Sub-Sub Category List</h1>
 
     <div class="flex justify-end mb-6">
         <a href="{{ url_for('admin_api.sub_sub_category_page') }}"
             class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:text-gray-700 text-sm">
-            Add Product Type
+            Add Sub-Sub Category
         </a>
     </div>
 
@@ -33,7 +33,7 @@
     <div id="subCategoryTabs" class="mb-6 flex flex-wrap gap-2"></div>
 
     <!-- Product Type Cards -->
-    <div id="productTypeCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div id="subSubCategoryCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <div class="col-span-full text-center text-gray-500">Please select a category.</div>
     </div>
 </div>
@@ -46,18 +46,19 @@
     async function handleCategoryChange() {
         const categoryId = document.getElementById('categorySelect').value;
         const subCategoryTabs = document.getElementById('subCategoryTabs');
-        const cardsContainer = document.getElementById('productTypeCards');
+        const cardsContainer = document.getElementById('subSubCategoryCards');
 
         subCategoryTabs.innerHTML = '';
         cardsContainer.innerHTML = '';
 
         if (categoryId) {
-            const { success, data } = await sendGetRequest(`/api/sub-categories/${categoryId}`);
+            const { success, data } = await sendGetRequest(`/api/sub-categories/list/${categoryId}`);
             if (success && Array.isArray(data)) {
                 // Create individual subcategory tabs
                 data.forEach(sub => {
+                    console.log(sub, )
                     const tab = createTab(sub.name, async () => {
-                        await loadProductTypesBySubcategory(sub.id);
+                        await loadSubSubCategoryByCategory(sub.id);
                     });
                     subCategoryTabs.appendChild(tab);
                 });
@@ -92,20 +93,20 @@
         activeBtn.classList.add('text-indigo-600', 'border-b-4', 'border-indigo-500');
     }
 
-    async function loadProductTypesBySubcategory(subCategoryId) {
-        const cardsContainer = document.getElementById('productTypeCards');
+    async function loadSubSubCategoryByCategory(subCategoryId) {
+        const cardsContainer = document.getElementById('subSubCategoryCards');
         cardsContainer.innerHTML = '';
 
-        const { success, data } = await sendGetRequest(`/api/product-types/${subCategoryId}`);
+        const { success, data } = await sendGetRequest(`/api/sub-sub-categories/list?subCategoryId=${subCategoryId}`);
         if (success) {
-            renderProductTypeCards(data);
+            renderSubSubCategoryCards(data);
         } else {
             cardsContainer.innerHTML = '<div class="col-span-full text-center text-red-500">Failed to load product types.</div>';
         }
     }
 
-    function renderProductTypeCards(data) {
-        const cardsContainer = document.getElementById('productTypeCards');
+    function renderSubSubCategoryCards(data) {
+        const cardsContainer = document.getElementById('subSubCategoryCards');
         if (!data.length) {
             cardsContainer.innerHTML = '<div class="col-span-full text-center text-gray-500">No product types available.</div>';
             return;
