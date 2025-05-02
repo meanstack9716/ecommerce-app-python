@@ -5,7 +5,7 @@ from app.utils.utils import generate_random_password, create_error_response
 from app import db
 from mongoengine import ValidationError
 from app.utils.image_upload import upload_image, validate_fields
-from constants import ADD_SELLER
+from constants import ADD_SELLER, GET_SELLER_API
 
 seller_bp = Blueprint('seller', __name__, url_prefix='/user')
 
@@ -136,7 +136,7 @@ def add_seller():
             session.abort_transaction()
             return create_error_response(f"Error occurred: {e}", status_code=500)
 
-@seller_bp.route('/sellers', methods=['GET'])
+@seller_bp.route(GET_SELLER_API, methods=['GET'])
 def get_sellers():
     try:
         page = int(request.args.get('page', 1))
