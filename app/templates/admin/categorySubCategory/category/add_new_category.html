@@ -65,9 +65,20 @@
             description: document.getElementById('description')
         };
 
-        const isValid = Object.keys(fields).every(field =>
-            validators.required(fields[field], field.charAt(0).toUpperCase() + field.slice(1))
-        );
+        const isValid = Object.keys(fields).every(field => {
+            const isRequiredValid = validators.required(fields[field], field.charAt(0).toUpperCase() + field.slice(1));
+            let isMinLengthValid = true;
+            if (field !== 'image') {
+                if (field === 'description') {
+                    isMinLengthValid = validators.minLength(fields[field], 10, field.charAt(0).toUpperCase() + field.slice(1));
+                } else {
+                    isMinLengthValid = validators.minLength(fields[field], 3, field.charAt(0).toUpperCase() + field.slice(1));
+                }
+            }
+            return isRequiredValid && isMinLengthValid;
+        });
+
+
 
         if (!isValid) {
             document.getElementById('loader').classList.add('hidden');
