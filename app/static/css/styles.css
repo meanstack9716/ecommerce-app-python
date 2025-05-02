@@ -57,3 +57,18 @@ body {
 select{
   font-size: 14px !important;
 }
+
+#quill-editor {
+  min-height: 150px;
+  border: 1px solid #ccc;
+}
+.ql-toolbar.ql-snow {
+  border-radius: 6px 6px 0 0;
+}
+.ql-container.ql-snow {
+  border-radius: 0 0 6px 6px;
+}
+
+input::placeholder{
+  font-size: 13px !important;
+}

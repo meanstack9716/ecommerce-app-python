@@ -29,23 +29,40 @@
 
 {% block js %}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function () {
+        const quill = new Quill('#quill-editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                    ['link', 'image'],
+                    ['clean']
+                ]
+            },
+            placeholder: 'Enter product description...',
+        });
+
+        const descriptionInput = document.getElementById('description');
+        quill.on('text-change', function () {
+            descriptionInput.value = quill.root.innerHTML;
+        });
+
+
         const categorySelect = document.getElementById('category_id');
         const subCategorySelect = document.getElementById('sub_category_id');
         const subSubCategorySelect = document.getElementById('product_type_id');
-
         const backButton = document.getElementById('back-button');
         const nextButton = document.getElementById('next-button');
         const submitButton = document.getElementById('submit-button');
-
         const step1 = document.getElementById('step-1');
         const step2 = document.getElementById('step-2');
-
         const hiddenCategoryId = document.getElementById('hidden-category-id');
         const hiddenSubCategoryId = document.getElementById('hidden-sub-category-id');
         const hiddenSubSubCategoryId = document.getElementById('hidden-product-type-id');
-
-        let currentStep = 1;
+        let currentStep = 2;
 
         function updateUI() {
             [step1, step2].forEach(step => step.classList.add('hidden'));
@@ -73,6 +90,7 @@
             }
         }
 
+        // Category selection handlers
         categorySelect.addEventListener('change', async () => {
             const categoryId = categorySelect.value;
             updateNextButtonState();
@@ -122,6 +140,7 @@
 
         subSubCategorySelect.addEventListener('change', updateNextButtonState);
 
+        // Navigation buttons
         nextButton.addEventListener('click', () => {
             if (currentStep === 1) {
                 hiddenCategoryId.value = categorySelect.value;
@@ -142,40 +161,109 @@
         document.getElementById('step-2').addEventListener('submit', async function (e) {
             e.preventDefault();
 
+            // Validate fields before proceeding
+            const isValid = validateFormFields();
+            if (!isValid) {
+                return;
+            }
+
+            // Update hidden inputs
             hiddenCategoryId.value = categorySelect.value;
             hiddenSubCategoryId.value = subCategorySelect.value;
             hiddenSubSubCategoryId.value = subSubCategorySelect.value;
 
-            const imageField = document.getElementById('images');
-            const isImageValid = validateImage(imageField);
+            descriptionInput.value = quill.root.innerHTML;
+
+            const imageInput = document.getElementById('product-images');
+            const isImageValid = validateImage(imageInput);
+            if (!isImageValid) {
+                return;
+            }
 
             const formData = new FormData(this);
             formData.append('category', hiddenCategoryId.value);
             formData.append('subcategory', hiddenSubCategoryId.value);
             formData.append('product_type', hiddenSubSubCategoryId.value);
 
-            const result = await sendPostRequest('/api/products/add', formData);
+            try {
+                const result = await sendPostRequest('/api/products/add', formData);
 
-            if (result.success) {
-                showToast(result.message, 'success');
-                this.reset();
-            } else {
-                Object.keys(result.errors).forEach(field => {
-                    const fieldError = result.errors[field];
-                    const fieldElement = document.getElementById(field);
-                    if (field === 'exception') {
-                        showToast('An exception occurred, please try again later.', 'error');
-                    } else {
-                        showToast(fieldError, 'error');
-                    }
-                });
-
-                console.error('Error:', result.errors || result.message || result.exception);
+                if (result.success) {
+                    showToast(result.message, 'success');
+                    // Reset the form
+                    this.reset();
+                    // Reset Quill editor
+                    quill.root.innerHTML = '';
+                    descriptionInput.value = '';
+                } else {
+                    handleFormErrors(result);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('An error occurred, please try again later.', 'error');
             }
         });
 
+        function validateFormFields() {
+            let isValid = true;
+
+            // Basic Information
+            isValid = validators.required(document.getElementById('title'), 'Title') && isValid;
+
+            // Quill editor content validation
+            const quillContent = quill.root.innerHTML;
+            const descriptionField = document.getElementById('description');
+            descriptionField.value = quillContent;
+            isValid = validators.required(descriptionField, 'Description') && isValid;
+
+
+            // Pricing & Inventory
+            isValid = validators.required(document.getElementById('price'), 'Price') && isValid;
+
+            isValid = validators.required(document.getElementById('stock'), 'Stock') && isValid;
+            isValid = validators.required(document.getElementById('stock'), 'Stock') && isValid;
+
+            isValid = validators.required(document.getElementById('sku'), 'SKU') && isValid;
+
+            // Product Attributes
+            isValid = validators.required(document.getElementById('brand'), 'Brand') && isValid;
+            isValid = validators.required(document.getElementById('material'), 'Material') && isValid;
+            isValid = validators.required(document.getElementById('tags'), 'Tags') && isValid;
+
+            // Color and Size selection
+
+            // Image validation
+            const imageInput = document.getElementById('product-images');
+            isValid = validators.required(imageInput, 'Product Image') && isValid;
+
+            return isValid;
+        }
+
+        function handleFormErrors(result) {
+            if (result.errors) {
+                Object.keys(result.errors).forEach(field => {
+                    const fieldError = result.errors[field];
+                    if (field === 'exception') {
+                        showToast('An exception occurred, please try again later.', 'error');
+                    } else {
+                        // Find the field and show error
+                        const fieldElement = document.querySelector(`[name="${field}"]`) ||
+                            document.getElementById(field);
+                        if (fieldElement) {
+                            showErrorMessage(fieldElement, fieldError);
+                        } else {
+                            showToast(fieldError, 'error');
+                        }
+                    }
+                });
+            } else {
+                showToast(result.message || 'An error occurred', 'error');
+            }
+            console.error('Error:', result.errors || result.message);
+        }
+
+        // Initialize UI
         updateUI();
     });
 </script>
-
 {% endblock %}
