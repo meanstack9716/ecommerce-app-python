@@ -38,6 +38,9 @@ DASHBOARD_WEB_URL = f'/dashboard'
 
 ALL_USER_LIST_WEB_URL = f'/all-users-list'
 
+ADD_SELLER_WEB_URL = f'/add-new-seller'
+GET_SELLER_LIST_WEB_URL = f'/seller/list'
+
 CATEGORY_LIST_WEB_URL = '/category-list'
 ADD_CATEGORY_WEB_URL = '/add-new-category'
 
