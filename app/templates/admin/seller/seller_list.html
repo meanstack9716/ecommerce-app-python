@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Seller List{% endblock %}
+
+{% block admin_content %}
+<div class="bg-white rounded-lg shadow p-6 max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8 text-center text-black">Seller List</h1>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+            <thead class="bg-gray-100 text-gray-700">
+                <tr>
+                    <th class="py-3 px-4 text-left">Business Name</th>
+                    <th class="py-3 px-4 text-left">Type</th>
+                    <th class="py-3 px-4 text-left">Email</th>
+                    <th class="py-3 px-4 text-left">Mobile</th>
+                    <th class="py-3 px-4 text-left">Approval Status</th>
+                    <th class="py-3 px-4 text-left">Address</th>
+                    <th class="py-3 px-4 text-left">Pan number</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-700">
+                {% for item in sellers %}
+                <tr class="border-t">
+                    <td class="py-3 px-4">{{ item.seller.businessName }}</td>
+                    <td class="py-3 px-4">{{ item.seller.businessType }}</td>
+                    <td class="py-3 px-4">{{ item.user.email }}</td>
+                    <td class="py-3 px-4">{{ item.user.phone_number }}</td>
+                    <td class="py-3 px-4">{{ item.seller.is_approved }}</td>
+                    <td class="py-3 px-4">
+                        {{ item.address.personal_address.line1 }}, {{ item.address.personal_address.city }}
+                    </td>
+                    <td class="py-3 px-4">
+                       {{ item.identification.pan_number }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            
+        </table>
+    </div>
+
+  
+
+</div>
+{% endblock %}
+
+{% block js %}
+<!-- Optional JavaScript here -->
+{% endblock %}

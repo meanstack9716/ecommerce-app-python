@@ -135,3 +135,69 @@ def add_seller():
         except Exception as e:
             session.abort_transaction()
             return create_error_response(f"Error occurred: {e}", status_code=500)
+
+@seller_bp.route('/sellers', methods=['GET'])
+def get_sellers():
+    try:
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 10))
+        approval_status = request.args.get('is_approved')
+
+        query = {}
+        if approval_status:
+            query['is_approved'] = approval_status
+
+        # Get total count
+        total = Seller.objects(**query).count()
+
+        # Get paginated results
+        sellers = Seller.objects(**query).skip((page - 1) * limit).limit(limit)
+
+        seller_list = []
+        for seller in sellers:
+            seller_data = {
+                'seller_id': str(seller.id),
+                'businessName': seller.businessName,
+                'businessType': seller.businessType,
+                'businessEmail': seller.businessEmail,
+                'businessMobile': seller.businessMobile,
+                'gstNumber': seller.gst_number,
+                'isApproved': seller.is_approved,
+                'user': {
+                    'user_id': str(seller.user_id.id),
+                    'email': seller.user_id.email,
+                    'firstName': seller.user_id.first_name,
+                    'lastName': seller.user_id.last_name,
+                    'phoneNumber': seller.user_id.phone_number
+                },
+                'address': {
+                    'personalAddress': {
+                        'line1': seller.address.personal_address.line1,
+                        'line2': seller.address.personal_address.line2,
+                        'city': seller.address.personal_address.city,
+                        'state': seller.address.personal_address.state,
+                        'postalCode': seller.address.personal_address.postal_code,
+                        'country': seller.address.personal_address.country
+                    },
+                    'businessAddress': {
+                        'line1': seller.address.business_address.line1,
+                        'line2': seller.address.business_address.line2,
+                        'city': seller.address.business_address.city,
+                        'state': seller.address.business_address.state,
+                        'postalCode': seller.address.business_address.postal_code,
+                        'country': seller.address.business_address.country,
+                        'type': seller.address.business_address.type
+                    }
+                }
+            }
+            seller_list.append(seller_data)
+
+        return jsonify({
+            'total': total,
+            'page': page,
+            'limit': limit,
+            'sellers': seller_list
+        }), 200
+
+    except Exception as e:
+        return create_error_response(f"Error retrieving seller list: {e}", status_code=500)

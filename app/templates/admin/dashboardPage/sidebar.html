@@ -62,13 +62,7 @@
 
                 <!-- Submenu that shows up when toggled -->
                 <div id="submenu"
-                    class="ml-6 mt-1 flex flex-col gap-3 mt-3 {% if request.endpoint in ['admin_api.add_new_seller'] %}block{% else %}hidden{% endif %}">
-                    <a href="#"
-                        class="text-gray-700 hover:text-indigo-700 hover:bg-indigo-100 px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">
-                            groups
-                        </span>
-                        <span>Seller List</span></a>
+                    class="ml-6 mt-1 flex flex-col gap-3 mt-3 {% if request.endpoint in ['admin_api.add_new_seller', 'admin_api.get_seller_list'] %}block{% else %}hidden{% endif %}">
                     <a href="{{ url_for('admin_api.add_new_seller') }}"
                         class="{% if request.endpoint == 'admin_api.add_new_seller' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
                         <span class="material-symbols-outlined">
@@ -76,6 +70,12 @@
                         </span>
                         <span>Add Seller</span>
                     </a>
+                    <a href="{{ url_for('admin_api.get_seller_list') }}"
+                    class="text-gray-700 hover:text-indigo-700 hover:bg-indigo-100 px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
+                    <span class="material-symbols-outlined">
+                        groups
+                    </span>
+                    <span>Seller List</span></a>
                 </div>
             </div>
             <!-- All Seller Section End  -->
