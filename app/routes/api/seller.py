@@ -9,7 +9,6 @@ from constants import ADD_SELLER, GET_SELLER_API
 
 seller_bp = Blueprint('seller', __name__, url_prefix='/user')
 
-
 @seller_bp.route(ADD_SELLER, methods=['POST'])
 def add_seller():
     data = request.form
@@ -142,19 +141,38 @@ def get_sellers():
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
         approval_status = request.args.get('is_approved')
+        search_query = request.args.get('search', '').lower()
 
         query = {}
         if approval_status:
             query['is_approved'] = approval_status
 
-        # Get total count
-        total = Seller.objects(**query).count()
+        # Fetch all sellers matching query
+        sellers_query = Seller.objects(**query)
 
-        # Get paginated results
-        sellers = Seller.objects(**query).skip((page - 1) * limit).limit(limit)
+        # Filter by user fields in Python (since MongoDB can't join user_id.email)
+        filtered_sellers = []
+        for seller in sellers_query:
+            user = seller.user_id
+            if user:
+                if search_query:
+                    if (search_query in seller.businessName.lower() or
+                        search_query in user.email.lower() or
+                        search_query in user.phone_number.lower()):
+                        filtered_sellers.append(seller)
+                else:
+                    filtered_sellers.append(seller)
+
+        # Pagination
+        total = len(filtered_sellers)
+        start = (page - 1) * limit
+        end = start + limit
+        paginated_sellers = filtered_sellers[start:end]
 
         seller_list = []
-        for seller in sellers:
+        for seller in paginated_sellers:
+            user = seller.user_id
+            address = seller.address
             seller_data = {
                 'seller_id': str(seller.id),
                 'businessName': seller.businessName,
@@ -164,29 +182,29 @@ def get_sellers():
                 'gstNumber': seller.gst_number,
                 'isApproved': seller.is_approved,
                 'user': {
-                    'user_id': str(seller.user_id.id),
-                    'email': seller.user_id.email,
-                    'firstName': seller.user_id.first_name,
-                    'lastName': seller.user_id.last_name,
-                    'phoneNumber': seller.user_id.phone_number
+                    'user_id': str(user.id) if user else None,
+                    'email': user.email if user else None,
+                    'firstName': user.first_name if user else None,
+                    'lastName': user.last_name if user else None,
+                    'phoneNumber': user.phone_number if user else None
                 },
                 'address': {
                     'personalAddress': {
-                        'line1': seller.address.personal_address.line1,
-                        'line2': seller.address.personal_address.line2,
-                        'city': seller.address.personal_address.city,
-                        'state': seller.address.personal_address.state,
-                        'postalCode': seller.address.personal_address.postal_code,
-                        'country': seller.address.personal_address.country
+                        'line1': address.personal_address.line1 if address and address.personal_address else None,
+                        'line2': address.personal_address.line2 if address and address.personal_address else None,
+                        'city': address.personal_address.city if address and address.personal_address else None,
+                        'state': address.personal_address.state if address and address.personal_address else None,
+                        'postalCode': address.personal_address.postal_code if address and address.personal_address else None,
+                        'country': address.personal_address.country if address and address.personal_address else None
                     },
                     'businessAddress': {
-                        'line1': seller.address.business_address.line1,
-                        'line2': seller.address.business_address.line2,
-                        'city': seller.address.business_address.city,
-                        'state': seller.address.business_address.state,
-                        'postalCode': seller.address.business_address.postal_code,
-                        'country': seller.address.business_address.country,
-                        'type': seller.address.business_address.type
+                        'line1': address.business_address.line1 if address and address.business_address else None,
+                        'line2': address.business_address.line2 if address and address.business_address else None,
+                        'city': address.business_address.city if address and address.business_address else None,
+                        'state': address.business_address.state if address and address.business_address else None,
+                        'postalCode': address.business_address.postal_code if address and address.business_address else None,
+                        'country': address.business_address.country if address and address.business_address else None,
+                        'type': address.business_address.type if address and address.business_address else None
                     }
                 }
             }
