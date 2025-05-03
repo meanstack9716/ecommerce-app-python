@@ -41,8 +41,6 @@
                 <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Description
                 </th>
                 <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Logo</th>
-                <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Created At
-                </th>
                 <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Actions
                 </th> <!-- Added Actions Column -->
             </tr>
@@ -61,7 +59,6 @@
                     <img src="/static/default-logo.png" alt="Default logo" class="w-12 h-12 object-contain">
                     {% endif %}
                 </td>
-                <td class="px-6 py-4">{{ brand.created_at.strftime('%Y-%m-%d') }}</td>
                 <td class="px-6 py-4 mt-3 flex items-center justify-center space-x-6">
                         <!-- Edit Button -->
                         <a href="{{ url_for('admin_api.update_brand_page', brand_id=brand.id) }}"
