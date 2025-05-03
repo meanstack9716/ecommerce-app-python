@@ -5,7 +5,7 @@ from app.models.brands import ProductBrands
 from constants import ALLOWED_SIZES, ALLOWED_GENDERS
 from bson import ObjectId
 
-class AddProducts(db.Document):
+class Products(db.Document):
     title = db.StringField(required=True, max_length=255)
     description = db.StringField()
     price = db.FloatField(required=True)
@@ -36,4 +36,4 @@ class AddProducts(db.Document):
     updated_at = db.DateTimeField(default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<AddProducts {self.title}>'
+        return f'<Products {self.title}>'

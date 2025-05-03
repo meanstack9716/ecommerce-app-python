@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, session
 from datetime import datetime
 from constants import ADD_NEW_PRODUCT_API, PRODUCT_LISTS_API
-from app.models import AddProducts, Category, SubCategory, SubSubCategory
+from app.models import Products, Category, SubCategory, SubSubCategory
 from app.utils.image_upload import upload_image
 from app.utils.validation import validate_required_fields
 from app.utils.utils import create_error_response
@@ -91,7 +91,7 @@ def create_ad():
         size = request.form.getlist('size')
         tags = request.form.getlist('tags')
         
-        ad = AddProducts(
+        ad = Products(
             title=data['title'],
             description=data.get('description'),
             price=price,
@@ -133,7 +133,7 @@ def list_products():
         sort_by = request.args.get('sort_by', 'created_at')
         sort_order = request.args.get('sort_order', 'desc')
         
-        query = AddProducts.objects()
+        query = Products.objects()
         
         if category_id:
             query = query.filter(category_id=category_id)

@@ -1,7 +1,7 @@
 from flask import render_template, redirect, url_for, session, request
 from constants import ADD_NEW_PRODUCT_WEB_URL, GET_PRODUCT_LIST_WEB_URL
 from . import admin_api
-from app.models import Category, SubCategory, SubSubCategory, AddProducts
+from app.models import Category, SubCategory, SubSubCategory, Products
 
 
 @admin_api.route(ADD_NEW_PRODUCT_WEB_URL, methods=['GET'])
@@ -45,7 +45,7 @@ def get_product_lists():
     if max_price is not None:
         query['final_price__lte'] = max_price
 
-    products = AddProducts.objects(**query).order_by('-created_at').paginate(page=page, per_page=per_page)
+    products = Products.objects(**query).order_by('-created_at').paginate(page=page, per_page=per_page)
     categories = Category.objects.all()
 
     return render_template(
@@ -58,7 +58,7 @@ def get_product_lists():
 
 @admin_api.route('/products/<product_id>', methods=['GET'])
 def product_details(product_id):
-    product = AddProducts.objects(id=product_id).first()
+    product = Products.objects(id=product_id).first()
     if not product:
         return "Product not found", 404
 
