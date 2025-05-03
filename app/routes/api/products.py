@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from datetime import datetime
 from constants import ADD_NEW_PRODUCT_API, PRODUCT_LISTS_API
 from app.models import AddProducts, Category, SubCategory, SubSubCategory
@@ -6,6 +6,7 @@ from app.utils.image_upload import upload_image
 from app.utils.validation import validate_required_fields
 from app.utils.utils import create_error_response
 from app.models.brands import ProductBrands
+from bson import ObjectId
 
 from app.extensions import db
 
@@ -13,7 +14,16 @@ products_bp = Blueprint('products_bp', __name__)
 
 @products_bp.route(ADD_NEW_PRODUCT_API, methods=['POST'])
 def create_ad():
+    user_id = session.get('user_id')
+    if not user_id:
+        return create_error_response({'user_id': 'User not logged in'})
+    
     try:
+        try:
+            user_object_id = ObjectId(user_id)
+        except Exception:
+            return create_error_response({'user_id': 'Invalid user ID'})
+
         required_fields = ['title', 'price', 'sku', 'category_id', 'sub_category_id', 'product_type_id', 'description', 'stock']
         
         form_data = request.form.to_dict(flat=False)
@@ -42,13 +52,12 @@ def create_ad():
 
         uploaded_files = request.files.getlist('images')
         images = []
-        if 'images' in request.files:
-            for image in uploaded_files:
-                image_path, error = upload_image(image)
-                if error:
-                    return create_error_response({'images': error})
-                if image_path:
-                    images.append(image_path)
+        for image in uploaded_files:
+            image_path, error = upload_image(image)
+            if error:
+                return create_error_response({'images': error})
+            if image_path:
+                images.append(image_path)
         
         price = float(data['price'])
         discount_percent = float(data.get('discount_percent', 0))
@@ -57,7 +66,7 @@ def create_ad():
         brand_id = None
         brand_value = data.get('brand')
         other_brand_name = data.get('other_brand')
-        
+
         if brand_value and brand_value != 'other':
             existing_brand = ProductBrands.objects(id=brand_value).first()
             if not existing_brand:
@@ -97,6 +106,7 @@ def create_ad():
             stock=int(data.get('stock', 0)),
             images=images,
             tags=tags,
+            user_id=user_object_id,
             category_id=category,
             sub_category_id=sub_category,
             product_type_id=product_type,

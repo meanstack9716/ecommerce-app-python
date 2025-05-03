@@ -3,11 +3,13 @@ from datetime import datetime
 from app.models import Category, SubCategory, SubSubCategory
 from app.models.brands import ProductBrands
 from constants import ALLOWED_SIZES, ALLOWED_GENDERS
+from bson import ObjectId
 
 class AddProducts(db.Document):
     title = db.StringField(required=True, max_length=255)
     description = db.StringField()
     price = db.FloatField(required=True)
+    user_id = db.ObjectIdField(required=True)
     discount_percent = db.FloatField(default=0)
     final_price = db.FloatField()
     
