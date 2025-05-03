@@ -5,6 +5,7 @@ from app.models import AddProducts, Category, SubCategory, SubSubCategory
 from app.utils.image_upload import upload_image
 from app.utils.validation import validate_required_fields
 from app.utils.utils import create_error_response
+from app.models.brands import ProductBrands
 
 from app.extensions import db
 
@@ -52,8 +53,31 @@ def create_ad():
         price = float(data['price'])
         discount_percent = float(data.get('discount_percent', 0))
         final_price = price - (price * discount_percent / 100)
+
+        brand_id = None
+        brand_value = data.get('brand')
+        other_brand_name = data.get('other_brand')
         
-        # Handle lists for color, size, tags
+        if brand_value and brand_value != 'other':
+            existing_brand = ProductBrands.objects(id=brand_value).first()
+            if not existing_brand:
+                return create_error_response({'brand': 'Invalid brand ID'})
+            brand_id = existing_brand
+        elif brand_value == 'other' and other_brand_name:
+            existing_brand = ProductBrands.objects(name__iexact=other_brand_name.strip()).first()
+            if existing_brand:
+                brand_id = existing_brand
+            else:
+                new_brand = ProductBrands(
+                    name=other_brand_name.strip(),
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
+                )
+                new_brand.save()
+                brand_id = new_brand
+        else:
+            brand_id = None
+        
         color = request.form.getlist('color')
         size = request.form.getlist('size')
         tags = request.form.getlist('tags')
@@ -65,7 +89,7 @@ def create_ad():
             discount_percent=discount_percent,
             final_price=final_price,
             sku=data['sku'],
-            brand=data.get('brand'),
+            brand_id=brand_id,
             color=color,
             size=size,
             material=data.get('material'),
@@ -91,7 +115,6 @@ def create_ad():
 @products_bp.route(PRODUCT_LISTS_API, methods=['GET'])
 def list_products():
     try:
-        # Get query parameters for filtering, sorting, and pagination
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 10))
         category_id = request.args.get('category_id')
@@ -141,11 +164,11 @@ def list_products():
             })
         
         response = {
-            'products': products_data,
-            'total': paginated_products.total,
-            'pages': paginated_products.pages,
-            'current_page': paginated_products.page,
-            'per_page': paginated_products.per_page
+            'data': products_data,
+            # 'total': paginated_products.total,
+            # 'pages': paginated_products.pages,
+            # 'current_page': paginated_products.page,
+            # 'per_page': paginated_products.per_page
         }
         
         return jsonify(response), 200

@@ -1,6 +1,7 @@
 from app.extensions import db
 from datetime import datetime
 from app.models import Category, SubCategory, SubSubCategory
+from app.models.brands import ProductBrands
 from constants import ALLOWED_SIZES, ALLOWED_GENDERS
 
 class AddProducts(db.Document):
@@ -11,7 +12,7 @@ class AddProducts(db.Document):
     final_price = db.FloatField()
     
     sku = db.StringField(unique=True, required=True)
-    brand = db.StringField()
+    brand_id = db.ReferenceField(ProductBrands)
     color = db.ListField(db.StringField())
     size = db.ListField(db.StringField(choices=ALLOWED_SIZES))
     material = db.StringField()

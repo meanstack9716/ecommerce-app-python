@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Brand{% endblock %}
+
+{% block admin_content %}
+<div class="bg-white rounded-lg shadow-lg p-8">
+    <h1 class="text-3xl font-semibold text-gray-800 mb-6 text-center">Edit Brand</h1>
+
+    <form id="editBrandForm" enctype="multipart/form-data">
+        <div class="mb-4">
+            <label for="name" class="block text-base font-medium text-black">Brand Name <span
+                    class="text-red-500">*</span></label>
+            <input type="text" id="name" name="name" value="{{ brand.name }}"
+                class="mt-1 block w-full px-4 py-3 border border-gray-300 outline-none rounded-lg shadow-sm sm:text-sm">
+        </div>
+
+        <div class="mb-4">
+            <label for="description" class="block text-base font-medium text-black">Description <span
+                    class="text-red-500">*</span></label>
+            <textarea id="description" name="description" rows="6"
+                class="mt-1 block w-full px-4 py-3 border border-gray-300 outline-none rounded-lg shadow-sm sm:text-sm">{{ brand.description }}</textarea>
+        </div>
+
+        <div class="mb-4">
+            <div class="bg-white">
+                {% set id = 'brand-logo' %}
+                {% set name = 'images' %}
+                {% set label = 'Upload Brand Logo' %}
+                {% set required = true %}
+                {% set multiple = false %}
+                {% set accept = '.png,.jpeg,.jpg,.webp,.avif' %}
+                {% set help_text = 'PNG, JPG, JPEG up to 2MB' %}
+                {% set label_classes = 'block text-base font-medium text-black' %}
+
+                {% include 'components/image_upload.html' %}
+            </div>
+        </div>
+
+        <div class="pt-4 flex justify-end">
+            <button type="submit"
+                class="w-48 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                <span id="btn-text" class="btn-text"> Save </span>
+                <div id="loading-spinner" class="hidden">
+                    <svg class="animate-spin h-8 w-8 text-white block" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                </div>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let initialValues = {
+        name: "{{ brand.name }}",
+        description: "{{ brand.description }}",
+        logo: "{{ brand.logo }}"
+    };
+
+    const saveButton = document.querySelector("button[type='submit']");
+    saveButton.disabled = true;
+
+    // Form fields
+    const nameField = document.getElementById('name');
+    const descriptionField = document.getElementById('description');
+    const logoField = document.getElementById('brand-logo');
+    const loader = document.getElementById('loading-spinner');
+    const btnText = document.getElementById('btn-text');
+    const responseMessage = document.createElement('p');
+
+    const checkIfChanged = () => {
+        const isChanged = (
+            nameField.value !== initialValues.name ||
+            descriptionField.value !== initialValues.description ||
+            (logoField.files.length > 0 && logoField.files[0].name !== initialValues.logo)
+        );
+        saveButton.disabled = !isChanged;
+    };
+
+    document.getElementById("editBrandForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const isRequiredValid =
+            validators.required(nameField, 'Brand Name') &&
+            validators.required(descriptionField, 'Description');
+
+        if (!isRequiredValid) return;
+
+        const isMinLengthValid =
+            validators.minLength(nameField, 3, 'Brand Name') &&
+            validators.minLength(descriptionField, 10, 'Description');
+
+        if (!isMinLengthValid) return;
+
+        const isChanged = (
+            nameField.value !== initialValues.name ||
+            descriptionField.value !== initialValues.description ||
+            (logoField.files.length > 0 && logoField.files[0].name !== initialValues.logo)
+        );
+
+        if (!isChanged) {
+            saveButton.disabled = true;
+            return;
+        } else {
+            saveButton.disabled = false;
+        }
+
+        if (logoField.files.length > 0) {
+            const isImageValid = validateImage(logoField);
+            if (!isImageValid) return;
+        }
+
+        loader.classList.remove('hidden');
+        btnText.classList.add('hidden');
+
+        const formData = new FormData();
+        formData.append("name", nameField.value);
+        formData.append("description", descriptionField.value);
+        const logo = logoField.files[0];
+        if (logo) formData.append("logo", logo);
+
+        try {
+            const result = await sendPostRequest(`/api/update-brand?brandId={{ brand.id | string }}`, formData);
+
+            if (result.success) {
+                nameField.value = '';
+                descriptionField.value = '';
+                logoField.value = '';
+                setTimeout(() => {
+                    window.location.href = "{{ url_for('admin_api.get_brand_list_page') }}";
+                }, 100);
+            } else {
+                responseMessage.textContent = result.errors || result.message || 'An error occurred';
+                responseMessage.classList.add('text-red-500');
+            }
+        } catch (error) {
+            responseMessage.textContent = error.message || 'An error occurred';
+            responseMessage.classList.add('text-red-500');
+        } finally {
+            loader.classList.add('hidden');
+            btnText.classList.remove('hidden');
+        }
+    });
+
+    // Input event listeners to track changes
+    [nameField, descriptionField, logoField].forEach(field => {
+        field.addEventListener('input', checkIfChanged);
+    });
+</script>
+
+
+{% endblock %}

@@ -52,6 +52,11 @@ SUB_SUB_CATEGORY_WEB_URL = f'sub-sub-category/add'
 
 ADD_NEW_PRODUCT_WEB_URL = f'products/add'
 GET_PRODUCT_LIST_WEB_URL = f'products/list'
+
+GET_BRANDS_WEB_URL = f'/brands/list'
+ADD_BRAND_WEB_URL = f'/brands/add'
+UPDATE_BRAND_WEB_URL = f'/brands/edit/<brand_id>'
+
 # WEB Endpoint Constants End
 
 
@@ -84,3 +89,12 @@ GET_SUBSUBCATEGORIES_BY_CATEGORY_ID_API = '/api/sub-sub-categories/list';
 ADD_NEW_PRODUCT_API = f'/api/products/add'
 PRODUCT_LISTS_API= f'/api/products/lists'
 # Sub Sub Category API Endpoint Constants End
+
+
+# Brand Endpoint API Start
+
+GET_BRANDS_API = '/api/brand/lists'
+ADD_BRAND_API = '/api/brands/add'
+UPDATE_BRAND_API = '/api/update-brand'
+DELETE_BRAND_API = '/delete_brand/<string:brand_id>'
+# Brand Endpoint API End

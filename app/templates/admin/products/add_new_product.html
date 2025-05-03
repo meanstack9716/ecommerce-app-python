@@ -210,7 +210,9 @@
                 formData.append('category', hiddenCategoryId.value);
                 formData.append('subcategory', hiddenSubCategoryId.value);
                 formData.append('product_type', hiddenSubSubCategoryId.value);
-
+                for (let pair of formData.entries()) {
+                    console.log(`${pair[0]}: ${pair[1]}`);
+                }
 
                 const result = await sendPostRequest('/api/products/add', formData);
 
@@ -221,7 +223,7 @@
                     descriptionInput.value = '';
                     setTimeout(() => {
                         window.location.href = '/products/list';
-                    }, 1000);
+                    }, 100);
                 } else {
                     handleFormErrors(result);
                 }
