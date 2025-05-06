@@ -34,8 +34,6 @@
                 </svg>
             </div>
         </button>
-
-
     </div>
 </div>
 {% endblock %}
@@ -66,7 +64,7 @@
 
         const categorySelect = document.getElementById('category_id');
         const subCategorySelect = document.getElementById('sub_category_id');
-        const subSubCategorySelect = document.getElementById('product_type_id');
+        const subSubCategorySelect = document.getElementById('sub_sub_categories_id');
         const backButton = document.getElementById('back-button');
         const nextButton = document.getElementById('next-button');
         const submitButton = document.getElementById('submit-button');
@@ -74,7 +72,7 @@
         const step2 = document.getElementById('step-2');
         const hiddenCategoryId = document.getElementById('hidden-category-id');
         const hiddenSubCategoryId = document.getElementById('hidden-sub-category-id');
-        const hiddenSubSubCategoryId = document.getElementById('hidden-product-type-id');
+        const hiddenSubSubCategoryId = document.getElementById('hidden-sub_sub_categories_id');
         let currentStep = 1;
 
         function updateUI() {
@@ -171,56 +169,106 @@
             }
         });
 
+
         document.getElementById('step-2').addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            // Validate fields before proceeding
-            const isValid = validateFormFields();
-            if (!isValid) {
+            const formValues = {
+                // Basic Information
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+
+                // Pricing & Inventory
+                price: document.getElementById('price').value,
+                discount_price: document.getElementById('discount_price').value,
+                stock: document.getElementById('stock').value,
+                sku: document.getElementById('sku').value,
+
+                // Product Attributes
+                brand: document.getElementById('brand').value,
+                other_brand: document.getElementById('other-brand').value,
+                tags: document.getElementById('tags').value,
+
+                // Hidden fields
+                category_id: document.getElementById('hidden-category-id').value,
+                sub_category_id: document.getElementById('hidden-sub-category-id').value,
+                subsubcategory_id: document.getElementById('hidden-sub_sub_categories_id').value,
+            };
+
+            // Get all variations
+            const variations = [];
+            document.querySelectorAll('#variations-container .variation-group').forEach(variation => {
+                const size = variation.querySelector('select[name="size"]').value;
+                const color = variation.querySelector('select[name="color"]').value;
+                const quantity = variation.querySelector('input[name="quantity"]').value;
+
+                // For custom colors
+                let finalColor = color;
+                if (color === 'Other') {
+                    const hexColor = variation.querySelector('#hex-color').value;
+                    const colorName = variation.querySelector('#color-name').value;
+                    finalColor = colorName || hexColor;
+                }
+
+                if (size && finalColor && quantity) {
+                    variations.push({
+                        size,
+                        color: finalColor,
+                        quantity: parseInt(quantity)
+                    });
+                }
+            });
+            formValues.variations = variations;
+
+            // Prepare FormData for file uploads
+            const formData = new FormData();
+
+            // Append all regular form values
+            for (const key in formValues) {
+                if (key === 'variations') {
+                    formData.append(key, JSON.stringify(formValues[key]));
+                } else {
+                    formData.append(key, formValues[key]);
+                }
+            }
+
+            // Append all image files
+            const colorImagesContainer = document.querySelector('#color-images-container');
+            let hasImages = false;
+
+            colorImagesContainer.querySelectorAll('div[id^="color-image-"]').forEach(div => {
+                const color = div.id.replace('color-image-', '');
+                const fileInput = div.querySelector('input[type="file"]');
+
+                if (fileInput && fileInput.files.length > 0) {
+                    hasImages = true;
+                    // Append each file with the correct field name
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        formData.append(`images[${color}]`, fileInput.files[i]);
+                    }
+                }
+            });
+
+            if (!hasImages) {
+                showToast('Please upload at least one image', 'error');
                 return;
             }
 
-            // Update button to show spinner and hide text
+            // Update button state
             const submitText = document.getElementById('submit-text');
             const submitSpinner = document.getElementById('loading-spinner');
             const submitButton = document.getElementById('submit-button');
 
-            // Show spinner and hide text
             submitText.style.display = 'none';
             submitSpinner.style.display = 'flex';
             submitButton.disabled = true;
 
             try {
-                // Update hidden inputs
-                hiddenCategoryId.value = categorySelect.value;
-                hiddenSubCategoryId.value = subCategorySelect.value;
-                hiddenSubSubCategoryId.value = subSubCategorySelect.value;
-                descriptionInput.value = quill.root.innerHTML;
-
-                const imageInput = document.getElementById('product-images');
-                const isImageValid = validateImage(imageInput);
-                if (!isImageValid) {
-                    submitText.classList.remove('hidden');
-                    submitSpinner.classList.add('hidden');
-                    submitButton.disabled = false;
-                    return;
-                }
-
-                const formData = new FormData(this);
-                formData.append('category', hiddenCategoryId.value);
-                formData.append('subcategory', hiddenSubCategoryId.value);
-                formData.append('product_type', hiddenSubSubCategoryId.value);
-                for (let pair of formData.entries()) {
-                    console.log(`${pair[0]}: ${pair[1]}`);
-                }
-
                 const result = await sendPostRequest('/api/products/add', formData);
 
                 if (result.success) {
                     showToast(result.message, 'success');
                     this.reset();
-                    quill.root.innerHTML = '';
-                    descriptionInput.value = '';
                     setTimeout(() => {
                         window.location.href = '/products/list';
                     }, 100);
@@ -236,21 +284,17 @@
                 submitButton.disabled = false;
             }
         });
-
         function validateFormFields() {
             let isValid = true;
 
-            // Basic Information
             isValid = validators.required(document.getElementById('title'), 'Title') && isValid;
 
-            // Quill editor content validation
             const quillContent = quill.root.innerHTML;
             const descriptionField = document.getElementById('description');
             descriptionField.value = quillContent;
             isValid = validators.required(descriptionField, 'Description') && isValid;
 
 
-            // Pricing & Inventory
             isValid = validators.required(document.getElementById('price'), 'Price') && isValid;
 
             isValid = validators.required(document.getElementById('stock'), 'Stock') && isValid;
@@ -258,16 +302,8 @@
 
             isValid = validators.required(document.getElementById('sku'), 'SKU') && isValid;
 
-            // Product Attributes
             isValid = validators.required(document.getElementById('brand'), 'Brand') && isValid;
-            isValid = validators.required(document.getElementById('material'), 'Material') && isValid;
             isValid = validators.required(document.getElementById('tags'), 'Tags') && isValid;
-
-            // Color and Size selection
-
-            // Image validation
-            const imageInput = document.getElementById('product-images');
-            isValid = validators.required(imageInput, 'Product Image') && isValid;
 
             return isValid;
         }

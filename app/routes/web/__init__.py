@@ -13,3 +13,4 @@ from .products_routes import *
 from .order_routes import *
 from .settings_routes import *
 from .brands_routes import *
+from .add_to_cart_routes import *

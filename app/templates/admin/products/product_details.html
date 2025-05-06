@@ -1,83 +1,222 @@
 {% extends "base.html" %}
 
-{% block title %}{{ product.title }} Details{% endblock %}
+{% block title %}{{ product.name }} - Product Details{% endblock %}
 
 {% block admin_content %}
 <div class="max-w-6xl mx-auto p-6">
+    <div class="my-6">
+        <a href="{{ url_for('admin_api.get_product_lists') }}" class="text-blue-600 hover:underline">← Back to
+            Product List</a>
+    </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-        <!-- Product Image -->
-        <div>
-            <img src="/static/{{ product.images[0] if product.images else 'images/placeholder.png' }}"
-                alt="{{ product.title }}" class="w-full h-[500px] object-cover rounded-lg border border-gray-200">
-
-            {% if product.images|length > 1 %}
-            <div class="flex gap-2 mt-4 overflow-x-auto">
-                {% for img in product.images %}
-                <img src="/static/{{ img }}" alt="{{ product.title }}"
-                    class="w-20 h-20 object-cover rounded-lg border hover:border-black cursor-pointer">
+        <!-- Product Image Section -->
+        <div class="flex gap-4">
+            <!-- Thumbnails Column -->
+            <div class="flex flex-col gap-2 overflow-y-auto max-h-[500px]">
+                {% for variant in product.variants %}
+                {% for img in variant.images %}
+                <img src="/static/{{ img.image_url }}" alt="{{ img.alt_text }}" data-size="{{ variant.size }}"
+                    data-color="{{ variant.color }}"
+                    class="thumbnail w-20 h-20 object-cover rounded-lg border border-gray-300 cursor-pointer hover:border-black"
+                    onclick="changeMainImage(this)">
+                {% endfor %}
                 {% endfor %}
             </div>
-            {% endif %}
+
+            <!-- Main Image -->
+            <div class="relative flex-1">
+                <img id="main-image"
+                    src="/static/{{ product.variants[0].images[0].image_url if product.variants[0].images else 'images/placeholder.png' }}"
+                    alt="{{ product.name }}" class="w-full h-[500px] object-cover rounded-lg border border-gray-200">
+            </div>
         </div>
 
-        <!-- Product Details -->
-        <div>
-            <h1 class="text-3xl font-bold text-black mb-2">{{ product.title }}</h1>
-            <p class="text-sm text-gray-500 mb-4">SKU: {{ product.sku }}</p>
+
+        <!-- Product Details Section -->
+        <div class="space-y-6">
+            <h1 class="text-3xl font-bold text-black mb-2">{{ product.name }}</h1>
+            <p class="text-sm text-gray-500 mb-4">SKU: {{ product.sku_number }}</p>
 
             <div class="flex items-center gap-4 mb-4">
-                <p class="text-2xl font-bold text-black">${{ product.final_price }}</p>
-                {% if product.discount_percent > 0 %}
-                <p class="text-lg line-through text-gray-500">${{ product.price }}</p>
-                <span class="text-green-600 font-semibold">{{ product.discount_percent }}% OFF</span>
-                {% endif %}
+                <p class="text-2xl font-bold text-black">${{ product.discount_price }}</p>
+                {% if product.discount_price < product.price %} <p class="text-lg line-through text-gray-500">${{
+                    product.price }}</p>
+                    <span class="text-green-600 font-semibold">{{ product.price - product.discount_price }}% OFF</span>
+                    {% endif %}
             </div>
 
-            <p id="desc-{{ product.id }}" class="text-gray-700 mb-6"></p>
+            <p id="desc-{{ product.id }}" class="text-gray-700 mb-6">{{ product.description }}</p>
 
-            {% if product.color %}
+            <!-- Color Options -->
             <div class="mb-4">
                 <p class="font-semibold text-black mb-1">Colors:</p>
-                <div class="flex gap-2">
-                    {% for color in product.color %}
-                    <span class="inline-block w-6 h-6 rounded-full border" style="background-color: {{ color }}"></span>
+                <div id="color-options" class="flex gap-2">
+                    {% for variant in product.variants|unique(attribute='color') %}
+                    <button class="color-btn w-6 h-6 rounded-full border" style="background-color: {{ variant.color }};"
+                        data-color="{{ variant.color }}">
+                    </button>
                     {% endfor %}
                 </div>
             </div>
-            {% endif %}
 
-            {% if product.size %}
+            <!-- Size Options -->
             <div class="mb-4">
                 <p class="font-semibold text-black mb-1">Available Sizes:</p>
-                <div class="flex gap-2 flex-wrap">
-                    {% for size in product.size %}
-                    <span class="px-3 py-1 border rounded text-sm text-black">{{ size }}</span>
+                <div id="size-options" class="flex gap-2 flex-wrap">
+                    {% for variant in product.variants|unique(attribute='size') %}
+                    <button class="size-btn px-3 py-1 border rounded text-sm text-black" data-size="{{ variant.size }}">
+                        {{ variant.size }}
+                    </button>
                     {% endfor %}
                 </div>
             </div>
-            {% endif %}
+            <!-- Actions -->
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4 mt-6">
+                <!-- Quantity Selector -->
+                <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                    <button type="button" onclick="adjustQty(-1)"
+                        class="px-3 py-2 text-lg font-bold text-gray-700 hover:bg-gray-100 focus:outline-none">
+                        -
+                    </button>
+                    <input id="quantity" type="number" value="1" min="1"
+                        class="w-12 text-center text-gray-900 focus:outline-none focus:ring-0 border-l border-r border-gray-300">
+                    <button type="button" onclick="adjustQty(1)"
+                        class="px-3 py-2 text-lg font-bold text-gray-700 hover:bg-gray-100 focus:outline-none">
+                        +
+                    </button>
+                </div>
 
-            <div class="flex gap-4 mt-6">
-                <button class="bg-black text-white px-6 py-3 rounded hover:bg-gray-800 transition">Add to Cart</button>
-                <button class="border border-black text-black px-6 py-3 rounded hover:bg-gray-100 transition">Buy
-                    Now</button>
-            </div>
+                <!-- Add to Cart Button -->
 
-            <div class="mt-6">
-                <a href="{{ url_for('admin_api.get_product_lists') }}" class="text-blue-600 hover:underline">← Back to
-                    Product List</a>
+
+                <form id="add-to-cart-form" method="POST" action="{{ url_for('add_to_cart_bp.add_to_cart') }}">
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <input type="hidden" name="product_name" value="{{ product.name }}">
+                    <input type="hidden" name="product_sku" value="{{ product.sku_number }}">
+                    <input type="hidden" name="product_price" value="{{ product.discount_price }}">
+                    <input type="hidden" name="size" id="selected-size">
+                    <input type="hidden" name="color" id="selected-color">
+                    <input type="hidden" name="quantity" id="selected-quantity">
+                    
+                    <input type="hidden" name="product_images" id="product-images">
+                    
+                    <button type="submit"
+                        class="flex-1 bg-black text-white px-6 py-3 rounded-lg shadow hover:bg-gray-800 transition duration-300 text-center">
+                        Add to Cart
+                    </button>
+                </form>
+            
+                <!-- Buy Now Button -->
+                <button
+                    class="flex-1 border border-black text-black px-6 py-3 rounded-lg shadow hover:bg-gray-100 transition duration-300 text-center">
+                    Buy Now
+                </button>
             </div>
         </div>
-
     </div>
 </div>
+
 <script>
+    const productVariants = {{ product.variants | tojson }};
+    let selectedSize = null;
+    let selectedColor = null;
+
     document.addEventListener('DOMContentLoaded', function () {
-        const rawHtml = {{ product.description | tojson
-    }};
-    document.getElementById('desc-{{ product.id }}').innerHTML = rawHtml;
+        const thumbnails = document.querySelectorAll('.thumbnail');
+        const mainImage = document.querySelector('#main-image');
+
+        function updateThumbnails() {
+            thumbnails.forEach(thumb => {
+                const thumbSize = thumb.dataset.size;
+                const thumbColor = thumb.dataset.color;
+                if (
+                    (!selectedSize || thumbSize === selectedSize) &&
+                    (!selectedColor || thumbColor === selectedColor)
+                ) {
+                    thumb.style.display = 'inline-block';
+                } else {
+                    thumb.style.display = 'none';
+                }
+            });
+
+            // Update main image to first matching thumbnail
+            const visibleThumb = Array.from(thumbnails).find(thumb =>
+                thumb.style.display !== 'none'
+            );
+            if (visibleThumb) {
+                mainImage.src = visibleThumb.src;
+            }
+        }
+
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                selectedSize = btn.dataset.size;
+                console.log('Size selected:', selectedSize);
+                updateThumbnails();
+            });
+        });
+
+        document.querySelectorAll('.color-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                selectedColor = btn.dataset.color;
+                console.log('Color selected:', selectedColor);
+                updateThumbnails();
+            });
+        });
+
+        // Optionally set initial active thumbnail
+        const firstThumb = document.querySelector('.thumbnail');
+        if (firstThumb) {
+            changeMainImage(firstThumb);
+        }
     });
+
+    function changeMainImage(imgElement) {
+        const mainImage = document.getElementById('main-image');
+        mainImage.src = imgElement.src;
+
+        // Remove active from all thumbnails
+        document.querySelectorAll('.thumbnail').forEach(thumb => {
+            thumb.classList.remove('border-black', 'ring-2', 'ring-black');
+            thumb.classList.add('border-gray-300');
+        });
+
+        // Add active style to clicked thumbnail
+        imgElement.classList.remove('border-gray-300');
+        imgElement.classList.add('border-black', 'ring-2', 'ring-black');
+    }
+
+    // ✅ ADD THIS: quantity adjustment
+    function adjustQty(change) {
+        const qtyInput = document.getElementById('quantity');
+        let currentQty = parseInt(qtyInput.value);
+        if (isNaN(currentQty)) currentQty = 1;
+        currentQty += change;
+        if (currentQty < 1) currentQty = 1; // don't go below 1
+        qtyInput.value = currentQty;
+    }
+    document.querySelectorAll('.size-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedSize = btn.dataset.size;
+            document.getElementById('selected-size').value = selectedSize;
+            updateThumbnails();
+        });
+    });
+
+    document.querySelectorAll('.color-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedColor = btn.dataset.color;
+            document.getElementById('selected-color').value = selectedColor;
+            updateThumbnails();
+        });
+    });
+
+    // Update hidden quantity field before submitting
+    document.getElementById('add-to-cart-form').addEventListener('submit', () => {
+        document.getElementById('selected-quantity').value = document.getElementById('quantity').value;
+    });
+
 </script>
 
 {% endblock %}

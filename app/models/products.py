@@ -3,37 +3,80 @@ from datetime import datetime
 from app.models import Category, SubCategory, SubSubCategory
 from app.models.brands import ProductBrands
 from constants import ALLOWED_SIZES, ALLOWED_GENDERS
-from bson import ObjectId
+from mongoengine import ReferenceField
+
+class ProductVariant(db.Document):
+    product_id = ReferenceField('Products', required=False)
+    size = db.StringField(required=True, choices=ALLOWED_SIZES)
+    color = db.StringField(required=True, max_length=50)
+    stock_quantity = db.IntField(default=0)
+    images = db.ListField(ReferenceField('ProductVariantImage'))
+    created_at = db.DateTimeField(default=datetime.utcnow)
+    
+    meta = {
+        'collection': 'product_variants',
+        'indexes': [
+            'product_id',
+            'size',
+            'color'
+        ]
+    }
+    
+    def __repr__(self):
+        return f"<Variant {self.product_id.name} - {self.color}/{self.size}>"
+
+
+class ProductVariantImage(db.Document):
+    variant_id = ReferenceField(ProductVariant, required=False)
+    image_url = db.StringField(required=True, max_length=255)
+    alt_text = db.StringField(max_length=255)
+    is_primary = db.BooleanField(default=False)
+    
+    meta = {
+        'collection': 'product_variant_images',
+        'indexes': [
+            'variant_id',
+            'is_primary'
+        ]
+    }
+    
+    def __repr__(self):
+        return f"<Image {self.image_url}>"
+
 
 class Products(db.Document):
-    title = db.StringField(required=True, max_length=255)
+    user_id = ReferenceField('User', required=True)
+    name = db.StringField(required=True, max_length=255)
     description = db.StringField()
-    price = db.FloatField(required=True)
-    user_id = db.ObjectIdField(required=True)
-    discount_percent = db.FloatField(default=0)
-    final_price = db.FloatField()
     
-    sku = db.StringField(unique=True, required=True)
-    brand_id = db.ReferenceField(ProductBrands)
-    color = db.ListField(db.StringField())
-    size = db.ListField(db.StringField(choices=ALLOWED_SIZES))
-    material = db.StringField()
-    gender = db.StringField(choices=ALLOWED_GENDERS)
-    
-    stock = db.IntField(default=0)
-    images = db.ListField(db.StringField())
-    tags = db.ListField(db.StringField())
-    
+    sku_number = db.StringField()
     category_id = db.ReferenceField(Category, required=True)
-    sub_category_id = db.ReferenceField(SubCategory, required=True)
-    product_type_id = db.ReferenceField(SubSubCategory, required=True)
+    subcategory_id = db.ReferenceField(SubCategory, required=True)
+    subsubcategory_id = db.ReferenceField(SubSubCategory, required=True)
+    brand_id = db.ReferenceField(ProductBrands, required=True)
     
-    rating = db.FloatField(default=0)
-    num_reviews = db.IntField(default=0)
-    
-    is_active = db.BooleanField(default=True)
+    price = db.DecimalField(required=True, precision=2)
+    discount_price = db.DecimalField(precision=2)
+    total_stocks = db.IntField()
+    material = db.StringField(max_length=100)
+    gender = db.StringField(choices=ALLOWED_GENDERS)
+    status = db.StringField(choices=['active', 'inactive'], default='active')
+    variants = db.ListField(ReferenceField('ProductVariant'))
+
     created_at = db.DateTimeField(default=datetime.utcnow)
     updated_at = db.DateTimeField(default=datetime.utcnow)
-
+    
+    meta = {
+        'collection': 'products',
+        'indexes': [
+            'user_id',
+            'name',
+            'category_id',
+            'subcategory_id',
+            'brand_id',
+            'status'
+        ]
+    }
+    
     def __repr__(self):
-        return f'<Products {self.title}>'
+        return f"<Product {self.name}>"

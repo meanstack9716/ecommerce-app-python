@@ -89,16 +89,18 @@
                     <!-- Image with Swiper and badge -->
                     <td class="px-3 py-2 border text-center">
                         <div class="relative w-40 mx-auto">
-    
                             <div class="swiper mySwiper-{{ product.id }}">
                                 <div class="swiper-wrapper">
-                                    {% for image in product.images %}
+                                    {% if product.variants %}
+                                    {% for variant in product.variants %}
+                                    {% for image in variant.images %}
                                     <div class="swiper-slide">
-                                        <img src="/static/{{ image }}" alt="{{ product.title }}" class="w-full h-16 object-contain rounded" />
-
+                                        <img src="/static/{{ image.image_url }}" alt="{{ product.title }}"
+                                            class="w-full h-16 object-contain rounded" />
                                     </div>
                                     {% endfor %}
-                                    {% if not product.images %}
+                                    {% endfor %}
+                                    {% else %}
                                     <div class="swiper-slide">
                                         <img src="/static/images/placeholder.png" alt="No Image"
                                             class="w-full h-32 object-cover rounded" />
@@ -110,27 +112,32 @@
                     </td>
 
                     <!-- Title -->
-                    <td class="px-4 py-2 border text-center">{{ product.title }}</td>
-
+                    <td class="px-4 py-2 border text-center">{{ product.name }}</td>
                     <!-- Price -->
                     <td class="px-4 py-2 border text-center">
-                        <p class="font-bold text-black">${{ product.final_price }}</p>
-                        {% if product.discount_percent > 0 %}
-                        <p class="text-xs text-gray-500 line-through">${{ product.price }}</p>
+                        <p class="font-bold text-black">${{ product.price }}</p>
+                        {% if product.discount_price > 0 %}
+                        <p class="text-xs text-gray-500 line-through">${{ product.discount_price }}</p>
                         {% endif %}
                     </td>
 
                     <!-- Discount -->
                     <td class="px-4 py-2 border text-center">
-                        {% if product.discount_percent > 0 %}
-                        {{ product.discount_percent }}%
+                        {% if product.discount_price > 0 %}
+                        {{ product.discount_price }}%
                         {% else %}
                         -
                         {% endif %}
                     </td>
 
-                    <!-- SKU -->
-                    <td class="px-4 py-2 border text-center">{{ product.sku }}</td>
+                    <!-- SKU (from variants) -->
+                    <td class="px-4 py-2 border text-center">
+                        {% if product.sku_number %}
+                        {{ product.sku_number }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
 
                     <!-- Actions -->
                     <td class="px-4 py-2 border text-center">
@@ -146,6 +153,7 @@
     {% else %}
     <p class="text-center text-gray-500 mt-10">No products available.</p>
     {% endif %}
+
 
     <!-- Pagination Controls (same as before) -->
     <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
@@ -199,20 +207,6 @@
 {% endblock %}
 
 {% block js %}
-{{ super() }}
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        {% for product in products.items %}
-        new Swiper('.mySwiper-{{ product.id }}', {
-            loop: true,
-            autoplay: {
-                delay: 2000,
-                disableOnInteraction: false,
-            },
-            slidesPerView: 1,
-        });
-        {% endfor %}
-    });
-</script>
+
 {% endblock %}

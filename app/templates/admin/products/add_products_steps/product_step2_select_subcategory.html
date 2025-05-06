@@ -3,7 +3,7 @@
     <!-- Hidden fields -->
     <input type="hidden" name="category_id" id="hidden-category-id">
     <input type="hidden" name="sub_category_id" id="hidden-sub-category-id">
-    <input type="hidden" name="product_type_id" id="hidden-product-type-id">
+    <input type="hidden" name="product_type_id" id="hidden-sub_sub_categories_id">
     <input type="hidden" name="id" id="product-id">
 
     <!-- Section 1: Basic Information -->
@@ -46,8 +46,8 @@
             </div>
 
             <div>
-                <label for="discount_percent" class="block text-sm font-medium text-gray-700 mb-1">Discount (%)</label>
-                <input type="number" name="discount_percent" id="discount_percent" value="0" step="0.01" min="0"
+                <label for="discount_price" class="block text-sm font-medium text-gray-700 mb-1">Discount (%)</label>
+                <input type="number" name="discount_price" id="discount_price" value="0" step="0.01" min="0"
                     max="100"
                     class="mt-2 block w-full border rounded-md border border-gray-300 px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm">
             </div>
@@ -79,55 +79,13 @@
                 <select name="brand" id="brand"
                     class="mt-2 block w-full border rounded-md border-gray-300 px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out text-sm">
                     <option value="">Select a brand</option>
-                    <!-- brands populated dynamically -->
                 </select>
 
                 <!-- input for custom brand name -->
                 <input type="text" id="other-brand" name="other_brand" placeholder="Enter other brand"
                     class="mt-2 block w-full border rounded-md border-gray-300 px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out text-sm hidden">
             </div>
-            <div>
-                <label for="material" class="block text-sm font-medium text-gray-700 mb-1">Material <span
-                        class="text-red-500">*</span></label>
-                <input type="text" name="material" id="material" placeholder="Material type"
-                    class="mt-2 block w-full border rounded-md border border-gray-300 px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm">
-            </div>
-
-            <div class="max-w-md mx-auto p-4 space-y-6">
-                <!-- Color Selection -->
-                <div>
-                    <h3 class="text-sm font-medium text-gray-700 mb-2">Color <span class="text-red-500">*</span></h3>
-                    <div class="flex flex-wrap gap-3" id="color-options">
-                        <!-- Color options will be added dynamically -->
-                    </div>
-                </div>
-
-                <!-- Size Selection -->
-                <div>
-                    <h3 class="text-sm font-medium text-gray-700 mb-2">Size <span class="text-red-500">*</span></h3>
-                    <div class="flex flex-wrap gap-2" id="size-options">
-                        <!-- Size options will be added dynamically -->
-                    </div>
-                </div>
-
-                <!-- Selected Variant Display -->
-                <div class="bg-gray-50 p-3 rounded-lg">
-                    <h4 class="text-sm font-medium text-gray-700 mb-2">Your Selection</h4>
-                    <div class="flex items-center space-x-3">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm text-gray-500">Color:</span>
-                            <span id="selected-color" class="text-sm font-medium">Not selected</span>
-                            <span id="selected-color-preview"
-                                class="inline-block h-4 w-4 rounded-full border border-gray-200"></span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm text-gray-500">Size:</span>
-                            <span id="selected-size" class="text-sm font-medium">Not selected</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+          
             <div>
                 <label for="tags" class="block text-sm font-medium text-gray-700 mb-1">Tags <span
                         class="text-red-500">*</span></label>
@@ -137,19 +95,59 @@
         </div>
     </div>
 
-    <!-- Section 4: Product Images -->
-    <div class="bg-white p-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">Product Images</h3>
-        {% set id = 'product-images' %}
-        {% set name = 'images' %}
-        {% set label = 'Upload Images' %}
-        {% set required = true %}
-        {% set multiple = true %}
-        {% set accept = '.png,.jpeg,.jpg,.webp,.avif' %}
-        {% set help_text = 'PNG, JPG, JEPG up to 2MB' %}
+    <!-- Section 5: Product Variations -->
+    <div class="bg-white p-6 mb-8 rounded-lg shadow-md">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">
+            Product Variations
+            <span class="text-sm text-gray-500 block font-medium">Size + Color + Quantity + Image</span>
+        </h3>
 
-        {% set label_classes = 'text-sm font-medium text-gray-700 mb-2' %}
-        {% include 'components/image_upload.html' %}
+        <div id="variations-container" class="space-y-4">
+            <!-- Variations will be added here -->
+        </div>
+
+        <button onclick="addVariation(event)"
+            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
+            Add Variation
+        </button>
+
+        <hr class="my-6">
+
+        <h2 class="text-lg font-semibold text-gray-700 mb-4">Upload Images (Color-wise)</h2>
+        <div id="color-images-container">
+            <!-- Color image uploads will be added here -->
+        </div>
+    </div>
+
+    <!-- Image upload template (hidden) -->
+    <div id="image-upload-template" class="hidden">
+        <div class="mb-4 relative" onclick="triggerFileInput('__COLOR__')">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Upload Images for <span
+                    class="font-bold font-md">__COLOR__</span></label>
+            <button type="button" onclick="removeColorImage('__COLOR__')"
+                class="absolute right-0 -top-2 text-red-500 text-sm font-bold mt-2">Remove All</button>
+
+            <div
+                class="mt-3 flex flex-col justify-center items-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48"
+                    aria-hidden="true">
+                    <path
+                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+
+                <div class="flex text-sm text-gray-600 cursor-pointer">
+                    <span class="text-blue-600 font-semibold">Upload files</span>
+                    <p class="pl-1">or drag and drop</p>
+                </div>
+
+                <input type="file" name="colorImage___COLOR__" multiple accept=".png,.jpeg,.jpg,.webp,.avif"
+                    class="sr-only" id="fileInput-__COLOR__" onchange="handleImagePreview(event, '__COLOR__')">
+
+                <p class="text-xs text-gray-500">PNG, JPG, JPEG up to 2MB</p>
+            </div>
+            <div id="preview-__COLOR__" class="flex flex-wrap gap-3 mt-3"></div>
+        </div>
     </div>
 </form>
 {% endblock %}
@@ -188,7 +186,214 @@
             }
         });
     });
-
 </script>
 
+<script>
+    let variationCount = 0;
+    const colorsAddedForImages = new Set();
+
+    function addVariation(e) {
+        if (e) e.preventDefault();
+        variationCount++;
+
+        const container = document.getElementById('variations-container');
+
+        const div = document.createElement('div');
+        div.className = 'variation-group p-4 border rounded-lg bg-gray-50';
+        div.innerHTML = `
+            <div class="flex items-center space-x-6 w-full relative">
+                <div class="w-full">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Size
+                    </label>
+                    <div class="relative w-full sm:min-w-64">
+                        <select name="size" class="border border-gray-300 cursor-pointer rounded-lg px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
+                            <option value="XS">XS</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="XXL">XXL</option>
+                        </select>
+                        <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">
+                            chevron_right
+                        </span>
+                    </div>
+                </div>
+
+                <div class="w-full">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Color: </label>
+                    <div class="relative w-full sm:min-w-64">
+                        <select name="color" onchange="handleColorChange(this)" class="border border-gray-300 cursor-pointer rounded-lg px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
+                            <option value="">Select Color</option>
+                            <option value="Red">Red</option>
+                            <option value="Green">Green</option>
+                            <option value="Blue">Blue</option>
+                            <option value="Black">Black</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">
+                            chevron_right
+                        </span>
+                    </div>
+                </div>
+
+                <div class="w-full">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Quantity: </label>
+                    <input type="number" name="quantity" min="1" class="mt-1 block w-full border rounded-md px-4 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm">
+                </div>
+                <span class="material-symbols-outlined absolute -top-3.5 -right-2.5 text-xl cursor-pointer" onclick="removeVariation(this)">cancel</span>
+            </div>
+           <div id="custom-color-fields" class="hidden mt-2 flex items-center justify-between space-x-8">
+                <!-- Color Picker -->
+                <input type="color" id="favcolor" name="favcolor" value="#ff0000" onchange="updateHexCode(this)">
+    
+                <!-- Hex Code Input (will be automatically updated) -->
+                <input type="text" id="hex-color" placeholder="Enter Hex Code (e.g., #FF5733)" class="mt-1 block w-full border rounded-md px-4 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm" readonly>
+
+                <!-- Color Name Input -->
+                <input type="text" id="color-name" placeholder="Enter Color Name (e.g., Custom Red)" class="mt-1 block w-full border rounded-md px-4 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm">
+            </div>
+        `;
+        container.appendChild(div);
+    }
+
+    function removeVariation(btn) {
+        const div = btn.closest('.variation-group');
+        if (div) {
+            const colorSelect = div.querySelector('select[name="color"]');
+            if (colorSelect && colorSelect.value) {
+                const color = colorSelect.value;
+                const otherVariationsWithSameColor = document.querySelectorAll(`.variation-group select[name="color"][value="${color}"]`);
+                if (otherVariationsWithSameColor.length <= 1) {
+                    removeColorImage(color);
+                }
+            }
+            div.remove();
+        }
+    }
+
+    function updateHexCode(colorPicker) {
+        const selectedColor = colorPicker.value;
+        
+        const hexColorInput = document.getElementById('hex-color');
+        hexColorInput.value = selectedColor;
+    }
+
+    function handleColorChange(selectElem) {
+        const previousColor = selectElem.dataset.previousColor;
+        const newColor = selectElem.value;
+        selectElem.dataset.previousColor = newColor;
+
+        // If "Other" is selected, show custom color inputs
+        if (newColor === 'Other') {
+            document.getElementById('custom-color-fields').classList.remove('hidden');
+        } else {
+            document.getElementById('custom-color-fields').classList.add('hidden');
+            // Handle color changes for predefined options
+            if (previousColor && previousColor !== newColor) {
+                const otherVariationsWithSameColor = document.querySelectorAll(`.variation-group select[name="color"][value="${previousColor}"]`);
+                if (otherVariationsWithSameColor.length === 0) {
+                    removeColorImage(previousColor);
+                }
+            }
+
+            if (newColor && !colorsAddedForImages.has(newColor)) {
+                addColorImageUpload(newColor);
+            }
+        }
+    }
+
+    function addColorImageUpload(color) {
+        if (colorsAddedForImages.has(color)) return;
+
+        colorsAddedForImages.add(color);
+
+        const container = document.getElementById('color-images-container');
+        const template = document.getElementById('image-upload-template');
+        const clone = template.cloneNode(true);
+        clone.id = `color-image-${color}`;
+        clone.classList.remove('hidden');
+
+        clone.innerHTML = clone.innerHTML.replace(/__COLOR__/g, color);
+
+        container.appendChild(clone);
+    }
+
+    function removeColorImage(color) {
+        const div = document.getElementById(`color-image-${color}`);
+        if (div) div.remove();
+
+        colorsAddedForImages.delete(color);
+    }
+
+    function submitData() {
+        const variations = [];
+        const variationDivs = document.querySelectorAll('#variations-container .variation-group');
+        variationDivs.forEach(div => {
+            const size = div.querySelector('select[name="size"]').value;
+            const color = div.querySelector('select[name="color"]').value;
+            const quantity = div.querySelector('input[name="quantity"]').value;
+            if (size && color && quantity) {
+                variations.push({ size, color, quantity });
+            }
+        });
+
+        const images = [];
+        document.querySelectorAll('#color-images-container div[id^="color-image-"]').forEach(div => {
+            const color = div.id.replace('color-image-', '');
+            const fileInput = div.querySelector('input[type="file"]');
+            if (fileInput && fileInput.files.length > 0) {
+                images.push({
+                    color: color,
+                    file: fileInput.files[0].name
+                });
+            }
+        });
+    }
+
+    function triggerFileInput(color) {
+        const fileInput = document.getElementById(`fileInput-${color}`);
+        fileInput.click();
+    }
+
+    function handleImagePreview(event, color) {
+        const files = event.target.files;
+        const previewContainer = document.getElementById(`preview-${color}`);
+        previewContainer.innerHTML = '';
+
+        [...files].forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const imageWrapper = document.createElement('div');
+                imageWrapper.className = 'relative w-32 h-32 rounded overflow-hidden shadow';
+
+                imageWrapper.innerHTML = `
+                <img src="${e.target.result}" alt="preview" class="object-cover w-full h-full rounded">
+                <span class="material-symbols-outlined text-md absolute top-0.5 right-1 cursor-pointer" onclick="removeSingleImage('${color}', ${index})">cancel</span>
+            `;
+                previewContainer.appendChild(imageWrapper);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removeSingleImage(color, index) {
+        const fileInput = document.querySelector(`input[name="colorImage_${color}"]`);
+        const dt = new DataTransfer();
+
+        [...fileInput.files].forEach((file, i) => {
+            if (i !== index) dt.items.add(file);
+        });
+
+        fileInput.files = dt.files;
+        handleImagePreview({ target: fileInput }, color);
+    }
+
+
+    // Initialize with one variation
+    document.addEventListener('DOMContentLoaded', () => {
+        addVariation();
+    });
+</script>
 {% endblock %}
