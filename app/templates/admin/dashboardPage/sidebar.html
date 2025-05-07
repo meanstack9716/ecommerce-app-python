@@ -2,268 +2,65 @@
 <div id="sidebar"
     class="w-72 overflow-auto h-screen bg-white text-gray-900 fixed flex flex-col py-8 px-4 shadow-xl border-r border-[#f3f3f3] transform transition-transform duration-300 ease-in-out">
     <nav class="flex flex-col gap-4">
+        {% for section in sidebar_menu.mainMenu %}
         <div class="flex flex-col gap-3">
-            <p class="font-semibold text-gray-400">MAIN HOME</p>
-            <a href="{{ url_for('admin_api.dashboard') }}"
-                class="nav-link flex items-center gap-3 {% if request.endpoint == 'admin_api.dashboard' %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300">
+            <p class="font-semibold text-gray-400">{{ section.title }}</p>
+
+            {% for item in section['items'] %}
+            {% if not item.submenu %}
+            <a href="{{ item.url | safe }}"
+                class="nav-link flex items-center gap-3 {% if request.endpoint == item.endpoint %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300">
                 <span class="material-symbols-outlined">
-                    grid_view
+                    {{ item.icon }}
                 </span>
-                <span class="ml-2 font-medium">Dashboard</span>
+                <span class="ml-2 font-medium">{{ item.label }}</span>
             </a>
+            {% else %}
+            <div>
+                <div
+                    class="toggle-submenu nav-link flex items-center justify-between gap-3 {% if request.endpoint in item.endpointGroup %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
+                    <div class="flex items-center gap-5">
+                        <span class="material-symbols-outlined">
+                            {{ item.icon }}
+                        </span>
+                        <span class="font-medium">{{ item.label }}</span>
+                    </div>
+                    <span
+                        class="material-symbols-outlined submenu-icon transform transition-transform {% if request.endpoint in item.endpointGroup %}rotate-180{% endif %}">keyboard_arrow_down</span>
+                </div>
+
+                <div
+                    class="submenu ml-6 mt-1 flex flex-col gap-3 {% if request.endpoint not in item.endpointGroup %}hidden{% endif %}">
+                    {% for subitem in item.submenu %}
+                    <a href="{{ subitem.url | safe }}"
+                        class="{% if request.endpoint == subitem.endpoint %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
+                        <span class="material-symbols-outlined">
+                            {{ subitem.icon }}
+                        </span>
+                        <span>{{ subitem.label }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
         </div>
-
-        <div class="flex flex-col gap-3">
-            <p class="font-semibold text-gray-400">All Page</p>
-            <!-- All User Section  -->
-            <div>
-                <div
-                    class="toggle-submenu nav-link flex items-center justify-between gap-3 {% if request.endpoint in ['admin_api.all_users', 'admin_api'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
-                    <div class="flex items-center gap-5">
-                        <span class="material-symbols-outlined">
-                            person
-                        </span>
-                        <span class="font-medium">All User</span>
-                    </div>
-                    <span
-                        class="material-symbols-outlined submenu-icon transform transition-transform">keyboard_arrow_down</span>
-                </div>
-
-                <!-- Submenu that shows up when toggled -->
-                <div
-                    class="{% if request.endpoint not in ['admin_api.all_users', 'admin_api.add_user'] %}hidden{% endif %} ml-6 mt-1 flex flex-col gap-3 mt-3">
-                    <a href="{{ url_for('admin_api.all_users') }}"
-                        class="{% if request.endpoint == 'admin_api.all_users' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">
-                            patient_list
-                        </span>
-                        <span>All User</span>
-                    </a>
-                    <a href="#"
-                        class="text-gray-700 hover:text-indigo-700 hover:bg-indigo-100 px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">person_add</span>
-                        <span>Add New User</span>
-                    </a>
-                </div>
-            </div>
-            <!-- All User End  -->
-
-            <!-- All Seller Section Start  -->
-            <div>
-                <div
-                    class="toggle-submenu nav-link flex items-center justify-between gap-3 {% if request.endpoint in ['admin_api.add_new_seller'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} hover:bg-indigo-700 hover:text-white rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
-                    <div class="flex items-center gap-5">
-                        <span class="material-symbols-outlined">group</span>
-                        <span class="font-medium">Seller</span>
-                    </div>
-                    <span
-                        class="material-symbols-outlined submenu-icon transform transition-transform">keyboard_arrow_down</span>
-                </div>
-
-                <!-- Submenu that shows up when toggled -->
-                <div id="submenu"
-                    class="ml-6 mt-1 flex flex-col gap-3 mt-3 {% if request.endpoint in ['admin_api.add_new_seller', 'admin_api.get_seller_list'] %}block{% else %}hidden{% endif %}">
-                    <a href="{{ url_for('admin_api.add_new_seller') }}"
-                        class="{% if request.endpoint == 'admin_api.add_new_seller' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">
-                            person_add
-                        </span>
-                        <span>Add Seller</span>
-                    </a>
-                    <a href="{{ url_for('admin_api.get_seller_list') }}"
-                        class="text-gray-700 hover:text-indigo-700 hover:bg-indigo-100 px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">
-                            groups
-                        </span>
-                        <span>Seller List</span></a>
-                </div>
-            </div>
-            <!-- All Seller Section End  -->
-
-            <!-- Products Section Start -->
-            <div>
-                <div class="toggle-submenu nav-link flex items-center justify-between gap-3 
-                    {% if request.endpoint in ['admin_api.add_products_page'] %} 
-                        bg-indigo-700 text-white 
-                    {% else %} 
-                        hover:bg-indigo-700 hover:text-white 
-                    {% endif %} 
-                    rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
-                    <div class="flex items-center gap-5">
-                        <span class="material-symbols-outlined">group</span>
-                        <span class="font-medium">Product</span>
-                    </div>
-                    <span
-                        class="material-symbols-outlined submenu-icon transform transition-transform">keyboard_arrow_down</span>
-                </div>
-
-                <!-- Submenu that shows up when toggled -->
-                <div id="submenu" class="ml-6 mt-1 flex flex-col gap-3 
-                    {% if request.endpoint in ['admin_api.add_products_page'] %}block{% else %}hidden{% endif %}">
-                    <a href="{{ url_for('admin_api.add_products_page') }}"
-                        class="text-gray-700 hover:text-indigo-700 hover:bg-indigo-100 px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">add_circle</span>
-                        <span>Add Product</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Products Section End -->
-
-            <!-- Category Section Start -->
-            <div id="categoryLink">
-                <div
-                    class="toggle-submenu nav-link flex items-center justify-between {% if request.endpoint in ['admin_api.get_category_list_page', 'admin_api.add_new_category_page', 'admin_api.add_subcategory_page', 'admin_api.get_subcategory_list_page', 'admin_api.product_types_list_page', 'admin_api.sub_sub_category_page'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
-                    <div class="flex items-center gap-5">
-                        <span class="material-symbols-outlined">
-                            category
-                        </span>
-                        <span class="font-medium">Category</span>
-                    </div>
-                    <span
-                        class="material-symbols-outlined submenu-icon transform transition-transform">keyboard_arrow_down</span>
-                </div>
-                <div
-                    class="{% if request.endpoint not in ['admin_api.get_category_list_page', 'admin_api.add_new_category_page', 'admin_api.add_subcategory_page', 'admin_api.get_subcategory_list_page','admin_api.sub_sub_category_page', 'admin_api.sub_sub_category_list_page'] %}hidden{% endif %} ml-6 mt-1 flex flex-col gap-3 mt-3">
-
-                    <a href="{{ url_for('admin_api.add_new_category_page') }}"
-                        class="{% if request.endpoint == 'admin_api.add_new_category_page' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-2 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">
-                            add_circle
-                        </span>
-                        <span>Add New Category</span>
-                    </a>
-                    <a href="{{ url_for('admin_api.get_category_list_page') }}"
-                        class="{% if request.endpoint == 'admin_api.get_category_list_page' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">
-                            format_list_bulleted
-                        </span>
-                        <span>Category List</span>
-                    </a>
-
-                    <!-- Add sub category  -->
-                    <a href="{{ url_for('admin_api.add_subcategory_page') }}"
-                        class="{% if request.endpoint == 'admin_api.add_subcategory_page' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-2 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">
-                            library_add
-                        </span>
-                        <span>Add Sub-Category</span>
-                    </a>
-                    <a href="{{ url_for('admin_api.get_subcategory_list_page') }}"
-                        class="{% if request.endpoint == 'admin_api.get_subcategory_list_page' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-2 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">
-                            view_headline
-                        </span>
-                        <span>Sub-Category List</span>
-                    </a>
-
-                    <a href="{{ url_for('admin_api.sub_sub_category_page') }}"
-                        class="{% if request.endpoint == 'admin_api.sub_sub_category_page' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-2 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">
-                            add
-                        </span>
-                        <span>Sub-Sub Category</span>
-                    </a>
-
-                    <a href="{{ url_for('admin_api.sub_sub_category_list_page') }}"
-                        class="{% if request.endpoint == 'admin_api.sub_sub_category_list_page' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-2 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">
-                            lists
-                        </span>
-                        <span>Sub-Sub Category List</span>
-                    </a>
-                </div>
-            </div>
-            <!-- Category Section End -->
-
-            <!-- Product Brand Start -->
-            <div>
-                <div
-                    class="toggle-submenu nav-link flex items-center justify-between {% if request.endpoint in ['admin_api.add_new_brand_page', 'admin_api.get_brand_list_page'] %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
-                    <div class="flex items-center gap-5">
-                        <span class="material-symbols-outlined">
-                            brand_family
-                        </span>
-                        <span class="font-medium">Product Brand</span>
-                    </div>
-                    <span
-                        class="material-symbols-outlined submenu-icon transform transition-transform">keyboard_arrow_down</span>
-                </div>
-                <div
-                    class="{% if request.endpoint not in ['admin_api.add_new_brand_page', 'admin_api.get_brand_list_page'] %}hidden{% endif %} ml-6 mt-1 flex flex-col gap-3 mt-3">
-
-                    <a href="{{ url_for('admin_api.add_new_brand_page') }}"
-                        class="{% if request.endpoint == 'admin_api.add_new_brand_page' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-2 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">
-                            add_circle
-                        </span>
-                        <span>Add New Brand</span>
-                    </a>
-
-                    <a href="{{ url_for('admin_api.get_brand_list_page') }}"
-                        class="{% if request.endpoint == 'admin_api.get_brand_list_page' %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-2 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">
-                            format_list_bulleted
-                        </span>
-                        <span>Brand Lists</span>
-                    </a>
-
-
-                </div>
-            </div>
-            <!-- Product Brand Section End -->
-
-            <!-- Order Section Start -->
-            <a href="{{ url_for('admin_api.orders') }}"
-                class="flex items-center gap-5 nav-link {% if request.endpoint == 'admin_api.orders' %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
-                <span class="material-symbols-outlined">
-                    list_alt
-                </span>
-                <span class="font-medium">Orders</span>
-            </a>
-            <!-- Order Section End -->
-
-            <!-- Settings Section Start -->
-            <a href="{{ url_for('admin_api.settings') }}"
-                class="flex items-center gap-5 nav-link {% if request.endpoint == 'admin_api.settings' %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
-                <span class="material-symbols-outlined">
-                    settings
-                </span>
-                <span class="font-medium">Settings</span>
-            </a>
-            <!-- Settings Section End -->
+        {% endfor %}
     </nav>
 </div>
 {% endblock %}
 
-{% block js %}
+{% block Js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.toggle-submenu').forEach(button => {
-            button.addEventListener('click', function () {
-                const submenu = this.nextElementSibling;
-                const icon = this.querySelector('.submenu-icon');
-
-                submenu.classList.toggle('hidden');
-                icon.classList.toggle('rotate-180');
-            });
-        });
-
-        document.querySelectorAll('.nav-link').forEach(link => {
-            if (link.classList.contains('bg-indigo-700')) {
-                const parentMenu = link.closest('.flex.flex-col.gap-1');
-                if (parentMenu) {
-                    parentMenu.classList.remove('hidden');
-                    const toggleButton = parentMenu.previousElementSibling;
-                    if (toggleButton) {
-                        const icon = toggleButton.querySelector('.submenu-icon');
-                        if (icon) {
-                            icon.classList.add('rotate-180');
-                        }
-                    }
-                }
-            }
+    const submenuItems = document.querySelectorAll('.toggle-submenu');
+    submenuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const submenu = item.nextElementSibling;
+            submenu.classList.toggle('hidden');
+            const icon = item.querySelector('.submenu-icon');
+            icon.classList.toggle('rotate-180');
         });
     });
 </script>
+
 {% endblock %}

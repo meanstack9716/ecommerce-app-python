@@ -3,6 +3,7 @@ from app.extensions import db, jwt, mail, bcrypt
 from .config import Config
 from app.models import User
 import os
+from app.utils.sidebar import sidebar_context
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -27,6 +28,7 @@ def create_app(config_class=Config):
     from app.models.brands import ProductBrands
     from app.seed_data import seed_data
 
+    sidebar_context(app)
     with app.app_context():
         Role.initialize_roles()
         User.create_default_admin()
@@ -53,7 +55,7 @@ def create_app(config_class=Config):
     app.register_blueprint(sub_sub_category_bp)
     app.register_blueprint(add_products_bp)
     app.register_blueprint(brand_bp)
-    
+
     @app.before_request
     def before_request():
         if 'user_id' in session:
