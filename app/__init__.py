@@ -45,7 +45,6 @@ def create_app(config_class=Config):
     from app.routes.api.sub_sub_category import sub_sub_category_bp
     from app.routes.api.products import products_bp
     from app.routes.api.brands import brand_bp
-    from app.routes.api.add_to_cart import add_to_cart_bp
 
     # Register blueprints
     app.register_blueprint(auth_bp)
@@ -57,7 +56,6 @@ def create_app(config_class=Config):
     app.register_blueprint(sub_sub_category_bp)
     app.register_blueprint(products_bp)
     app.register_blueprint(brand_bp)
-    app.register_blueprint(add_to_cart_bp)
 
     @app.before_request
     def before_request():
