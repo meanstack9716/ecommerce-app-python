@@ -56,8 +56,12 @@ body {
 
 select{
   font-size: 14px !important;
+  height: 46px !important;
 }
 
+input{
+  height: 46px !important;
+}
 #quill-editor {
   min-height: 150px;
   border: 1px solid #ccc;

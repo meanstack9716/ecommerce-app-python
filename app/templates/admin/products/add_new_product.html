@@ -22,7 +22,7 @@
             class="w-32 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:text-gray-700 disabled:opacity-30">
             Next</button>
         <button id="submit-button" type="submit" form="step-2"
-            class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition hidden flex items-center justify-center min-w-32">
+            class="w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
             <span id="submit-text">Submit</span>
             <div id="loading-spinner" class="hidden">
                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -256,7 +256,7 @@
                         window.location.href = '/products/list';
                     }, 100);
                 } else {
-                    showToast(result, 'error');
+                    handleErrors(result.errors)
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -267,29 +267,49 @@
                 submitButton.disabled = false;
             }
         });
-        
+
+
         function validateFormFields() {
-            let isValid = true;
+    let isValid = true;
 
-            isValid = validators.required(document.getElementById('title'), 'Title') && isValid;
+    isValid = validators.required(document.getElementById('title'), 'Title', 'title-error') && isValid;
+    
+    const quillContent = quill.root.innerHTML;
+    const descriptionField = document.getElementById('description');
+    descriptionField.value = quillContent;
+    isValid = validators.required(descriptionField, 'Description', 'description-error') && isValid;
 
-            const quillContent = quill.root.innerHTML;
-            const descriptionField = document.getElementById('description');
-            descriptionField.value = quillContent;
-            isValid = validators.required(descriptionField, 'Description') && isValid;
+    isValid = validators.required(document.getElementById('price'), 'Price', 'price-error') && isValid;
 
+    isValid = validators.required(document.getElementById('stock'), 'Stock', 'stock-error') && isValid;
+    isValid = validators.required(document.getElementById('discount_price'), 'Discount Price', 'discount-error') && isValid;
 
-            isValid = validators.required(document.getElementById('price'), 'Price') && isValid;
+    isValid = validators.required(document.getElementById('sku'), 'SKU', 'sku-error') && isValid;
 
-            isValid = validators.required(document.getElementById('stock'), 'Stock') && isValid;
-            isValid = validators.required(document.getElementById('discount_price'), 'Discount Price') && isValid;
+    isValid = validators.required(document.getElementById('brand'), 'Brand', 'brand-error') && isValid;
 
-            isValid = validators.required(document.getElementById('sku'), 'SKU') && isValid;
+    // Validate variations
+    const variations = document.querySelectorAll('.variation-group');
+    variations.forEach(variation => {
+        const size = variation.querySelector('select[name="size"]');
+        const color = variation.querySelector('select[name="color"]');
+        const quantity = variation.querySelector('input[name="quantity"]');
 
-            isValid = validators.required(document.getElementById('brand'), 'Brand') && isValid;
+        isValid = validators.required(size, 'Size', `${variation.dataset.variationId}-size-error`) && isValid;
+        isValid = validators.required(color, 'Color', `${variation.dataset.variationId}-color-error`) && isValid;
+        isValid = validators.required(quantity, 'Quantity', `${variation.dataset.variationId}-quantity-error`) && isValid;
+    });
 
-            return isValid;
-        }
+    // Validate color images
+    const colorImages = Object.keys(colorsAddedForImages);
+    colorImages.forEach(color => {
+        const fileInput = document.getElementById(`fileInput-${color}`);
+        isValid = validators.required(fileInput, `Image for ${color}`, `fileInput-${color}-error`) && isValid;
+    });
+
+    return isValid;
+}
+
         updateUI();
     });
 </script>

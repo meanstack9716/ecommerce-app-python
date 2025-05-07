@@ -7,7 +7,7 @@
 
         <div class="relative mt-1">
             <select id="category_id"
-                class="block w-full border rounded-md px-5 py-3 appearance-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
+                class="mt-2 block w-full border rounded-md px-5 py-3 appearance-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
                 <option value="">Select Category</option>
                 {% for category in categories %}
                 <option value="{{ category.id }}" class="text-base">{{ category.name }}</option>
@@ -26,7 +26,7 @@
 
         <div class="relative mt-1">
             <select id="sub_category_id" disabled
-                class="block w-full border rounded-md px-5 py-3 appearance-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
+                class="mt-2 block w-full border rounded-md px-5 py-3 appearance-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
                 <option value="">Select Subcategory</option>
             </select>
             <span
@@ -42,7 +42,7 @@
 
         <div class="relative mt-1">
             <select id="sub_sub_categories_id" disabled
-                class="block w-full border rounded-md px-5 py-3 appearance-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
+                class="mt-2 block w-full border rounded-md px-5 py-3 appearance-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
                 <option value="" class="text-xs">Select Product Type</option>
             </select>
             <span

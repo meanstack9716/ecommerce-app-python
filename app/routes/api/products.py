@@ -21,12 +21,11 @@ def create_ad():
     try:
         user_id = session.get('user_id')
         if not user_id:
-            return jsonify({'error': 'User not logged in', 'user_id': 'User not logged in'}), 401
-
+            return create_error_response({'user_id': 'User not logged in'}, 401)
         try:
             user_object_id = ObjectId(user_id)
         except Exception:
-            return jsonify({'error': 'Invalid user ID', 'user_id': 'Invalid user ID'}), 400
+            return create_error_response({'user_id': 'Invalid user ID'}, 400)
 
         required_fields = ['name', 'price', 'category_id', 'subcategory_id', 'subsubcategory_id', 'description', 'total_stocks', 'sku_number']
         form_data = request.form.to_dict(flat=False)
@@ -34,7 +33,7 @@ def create_ad():
 
         is_valid, validation_errors = validate_required_fields(data, required_fields)
         if not is_valid:
-            return jsonify({'error': 'Validation failed', 'errors': validation_errors}), 400
+            return create_error_response({'validation': validation_errors}, 400)
 
         # Fetch category references
         category = Category.objects(id=data['category_id']).first()
@@ -42,14 +41,11 @@ def create_ad():
         subsubcategory = SubSubCategory.objects(id=data['subsubcategory_id']).first()
 
         if not category or not subcategory or not subsubcategory:
-            return jsonify({
-                'error': 'Invalid category references',
-                'errors': {
-                    'category_id': 'Invalid category ID',
-                    'subcategory_id': 'Invalid subcategory ID',
-                    'subsubcategory_id': 'Invalid subsubcategory ID'
-                }
-            }), 400
+            return create_error_response({
+                'category_id': 'Invalid category ID',
+                'subcategory_id': 'Invalid subcategory ID',
+                'subsubcategory_id': 'Invalid subsubcategory ID'
+            }, 400)
 
         # Calculate price and discount
         price = float(data['price'])
@@ -59,7 +55,7 @@ def create_ad():
         total_stocks = data.get('total_stocks')
         sku_number = data.get('sku_number')
         if not sku_number:
-            return jsonify({'error': 'SKU number is required'}), 400
+            return create_error_response({'sku_number': 'SKU number is required'}, 400)
 
         # Handle brand
         brand = None
@@ -69,7 +65,7 @@ def create_ad():
         if brand_value and brand_value != 'other':
             brand = ProductBrands.objects(id=brand_value).first()
             if not brand:
-                return jsonify({'error': 'Invalid brand', 'brand': 'Invalid brand ID'}), 400
+                return create_error_response({'brand': 'Invalid brand ID'}, 400)
         elif brand_value == 'other' and other_brand_name:
             brand = ProductBrands.objects(name__iexact=other_brand_name.strip()).first()
             if not brand:
@@ -84,7 +80,7 @@ def create_ad():
         try:
             variations_list = json.loads(data.get('variations', '[]'))
         except json.JSONDecodeError:
-            return jsonify({'error': 'Invalid variations format'}), 400
+            return create_error_response({'variations': 'Invalid variations format'}, 400)
 
         variants = []
         for var in variations_list:
@@ -101,7 +97,7 @@ def create_ad():
                 )
                 variants.append(variant)
             except (KeyError, ValueError) as e:
-                return jsonify({'error': f'Invalid variation data: {str(e)}'}), 400
+                return create_error_response({'variations': f'Invalid variation data: {str(e)}'}, 400)
 
         # Process color-specific images
         color_images = {}
@@ -113,7 +109,7 @@ def create_ad():
                 for file in request.files.getlist(file_key):
                     image_path, error = upload_image(file)
                     if error:
-                        return jsonify({'error': 'Image upload failed', 'images': error}), 400
+                        return create_error_response({'images': error}, 400)
                     color_images[color_name].append(image_path)
 
         # Save all variants
@@ -144,7 +140,7 @@ def create_ad():
             if thumbnail_file.filename != '':
                 thumbnail_path, error = upload_image(thumbnail_file)
                 if error:
-                    return jsonify({'error': 'Thumbnail upload failed', 'thumbnail': error}), 400
+                    return create_error_response({'thumbnail': error}, 400)
 
                 if saved_variants:
                     primary_image = ProductVariantImage(
@@ -194,11 +190,8 @@ def create_ad():
             }
         }), 201
 
-    except Exception as e:
-        return jsonify({
-            "error": "An unexpected error occurred",
-            "details": str(e)
-        }), 500
+    except Exception as error:
+        return create_error_response({'unexpected_error': str(error)}, 500)
 
 @products_bp.route(PRODUCT_LISTS_API, methods=['GET'])
 def list_products():
@@ -206,14 +199,14 @@ def list_products():
         # Pagination params
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 10))
-        
+
         # Filter params
         category_id = request.args.get('category_id')
         subcategory_id = request.args.get('subcategory_id')
         subsubcategory_id = request.args.get('subsubcategory_id')
         brand_id = request.args.get('brand_id')
         status = request.args.get('status')
-        
+
         # Sorting params
         sort_by = request.args.get('sort_by', 'created_at')
         sort_order = request.args.get('sort_order', 'desc')
@@ -243,7 +236,7 @@ def list_products():
         paginated_products = query.paginate(page=page, per_page=per_page)
 
         products_data = []
-        
+
         for product in paginated_products.items:
             # Get variant data
             variants_data = []

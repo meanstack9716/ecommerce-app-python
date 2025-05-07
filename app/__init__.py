@@ -29,9 +29,6 @@ def create_app(config_class=Config):
 
     from app.seed_data import seed_data
 
-
-
-    from app.models.add_products import AddProducts
     from app.models.brands import ProductBrands
     from app.seed_data import seed_data
 

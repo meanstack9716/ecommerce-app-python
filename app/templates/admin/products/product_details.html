@@ -3,7 +3,7 @@
 {% block title %}{{ product.name }} - Product Details{% endblock %}
 
 {% block admin_content %}
-<div class="max-w-6xl mx-auto p-6">
+<div class="max-w-7xl mx-auto px-6">
     <div class="my-6">
         <a href="{{ url_for('admin_api.get_product_lists') }}" class="text-blue-600 hover:underline">← Back to
             Product List</a>
@@ -80,21 +80,12 @@
                     </button>
                 </div>
 
-                <form id="add-to-cart-form" method="POST" action="{{ url_for('add_to_cart_bp.add_to_cart') }}">
-                    <input type="hidden" name="product_id" value="{{ product.id }}">
-                    <input type="hidden" name="product_name" value="{{ product.name }}">
-                    <input type="hidden" name="product_sku" value="{{ product.sku_number }}">
-                    <input type="hidden" name="product_price" value="{{ product.discount_price }}">
-                    <input type="hidden" name="size" id="selected-size">
-                    <input type="hidden" name="color" id="selected-color">
-                    <input type="hidden" name="quantity" id="selected-quantity">
-                    <input type="hidden" name="product_images" id="product-images">
-                    <button type="submit"
-                        class="flex-1 bg-black text-white px-6 cursor-pointer py-3 rounded-lg shadow hover:bg-gray-800 transition duration-300 text-center"
-                        disabled>
-                        Add to Cart
-                    </button>
-                </form>
+
+                <button type="submit"
+                    class="flex-1 bg-black text-white px-6 cursor-pointer py-3 rounded-lg shadow hover:bg-gray-800 transition duration-300 text-center"
+                    disabled>
+                    Add to Cart
+                </button>
 
                 <button
                     class="flex-1 border border-black text-black px-6 py-3 rounded-lg shadow hover:bg-gray-100 transition duration-300 text-center"
