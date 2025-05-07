@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Cart{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-6xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">Your Cart</h1>
+
+    {% if cart_items %}
+        <div class="space-y-6">
+            {% for item in cart_items %}
+            <div class="flex items-center gap-6 mb-4 border-b border-gray-200 pb-4">
+                <div class="w-1/5">
+                    <img src="/static/{{ item.product_images[0] }}" alt="{{ item.product_name }}" class="w-full object-cover rounded-lg">
+                </div>
+                <div class="w-4/5">
+                    <h2 class="text-xl font-semibold">{{ item.product_name }}</h2>
+                    <p class="text-gray-600">SKU: {{ item.product_sku }}</p>
+                    <p class="text-lg font-bold">${{ item.product_price }}</p>
+                    <p>Size: {{ item.size }}</p>
+                    <p>Color: {{ item.color }}</p>
+                    <p>Quantity: {{ item.quantity }}</p>
+                    <p class="text-gray-500">Total: ${{ item.product_price * item.quantity }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="flex justify-between mt-6">
+            <div>
+                <p class="text-2xl font-semibold">Total: ${{ cart_items | sum(attribute='total_price') }}</p>
+                <a href="{{ url_for('checkout') }}" class="bg-black text-white px-6 py-3 rounded-lg mt-4 inline-block">Proceed to Checkout</a>
+            </div>
+        </div>
+
+    {% else %}
+        <p>Your cart is empty. <a href="#" class="text-blue-600 hover:underline">Continue Shopping</a></p>
+    {% endif %}
+</div>
+{% endblock %}
