@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Brand List{% endblock %}
+
+{% block admin_content %}
+<div class="bg-white rounded-lg shadow-lg p-8">
+    <h1 class="text-3xl font-semibold text-gray-800 mb-6">Brand List</h1>
+
+    <!-- Search and Filter Form -->
+    <form method="get" class="flex items-end justify-between w-full mb-10">
+        <div class="w-full sm:w-1/2 lg:w-full">
+            <div class="flex items-end space-x-4">
+                <div class="flex flex-col">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search Brand</label>
+                    <input type="text" name="search" value="{{ search }}" placeholder="Search by brand name"
+                        class="mt-1 block w-full px-4 py-3 border border-gray-300 outline-none rounded-lg shadow-sm sm:text-sm w-72">
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-row items-center justify-end space-x-4 sm:w-1/2 lg:w-full">
+            <button type="submit"
+                class="w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                Search
+            </button>
+
+            <div class="w-full sm:w-auto mt-2 sm:mt-0">
+                <a href="{{ url_for('admin_api.get_brand_list_page') }}"
+                    class="text-sm text-indigo-600 hover:text-indigo-800">Clear Search</a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Brand Table -->
+    {% set brand_headers = ['S.No', 'Brand Name', 'Description', 'Logo', 'Actions'] %}
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                {% for header in brand_headers %}
+                <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                    {{ header }}
+                </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for brand in brands %}
+            <tr class="border-t text-center">
+                <td class="px-6 py-4">{{ loop.index }}</td>
+                <td class="px-6 py-4">{{ brand.name }}</td>
+                <td class="px-6 py-4">{{ brand.description }}</td>
+                <td class="px-6 py-4 w-24">
+                    {% if brand.logo_path %}
+                    <img src="/static/{{ brand.logo_path }}" alt="{{ brand.name }} logo" class="w-full object-contain">
+                    {% else %}
+                    <img src="/static/default-logo.png" alt="Default logo" class="w-12 h-12 object-contain">
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 mt-3 flex items-center justify-center space-x-6">
+                    <!-- Edit Button -->
+                    <a href="{{ url_for('admin_api.update_brand_page', brand_id=brand.id) }}"
+                        class="text-blue-600 hover:text-blue-800">Edit</a>
+                    <!-- Delete Button -->
+                    <form action="{{ url_for('admin_api.delete_brand', brand_id=brand.id) }}" method="POST"
+                        class="inline">
+                        <button type="submit" class="text-red-600 hover:text-red-800">Delete</button>
+                    </form>
+                </td>
+
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center py-4 text-gray-500">No brands found.</td>
+                <!-- Adjusted colspan for 6 columns -->
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
+        <!-- Items per page selector -->
+        <div class="flex items-center gap-2 relative w-fit">
+            <span class="text-sm text-gray-600">Items per page:</span>
+            <div class="relative">
+                <select onchange="window.location.href = this.value"
+                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 appearance-none">
+                    {% for amount in [10, 20, 50, 100] %}
+                    <option value="{{ url_for('admin_api.get_brand_list_page', limit=amount, page=1, search=search) }}"
+                        {% if limit==amount %}selected{% endif %}>
+                        {{ amount }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <span
+                    class="material-symbols-outlined pointer-events-none absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500">
+                    expand_more
+                </span>
+            </div>
+        </div>
+
+        <!-- Page Navigation -->
+        <div class="flex items-center gap-2">
+            {% if pagination.has_prev %}
+            <a href="{{ url_for('admin_api.get_brand_list_page', page=pagination.prev_num, limit=limit, search=search) }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition">
+                Previous
+            </a>
+            {% else %}
+            <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>
+            {% endif %}
+
+            <span class="px-4 py-2 text-sm">
+                Page {{ pagination.page }} of {{ pagination.pages }}
+            </span>
+
+            {% if pagination.has_next %}
+            <a href="{{ url_for('admin_api.get_brand_list_page', page=pagination.next_num, limit=limit, search=search) }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition">
+                Next
+            </a>
+            {% else %}
+            <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block js %}
+<!-- Optional JavaScript here -->
+{% endblock %}

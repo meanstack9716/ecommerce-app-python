@@ -12,3 +12,4 @@ from .sub_category_routes import *
 from .sub_sub_category_routes import *
 from .add_products_routes import *
 from .seller_routes import *
+from .brands_routes import *
