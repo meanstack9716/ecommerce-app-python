@@ -58,6 +58,9 @@ def create_ad():
         gender = data.get('gender') if data.get('gender') in ALLOWED_GENDERS else None
         total_stocks = data.get('total_stocks')
         sku_number = data.get('sku_number')
+        if not sku_number:
+            return jsonify({'error': 'SKU number is required'}), 400
+
         # Handle brand
         brand = None
         brand_value = data.get('brand_id')
@@ -100,60 +103,41 @@ def create_ad():
             except (KeyError, ValueError) as e:
                 return jsonify({'error': f'Invalid variation data: {str(e)}'}), 400
 
-        variant_images = []
+        # Process color-specific images
+        color_images = {}
         for file_key in request.files:
             if file_key.startswith('images[') and file_key.endswith(']'):
-                parts = file_key[7:-1].split('][')
-                if len(parts) != 2:
-                    continue
-
-                color_name = parts[0]
-                size_name = parts[1]
-
+                color_name = file_key[7:-1]
+                if color_name not in color_images:
+                    color_images[color_name] = []
                 for file in request.files.getlist(file_key):
                     image_path, error = upload_image(file)
                     if error:
                         return jsonify({'error': 'Image upload failed', 'images': error}), 400
+                    color_images[color_name].append(image_path)
 
-                    # Find matching variant
-                    matching_variant = None
-                    for v in variants:
-                        if v.size == size_name and v.color == color_name:
-                            matching_variant = v
-                            break
-
-                    if matching_variant:
-                        image = ProductVariantImage(
-                            variant_id=matching_variant.id,
-                            image_url=image_path,
-                            alt_text=f"{data['name']} - {color_name} - {size_name}",
-                            is_primary=False
-                        )
-                        variant_images.append(image)
-
-                        # Add image reference to variant (with temp_images field)
-                        if not hasattr(matching_variant, 'temp_images'):
-                            matching_variant.temp_images = []
-                        matching_variant.temp_images.append(image)
-
-        # Save all variants with their images
+        # Save all variants
         saved_variants = []
         for variant in variants:
-            # Save the variant first to get an ID
-            variant.save()
-
-            # Save all images for this variant
-            if hasattr(variant, 'temp_images'):
-                for image in variant.temp_images:
-                    image.variant_id = variant.id
-                    image.variant = variant
-                    image.save()
-                    variant.images.append(image)
-
             variant.save()
             saved_variants.append(variant)
 
-        # Handle thumbnail (primary image)
+        # Associate color images with variants
+        for variant in saved_variants:
+            color = variant.color
+            if color in color_images:
+                for image_url in color_images[color]:
+                    image = ProductVariantImage(
+                        variant_id=variant.id,
+                        image_url=image_url,
+                        alt_text=f"{data['name']} - {color} - {variant.size}",
+                        is_primary=False
+                    )
+                    image.save()
+                    variant.images.append(image)
+            variant.save()
+
+        # Handle thumbnail (primary image - attach to first variant)
         thumbnail_path = None
         if 'thumbnail' in request.files:
             thumbnail_file = request.files['thumbnail']
@@ -162,7 +146,6 @@ def create_ad():
                 if error:
                     return jsonify({'error': 'Thumbnail upload failed', 'thumbnail': error}), 400
 
-                # Create as a primary variant image (attach to first variant)
                 if saved_variants:
                     primary_image = ProductVariantImage(
                         variant_id=saved_variants[0],
@@ -194,7 +177,7 @@ def create_ad():
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
-        product.save()  # Save the product itself
+        product.save()
 
         # Now assign product_id to variants
         for variant in saved_variants:
@@ -216,7 +199,6 @@ def create_ad():
             "error": "An unexpected error occurred",
             "details": str(e)
         }), 500
-
 
 @products_bp.route(PRODUCT_LISTS_API, methods=['GET'])
 def list_products():

@@ -49,7 +49,7 @@ class Products(db.Document):
     name = db.StringField(required=True, max_length=255)
     description = db.StringField()
     
-    sku_number = db.StringField()
+    sku_number = db.StringField(required=True, unique=True)
     category_id = db.ReferenceField(Category, required=True)
     subcategory_id = db.ReferenceField(SubCategory, required=True)
     subsubcategory_id = db.ReferenceField(SubSubCategory, required=True)

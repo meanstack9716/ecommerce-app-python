@@ -115,10 +115,7 @@
                     <td class="px-4 py-2 border text-center">{{ product.name }}</td>
                     <!-- Price -->
                     <td class="px-4 py-2 border text-center">
-                        <p class="font-bold text-black">${{ product.price }}</p>
-                        {% if product.discount_price > 0 %}
-                        <p class="text-xs text-gray-500 line-through">${{ product.discount_price }}</p>
-                        {% endif %}
+                        <p class="font-bold text-black">₹{{ product.price|int }}</p>
                     </td>
 
                     <!-- Discount -->

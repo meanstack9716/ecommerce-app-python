@@ -47,8 +47,7 @@
 
             <div>
                 <label for="discount_price" class="block text-sm font-medium text-gray-700 mb-1">Discount (%)</label>
-                <input type="number" name="discount_price" id="discount_price" value="0" step="0.01" min="0"
-                    max="100"
+                <input type="number" name="discount_price" id="discount_price" value="0" step="0.01" min="0" max="100"
                     class="mt-2 block w-full border rounded-md border border-gray-300 px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm">
             </div>
 
@@ -85,13 +84,7 @@
                 <input type="text" id="other-brand" name="other_brand" placeholder="Enter other brand"
                     class="mt-2 block w-full border rounded-md border-gray-300 px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out text-sm hidden">
             </div>
-          
-            <div>
-                <label for="tags" class="block text-sm font-medium text-gray-700 mb-1">Tags <span
-                        class="text-red-500">*</span></label>
-                <input type="text" name="tags" id="tags" placeholder="tag1, tag2, tag3"
-                    class="mt-2 block w-full border rounded-md border border-gray-300 px-5 py-3 h-[46px] focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm">
-            </div>
+
         </div>
     </div>
 
@@ -190,7 +183,21 @@
 
 <script>
     let variationCount = 0;
-    const colorsAddedForImages = new Set();
+    const colorsAddedForImages = {}; // Object to track colors with image upload boxes
+
+    function isDuplicateVariation(size, color, currentVariationDiv) {
+        const otherVariations = document.querySelectorAll('#variations-container .variation-group');
+        for (const otherDiv of otherVariations) {
+            if (otherDiv !== currentVariationDiv) {
+                const otherSizeSelect = otherDiv.querySelector('select[name="size"]');
+                const otherColorSelect = otherDiv.querySelector('select[name="color"]');
+                if (otherSizeSelect.value === size && otherColorSelect.value === color && size && color) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     function addVariation(e) {
         if (e) e.preventDefault();
@@ -199,7 +206,10 @@
         const container = document.getElementById('variations-container');
 
         const div = document.createElement('div');
-        div.className = 'variation-group p-4 border rounded-lg bg-gray-50';
+        div.className = 'variation-group p-4 border rounded-lg bg-gray-50 relative flex items-center space-x-6 w-full';
+        const variationId = `variation-${variationCount}`; // Unique ID for each variation
+        div.dataset.variationId = variationId; // Store ID in the DOM
+
         div.innerHTML = `
             <div class="flex items-center space-x-6 w-full relative">
                 <div class="w-full">
@@ -224,12 +234,13 @@
                 <div class="w-full">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Color: </label>
                     <div class="relative w-full sm:min-w-64">
-                        <select name="color" onchange="handleColorChange(this)" class="border border-gray-300 cursor-pointer rounded-lg px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
+                        <select name="color" onchange="handleColorChange(this, '${variationId}')" class="border border-gray-300 cursor-pointer rounded-lg px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
                             <option value="">Select Color</option>
                             <option value="Red">Red</option>
                             <option value="Green">Green</option>
                             <option value="Blue">Blue</option>
                             <option value="Black">Black</option>
+                            <option value="White">White</option>
                             <option value="Other">Other</option>
                         </select>
                         <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">
@@ -245,13 +256,10 @@
                 <span class="material-symbols-outlined absolute -top-3.5 -right-2.5 text-xl cursor-pointer" onclick="removeVariation(this)">cancel</span>
             </div>
            <div id="custom-color-fields" class="hidden mt-2 flex items-center justify-between space-x-8">
-                <!-- Color Picker -->
                 <input type="color" id="favcolor" name="favcolor" value="#ff0000" onchange="updateHexCode(this)">
-    
-                <!-- Hex Code Input (will be automatically updated) -->
+
                 <input type="text" id="hex-color" placeholder="Enter Hex Code (e.g., #FF5733)" class="mt-1 block w-full border rounded-md px-4 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm" readonly>
 
-                <!-- Color Name Input -->
                 <input type="text" id="color-name" placeholder="Enter Color Name (e.g., Custom Red)" class="mt-1 block w-full border rounded-md px-4 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm">
             </div>
         `;
@@ -262,11 +270,17 @@
         const div = btn.closest('.variation-group');
         if (div) {
             const colorSelect = div.querySelector('select[name="color"]');
-            if (colorSelect && colorSelect.value) {
-                const color = colorSelect.value;
-                const otherVariationsWithSameColor = document.querySelectorAll(`.variation-group select[name="color"][value="${color}"]`);
-                if (otherVariationsWithSameColor.length <= 1) {
-                    removeColorImage(color);
+            const color = colorSelect.value;
+            const variationId = div.dataset.variationId;
+            if (color) {
+                // Decrement the count for the color
+                if (colorsAddedForImages[color]) {
+                    colorsAddedForImages[color]--;
+                    // If the count becomes zero, remove the image upload container
+                    if (colorsAddedForImages[color] === 0) {
+                        removeColorImageContainer(color);
+                        delete colorsAddedForImages[color];
+                    }
                 }
             }
             div.remove();
@@ -275,81 +289,94 @@
 
     function updateHexCode(colorPicker) {
         const selectedColor = colorPicker.value;
-        
         const hexColorInput = document.getElementById('hex-color');
         hexColorInput.value = selectedColor;
     }
 
-    function handleColorChange(selectElem) {
+    function handleColorChange(selectElem, variationId) {
         const previousColor = selectElem.dataset.previousColor;
         const newColor = selectElem.value;
         selectElem.dataset.previousColor = newColor;
+        const variationDiv = selectElem.closest('.variation-group');
 
-        // If "Other" is selected, show custom color inputs
+        // Hide or show custom color fields
+        const customColorFields = variationDiv.querySelector('#custom-color-fields');
         if (newColor === 'Other') {
-            document.getElementById('custom-color-fields').classList.remove('hidden');
+            customColorFields.classList.remove('hidden');
         } else {
-            document.getElementById('custom-color-fields').classList.add('hidden');
-            // Handle color changes for predefined options
-            if (previousColor && previousColor !== newColor) {
-                const otherVariationsWithSameColor = document.querySelectorAll(`.variation-group select[name="color"][value="${previousColor}"]`);
-                if (otherVariationsWithSameColor.length === 0) {
-                    removeColorImage(previousColor);
-                }
-            }
+            customColorFields.classList.add('hidden');
+        }
 
-            if (newColor && !colorsAddedForImages.has(newColor)) {
-                addColorImageUpload(newColor);
+        // If the new color is selected and it's not empty or the default, add the image upload
+        if (newColor && newColor !== '' && newColor !== 'Select Color') {
+            addColorImageUpload(newColor);
+        }
+
+        // If the color changed and there was a previous color, we might need to adjust counts
+        if (previousColor && previousColor !== newColor) {
+            // Decrement count for the previous color
+            if (colorsAddedForImages[previousColor]) {
+                colorsAddedForImages[previousColor]--;
+                if (colorsAddedForImages[previousColor] === 0) {
+                    removeColorImageContainer(previousColor);
+                    delete colorsAddedForImages[previousColor];
+                }
             }
         }
     }
 
     function addColorImageUpload(color) {
-        if (colorsAddedForImages.has(color)) return;
-
-        colorsAddedForImages.add(color);
-
         const container = document.getElementById('color-images-container');
-        const template = document.getElementById('image-upload-template');
-        const clone = template.cloneNode(true);
-        clone.id = `color-image-${color}`;
-        clone.classList.remove('hidden');
+        const existingContainer = document.getElementById(`color-image-${color}`);
 
-        clone.innerHTML = clone.innerHTML.replace(/__COLOR__/g, color);
+        if (!existingContainer) {
+            const template = document.getElementById('image-upload-template');
+            const newContainer = document.createElement('div');
+            newContainer.id = `color-image-${color}`;
+            newContainer.innerHTML = template.innerHTML.replace(/__COLOR__/g, color);
 
-        container.appendChild(clone);
+            // Update the file input (no variation ID needed here as it's per color)
+            const fileInput = newContainer.querySelector('input[type="file"]');
+            fileInput.name = `colorImage_${color}`;
+            fileInput.id = `fileInput-${color}`;
+            fileInput.setAttribute('onchange', `handleImagePreview(event, '${color}')`);
+
+            // Update preview div
+            const previewDiv = newContainer.querySelector('[id^="preview-"]');
+            previewDiv.id = `preview-${color}`;
+
+            // Update remove button
+            const removeAllBtn = newContainer.querySelector('button[onclick^="removeColorImage"]');
+            removeAllBtn.setAttribute('onclick', `removeAllColorImages('${color}')`);
+
+            // Update container click handler
+            const uploadContainer = newContainer.querySelector('[onclick^="triggerFileInput"]');
+            uploadContainer.setAttribute('onclick', `triggerFileInput('${color}')`);
+
+            container.appendChild(newContainer);
+            colorsAddedForImages[color] = (colorsAddedForImages[color] || 0) + 1;
+        } else {
+            // If the container exists, just increment the count
+            colorsAddedForImages[color] = (colorsAddedForImages[color] || 0) + 1;
+        }
     }
 
-    function removeColorImage(color) {
-        const div = document.getElementById(`color-image-${color}`);
-        if (div) div.remove();
-
-        colorsAddedForImages.delete(color);
+    function removeColorImageContainer(color) {
+        const divToRemove = document.getElementById(`color-image-${color}`);
+        if (divToRemove) {
+            divToRemove.remove();
+        }
     }
 
-    function submitData() {
-        const variations = [];
-        const variationDivs = document.querySelectorAll('#variations-container .variation-group');
-        variationDivs.forEach(div => {
-            const size = div.querySelector('select[name="size"]').value;
-            const color = div.querySelector('select[name="color"]').value;
-            const quantity = div.querySelector('input[name="quantity"]').value;
-            if (size && color && quantity) {
-                variations.push({ size, color, quantity });
-            }
-        });
-
-        const images = [];
-        document.querySelectorAll('#color-images-container div[id^="color-image-"]').forEach(div => {
-            const color = div.id.replace('color-image-', '');
-            const fileInput = div.querySelector('input[type="file"]');
-            if (fileInput && fileInput.files.length > 0) {
-                images.push({
-                    color: color,
-                    file: fileInput.files[0].name
-                });
-            }
-        });
+    function removeAllColorImages(color) {
+        const fileInput = document.querySelector(`#color-image-${color} input[type="file"]`);
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        const previewContainer = document.getElementById(`preview-${color}`);
+        if (previewContainer) {
+            previewContainer.innerHTML = '';
+        }
     }
 
     function triggerFileInput(color) {
@@ -367,11 +394,10 @@
             reader.onload = (e) => {
                 const imageWrapper = document.createElement('div');
                 imageWrapper.className = 'relative w-32 h-32 rounded overflow-hidden shadow';
-
                 imageWrapper.innerHTML = `
-                <img src="${e.target.result}" alt="preview" class="object-cover w-full h-full rounded">
-                <span class="material-symbols-outlined text-md absolute top-0.5 right-1 cursor-pointer" onclick="removeSingleImage('${color}', ${index})">cancel</span>
-            `;
+                    <img src="${e.target.result}" alt="preview" class="object-cover w-full h-full rounded">
+                    <span class="material-symbols-outlined text-md absolute top-0.5 right-1 cursor-pointer" onclick="removeSingleImage('${color}', ${index})">cancel</span>
+                `;
                 previewContainer.appendChild(imageWrapper);
             };
             reader.readAsDataURL(file);
@@ -379,21 +405,54 @@
     }
 
     function removeSingleImage(color, index) {
-        const fileInput = document.querySelector(`input[name="colorImage_${color}"]`);
+        const fileInput = document.querySelector(`#fileInput-${color}`);
         const dt = new DataTransfer();
+        const files = Array.from(fileInput.files);
 
-        [...fileInput.files].forEach((file, i) => {
-            if (i !== index) dt.items.add(file);
+        files.forEach((file, i) => {
+            if (i !== index) {
+                dt.items.add(file);
+            }
         });
 
         fileInput.files = dt.files;
         handleImagePreview({ target: fileInput }, color);
     }
 
+    document.getElementById('variations-container').addEventListener('change', function (event) {
+        const target = event.target;
+        if (target.tagName === 'SELECT' && (target.name === 'size' || target.name === 'color')) {
+            const variationDiv = target.closest('.variation-group');
+            const sizeSelect = variationDiv.querySelector('select[name="size"]');
+            const colorSelect = variationDiv.querySelector('select[name="color"]');
+
+            const currentSize = sizeSelect.value;
+            const currentColor = colorSelect.value;
+
+            if (currentSize && currentColor) {
+                if (isDuplicateVariation(currentSize, currentColor, variationDiv)) {
+                    showToast('Yeh size aur color combination pehle se add kiya ja chuka hai!', 'error');
+                    if (target === sizeSelect) {
+                        sizeSelect.value = target.dataset.previousValue || '';
+                    } else {
+                        colorSelect.value = target.dataset.previousValue || '';
+                    }
+                    // If a duplicate is found, we don't need to do anything with the image box here,
+                    // as the handleColorChange will manage it based on the new color selection.
+                } else {
+                    target.dataset.previousValue = target.value;
+                    // handleColorChange will ensure the image upload is present if the color is valid
+                }
+            } else if (currentColor && currentColor !== '' && currentColor !== 'Select Color') {
+                // handleColorChange will ensure the image upload is present if only color is selected
+            }
+        }
+    });
 
     // Initialize with one variation
     document.addEventListener('DOMContentLoaded', () => {
         addVariation();
     });
+
 </script>
 {% endblock %}

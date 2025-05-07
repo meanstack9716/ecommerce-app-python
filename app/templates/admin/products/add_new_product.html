@@ -173,86 +173,69 @@
         document.getElementById('step-2').addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            const formValues = {
-                // Basic Information
-                title: document.getElementById('title').value,
-                description: document.getElementById('description').value,
+            if (!validateFormFields()) {
+                return
+            }
 
-                // Pricing & Inventory
+            const formValues = {
+                name: document.getElementById('title').value,
+                description: document.getElementById('description').value,
                 price: document.getElementById('price').value,
                 discount_price: document.getElementById('discount_price').value,
-                stock: document.getElementById('stock').value,
-                sku: document.getElementById('sku').value,
-
-                // Product Attributes
-                brand: document.getElementById('brand').value,
-                other_brand: document.getElementById('other-brand').value,
-                tags: document.getElementById('tags').value,
-
-                // Hidden fields
+                total_stocks: document.getElementById('stock').value,
+                sku_number: document.getElementById('sku').value,
                 category_id: document.getElementById('hidden-category-id').value,
-                sub_category_id: document.getElementById('hidden-sub-category-id').value,
+                subcategory_id: document.getElementById('hidden-sub-category-id').value,
                 subsubcategory_id: document.getElementById('hidden-sub_sub_categories_id').value,
             };
 
-            // Get all variations
+            const brand = document.getElementById('brand').value;
+            formValues.brand_id = (brand === 'other') ? document.getElementById('other-brand').value : brand;
+
             const variations = [];
-            document.querySelectorAll('#variations-container .variation-group').forEach(variation => {
-                const size = variation.querySelector('select[name="size"]').value;
-                const color = variation.querySelector('select[name="color"]').value;
-                const quantity = variation.querySelector('input[name="quantity"]').value;
+            const variationDivs = document.querySelectorAll('#variations-container .variation-group');
+            variationDivs.forEach(div => {
+                const size = div.querySelector('select[name="size"]').value;
+                const colorSelect = div.querySelector('select[name="color"]');
+                const color = colorSelect.value;
+                const quantity = div.querySelector('input[name="quantity"]').value;
 
-                // For custom colors
-                let finalColor = color;
-                if (color === 'Other') {
-                    const hexColor = variation.querySelector('#hex-color').value;
-                    const colorName = variation.querySelector('#color-name').value;
-                    finalColor = colorName || hexColor;
-                }
-
-                if (size && finalColor && quantity) {
-                    variations.push({
-                        size,
-                        color: finalColor,
-                        quantity: parseInt(quantity)
-                    });
+                if (size && color && quantity) {
+                    variations.push({ size, color, quantity });
                 }
             });
-            formValues.variations = variations;
 
-            // Prepare FormData for file uploads
             const formData = new FormData();
 
-            // Append all regular form values
+            // Append basic form values
             for (const key in formValues) {
-                if (key === 'variations') {
-                    formData.append(key, JSON.stringify(formValues[key]));
-                } else {
-                    formData.append(key, formValues[key]);
-                }
+                formData.append(key, formValues[key]);
             }
 
-            // Append all image files
-            const colorImagesContainer = document.querySelector('#color-images-container');
-            let hasImages = false;
+            // Append the stringified variations array
+            formData.append('variations', JSON.stringify(variations));
 
-            colorImagesContainer.querySelectorAll('div[id^="color-image-"]').forEach(div => {
-                const color = div.id.replace('color-image-', '');
-                const fileInput = div.querySelector('input[type="file"]');
+            // Append thumbnail
+            const thumbnailInput = document.getElementById('thumbnail');
+            if (thumbnailInput && thumbnailInput.files.length > 0) {
+                formData.append('thumbnail', thumbnailInput.files[0]);
+            }
 
-                if (fileInput && fileInput.files.length > 0) {
-                    hasImages = true;
-                    // Append each file with the correct field name
+            // Append images for each variation
+            const colorImageContainers = document.querySelectorAll('#color-images-container > div[id^="color-image-"]');
+            colorImageContainers.forEach(container => {
+                const color = container.id.split('-')[2];
+                const fileInputs = container.querySelectorAll('input[type="file"]');
+                fileInputs.forEach(fileInput => {
                     for (let i = 0; i < fileInput.files.length; i++) {
                         formData.append(`images[${color}]`, fileInput.files[i]);
                     }
-                }
+                });
+            });
+            formData.forEach((value, key) => {
+                console.log(key + ': ', value);
             });
 
-            if (!hasImages) {
-                showToast('Please upload at least one image', 'error');
-                return;
-            }
 
             // Update button state
             const submitText = document.getElementById('submit-text');
@@ -273,7 +256,7 @@
                         window.location.href = '/products/list';
                     }, 100);
                 } else {
-                    handleFormErrors(result);
+                    showToast(result, 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -284,6 +267,7 @@
                 submitButton.disabled = false;
             }
         });
+        
         function validateFormFields() {
             let isValid = true;
 
@@ -298,38 +282,14 @@
             isValid = validators.required(document.getElementById('price'), 'Price') && isValid;
 
             isValid = validators.required(document.getElementById('stock'), 'Stock') && isValid;
-            isValid = validators.required(document.getElementById('stock'), 'Stock') && isValid;
+            isValid = validators.required(document.getElementById('discount_price'), 'Discount Price') && isValid;
 
             isValid = validators.required(document.getElementById('sku'), 'SKU') && isValid;
 
             isValid = validators.required(document.getElementById('brand'), 'Brand') && isValid;
-            isValid = validators.required(document.getElementById('tags'), 'Tags') && isValid;
 
             return isValid;
         }
-
-        function handleFormErrors(result) {
-            if (result.errors) {
-                Object.keys(result.errors).forEach(field => {
-                    const fieldError = result.errors[field];
-                    if (field === 'exception') {
-                        showToast('An exception occurred, please try again later.', 'error');
-                    } else {
-                        const fieldElement = document.querySelector(`[name="${field}"]`) ||
-                            document.getElementById(field);
-                        if (fieldElement) {
-                            showErrorMessage(fieldElement, fieldError);
-                        } else {
-                            showToast(fieldError, 'error');
-                        }
-                    }
-                });
-            } else {
-                showToast(result.message || 'An error occurred', 'error');
-            }
-            console.error('Error:', result.errors || result.message);
-        }
-
         updateUI();
     });
 </script>

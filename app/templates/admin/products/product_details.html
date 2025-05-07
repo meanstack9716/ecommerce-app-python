@@ -10,9 +10,7 @@
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-        <!-- Product Image Section -->
         <div class="flex gap-4">
-            <!-- Thumbnails Column -->
             <div class="flex flex-col gap-2 overflow-y-auto max-h-[500px]">
                 {% for variant in product.variants %}
                 {% for img in variant.images %}
@@ -24,7 +22,6 @@
                 {% endfor %}
             </div>
 
-            <!-- Main Image -->
             <div class="relative flex-1">
                 <img id="main-image"
                     src="/static/{{ product.variants[0].images[0].image_url if product.variants[0].images else 'images/placeholder.png' }}"
@@ -33,22 +30,21 @@
         </div>
 
 
-        <!-- Product Details Section -->
         <div class="space-y-6">
             <h1 class="text-3xl font-bold text-black mb-2">{{ product.name }}</h1>
             <p class="text-sm text-gray-500 mb-4">SKU: {{ product.sku_number }}</p>
 
             <div class="flex items-center gap-4 mb-4">
-                <p class="text-2xl font-bold text-black">${{ product.discount_price }}</p>
-                {% if product.discount_price < product.price %} <p class="text-lg line-through text-gray-500">${{
-                    product.price }}</p>
-                    <span class="text-green-600 font-semibold">{{ product.price - product.discount_price }}% OFF</span>
-                    {% endif %}
+                <p class="text-2xl font-bold text-black">₹{{ product.price|int }}</p>
+                {% if product.discount_price %}
+                <span class="text-green-600 font-semibold">{{ product.discount_price }}% OFF</span>
+                {% endif %}
             </div>
 
-            <p id="desc-{{ product.id }}" class="text-gray-700 mb-6">{{ product.description }}</p>
+            <div id="desc-{{ product.id }}" class="text-gray-700 mb-6" style="white-space: pre-wrap;">
+                {{ product.description|safe }}
+            </div>
 
-            <!-- Color Options -->
             <div class="mb-4">
                 <p class="font-semibold text-black mb-1">Colors:</p>
                 <div id="color-options" class="flex gap-2">
@@ -60,7 +56,6 @@
                 </div>
             </div>
 
-            <!-- Size Options -->
             <div class="mb-4">
                 <p class="font-semibold text-black mb-1">Available Sizes:</p>
                 <div id="size-options" class="flex gap-2 flex-wrap">
@@ -71,9 +66,7 @@
                     {% endfor %}
                 </div>
             </div>
-            <!-- Actions -->
             <div class="flex flex-col sm:flex-row sm:items-center gap-4 mt-6">
-                <!-- Quantity Selector -->
                 <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden shadow-sm">
                     <button type="button" onclick="adjustQty(-1)"
                         class="px-3 py-2 text-lg font-bold text-gray-700 hover:bg-gray-100 focus:outline-none">
@@ -87,9 +80,6 @@
                     </button>
                 </div>
 
-                <!-- Add to Cart Button -->
-
-
                 <form id="add-to-cart-form" method="POST" action="{{ url_for('add_to_cart_bp.add_to_cart') }}">
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     <input type="hidden" name="product_name" value="{{ product.name }}">
@@ -98,18 +88,17 @@
                     <input type="hidden" name="size" id="selected-size">
                     <input type="hidden" name="color" id="selected-color">
                     <input type="hidden" name="quantity" id="selected-quantity">
-                    
                     <input type="hidden" name="product_images" id="product-images">
-                    
                     <button type="submit"
-                        class="flex-1 bg-black text-white px-6 py-3 rounded-lg shadow hover:bg-gray-800 transition duration-300 text-center">
+                        class="flex-1 bg-black text-white px-6 cursor-pointer py-3 rounded-lg shadow hover:bg-gray-800 transition duration-300 text-center"
+                        disabled>
                         Add to Cart
                     </button>
                 </form>
-            
-                <!-- Buy Now Button -->
+
                 <button
-                    class="flex-1 border border-black text-black px-6 py-3 rounded-lg shadow hover:bg-gray-100 transition duration-300 text-center">
+                    class="flex-1 border border-black text-black px-6 py-3 rounded-lg shadow hover:bg-gray-100 transition duration-300 text-center"
+                    disabled>
                     Buy Now
                 </button>
             </div>
@@ -121,94 +110,97 @@
     const productVariants = {{ product.variants | tojson }};
     let selectedSize = null;
     let selectedColor = null;
+    const sizeButtons = document.querySelectorAll('.size-btn');
+    const colorButtons = document.querySelectorAll('.color-btn');
+    const thumbnails = document.querySelectorAll('.thumbnail');
+    const mainImage = document.querySelector('#main-image');
+    const addToCartButton = document.querySelector('#add-to-cart-form button[type="submit"]');
+    const buyNowButton = document.querySelector('.flex-col.sm\\:flex-row button:last-child'); // Assuming Buy Now is the last button
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const thumbnails = document.querySelectorAll('.thumbnail');
-        const mainImage = document.querySelector('#main-image');
-
-        function updateThumbnails() {
-            thumbnails.forEach(thumb => {
-                const thumbSize = thumb.dataset.size;
-                const thumbColor = thumb.dataset.color;
-                if (
-                    (!selectedSize || thumbSize === selectedSize) &&
-                    (!selectedColor || thumbColor === selectedColor)
-                ) {
-                    thumb.style.display = 'inline-block';
-                } else {
-                    thumb.style.display = 'none';
-                }
-            });
-
-            // Update main image to first matching thumbnail
-            const visibleThumb = Array.from(thumbnails).find(thumb =>
-                thumb.style.display !== 'none'
-            );
-            if (visibleThumb) {
-                mainImage.src = visibleThumb.src;
-            }
-        }
-
-        document.querySelectorAll('.size-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                selectedSize = btn.dataset.size;
-                console.log('Size selected:', selectedSize);
-                updateThumbnails();
-            });
-        });
-
-        document.querySelectorAll('.color-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                selectedColor = btn.dataset.color;
-                console.log('Color selected:', selectedColor);
-                updateThumbnails();
-            });
-        });
-
-        // Optionally set initial active thumbnail
-        const firstThumb = document.querySelector('.thumbnail');
-        if (firstThumb) {
-            changeMainImage(firstThumb);
-        }
-    });
-
-    function changeMainImage(imgElement) {
-        const mainImage = document.getElementById('main-image');
-        mainImage.src = imgElement.src;
-
-        // Remove active from all thumbnails
-        document.querySelectorAll('.thumbnail').forEach(thumb => {
+    function updateThumbnails() {
+        thumbnails.forEach(thumb => {
+            const thumbSize = thumb.dataset.size;
+            const thumbColor = thumb.dataset.color;
+            thumb.style.display = (
+                (!selectedColor || thumbColor === selectedColor)
+            ) ? 'inline-block' : 'none';
             thumb.classList.remove('border-black', 'ring-2', 'ring-black');
             thumb.classList.add('border-gray-300');
         });
 
-        // Add active style to clicked thumbnail
+        // Update main image to the first visible thumbnail
+        const visibleThumb = Array.from(thumbnails).find(thumb => thumb.style.display !== 'none');
+        if (visibleThumb) {
+            changeMainImage(visibleThumb);
+        } else if (thumbnails.length > 0) {
+            changeMainImage(thumbnails[0]); // Fallback if no color is selected
+        } else {
+            mainImage.src = '/images/placeholder.png'; // Default placeholder
+        }
+    }
+
+    function updateSizes() {
+        sizeButtons.forEach(btn => {
+            const size = btn.dataset.size;
+            const isAvailable = productVariants.some(v => v.size === size && (!selectedColor || v.color === selectedColor));
+            btn.disabled = !isAvailable;
+            btn.classList.toggle('opacity-50', !isAvailable);
+            btn.classList.remove('border-black', 'ring-2', 'ring-black');
+            if (selectedSize === size && isAvailable) {
+                btn.classList.add('border-black', 'ring-2', 'ring-black');
+            } else if (selectedSize === size && !isAvailable) {
+                selectedSize = null; // Reset selected size if not available in new color
+            }
+        });
+
+        // Enable/disable Add to Cart and Buy Now buttons based on size and color selection
+        const canAddToCart = selectedSize && selectedColor;
+        addToCartButton.disabled = !canAddToCart;
+        buyNowButton.disabled = !canAddToCart;
+    }
+
+    function changeMainImage(imgElement) {
+        mainImage.src = imgElement.src;
+        thumbnails.forEach(thumb => {
+            thumb.classList.remove('border-black', 'ring-2', 'ring-black');
+            thumb.classList.add('border-gray-300');
+        });
         imgElement.classList.remove('border-gray-300');
         imgElement.classList.add('border-black', 'ring-2', 'ring-black');
     }
 
-    // ✅ ADD THIS: quantity adjustment
     function adjustQty(change) {
         const qtyInput = document.getElementById('quantity');
-        let currentQty = parseInt(qtyInput.value);
-        if (isNaN(currentQty)) currentQty = 1;
+        let currentQty = parseInt(qtyInput.value) || 1;
         currentQty += change;
-        if (currentQty < 1) currentQty = 1; // don't go below 1
-        qtyInput.value = currentQty;
+        qtyInput.value = Math.max(1, currentQty);
     }
-    document.querySelectorAll('.size-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            selectedSize = btn.dataset.size;
-            document.getElementById('selected-size').value = selectedSize;
-            updateThumbnails();
-        });
-    });
 
-    document.querySelectorAll('.color-btn').forEach(btn => {
+    colorButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             selectedColor = btn.dataset.color;
             document.getElementById('selected-color').value = selectedColor;
+            // Remove active class from other color buttons
+            colorButtons.forEach(cBtn => cBtn.classList.remove('ring-2', 'ring-black', 'border-black'));
+            // Add active class to the clicked color button
+            btn.classList.add('ring-2', 'ring-black', 'border-black');
+            selectedSize = null; // Reset size selection on color change
+            document.getElementById('selected-size').value = null;
             updateThumbnails();
+            updateSizes();
+        });
+    });
+
+    sizeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedSize = btn.dataset.size;
+            document.getElementById('selected-size').value = selectedSize;
+            // Remove active class from other size buttons
+            sizeButtons.forEach(sBtn => sBtn.classList.remove('ring-2', 'ring-black', 'border-black'));
+            // Add active class to the clicked size button
+            btn.classList.add('ring-2', 'ring-black', 'border-black');
+            updateThumbnails(); // Keep thumbnails consistent with selected color
+            updateSizes(); // Ensure button states are correct
         });
     });
 
@@ -216,6 +208,18 @@
     document.getElementById('add-to-cart-form').addEventListener('submit', () => {
         document.getElementById('selected-quantity').value = document.getElementById('quantity').value;
     });
+
+    // Initial setup on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initially select the first color if available
+        if (colorButtons.length > 0) {
+            colorButtons[0].click();
+        } else {
+            updateThumbnails();
+            updateSizes();
+        }
+    });
+
 
 </script>
 
