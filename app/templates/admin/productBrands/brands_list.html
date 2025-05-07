@@ -32,17 +32,15 @@
     </form>
 
     <!-- Brand Table -->
+    {% set brand_headers = ['S.No', 'Brand Name', 'Description', 'Logo', 'Actions'] %}
     <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
-                <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">#</th>
-                <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Brand Name
+                {% for header in brand_headers %}
+                <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                    {{ header }}
                 </th>
-                <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Description
-                </th>
-                <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Logo</th>
-                <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Actions
-                </th> <!-- Added Actions Column -->
+                {% endfor %}
             </tr>
         </thead>
         <tbody>
@@ -51,18 +49,17 @@
                 <td class="px-6 py-4">{{ loop.index }}</td>
                 <td class="px-6 py-4">{{ brand.name }}</td>
                 <td class="px-6 py-4">{{ brand.description }}</td>
-                <td class="px-6 py-4">
+                <td class="px-6 py-4 w-24">
                     {% if brand.logo_path %}
-                    <img src="/static/{{ brand.logo_path }}" alt="{{ brand.name }} logo"
-                        class="w-12 h-12 object-contain">
+                    <img src="/static/{{ brand.logo_path }}" alt="{{ brand.name }} logo" class="w-full object-contain">
                     {% else %}
                     <img src="/static/default-logo.png" alt="Default logo" class="w-12 h-12 object-contain">
                     {% endif %}
                 </td>
                 <td class="px-6 py-4 mt-3 flex items-center justify-center space-x-6">
-                        <!-- Edit Button -->
-                        <a href="{{ url_for('admin_api.update_brand_page', brand_id=brand.id) }}"
-                            class="text-blue-600 hover:text-blue-800">Edit</a>
+                    <!-- Edit Button -->
+                    <a href="{{ url_for('admin_api.update_brand_page', brand_id=brand.id) }}"
+                        class="text-blue-600 hover:text-blue-800">Edit</a>
                     <!-- Delete Button -->
                     <form action="{{ url_for('admin_api.delete_brand', brand_id=brand.id) }}" method="POST"
                         class="inline">
@@ -105,7 +102,7 @@
         <div class="flex items-center gap-2">
             {% if pagination.has_prev %}
             <a href="{{ url_for('admin_api.get_brand_list_page', page=pagination.prev_num, limit=limit, search=search) }}"
-                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition text-sm">
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition">
                 Previous
             </a>
             {% else %}
@@ -118,7 +115,7 @@
 
             {% if pagination.has_next %}
             <a href="{{ url_for('admin_api.get_brand_list_page', page=pagination.next_num, limit=limit, search=search) }}"
-                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition text-sm">
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition">
                 Next
             </a>
             {% else %}

@@ -11,15 +11,15 @@ def get_brand_list_page():
     
     search_query = request.args.get('search', '')
     limit = int(request.args.get('limit', 10))
-    
+
     if search_query:
         brands = ProductBrands.objects(name__icontains=search_query)
     else:
         brands = ProductBrands.objects.all()
-    
+
     page = int(request.args.get('page', 1))
     brands_paginated = brands.paginate(page=page, per_page=limit)
-    
+
     return render_template('admin/productBrands/brands_list.html', 
                            brands=brands_paginated.items, 
                            pagination=brands_paginated, 
@@ -57,4 +57,3 @@ def delete_brand(brand_id):
         brand.delete()
 
     return redirect(url_for('admin_api.get_brand_list_page'))
-

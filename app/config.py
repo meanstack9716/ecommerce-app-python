@@ -2,14 +2,20 @@ import os
 from dotenv import load_dotenv
 import cloudinary
 import cloudinary.uploader
+from urllib.parse import quote_plus 
 
 load_dotenv()
+
+username = quote_plus(os.getenv('MONGO_USERNAME'))
+password = quote_plus(os.getenv('MONGO_PASSWORD'))
+
+MONGO_URI = f"mongodb+srv://{username}:{password}@cluster0.jfsv6k2.mongodb.net/"
 
 class Config:
     SECRET_KEY = os.getenv('SESSION_SECRET_KEY', 'your-secret-key-here')
     MONGODB_SETTINGS = {
         'db': os.getenv('MONGO_DB'),
-        'host': os.getenv('MONGO_URI')
+        'host': MONGO_URI
     }
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
     JWT_ACCESS_TOKEN_EXPIRES = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 3600))
