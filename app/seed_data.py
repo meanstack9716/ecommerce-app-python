@@ -4,10 +4,8 @@ from flask import url_for
 
 def seed_categories():
     if Category.objects.count() > 0:
-        print("⚠️ Categories already exist. Skipping category seeding.")
+        print("Categories already exist. Skipping category seeding.")
         return
-
-    print("🌱 Seeding categories, subcategories, product types...")
 
     category_data = {
         "MEN": ["Shirts", "Pants", "Shoes", "Accessories"],
@@ -83,7 +81,7 @@ def seed_categories():
                         img_url=f"/seed_images/product_types/{prod_type_name.lower().replace(' ', '_')}.jpg"
                     ).save()
 
-    print("✅ Category seeding complete!")
+    print("Category seeding complete!")
 
 def seed_brands():
     brand_data = [
@@ -100,7 +98,7 @@ def seed_brands():
     ]
 
     if ProductBrands.objects.count() > 0:
-        print("⚠️ Brands already exist. Skipping brand seeding.")
+        print("Brands already exist. Skipping brand seeding.")
         return
 
     for data in brand_data:
@@ -111,7 +109,7 @@ def seed_brands():
         )
         brand.save()
 
-    print("✅ Brand seeding complete!")
+    print("Brand seeding complete!")
 
 
 
