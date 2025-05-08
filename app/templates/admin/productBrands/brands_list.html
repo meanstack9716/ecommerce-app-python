@@ -51,9 +51,7 @@
                 <td class="px-6 py-4">{{ brand.description }}</td>
                 <td class="px-6 py-4 w-24">
                     {% if brand.logo_path %}
-                    <img src="/static/{{ brand.logo_path }}" alt="{{ brand.name }} logo" class="w-full object-contain">
-                    {% else %}
-                    <img src="/static/default-logo.png" alt="Default logo" class="w-12 h-12 object-contain">
+                    <img src="{{ brand.logo_path }}" alt="{{ brand.name }} logo" class="w-full object-contain">
                     {% endif %}
                 </td>
                 <td class="px-6 py-4 mt-3 flex items-center justify-center space-x-6">
