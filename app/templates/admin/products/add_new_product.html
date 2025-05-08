@@ -194,19 +194,25 @@
             formValues.brand_id = (brand === 'other') ? document.getElementById('other-brand').value : brand;
 
             const variations = [];
+            const colorSizeMap = {};
             const variationDivs = document.querySelectorAll('#variations-container .variation-group');
+
             variationDivs.forEach(div => {
                 const size = div.querySelector('select[name="size"]').value;
                 const colorSelect = div.querySelector('select[name="color"]');
-                let color = colorSelect.value; // Start with the selected dropdown value
+                let color = colorSelect.value;
                 const quantity = div.querySelector('input[name="quantity"]').value;
                 const colorHexaCodeInput = div.querySelector('input[name="color_hexa_code"]');
                 const color_hexa_code = colorHexaCodeInput ? colorHexaCodeInput.value : null;
-                const customColorNameInput = div.querySelector('#color-name_${variationId}'.replace('${variationId}', div.dataset.variationId)); // Get custom color input
+                const customColorNameInput = div.querySelector('#color-name_${variationId}'.replace('${variationId}', div.dataset.variationId));
 
-                // If "Other" is selected, use the value from the custom color name input
+                // Handle custom color names
                 if (color === 'Other' && customColorNameInput && customColorNameInput.value.trim() !== '') {
-                    color = customColorNameInput.value.trim();
+                    const customColorName = customColorNameInput.value.trim();
+                    colorSizeMap[color] = { customName: customColorName, size: size };
+                    color = customColorName;
+                } else {
+                    colorSizeMap[color] = { size: size };
                 }
 
                 if (size && color && quantity) {
@@ -233,14 +239,22 @@
             // Append images for each variation
             const colorImageContainers = document.querySelectorAll('#color-images-container > div[id^="color-image-"]');
             colorImageContainers.forEach(container => {
-                const color = container.id.split('-')[2];
-                const fileInputs = container.querySelectorAll('input[type="file"]');
-                fileInputs.forEach(fileInput => {
-                    for (let i = 0; i < fileInput.files.length; i++) {
-                        formData.append(`images[${color}]`, fileInput.files[i]);
-                    }
-                });
+                const originalColor = container.id.split('-')[2];
+                const colorInfo = colorSizeMap[originalColor];
+
+                if (colorInfo) {
+                    const actualColor = colorInfo.customName || originalColor;
+                    const size = colorInfo.size;
+
+                    const fileInputs = container.querySelectorAll('input[type="file"]');
+                    fileInputs.forEach(fileInput => {
+                        for (let i = 0; i < fileInput.files.length; i++) {
+                            formData.append(`image[${actualColor}][${size}]`, fileInput.files[i]);
+                        }
+                    });
+                }
             });
+
             formData.forEach((value, key) => {
                 console.log(key + ': ', value);
             });

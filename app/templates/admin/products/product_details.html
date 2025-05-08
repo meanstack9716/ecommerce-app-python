@@ -8,14 +8,14 @@
         <div class="lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
             <div class="mb-8 lg:mb-0">
                 <div class="relative overflow-hidden border border-gray-200">
-                    <img id="mainProductImage" src="/static/{{ product.gallery[0].img_url }}" alt="{{ product.title }}"
+                    <img id="mainProductImage" src="{{ product.gallery[0].img_url }}" alt="{{ product.title }}"
                         class="w-full h-96 object-contain transition-opacity duration-300 ease-in-out">
                 </div>
                 <div class="mt-4 grid grid-cols-4 gap-3" id="colorThumbnails">
                     {% for image in product.gallery %}
                     <div class="relative rounded-md overflow-hidden shadow-sm border border-gray-200 hover:border-blue-500 cursor-pointer transition-shadow duration-200 ease-in-out"
                         onclick="changeMainImage(this)" data-color="{{ image.color }}">
-                        <img src="/static/{{ image.img_url }}" alt="{{ product.title }} - {{ image.color }}"
+                        <img src="{{ image.img_url }}" alt="{{ product.title }} - {{ image.color }}"
                             class="w-full h-20 object-cover">
                         <div class="absolute inset-0 flex items-center justify-center"
                             id="colorIndicator-{{ loop.index0 }}">
@@ -148,10 +148,9 @@
     }
 
     // Filter images by color and update active color indicator
-    // Filter images by color and update active color indicator
     function filterImagesByColor(color) {
         const thumbnailsContainer = document.getElementById('colorThumbnails');
-        thumbnailsContainer.innerHTML = ''; // Clear existing thumbnails
+        thumbnailsContainer.innerHTML = '';
 
         let firstMatchingImage = null;
         const displayedImages = new Set(); // To keep track of displayed image URLs
@@ -159,17 +158,17 @@
         {% for image in product.gallery %}
         if ("{{ image.color }}".toLowerCase() === color.toLowerCase()) {
             if (!firstMatchingImage) {
-                firstMatchingImage = "/static/{{ image.img_url }}";
+                firstMatchingImage = "{{ image.img_url }}";
             }
             // Check if this image URL has already been displayed
-            if (!displayedImages.has("/static/{{ image.img_url }}")) {
-                displayedImages.add("/static/{{ image.img_url }}");
+            if (!displayedImages.has("{{ image.img_url }}")) {
+                displayedImages.add("{{ image.img_url }}");
                 const thumbnailDiv = document.createElement('div');
                 thumbnailDiv.className = 'relative rounded-md overflow-hidden shadow-sm border border-gray-200 hover:border-blue-500 cursor-pointer transition-shadow duration-200 ease-in-out';
                 thumbnailDiv.setAttribute('onclick', 'changeMainImage(this)');
                 thumbnailDiv.setAttribute('data-color', "{{ image.color }}");
                 thumbnailDiv.innerHTML = `
-                        <img src="/static/{{ image.img_url }}"
+                        <img src="{{ image.img_url }}"
                              alt="{{ product.title }} - {{ image.color }}"
                              class="w-full h-20 object-cover">
                         <div class="absolute inset-0 flex items-center justify-center" id="colorIndicator-{{ loop.index0 }}">

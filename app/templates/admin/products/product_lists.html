@@ -92,27 +92,19 @@
                     <!-- Image with Swiper and badge -->
                     <td class="px-3 py-2 border text-center">
                         <div class="relative w-40 mx-auto">
-                            <div class="swiper mySwiper-{{ product.id }}">
-                                <div class="swiper-wrapper">
-                                    {% if product.variants %}
+                            <div class="flex justify-center">
+                                {% if product.variants %}
                                     {% for variant in product.variants %}
-                                    {% for image in variant.images %}
-                                    <div class="swiper-slide">
-                                        <img src="/static/{{ image.image_url }}" alt="{{ product.title }}"
-                                            class="w-full h-16 object-contain rounded" />
-                                    </div>
+                                        {% if variant.images %}
+                                            <img src="{{ variant.images.0.image_url }}" alt="{{ product.title }}"
+                                                class="w-16 h-16 object-contain rounded" />
+                                        {% endif %}
                                     {% endfor %}
-                                    {% endfor %}
-                                    {% else %}
-                                    <div class="swiper-slide">
-                                        <img src="/static/images/placeholder.png" alt="No Image"
-                                            class="w-full h-32 object-cover rounded" />
-                                    </div>
-                                    {% endif %}
-                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     </td>
+                    
 
                     <!-- Title -->
                     <td class="px-4 py-2 border text-center">{{ product.name }}</td>
