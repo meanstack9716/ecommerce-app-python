@@ -1,217 +1,274 @@
 {% extends "base.html" %}
 
-{% block title %}{{ product.name }} - Product Details{% endblock %}
+{% block title %}{{ product.title }} - Exquisite Details{% endblock %}
 
 {% block admin_content %}
-<div class="max-w-7xl mx-auto px-6">
-    <div class="my-6">
-        <a href="{{ url_for('admin_api.get_product_lists') }}" class="text-blue-600 hover:underline">← Back to
-            Product List</a>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-        <div class="flex gap-4">
-            <div class="flex flex-col gap-2 overflow-y-auto max-h-[500px]">
-                {% for variant in product.variants %}
-                {% for img in variant.images %}
-                <img src="/static/{{ img.image_url }}" alt="{{ img.alt_text }}" data-size="{{ variant.size }}"
-                    data-color="{{ variant.color }}"
-                    class="thumbnail w-20 h-20 object-cover rounded-lg border border-gray-300 cursor-pointer hover:border-black"
-                    onclick="changeMainImage(this)">
-                {% endfor %}
-                {% endfor %}
-            </div>
-
-            <div class="relative flex-1">
-                <img id="main-image"
-                    src="/static/{{ product.variants[0].images[0].image_url if product.variants[0].images else 'images/placeholder.png' }}"
-                    alt="{{ product.name }}" class="w-full h-[500px] object-cover rounded-lg border border-gray-200">
-            </div>
-        </div>
-
-
-        <div class="space-y-6">
-            <h1 class="text-3xl font-bold text-black mb-2">{{ product.name }}</h1>
-            <p class="text-sm text-gray-500 mb-4">SKU: {{ product.sku_number }}</p>
-
-            <div class="flex items-center gap-4 mb-4">
-                <p class="text-2xl font-bold text-black">₹{{ product.price|int }}</p>
-                {% if product.discount_price %}
-                <span class="text-green-600 font-semibold">{{ product.discount_price }}% OFF</span>
-                {% endif %}
-            </div>
-
-            <div id="desc-{{ product.id }}" class="text-gray-700 mb-6" style="white-space: pre-wrap;">
-                {{ product.description|safe }}
-            </div>
-
-            <div class="mb-4">
-                <p class="font-semibold text-black mb-1">Colors:</p>
-                <div id="color-options" class="flex gap-2">
-                    {% for variant in product.variants|unique(attribute='color') %}
-                    <button class="color-btn w-6 h-6 rounded-full border" style="background-color: {{ variant.color }};"
-                        data-color="{{ variant.color }}">
-                    </button>
+<div class="bg-white py-12 lg:py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
+            <div class="mb-8 lg:mb-0">
+                <div class="relative overflow-hidden border border-gray-200">
+                    <img id="mainProductImage" src="/static/{{ product.gallery[0].img_url }}" alt="{{ product.title }}"
+                        class="w-full h-96 object-contain transition-opacity duration-300 ease-in-out">
+                </div>
+                <div class="mt-4 grid grid-cols-4 gap-3" id="colorThumbnails">
+                    {% for image in product.gallery %}
+                    <div class="relative rounded-md overflow-hidden shadow-sm border border-gray-200 hover:border-blue-500 cursor-pointer transition-shadow duration-200 ease-in-out"
+                        onclick="changeMainImage(this)" data-color="{{ image.color }}">
+                        <img src="/static/{{ image.img_url }}" alt="{{ product.title }} - {{ image.color }}"
+                            class="w-full h-20 object-cover">
+                        <div class="absolute inset-0 flex items-center justify-center"
+                            id="colorIndicator-{{ loop.index0 }}">
+                            {% if loop.index0 == 0 %}
+                            <svg class="w-6 h-6 text-blue-500 fill-current" viewBox="0 0 24 24">
+                                <path
+                                    d="M20.293 4.293l-1.414-1.414L15 6.586 9.707 1.293 8.293 2.707l5.293 5.293-5.293 5.293L9.707 15 15 20.293l1.414-1.414L10.707 13.586z" />
+                            </svg>
+                            {% endif %}
+                        </div>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
 
-            <div class="mb-4">
-                <p class="font-semibold text-black mb-1">Available Sizes:</p>
-                <div id="size-options" class="flex gap-2 flex-wrap">
-                    {% for variant in product.variants|unique(attribute='size') %}
-                    <button class="size-btn px-3 py-1 border rounded text-sm text-black" data-size="{{ variant.size }}">
-                        {{ variant.size }}
-                    </button>
-                    {% endfor %}
-                </div>
-            </div>
-            <div class="flex flex-col sm:flex-row sm:items-center gap-4 mt-6">
-                <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden shadow-sm">
-                    <button type="button" onclick="adjustQty(-1)"
-                        class="px-3 py-2 text-lg font-bold text-gray-700 hover:bg-gray-100 focus:outline-none">
-                        -
-                    </button>
-                    <input id="quantity" type="number" value="1" min="1"
-                        class="w-12 text-center text-gray-900 focus:outline-none focus:ring-0 border-l border-r border-gray-300">
-                    <button type="button" onclick="adjustQty(1)"
-                        class="px-3 py-2 text-lg font-bold text-gray-700 hover:bg-gray-100 focus:outline-none">
-                        +
-                    </button>
+            <div class="lg:sticky top-6">
+                <div class="pb-6 border-b border-gray-200 mb-6">
+                    <h1 class="text-2xl font-extrabold text-gray-900 sm:text-3xl mb-2">{{ product.title }}</h1>
+                    <p class="text-md text-gray-500">{{ product.description }}</p>
                 </div>
 
+                <div class="flex items-center mb-4">
+                    <p class="text-xl font-bold text-gray-900 mr-4">₹{{ product.final_price|int }}</p>
+                    {% if product.discount_percent > 0 %}
+                    <div class="flex items-center">
+                        <p class="text-sm text-gray-500 line-through mr-2">₹{{ product.price|int }}</p>
+                        <span class="px-2 py-1 rounded-full text-lg font-semibold text-orange-400">
+                            ({{ product.discount_percent|int }}% OFF)
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-green-600 font-semibold mb-4">Inclusive of all taxes</p>
 
-                <button type="submit"
-                    class="flex-1 bg-black text-white px-6 cursor-pointer py-3 rounded-lg shadow hover:bg-gray-800 transition duration-300 text-center"
-                    disabled>
-                    Add to Cart
-                </button>
+                <div class="mb-6">
+                    <p class="text-sm font-semibold text-gray-700 mb-2">Brand: <span
+                            class="text-gray-500 font-medium">{{ product.brand.name }}</span></p>
+                </div>
 
-                <button
-                    class="flex-1 border border-black text-black px-6 py-3 rounded-lg shadow hover:bg-gray-100 transition duration-300 text-center"
-                    disabled>
-                    Buy Now
-                </button>
+                <div class="mb-6">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-3">Select Size</h3>
+                    <div class="flex flex-wrap gap-2">
+                        {% for size_data in product.sizes %}
+                        {% set index = loop.index0 %}
+                        <button type="button"
+                            class="px-3 py-2 rounded-md text-sm font-medium focus:outline-none transition-colors duration-200 ease-in-out
+                                           {{ 'bg-blue-500 text-white hover:bg-blue-600 border-blue-500' if index == 0 else 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300' }}"
+                            data-size="{{ size_data.value }}"
+                            onclick="selectSize(this, '{{ size_data.value }}', {{ size_data.variants|tojson }})">
+                            {{ size_data.value }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% set color_map = {} %}
+                {% for size in product.sizes %}
+                {% for variant in size.variants %}
+                {% set _ = color_map.update({variant.value: variant}) %}
+                {% endfor %}
+                {% endfor %}
+                <div class="mb-6" id="colorSelectionContainer">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-3">Select Color</h3>
+                    <div class="flex flex-wrap gap-5">
+                        {% for color_hex, variant in color_map.items() %}
+                        {% set index = loop.index0 %}
+                        <button type="button" class="w-8 h-8 rounded-full focus:outline-none ring-2 ring-offset-1 
+                                           {{ 'ring-blue-500' if index == 0 else 'ring-transparent' }}"
+                            style="background-color: {{ variant.value }}"
+                            onclick="selectColor(this, '{{ variant.name }}', '{{ variant.value }}', '{{ variant.stock_quantity }}')"
+                            title="{{ variant.name }}">
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+
+                <div class="flex items-center mb-6">
+                    <p class="text-sm font-semibold text-gray-700 mr-4">Available: <span id="stockQuantity"
+                            class="font-medium text-gray-500">{{ product.sizes[0].variants[0].stock_quantity }}</span>
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="flex items-center border border-gray-300 rounded-md overflow-hidden">
+
+                        <input type="number" id="quantity" value="1" min="1"
+                            max="{{ product.sizes[0].variants[0].stock_quantity }}"
+                            class="w-16 text-center text-gray-700 font-medium focus:outline-none">
+
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-200 pt-6">
+                    <h2 class="font-semibold text-lg text-gray-800 mb-3">Product Details</h2>
+                    <div class="space-y-4">
+                        <div class="rounded-md bg-gray-50 p-4">
+                            <p class="text-sm text-gray-600 leading-relaxed">{{ product.details|safe }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-700 mb-1">SKU: <span
+                                    class="text-gray-500 font-medium">{{ product.sku }}</span></p>
+                            <p class="text-sm font-semibold text-gray-700 mb-1">Brand: <span
+                                    class="text-gray-500 font-medium">{{ product.brand.name }}</span></p>
+                            <p class="text-sm font-semibold text-gray-700">In Stock: <span
+                                    class="text-gray-500 font-medium">{{ product.stock_quantity }}</span></p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    const productVariants = {{ product.variants | tojson }};
-    let selectedSize = null;
-    let selectedColor = null;
-    const sizeButtons = document.querySelectorAll('.size-btn');
-    const colorButtons = document.querySelectorAll('.color-btn');
-    const thumbnails = document.querySelectorAll('.thumbnail');
-    const mainImage = document.querySelector('#main-image');
-    const addToCartButton = document.querySelector('#add-to-cart-form button[type="submit"]');
-    const buyNowButton = document.querySelector('.flex-col.sm\\:flex-row button:last-child'); // Assuming Buy Now is the last button
+    // Current selections
+    let selectedSize = "{{ product.sizes[0].value }}";
+    let selectedColor = "{{ product.sizes[0].variants[0].name }}";
+    let selectedColorValue = "{{ product.sizes[0].variants[0].value }}";
+    let maxQuantity = {{ product.sizes[0].variants[0].stock_quantity }};
 
-    function updateThumbnails() {
-        thumbnails.forEach(thumb => {
-            const thumbSize = thumb.dataset.size;
-            const thumbColor = thumb.dataset.color;
-            thumb.style.display = (
-                (!selectedColor || thumbColor === selectedColor)
-            ) ? 'inline-block' : 'none';
-            thumb.classList.remove('border-black', 'ring-2', 'ring-black');
-            thumb.classList.add('border-gray-300');
-        });
+    // Initialize the gallery with the first color's images and active color indicator
+    document.addEventListener('DOMContentLoaded', function () {
+        filterImagesByColor(selectedColor);
+    });
 
-        // Update main image to the first visible thumbnail
-        const visibleThumb = Array.from(thumbnails).find(thumb => thumb.style.display !== 'none');
-        if (visibleThumb) {
-            changeMainImage(visibleThumb);
-        } else if (thumbnails.length > 0) {
-            changeMainImage(thumbnails[0]); // Fallback if no color is selected
-        } else {
-            mainImage.src = '/images/placeholder.png'; // Default placeholder
-        }
+    // Change main image when thumbnail is clicked
+    function changeMainImage(element) {
+        document.getElementById('mainProductImage').src = element.querySelector('img').src;
     }
 
-    function updateSizes() {
-        sizeButtons.forEach(btn => {
-            const size = btn.dataset.size;
-            const isAvailable = productVariants.some(v => v.size === size && (!selectedColor || v.color === selectedColor));
-            btn.disabled = !isAvailable;
-            btn.classList.toggle('opacity-50', !isAvailable);
-            btn.classList.remove('border-black', 'ring-2', 'ring-black');
-            if (selectedSize === size && isAvailable) {
-                btn.classList.add('border-black', 'ring-2', 'ring-black');
-            } else if (selectedSize === size && !isAvailable) {
-                selectedSize = null; // Reset selected size if not available in new color
+    // Filter images by color and update active color indicator
+    // Filter images by color and update active color indicator
+    function filterImagesByColor(color) {
+        const thumbnailsContainer = document.getElementById('colorThumbnails');
+        thumbnailsContainer.innerHTML = ''; // Clear existing thumbnails
+
+        let firstMatchingImage = null;
+        const displayedImages = new Set(); // To keep track of displayed image URLs
+
+        {% for image in product.gallery %}
+        if ("{{ image.color }}".toLowerCase() === color.toLowerCase()) {
+            if (!firstMatchingImage) {
+                firstMatchingImage = "/static/{{ image.img_url }}";
             }
-        });
-
-        // Enable/disable Add to Cart and Buy Now buttons based on size and color selection
-        const canAddToCart = selectedSize && selectedColor;
-        addToCartButton.disabled = !canAddToCart;
-        buyNowButton.disabled = !canAddToCart;
-    }
-
-    function changeMainImage(imgElement) {
-        mainImage.src = imgElement.src;
-        thumbnails.forEach(thumb => {
-            thumb.classList.remove('border-black', 'ring-2', 'ring-black');
-            thumb.classList.add('border-gray-300');
-        });
-        imgElement.classList.remove('border-gray-300');
-        imgElement.classList.add('border-black', 'ring-2', 'ring-black');
-    }
-
-    function adjustQty(change) {
-        const qtyInput = document.getElementById('quantity');
-        let currentQty = parseInt(qtyInput.value) || 1;
-        currentQty += change;
-        qtyInput.value = Math.max(1, currentQty);
-    }
-
-    colorButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            selectedColor = btn.dataset.color;
-            document.getElementById('selected-color').value = selectedColor;
-            // Remove active class from other color buttons
-            colorButtons.forEach(cBtn => cBtn.classList.remove('ring-2', 'ring-black', 'border-black'));
-            // Add active class to the clicked color button
-            btn.classList.add('ring-2', 'ring-black', 'border-black');
-            selectedSize = null; // Reset size selection on color change
-            document.getElementById('selected-size').value = null;
-            updateThumbnails();
-            updateSizes();
-        });
-    });
-
-    sizeButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            selectedSize = btn.dataset.size;
-            document.getElementById('selected-size').value = selectedSize;
-            // Remove active class from other size buttons
-            sizeButtons.forEach(sBtn => sBtn.classList.remove('ring-2', 'ring-black', 'border-black'));
-            // Add active class to the clicked size button
-            btn.classList.add('ring-2', 'ring-black', 'border-black');
-            updateThumbnails(); // Keep thumbnails consistent with selected color
-            updateSizes(); // Ensure button states are correct
-        });
-    });
-
-    // Update hidden quantity field before submitting
-    document.getElementById('add-to-cart-form').addEventListener('submit', () => {
-        document.getElementById('selected-quantity').value = document.getElementById('quantity').value;
-    });
-
-    // Initial setup on page load
-    document.addEventListener('DOMContentLoaded', () => {
-        // Initially select the first color if available
-        if (colorButtons.length > 0) {
-            colorButtons[0].click();
-        } else {
-            updateThumbnails();
-            updateSizes();
+            // Check if this image URL has already been displayed
+            if (!displayedImages.has("/static/{{ image.img_url }}")) {
+                displayedImages.add("/static/{{ image.img_url }}");
+                const thumbnailDiv = document.createElement('div');
+                thumbnailDiv.className = 'relative rounded-md overflow-hidden shadow-sm border border-gray-200 hover:border-blue-500 cursor-pointer transition-shadow duration-200 ease-in-out';
+                thumbnailDiv.setAttribute('onclick', 'changeMainImage(this)');
+                thumbnailDiv.setAttribute('data-color', "{{ image.color }}");
+                thumbnailDiv.innerHTML = `
+                        <img src="/static/{{ image.img_url }}"
+                             alt="{{ product.title }} - {{ image.color }}"
+                             class="w-full h-20 object-cover">
+                        <div class="absolute inset-0 flex items-center justify-center" id="colorIndicator-{{ loop.index0 }}">
+                            ${"{{ image.color }}".toLowerCase() === selectedColor.toLowerCase() ?
+                        '<svg class="w-6 h-6 text-blue-500 fill-current" viewBox="0 0 24 24"><path d="M20.293 4.293l-1.414-1.414L15 6.586 9.707 1.293 8.293 2.707l5.293 5.293-5.293 5.293L9.707 15 15 20.293l1.414-1.414L10.707 13.586z"/></svg>' :
+                        ''
+                    }
+                        </div>
+                    `;
+                thumbnailsContainer.appendChild(thumbnailDiv);
+            }
         }
-    });
+        {% endfor %}
 
+        // Update main image if a matching image is found
+        if (firstMatchingImage) {
+            document.getElementById('mainProductImage').src = firstMatchingImage;
+        }
+    }
 
+    // Size selection handler
+    function selectSize(element, size, variants) {
+        // Update selected size
+        selectedSize = size;
+
+        // Update active state for size buttons
+        document.querySelectorAll('#sizeSelection button').forEach(btn => {
+            btn.classList.remove('bg-blue-500', 'text-white', 'hover:bg-blue-600', 'border-blue-500');
+            btn.classList.add('bg-white', 'text-gray-700', 'hover:bg-gray-100', 'border', 'border-gray-300');
+        });
+        element.classList.add('bg-blue-500', 'text-white', 'hover:bg-blue-600', 'border-blue-500');
+        element.classList.remove('bg-white', 'text-gray-700', 'hover:bg-gray-100', 'border', 'border-gray-300');
+
+        // Update color options
+        const colorSelection = document.getElementById('colorSelection');
+        colorSelection.innerHTML = '';
+
+        variants.forEach((variant, index) => {
+            const isFirst = index === 0;
+            const colorBtn = document.createElement('button');
+            colorBtn.type = 'button';
+            colorBtn.className = `w-8 h-8 rounded-full focus:outline-none ring-2 ring-offset-1 ${isFirst ? 'ring-blue-500' : 'ring-transparent'}`;
+            colorBtn.style.backgroundColor = variant.value;
+            colorBtn.title = variant.name;
+            colorBtn.onclick = function () {
+                selectColor(this, variant.name, variant.value, variant.stock_quantity);
+            };
+            colorSelection.appendChild(colorBtn);
+        });
+
+        // Update selected color and stock based on the first variant of the new size
+        if (variants.length > 0) {
+            selectedColor = variants[0].name;
+            selectedColorValue = variants[0].value;
+            document.getElementById('stockQuantity').textContent = variants[0].stock_quantity;
+            maxQuantity = parseInt(variants[0].stock_quantity);
+            document.getElementById('quantity').max = maxQuantity;
+
+            // Filter images for the initial color of the new size
+            filterImagesByColor(variants[0].name);
+        }
+    }
+
+    // Color selection handler
+    function selectColor(element, colorName, colorValue, stockQuantity) {
+        // Update selected color
+        selectedColor = colorName;
+        selectedColorValue = colorValue;
+
+        // Update active state for color buttons
+        document.querySelectorAll('#colorSelection button').forEach(btn => {
+            btn.classList.remove('ring-blue-500');
+            btn.classList.add('ring-transparent');
+        });
+        element.classList.add('ring-blue-500');
+        element.classList.remove('ring-transparent');
+
+        // Update stock quantity
+        document.getElementById('stockQuantity').textContent = stockQuantity;
+        maxQuantity = parseInt(stockQuantity);
+        const quantityInput = document.getElementById('quantity');
+        if (parseInt(quantityInput.value) > maxQuantity) {
+            quantityInput.value = maxQuantity;
+        }
+        quantityInput.max = maxQuantity;
+
+        // Filter images by color
+        filterImagesByColor(colorName);
+    }
+
+    // Quantity update handler
+    function updateQuantity(change) {
+        const quantityInput = document.getElementById('quantity');
+        let newValue = parseInt(quantityInput.value) + change;
+
+        if (newValue < 1) newValue = 1;
+        if (newValue > maxQuantity) newValue = maxQuantity;
+
+        quantityInput.value = newValue;
+    }
 </script>
-
 {% endblock %}

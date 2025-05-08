@@ -76,6 +76,9 @@
                         Discount
                     </th>
                     <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Product
+                        Discount Price
+                    </th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Product
                         SKU Number
                     </th>
                     <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Action
@@ -126,7 +129,9 @@
                         -
                         {% endif %}
                     </td>
-
+                    <td class="px-4 py-2 border text-center">
+                        <p class="font-bold text-black">₹{{ product.final_price|int }}</p>
+                    </td>
                     <!-- SKU (from variants) -->
                     <td class="px-4 py-2 border text-center">
                         {% if product.sku_number %}

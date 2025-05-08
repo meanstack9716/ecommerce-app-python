@@ -15,7 +15,6 @@ from app.extensions import db
 
 products_bp = Blueprint('products_bp', __name__)
 
-
 @products_bp.route(ADD_NEW_PRODUCT_API, methods=['POST'])
 def create_ad():
     try:
@@ -27,7 +26,7 @@ def create_ad():
         except Exception:
             return create_error_response({'user_id': 'Invalid user ID'}, 400)
 
-        required_fields = ['name', 'price', 'category_id', 'subcategory_id', 'subsubcategory_id', 'description', 'total_stocks', 'sku_number']
+        required_fields = ['name', 'price', 'category_id', 'subcategory_id', 'subsubcategory_id', 'details', 'description', 'stock_quantity', 'sku_number']
         form_data = request.form.to_dict(flat=False)
         data = {k: v[0] if len(v) == 1 else v for k, v in form_data.items()}
 
@@ -47,12 +46,18 @@ def create_ad():
                 'subsubcategory_id': 'Invalid subsubcategory ID'
             }, 400)
 
-        # Calculate price and discount
         price = float(data['price'])
-        discount_price = float(data.get('discount_price', price))
+        discount_price = float(data.get('discount_price', 0))
+
+        final_price = price
+
+        if discount_price > 0:
+            final_price = price - (price * discount_price / 100)
+            
         material = data.get('material')
+        description = data.get('description')
         gender = data.get('gender') if data.get('gender') in ALLOWED_GENDERS else None
-        total_stocks = data.get('total_stocks')
+        stock_quantity = data.get('stock_quantity')
         sku_number = data.get('sku_number')
         if not sku_number:
             return create_error_response({'sku_number': 'SKU number is required'}, 400)
@@ -88,10 +93,11 @@ def create_ad():
                 size = var['size']
                 color = var['color']
                 quantity = int(var.get('quantity', 0))
-
+                color_hexa_code = var.get('color_hexa_code')
                 variant = ProductVariant(
                     size=size,
                     color=color,
+                    color_hexa_code=color_hexa_code,
                     stock_quantity=quantity,
                     product_id=None
                 )
@@ -99,18 +105,18 @@ def create_ad():
             except (KeyError, ValueError) as e:
                 return create_error_response({'variations': f'Invalid variation data: {str(e)}'}, 400)
 
-        # Process color-specific images
+        # Process color-specific images and store their URLs temporarily
         color_images = {}
         for file_key in request.files:
             if file_key.startswith('images[') and file_key.endswith(']'):
                 color_name = file_key[7:-1]
                 if color_name not in color_images:
-                    color_images[color_name] = []
+                    color_images[color_name] = set()  # Use a set for unique image paths
                 for file in request.files.getlist(file_key):
                     image_path, error = upload_image(file)
                     if error:
                         return create_error_response({'images': error}, 400)
-                    color_images[color_name].append(image_path)
+                    color_images[color_name].add(image_path)
 
         # Save all variants
         saved_variants = []
@@ -118,23 +124,27 @@ def create_ad():
             variant.save()
             saved_variants.append(variant)
 
-        # Associate color images with variants
+        # Create and associate ProductVariantImage objects
+        variant_images_map = {}  # To store already created image objects by URL
+
         for variant in saved_variants:
             color = variant.color
             if color in color_images:
                 for image_url in color_images[color]:
-                    image = ProductVariantImage(
-                        variant_id=variant.id,
-                        image_url=image_url,
-                        alt_text=f"{data['name']} - {color} - {variant.size}",
-                        is_primary=False
-                    )
-                    image.save()
-                    variant.images.append(image)
+                    # Check if this image URL has already been processed
+                    if image_url not in variant_images_map:
+                        image = ProductVariantImage(
+                            variant_id=variant.id,  # Initially set variant_id
+                            image_url=image_url,
+                            alt_text=f"{data['name']} - {color} - {variant.size}",
+                            is_primary=False
+                        )
+                        image.save()
+                        variant_images_map[image_url] = image
+                    variant.images.append(variant_images_map[image_url])  # Append the reference
             variant.save()
 
         # Handle thumbnail (primary image - attach to first variant)
-        thumbnail_path = None
         if 'thumbnail' in request.files:
             thumbnail_file = request.files['thumbnail']
             if thumbnail_file.filename != '':
@@ -143,14 +153,16 @@ def create_ad():
                     return create_error_response({'thumbnail': error}, 400)
 
                 if saved_variants:
-                    primary_image = ProductVariantImage(
-                        variant_id=saved_variants[0],
-                        image_url=thumbnail_path,
-                        alt_text=f"{data['name']} - thumbnail",
-                        is_primary=True
-                    )
-                    primary_image.save()
-                    saved_variants[0].images.append(primary_image)
+                    if thumbnail_path not in variant_images_map:
+                        primary_image = ProductVariantImage(
+                            variant_id=saved_variants[0].id,
+                            image_url=thumbnail_path,
+                            alt_text=f"{data['name']} - thumbnail",
+                            is_primary=True
+                        )
+                        primary_image.save()
+                        variant_images_map[thumbnail_path] = primary_image
+                    saved_variants[0].images.append(variant_images_map[thumbnail_path])
                     saved_variants[0].save()
 
         # Create the product
@@ -158,14 +170,16 @@ def create_ad():
             user_id=user_object_id,
             name=data['name'],
             description=data.get('description'),
+            details=data.get('details'),
             category_id=category,
             subcategory_id=subcategory,
             subsubcategory_id=subsubcategory,
             brand_id=brand,
             sku_number=sku_number,
             price=price,
-            total_stocks=total_stocks,
+            stock_quantity=stock_quantity,
             discount_price=discount_price,
+            final_price=final_price,  # Store the calculated final price
             material=material,
             gender=gender,
             status='active',
@@ -175,7 +189,15 @@ def create_ad():
         )
         product.save()
 
-        # Now assign product_id to variants
+        # Now assign the correct product_id to the ProductVariantImage objects
+        for image_obj in variant_images_map.values():
+            for variant in saved_variants:
+                if image_obj in variant.images:
+                    image_obj.product_id = product.id
+                    image_obj.save()
+                    break
+
+        # Finally, update variants with the correct product_id
         for variant in saved_variants:
             variant.product_id = product
             variant.save()
@@ -186,12 +208,14 @@ def create_ad():
             "product": {
                 "name": product.name,
                 "price": float(product.price),
-                "discount_price": float(product.discount_price) if product.discount_price else None
+                "discount_price": float(product.discount_price) if product.discount_price else None,
+                "final_price": float(product.final_price)
             }
         }), 201
 
     except Exception as error:
         return create_error_response({'unexpected_error': str(error)}, 500)
+
 
 @products_bp.route(PRODUCT_LISTS_API, methods=['GET'])
 def list_products():
@@ -238,66 +262,190 @@ def list_products():
         products_data = []
 
         for product in paginated_products.items:
-            # Get variant data
-            variants_data = []
+            sizes_data = {}
+            gallery_data = {}
+
             for variant in product.variants:
-                variant_images_data = []
-                for image in variant.images:
-                    variant_images_data.append({
-                        'id': str(image.id),
-                        'image_url': image.image_url,
-                        'alt_text': image.alt_text,
-                        'is_primary': image.is_primary
-                    })
-                variants_data.append({
-                    'id': str(variant.id),
-                    'size': variant.size,
-                    'color': variant.color,
+                # Populate sizes_data
+                if variant.size not in sizes_data:
+                    sizes_data[variant.size] = {
+                        'product_id': str(product.id),
+                        'value': variant.size,
+                        'size_type': 'standard', 
+                        'id': str(variant.id) + '_size',
+                        'variants': []
+                    }
+                sizes_data[variant.size]['variants'].append({
+                    'value': variant.color_hexa_code if hasattr(variant, 'color_hexa_code') else variant.color,
+                    'name': variant.color,
                     'stock_quantity': variant.stock_quantity,
-                    'images': variant_images_data
+                    'id': str(variant.id)
                 })
 
-            # Build product dict
-            product_dict = {
-                'id': str(product.id),
-                'name': product.name,
-                'description': product.description,
-                'price': float(product.price) if product.price else None,
-                'discount_price': float(product.discount_price) if product.discount_price else None,
-                'total_stocks': product.total_stocks,
-                'sku_number': product.sku_number,
-                'material': product.material,
-                'gender': product.gender,
-                'status': product.status,
-                'category': {
-                    'id': str(product.category_id.id),
-                    'name': product.category_id.name
-                } if product.category_id else None,
-                'subcategory': {
-                    'id': str(product.subcategory_id.id),
-                    'name': product.subcategory_id.name
-                } if product.subcategory_id else None,
-                'subsubcategory': {
-                    'id': str(product.subsubcategory_id.id),
-                    'name': product.subsubcategory_id.name
-                } if product.subsubcategory_id else None,
-                'brand': {
-                    'id': str(product.brand_id.id),
-                    'name': product.brand_id.name
-                } if product.brand_id else None,
-                'variants': variants_data,
-                'created_at': product.created_at.isoformat() if product.created_at else None,
-                'updated_at': product.updated_at.isoformat() if product.updated_at else None
-            }
+                for image in variant.images:
+                    if variant.color not in gallery_data:
+                        gallery_data[variant.color] = []
+                    gallery_data[variant.color].append({
+                        'color': variant.color,
+                        'id': str(image.id),
+                        'img_url': image.image_url
+                    })
 
+            final_price = float(product.discount_price) if product.discount_price is not None else (float(product.price) if product.price is not None else None)
+            discount_percent = None
+            if product.price is not None and final_price is not None and float(product.price) > 0:
+                discount_percent = round(((float(product.price) - final_price) / float(product.price)) * 100)
+
+
+            thumbnail_url = None
+            if product.variants and product.variants[0].images:
+                thumbnail_url = product.variants[0].images[0].image_url
+
+            product_dict = {
+                'user_id': str(product.user_id.id) if product.user_id else None,
+                'title': product.name,
+                'description': product.description,
+                'details': product.details,
+                'price': float(product.price) if product.price else None,
+                'discount_percent': discount_percent,
+                'sku': product.sku_number,
+                'stock_quantity': sum(v.stock_quantity for v in product.variants) if product.variants else 0,
+                'final_price': final_price,
+                'id': str(product.id),
+                'thumbnail_url': thumbnail_url,
+                'sizes': list(sizes_data.values()),
+                'gallery': [img for color_gallery in gallery_data.values() for img in color_gallery],
+                'category': {
+                    'name': product.category_id.name if product.category_id else None,
+                    'description': getattr(product.category_id, 'description', None),
+                    'id': str(product.category_id.id) if product.category_id else None,
+                    'img_url': getattr(product.category_id, 'img_url', None)
+                },
+                'sub_category': {
+                    'name': product.subcategory_id.name if product.subcategory_id else None,
+                    'description': getattr(product.subcategory_id, 'description', None),
+                    'category_id': str(product.subcategory_id.category.id) if product.subcategory_id and product.subcategory_id.category else None,
+                    'id': str(product.subcategory_id.id) if product.subcategory_id else None,
+                    'img_url': getattr(product.subcategory_id, 'img_url', None)
+                },
+                'sub_sub_category': {
+                    'name': product.subsubcategory_id.name if product.subsubcategory_id else None,
+                    'description': getattr(product.subsubcategory_id, 'description', None),
+                    'category_id': str(product.subsubcategory_id.category_id.id) if product.subsubcategory_id and product.subsubcategory_id.category_id else None,
+                    'sub_category_id': str(product.subsubcategory_id.sub_category_id.id) if product.subsubcategory_id and product.subsubcategory_id.sub_category_id else None,
+                    'id': str(product.subsubcategory_id.id) if product.subsubcategory_id else None,
+                    'img_url': getattr(product.subsubcategory_id, 'img_url', None)
+                },
+                'brand': {
+                    'name': product.brand_id.name if product.brand_id else None,
+                    'description': getattr(product.brand_id, 'description', None),
+                    'id': str(product.brand_id.id) if product.brand_id else None,
+                    'img_url': getattr(product.brand_id, 'img_url', None)
+                }
+            }
             products_data.append(product_dict)
 
         response = {
             'data': products_data,
-            # 'page': page,
-            # 'per_page': per_page,
-            # 'total': paginated_products.total,
-            # 'pages': paginated_products.pages
+        }
+
+        return jsonify(response), 200
+
+    except Exception as e:
+        return create_error_response({"exception": str(e)}, status_code=500)
+
+
+@products_bp.route('/api/products/<string:product_id>', methods=['GET'])
+def get_product_by_id(product_id):
+    try:
+        product = Products.objects(id=product_id).first()
+
+        if not product:
+            return create_error_response({"message": "Product not found"}, status_code=404)
+
+        sizes_data = {}
+        gallery_data = {}
+
+        for variant in product.variants:
+            # Populate sizes_data
+            if variant.size not in sizes_data:
+                sizes_data[variant.size] = {
+                    'product_id': str(product.id),
+                    'value': variant.size,
+                    'size_type': 'standard',
+                    'id': str(variant.id) + '_size',
+                    'variants': []
+                }
+            sizes_data[variant.size]['variants'].append({
+                'value': variant.color_hexa_code if hasattr(variant, 'color_hexa_code') else variant.color,
+                'name': variant.color,
+                'stock_quantity': variant.stock_quantity,
+                'id': str(variant.id)
+            })
+
+            for image in variant.images:
+                if variant.color not in gallery_data:
+                    gallery_data[variant.color] = []
+                gallery_data[variant.color].append({
+                    'color': variant.color,
+                    'id': str(image.id),
+                    'img_url': image.image_url
+                })
+
+        final_price = float(product.discount_price) if product.discount_price is not None else (float(product.price) if product.price is not None else None)
+        discount_percent = None
+        if product.price is not None and final_price is not None and float(product.price) > 0:
+            discount_percent = round(((float(product.price) - final_price) / float(product.price)) * 100)
+
+        thumbnail_url = None
+        if product.variants and product.variants[0].images:
+            thumbnail_url = product.variants[0].images[0].image_url
+
+        product_data = {
+            'user_id': str(product.user_id.id) if product.user_id else None,
+            'title': product.name,
+            'description': product.description,
+            'details': product.details,
+            'price': float(product.price) if product.price else None,
+            'discount_percent': discount_percent,
+            'sku': product.sku_number,
+            'stock_quantity': sum(v.stock_quantity for v in product.variants) if product.variants else 0,
+            'final_price': final_price,
+            'id': str(product.id),
+            'thumbnail_url': thumbnail_url,
+            'sizes': list(sizes_data.values()),
+            'gallery': [img for color_gallery in gallery_data.values() for img in color_gallery],
+            'category': {
+                'name': product.category_id.name if product.category_id else None,
+                'description': getattr(product.category_id, 'description', None),
+                'id': str(product.category_id.id) if product.category_id else None,
+                'img_url': getattr(product.category_id, 'img_url', None)
+            },
+            'sub_category': {
+                'name': product.subcategory_id.name if product.subcategory_id else None,
+                'description': getattr(product.subcategory_id, 'description', None),
+                'category_id': str(product.subcategory_id.category.id) if product.subcategory_id and product.subcategory_id.category else None,
+                'id': str(product.subcategory_id.id) if product.subcategory_id else None,
+                'img_url': getattr(product.subcategory_id, 'img_url', None)
+            },
+            'sub_sub_category': {
+                'name': product.subsubcategory_id.name if product.subsubcategory_id else None,
+                'description': getattr(product.subsubcategory_id, 'description', None),
+                'category_id': str(product.subsubcategory_id.category_id.id) if product.subsubcategory_id and product.subsubcategory_id.category_id else None,
+                'sub_category_id': str(product.subsubcategory_id.sub_category_id.id) if product.subsubcategory_id and product.subsubcategory_id.sub_category_id else None,
+                'id': str(product.subsubcategory_id.id) if product.subsubcategory_id else None,
+                'img_url': getattr(product.subsubcategory_id, 'img_url', None)
+            },
+            'brand': {
+                'name': product.brand_id.name if product.brand_id else None,
+                'description': getattr(product.brand_id, 'description', None),
+                'id': str(product.brand_id.id) if product.brand_id else None,
+                'img_url': getattr(product.brand_id, 'img_url', None)
+            }
+        }
+
+        response = {
+            'data': product_data,
         }
 
         return jsonify(response), 200

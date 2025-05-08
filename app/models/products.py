@@ -9,6 +9,7 @@ class ProductVariant(db.Document):
     product_id = ReferenceField('Products', required=False)
     size = db.StringField(required=True, choices=ALLOWED_SIZES)
     color = db.StringField(required=True, max_length=50)
+    color_hexa_code = db.StringField(max_length=7)
     stock_quantity = db.IntField(default=0)
     images = db.ListField(ReferenceField('ProductVariantImage'))
     created_at = db.DateTimeField(default=datetime.utcnow)
@@ -18,7 +19,8 @@ class ProductVariant(db.Document):
         'indexes': [
             'product_id',
             'size',
-            'color'
+            'color',
+            'color_hexa_code'
         ]
     }
     
@@ -47,6 +49,7 @@ class ProductVariantImage(db.Document):
 class Products(db.Document):
     user_id = ReferenceField('User', required=True)
     name = db.StringField(required=True, max_length=255)
+    details = db.StringField()
     description = db.StringField()
     
     sku_number = db.StringField(required=True, unique=True)
@@ -57,12 +60,14 @@ class Products(db.Document):
     
     price = db.DecimalField(required=True, precision=2)
     discount_price = db.DecimalField(precision=2)
-    total_stocks = db.IntField()
+    final_price = db.DecimalField(required=True, precision=2)
+    stock_quantity = db.IntField()
     material = db.StringField(max_length=100)
     gender = db.StringField(choices=ALLOWED_GENDERS)
     status = db.StringField(choices=['active', 'inactive'], default='active')
     variants = db.ListField(ReferenceField('ProductVariant'))
-
+    
+    thumbnail_url = db.StringField()
     created_at = db.DateTimeField(default=datetime.utcnow)
     updated_at = db.DateTimeField(default=datetime.utcnow)
     

@@ -53,12 +53,12 @@
                     ['clean']
                 ]
             },
-            placeholder: 'Enter product description...',
+            placeholder: 'Enter product details...',
         });
 
-        const descriptionInput = document.getElementById('description');
+        const productDetailsInput = document.getElementById('product-details');
         quill.on('text-change', function () {
-            descriptionInput.value = quill.root.innerHTML;
+            productDetailsInput.value = quill.root.innerHTML;
         });
 
 
@@ -180,9 +180,10 @@
             const formValues = {
                 name: document.getElementById('title').value,
                 description: document.getElementById('description').value,
+                details: document.getElementById('product-details').value,
                 price: document.getElementById('price').value,
                 discount_price: document.getElementById('discount_price').value,
-                total_stocks: document.getElementById('stock').value,
+                stock_quantity: document.getElementById('stock').value,
                 sku_number: document.getElementById('sku').value,
                 category_id: document.getElementById('hidden-category-id').value,
                 subcategory_id: document.getElementById('hidden-sub-category-id').value,
@@ -197,11 +198,19 @@
             variationDivs.forEach(div => {
                 const size = div.querySelector('select[name="size"]').value;
                 const colorSelect = div.querySelector('select[name="color"]');
-                const color = colorSelect.value;
+                let color = colorSelect.value; // Start with the selected dropdown value
                 const quantity = div.querySelector('input[name="quantity"]').value;
+                const colorHexaCodeInput = div.querySelector('input[name="color_hexa_code"]');
+                const color_hexa_code = colorHexaCodeInput ? colorHexaCodeInput.value : null;
+                const customColorNameInput = div.querySelector('#color-name_${variationId}'.replace('${variationId}', div.dataset.variationId)); // Get custom color input
+
+                // If "Other" is selected, use the value from the custom color name input
+                if (color === 'Other' && customColorNameInput && customColorNameInput.value.trim() !== '') {
+                    color = customColorNameInput.value.trim();
+                }
 
                 if (size && color && quantity) {
-                    variations.push({ size, color, quantity });
+                    variations.push({ size, color, quantity, color_hexa_code });
                 }
             });
 
@@ -270,45 +279,46 @@
 
 
         function validateFormFields() {
-    let isValid = true;
+            let isValid = true;
 
-    isValid = validators.required(document.getElementById('title'), 'Title', 'title-error') && isValid;
-    
-    const quillContent = quill.root.innerHTML;
-    const descriptionField = document.getElementById('description');
-    descriptionField.value = quillContent;
-    isValid = validators.required(descriptionField, 'Description', 'description-error') && isValid;
+            isValid = validators.required(document.getElementById('title'), 'Title', 'title-error') && isValid;
+            isValid = validators.required(document.getElementById('description'), 'Description', 'description-error') && isValid;
 
-    isValid = validators.required(document.getElementById('price'), 'Price', 'price-error') && isValid;
+            const quillContent = quill.root.innerHTML;
+            const productDetailsField = document.getElementById('product-details');
+            productDetailsField.value = quillContent;
+            isValid = validators.required(productDetailsField, 'Product Details', 'product-details-error') && isValid;
 
-    isValid = validators.required(document.getElementById('stock'), 'Stock', 'stock-error') && isValid;
-    isValid = validators.required(document.getElementById('discount_price'), 'Discount Price', 'discount-error') && isValid;
+            isValid = validators.required(document.getElementById('price'), 'Price', 'price-error') && isValid;
 
-    isValid = validators.required(document.getElementById('sku'), 'SKU', 'sku-error') && isValid;
+            isValid = validators.required(document.getElementById('stock'), 'Stock', 'stock-error') && isValid;
+            isValid = validators.required(document.getElementById('discount_price'), 'Discount Price', 'discount-error') && isValid;
 
-    isValid = validators.required(document.getElementById('brand'), 'Brand', 'brand-error') && isValid;
+            isValid = validators.required(document.getElementById('sku'), 'SKU', 'sku-error') && isValid;
 
-    // Validate variations
-    const variations = document.querySelectorAll('.variation-group');
-    variations.forEach(variation => {
-        const size = variation.querySelector('select[name="size"]');
-        const color = variation.querySelector('select[name="color"]');
-        const quantity = variation.querySelector('input[name="quantity"]');
+            isValid = validators.required(document.getElementById('brand'), 'Brand', 'brand-error') && isValid;
 
-        isValid = validators.required(size, 'Size', `${variation.dataset.variationId}-size-error`) && isValid;
-        isValid = validators.required(color, 'Color', `${variation.dataset.variationId}-color-error`) && isValid;
-        isValid = validators.required(quantity, 'Quantity', `${variation.dataset.variationId}-quantity-error`) && isValid;
-    });
+            // Validate variations
+            const variations = document.querySelectorAll('.variation-group');
+            variations.forEach(variation => {
+                const size = variation.querySelector('select[name="size"]');
+                const color = variation.querySelector('select[name="color"]');
+                const quantity = variation.querySelector('input[name="quantity"]');
 
-    // Validate color images
-    const colorImages = Object.keys(colorsAddedForImages);
-    colorImages.forEach(color => {
-        const fileInput = document.getElementById(`fileInput-${color}`);
-        isValid = validators.required(fileInput, `Image for ${color}`, `fileInput-${color}-error`) && isValid;
-    });
+                isValid = validators.required(size, 'Size', `${variation.dataset.variationId}-size-error`) && isValid;
+                isValid = validators.required(color, 'Color', `${variation.dataset.variationId}-color-error`) && isValid;
+                isValid = validators.required(quantity, 'Quantity', `${variation.dataset.variationId}-quantity-error`) && isValid;
+            });
 
-    return isValid;
-}
+            // Validate color images
+            const colorImages = Object.keys(colorsAddedForImages);
+            colorImages.forEach(color => {
+                const fileInput = document.getElementById(`fileInput-${color}`);
+                isValid = validators.required(fileInput, `Image for ${color}`, `fileInput-${color}-error`) && isValid;
+            });
+
+            return isValid;
+        }
 
         updateUI();
     });

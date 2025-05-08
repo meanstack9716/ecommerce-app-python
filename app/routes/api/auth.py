@@ -44,7 +44,7 @@ def register():
         return create_error_response({"email": "Email already exists"}, 409)
 
     otp = str(random.randint(100000, 999999))
-    otp_expiry = datetime.utcnow() + timedelta(minutes=10)
+    otp_expiry = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
 
     role = Role.objects(name='user').first()
     if not role:

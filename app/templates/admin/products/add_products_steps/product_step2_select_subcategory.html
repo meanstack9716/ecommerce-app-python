@@ -19,13 +19,22 @@
                     class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
             </div>
 
-            <!-- Description -->
+            <!-- Description  -->
             <div>
-                <label for="description" class="block text-base font-medium text-black mb-2">
+                <label for="description" class="block text-base font-medium text-black">
                     Description <span class="text-red-500">*</span>
                 </label>
+                <input type="text" name="description" id="description" placeholder="Enter product description"
+                    class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
+            </div>
+
+            <!-- Product Details -->
+            <div>
+                <label for="product-details" class="block text-base font-medium text-black mb-2">
+                    Product Details <span class="text-red-500">*</span>
+                </label>
                 <div id="quill-editor" class=" h-48 border border-gray-300 rounded-md"></div>
-                <input type="hidden" name="description" id="description">
+                <input type="hidden" name="product-details" id="product-details">
             </div>
         </div>
 
@@ -206,6 +215,34 @@
         return false;
     }
 
+    const standardColors = [
+        { name: 'Red', hex: '#FF0000' },
+        { name: 'Green', hex: '#00FF00' },
+        { name: 'Blue', hex: '#0000FF' },
+        { name: 'Black', hex: '#000000' },
+        { name: 'White', hex: '#FFFFFF' },
+        { name: 'Gray', hex: '#808080' },
+        { name: 'Pink', hex: '#FFC0CB' },
+        { name: 'Lavender', hex: '#E6E6FA' },
+        { name: 'Yellow', hex: '#FFFF00' },
+        { name: 'Cyan', hex: '#00FFFF' },
+        { name: 'Magenta', hex: '#FF00FF' },
+        { name: 'Orange', hex: '#FFA500' },
+        { name: 'Brown', hex: '#A52A2A' },
+        { name: 'Gold', hex: '#FFD700' },
+        { name: 'Beige', hex: '#F5F5DC' },
+        { name: 'Ivory', hex: '#FFFFF0' },
+        { name: 'Khaki', hex: '#F0E68C' },
+        { name: 'Turquoise', hex: '#40E0D0' },
+        { name: 'Violet', hex: '#EE82EE' },
+        { name: 'Indigo', hex: '#4B0082' },
+        { name: 'Teal', hex: '#008080' },
+        { name: 'Maroon', hex: '#800000' },
+        { name: 'Olive', hex: '#808000' },
+        { name: 'Navy', hex: '#000080' },
+        { name: 'Other', hex: '' }
+    ];
+
     function addVariation(e) {
         if (e) e.preventDefault();
         variationCount++;
@@ -213,65 +250,63 @@
         const container = document.getElementById('variations-container');
 
         const div = document.createElement('div');
-        div.className = 'variation-group p-4 border rounded-lg bg-gray-50 relative flex items-center space-x-6 w-full';
-        const variationId = `variation-${variationCount}`; // Unique ID for each variation
-        div.dataset.variationId = variationId; // Store ID in the DOM
+        div.className = 'variation-group p-4 border rounded-lg bg-gray-50 relative flex space-x-6 w-full flex-col';
+        const variationId = `variation-${variationCount}`;
+        div.dataset.variationId = variationId;
+
+        const colorOptions = standardColors.map(color =>
+            `<option value="${color.name}" data-hexa="${color.hex}">${color.name}</option>`
+        ).join('');
 
         div.innerHTML = `
-            <div class="flex items-center space-x-6 w-full relative">
-                <div class="w-full">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Size
-                    </label>
-                    <div class="relative w-full sm:min-w-64">
-                        <select name="size" class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm appearance-none">
-                            <option value="XS">XS</option>
-                            <option value="S">S</option>
-                            <option value="M">M</option>
-                            <option value="L">L</option>
-                            <option value="XL">XL</option>
-                            <option value="XXL">XXL</option>
-                        </select>
-                        <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">
-                            chevron_right
-                        </span>
-                    </div>
+        <div class="flex items-center space-x-6 w-full relative">
+            <div class="w-full">
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Size
+                </label>
+                <div class="relative w-full sm:min-w-64">
+                    <select name="size" class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm appearance-none">
+                        <option value="XS">XS</option>
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                        <option value="XXL">XXL</option>
+                    </select>
+                    <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">
+                        chevron_right
+                    </span>
                 </div>
-
-                <div class="w-full">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Color: </label>
-                    <div class="relative w-full sm:min-w-64">
-                        <select name="color" onchange="handleColorChange(this, '${variationId}')" class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm appearance-none">
-                            <option value="">Select Color</option>
-                            <option value="Red">Red</option>
-                            <option value="Green">Green</option>
-                            <option value="Blue">Blue</option>
-                            <option value="Black">Black</option>
-                            <option value="White">White</option>
-                            <option value="Other">Other</option>
-                        </select>
-                        <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">
-                            chevron_right
-                        </span>
-                    </div>
-                    <div class="text-red-500 text-sm mt-1 absolute -bottom-23" name="color-error"></div>
-                </div>
-                
-                <div class="w-full relative">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Quantity: </label>
-                    <input type="number" name="quantity" min="1" class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
-                    <div class="text-red-500 text-sm mt-1 absolute -bottom-23" name="quantity-error"></div>
-                </div>
-                <span class="material-symbols-outlined absolute -top-3.5 -right-2.5 text-xl cursor-pointer" onclick="removeVariation(this)">cancel</span>
             </div>
-           <div id="custom-color-fields" class="hidden mt-2 flex items-center justify-between space-x-8">
-                <input type="color" id="favcolor" name="favcolor" value="#ff0000" onchange="updateHexCode(this)">
 
-                <input type="text" id="hex-color" placeholder="Enter Hex Code (e.g., #FF5733)" class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out" readonly>
-
-                <input type="text" id="color-name" placeholder="Enter Color Name (e.g., Custom Red)" class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
+            <div class="w-full">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Color: </label>
+                <div class="relative w-full sm:min-w-64">
+                   <select name="color" onchange="handleColorChange(this, '${variationId}')" class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm appearance-none">
+                        <option value="" data-hexa="">Select Color</option>
+                        ${colorOptions}
+                    </select>
+                    <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">
+                        chevron_right
+                    </span>
+                </div>
+                <div class="text-red-500 text-sm mt-1 absolute -bottom-23" name="color-error"></div>
             </div>
-        `;
+            
+            <div class="w-full relative">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Quantity: </label>
+                <input type="number" name="quantity" min="1" class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
+                <div class="text-red-500 text-sm mt-1 absolute -bottom-23" name="quantity-error"></div>
+            </div>
+            <span class="material-symbols-outlined absolute -top-3.5 -right-2.5 text-xl cursor-pointer" onclick="removeVariation(this)">cancel</span>
+        </div>
+        <div id="custom-color-fields" class="hidden mt-2 flex items-center justify-between space-x-8">
+            <input type="color" id="favcolor_${variationId}" name="favcolor" value="#ff0000" onchange="updateHexCode(this, '${variationId}')">
+            <input type="text" id="hex-color_${variationId}" name="color_hexa_code" placeholder="Enter Hex Code (e.g., #FF5733)" class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
+            <input type="text" id="color-name_${variationId}" placeholder="Enter Color Name (e.g., Custom Red)" class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
+        </div>
+    `;
+
         container.appendChild(div);
     }
 
@@ -296,24 +331,28 @@
         }
     }
 
-    function updateHexCode(colorPicker) {
-        const selectedColor = colorPicker.value;
-        const hexColorInput = document.getElementById('hex-color');
-        hexColorInput.value = selectedColor;
-    }
-
     function handleColorChange(selectElem, variationId) {
         const previousColor = selectElem.dataset.previousColor;
         const newColor = selectElem.value;
         selectElem.dataset.previousColor = newColor;
         const variationDiv = selectElem.closest('.variation-group');
+        const hexaCodeInput = variationDiv.querySelector('input[name="color_hexa_code"]');
 
-        // Hide or show custom color fields
-        const customColorFields = variationDiv.querySelector('#custom-color-fields');
-        if (newColor === 'Other') {
-            customColorFields.classList.remove('hidden');
-        } else {
-            customColorFields.classList.add('hidden');
+        const selectedOption = selectElem.options[selectElem.selectedIndex];
+        const defaultHexa = selectedOption.getAttribute('data-hexa');
+
+        if (hexaCodeInput) {
+            hexaCodeInput.value = defaultHexa || '';
+
+            // If "Other" is selected, focus on the color picker
+            const customColorFields = variationDiv.querySelector('#custom-color-fields');
+            const colorPicker = variationDiv.querySelector('input[name="favcolor"]');
+            if (newColor === 'Other' && colorPicker) {
+                customColorFields.classList.remove('hidden');
+                colorPicker.focus();
+            } else {
+                customColorFields.classList.add('hidden');
+            }
         }
 
         // If the new color is selected and it's not empty or the default, add the image upload
@@ -323,13 +362,25 @@
 
         // If the color changed and there was a previous color, we might need to adjust counts
         if (previousColor && previousColor !== newColor) {
-            // Decrement count for the previous color
             if (colorsAddedForImages[previousColor]) {
                 colorsAddedForImages[previousColor]--;
                 if (colorsAddedForImages[previousColor] === 0) {
                     removeColorImageContainer(previousColor);
                     delete colorsAddedForImages[previousColor];
                 }
+            }
+        }
+    }
+
+    function updateHexCode(colorPicker, variationId) {
+        const hexColorInput = document.getElementById(`hex-color_${variationId}`);
+        if (hexColorInput) {
+            hexColorInput.value = colorPicker.value;
+
+            const variationDiv = colorPicker.closest('.variation-group');
+            const hiddenHexInput = variationDiv.querySelector('input[name="color_hexa_code"]');
+            if (hiddenHexInput) {
+                hiddenHexInput.value = colorPicker.value;
             }
         }
     }
