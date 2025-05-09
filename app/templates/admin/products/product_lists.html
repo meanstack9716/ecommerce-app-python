@@ -134,7 +134,9 @@
                     </td>
 
                     <!-- Actions -->
-                    <td class="px-4 py-2 border text-center">
+                    <td class="px-4 py-2 border text-center flex items-center gap-2">
+                        <a href="{{ url_for('admin_api.edit_product', product_id=product.id) }}"
+                        class="text-blue-600 hover:underline text-sm">Edit Product</a>
                         <a href="{{ url_for('admin_api.product_details', product_id=product.id) }}"
                             class="text-blue-600 hover:underline text-sm">View Details</a>
                     </td>

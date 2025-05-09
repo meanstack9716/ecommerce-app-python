@@ -195,8 +195,8 @@
 
             const variations = [];
             const colorSizeMap = {};
-            const variationDivs = document.querySelectorAll('#variations-container .variation-group');
 
+            const variationDivs = document.querySelectorAll('#variations-container .variation-group');
             variationDivs.forEach(div => {
                 const size = div.querySelector('select[name="size"]').value;
                 const colorSelect = div.querySelector('select[name="color"]');
@@ -227,7 +227,7 @@
                 formData.append(key, formValues[key]);
             }
 
-            // Append the stringified variations array
+            // Append variations
             formData.append('variations', JSON.stringify(variations));
 
             // Append thumbnail
@@ -236,7 +236,7 @@
                 formData.append('thumbnail', thumbnailInput.files[0]);
             }
 
-            // Append images for each variation
+            // Append images with nested structure image[color][size]
             const colorImageContainers = document.querySelectorAll('#color-images-container > div[id^="color-image-"]');
             colorImageContainers.forEach(container => {
                 const originalColor = container.id.split('-')[2];
@@ -249,12 +249,11 @@
                     const fileInputs = container.querySelectorAll('input[type="file"]');
                     fileInputs.forEach(fileInput => {
                         for (let i = 0; i < fileInput.files.length; i++) {
-                            formData.append(`image[${actualColor}][${size}]`, fileInput.files[i]);
+                            formData.append(`image[${actualColor}][${size}]`, fileInput.files[i], fileInput.files[i].name);
                         }
                     });
                 }
             });
-
             formData.forEach((value, key) => {
                 console.log(key + ': ', value);
             });

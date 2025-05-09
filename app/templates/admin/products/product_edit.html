@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Product{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto p-6 bg-white rounded-lg shadow">
+    <h1 class="text-3xl font-bold mb-8 text-center text-black">Edit Product</h1>
+    
+    <form method="POST" action="{{ url_for('admin_api.edit_product', product_id=product.id) }}" enctype="multipart/form-data" class="space-y-6">
+        <!-- Basic Information -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Title -->
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Product Title</label>
+                <input type="text" id="title" name="title" value="{{ product.title }}" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <!-- SKU -->
+            <div>
+                <label for="sku" class="block text-sm font-medium text-gray-700 mb-1">SKU Number</label>
+                <input type="text" id="sku" name="sku" value="{{ product.sku }}" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+        
+        <!-- Pricing -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Price -->
+            <div>
+                <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                <input type="number" step="0.01" id="price" name="price" value="{{ product.price }}" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <!-- Discount -->
+            <div>
+                <label for="discount_percent" class="block text-sm font-medium text-gray-700 mb-1">Discount Percent</label>
+                <input type="number" id="discount_percent" name="discount_percent" value="{{ product.discount_percent }}" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <!-- Final Price (readonly) -->
+            <div>
+                <label for="final_price" class="block text-sm font-medium text-gray-700 mb-1">Final Price</label>
+                <input type="number" step="0.01" id="final_price" name="final_price" value="{{ product.final_price }}" readonly 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100">
+            </div>
+        </div>
+        
+        <!-- Categories -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Category -->
+            <div>
+                <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select id="category" name="category" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="{{ product.category.id }}" selected>{{ product.category.name }}</option>
+                    <!-- Options would be populated from your database -->
+                </select>
+            </div>
+            
+            <!-- Subcategory -->
+            <div>
+                <label for="sub_category" class="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
+                <select id="sub_category" name="sub_category" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="{{ product.sub_category.id }}" selected>{{ product.sub_category.name }}</option>
+                </select>
+            </div>
+            
+            <!-- Sub-subcategory -->
+            <div>
+                <label for="sub_sub_category" class="block text-sm font-medium text-gray-700 mb-1">Sub-subcategory</label>
+                <select id="sub_sub_category" name="sub_sub_category" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="{{ product.sub_sub_category.id }}" selected>{{ product.sub_sub_category.name }}</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Brand -->
+        <div>
+            <label for="brand" class="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+            <select id="brand" name="brand" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="{{ product.brand.id }}" selected>{{ product.brand.name }}</option>
+            </select>
+        </div>
+        
+        <!-- Description -->
+        <div>
+            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea id="description" name="description" rows="3" 
+                      class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">{{ product.description }}</textarea>
+        </div>
+        
+        <!-- Details -->
+        <div>
+            <label for="details" class="block text-sm font-medium text-gray-700 mb-1">Details</label>
+            <textarea id="details" name="details" rows="3" 
+                      class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">{{ product.details }}</textarea>
+        </div>
+        
+        <!-- Thumbnail Image -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Thumbnail Image</label>
+            <div class="flex items-center space-x-4">
+                {% if product.thumbnail_url %}
+                <img src="{{ product.thumbnail_url }}" alt="Thumbnail" class="h-20 w-20 object-cover rounded">
+                {% endif %}
+                <input type="file" name="thumbnail" class="px-4 py-2 border border-gray-300 rounded-md">
+            </div>
+        </div>
+        
+        <!-- Gallery Images -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Gallery Images</label>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                {% for image in product.gallery %}
+                <div class="relative group">
+                    <img src="{{ image.img_url }}" alt="{{ image.color }}" class="h-32 w-full object-cover rounded">
+                    <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button type="button" class="text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded" onclick="removeImage('{{ image.id }}')">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <input type="file" name="gallery_images" multiple class="px-4 py-2 border border-gray-300 rounded-md">
+        </div>
+        
+        <!-- Variants -->
+        <div class="space-y-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Product Variants</label>
+            
+            {% for size in product.sizes %}
+            <div class="border border-gray-200 rounded-lg p-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-medium">Size: {{ size.value }}</h3>
+                    <button type="button" class="text-red-500 hover:text-red-700" onclick="removeSize('{{ size.id }}')">
+                        Remove Size
+                    </button>
+                </div>
+                
+                {% for variant in size.variants %}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-3 bg-gray-50 rounded">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                        <input type="text" name="variants[{{ size.id }}][{{ variant.id }}][color]" value="{{ variant.name }}" 
+                               class="w-full px-3 py-1 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Color Code</label>
+                        <input type="color" name="variants[{{ size.id }}][{{ variant.id }}][color_hexa_code]" value="{{ variant.value }}" 
+                               class="w-full h-9 px-1 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+                        <input type="number" name="variants[{{ size.id }}][{{ variant.id }}][stock_quantity]" value="{{ variant.stock_quantity }}" 
+                               class="w-full px-3 py-1 border border-gray-300 rounded-md">
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <button type="button" class="mt-2 text-blue-500 hover:text-blue-700 text-sm" onclick="addColorVariant('{{ size.id }}')">
+                    + Add Color Variant
+                </button>
+            </div>
+            {% endfor %}
+            
+            <button type="button" class="mt-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md" onclick="addSizeVariant()">
+                + Add Size Variant
+            </button>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="flex justify-end space-x-4 pt-6">
+          
+            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    // Function to add a new color variant to a size
+    function addColorVariant(sizeId) {
+        // Implement logic to add a new color variant form
+        console.log(`Add color variant to size ${sizeId}`);
+    }
+    
+    // Function to add a new size variant
+    function addSizeVariant() {
+        // Implement logic to add a new size variant section
+        console.log('Add size variant');
+    }
+    
+    // Function to remove an image
+    function removeImage(imageId) {
+        if (confirm('Are you sure you want to remove this image?')) {
+            // Implement logic to remove the image
+            console.log(`Remove image ${imageId}`);
+        }
+    }
+    
+    // Function to remove a size variant
+    function removeSize(sizeId) {
+        if (confirm('Are you sure you want to remove this size and all its variants?')) {
+            // Implement logic to remove the size
+            console.log(`Remove size ${sizeId}`);
+        }
+    }
+    
+    // Calculate final price when price or discount changes
+    document.getElementById('price').addEventListener('input', calculateFinalPrice);
+    document.getElementById('discount_percent').addEventListener('input', calculateFinalPrice);
+    
+    function calculateFinalPrice() {
+        const price = parseFloat(document.getElementById('price').value) || 0;
+        const discount = parseFloat(document.getElementById('discount_percent').value) || 0;
+        const finalPrice = price - (price * discount / 100);
+        document.getElementById('final_price').value = finalPrice.toFixed(2);
+    }
+</script>
+{% endblock %}

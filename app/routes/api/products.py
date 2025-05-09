@@ -106,17 +106,28 @@ def create_ad():
                 return create_error_response({'variations': f'Invalid variation data: {str(e)}'}, 400)
 
         # Process color-specific images and store their URLs temporarily
-        color_images = {}
+        color_size_images = {}
         for file_key in request.files:
-            if file_key.startswith('images[') and file_key.endswith(']'):
-                color_name = file_key[7:-1]
-                if color_name not in color_images:
-                    color_images[color_name] = set()  # Use a set for unique image paths
-                for file in request.files.getlist(file_key):
-                    image_path, error = upload_image(file)
-                    if error:
-                        return create_error_response({'images': error}, 400)
-                    color_images[color_name].add(image_path)
+            if file_key.startswith('image[') and ']' in file_key:
+                try:
+                    # Extract color and size from key format: image[color][size]
+                    parts = file_key.split('[')
+                    color = parts[1].split(']')[0]
+                    size = parts[2].split(']')[0]
+                    
+                    if color not in color_size_images:
+                        color_size_images[color] = {}
+                    if size not in color_size_images[color]:
+                        color_size_images[color][size] = []
+                        
+                    for file in request.files.getlist(file_key):
+                        image_path, error = upload_image(file)
+                        if error:
+                            return create_error_response({'images': error}, 400)
+                        color_size_images[color][size].append(image_path)
+                except Exception as e:
+                    return create_error_response({'images': f'Invalid image key format: {str(e)}'}, 400)
+
 
         # Save all variants
         saved_variants = []
@@ -129,20 +140,21 @@ def create_ad():
 
         for variant in saved_variants:
             color = variant.color
-            if color in color_images:
-                for image_url in color_images[color]:
-                    # Check if this image URL has already been processed
+            size = variant.size
+            if color in color_size_images and size in color_size_images[color]:
+                for image_url in color_size_images[color][size]:
                     if image_url not in variant_images_map:
                         image = ProductVariantImage(
-                            variant_id=variant.id,  # Initially set variant_id
+                            variant_id=variant.id,
                             image_url=image_url,
-                            alt_text=f"{data['name']} - {color} - {variant.size}",
+                            alt_text=f"{data['name']} - {color} - {size}",
                             is_primary=False
                         )
                         image.save()
                         variant_images_map[image_url] = image
-                    variant.images.append(variant_images_map[image_url])  # Append the reference
+                    variant.images.append(variant_images_map[image_url])
             variant.save()
+
 
         # Handle thumbnail (primary image - attach to first variant)
         if 'thumbnail' in request.files:
