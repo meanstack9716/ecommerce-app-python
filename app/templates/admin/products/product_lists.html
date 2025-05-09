@@ -94,18 +94,16 @@
                         <div class="relative w-40 mx-auto">
                             <div class="flex justify-center">
                                 {% if product.variants %}
-                                    {% for variant in product.variants %}
-                                        {% if variant.images %}
-                                            <img src="{{ variant.images.0.image_url }}" alt="{{ product.title }}"
-                                                class="w-16 h-16 object-contain rounded" />
-                                        {% endif %}
-                                    {% endfor %}
+                                    {% set first_variant = product.variants[0] %}
+                                    {% if first_variant.images %}
+                                        <img src="{{ first_variant.images.0.image_url }}" alt="{{ first_variant.title }}"
+                                             class="w-16 h-16 object-contain rounded" />
+                                    {% endif %}
                                 {% endif %}
                             </div>
                         </div>
                     </td>
                     
-
                     <!-- Title -->
                     <td class="px-4 py-2 border text-center">{{ product.name }}</td>
                     <!-- Price -->
@@ -134,12 +132,15 @@
                     </td>
 
                     <!-- Actions -->
-                    <td class="px-4 py-2 border text-center flex items-center gap-2">
-                        <a href="{{ url_for('admin_api.edit_product', product_id=product.id) }}"
-                        class="text-blue-600 hover:underline text-sm">Edit Product</a>
-                        <a href="{{ url_for('admin_api.product_details', product_id=product.id) }}"
-                            class="text-blue-600 hover:underline text-sm">View Details</a>
+                    <td class="px-4 py-2 border text-center space-x-4">
+                        <a href="{{ url_for('admin_api.edit_product', product_id=product.id) }}" class="text-blue-600 hover:underline text-sm">
+                            <span class="material-symbols-outlined">edit_square</span>
+                        </a>
+                        <a href="{{ url_for('admin_api.product_details', product_id=product.id) }}" class="text-blue-600 hover:underline text-sm"><span class="material-symbols-outlined">
+                            chevron_forward
+                            </span></a>
                     </td>
+                    
                 </tr>
                 {% endfor %}
             </tbody>

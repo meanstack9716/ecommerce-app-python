@@ -92,13 +92,13 @@ def create_ad():
             try:
                 size = var['size']
                 color = var['color']
-                quantity = int(var.get('quantity', 0))
+                stock_quantity = int(var.get('stock_quantity', 0))
                 color_hexa_code = var.get('color_hexa_code')
                 variant = ProductVariant(
                     size=size,
                     color=color,
                     color_hexa_code=color_hexa_code,
-                    stock_quantity=quantity,
+                    stock_quantity=stock_quantity,
                     product_id=None
                 )
                 variants.append(variant)
@@ -108,7 +108,7 @@ def create_ad():
         # Process color-specific images and store their URLs temporarily
         color_size_images = {}
         for file_key in request.files:
-            if file_key.startswith('image[') and ']' in file_key:
+            if file_key.startswith('images[') and ']' in file_key:
                 try:
                     # Extract color and size from key format: image[color][size]
                     parts = file_key.split('[')
@@ -148,34 +148,11 @@ def create_ad():
                             variant_id=variant.id,
                             image_url=image_url,
                             alt_text=f"{data['name']} - {color} - {size}",
-                            is_primary=False
                         )
                         image.save()
                         variant_images_map[image_url] = image
                     variant.images.append(variant_images_map[image_url])
             variant.save()
-
-
-        # Handle thumbnail (primary image - attach to first variant)
-        if 'thumbnail' in request.files:
-            thumbnail_file = request.files['thumbnail']
-            if thumbnail_file.filename != '':
-                thumbnail_path, error = upload_image(thumbnail_file)
-                if error:
-                    return create_error_response({'thumbnail': error}, 400)
-
-                if saved_variants:
-                    if thumbnail_path not in variant_images_map:
-                        primary_image = ProductVariantImage(
-                            variant_id=saved_variants[0].id,
-                            image_url=thumbnail_path,
-                            alt_text=f"{data['name']} - thumbnail",
-                            is_primary=True
-                        )
-                        primary_image.save()
-                        variant_images_map[thumbnail_path] = primary_image
-                    saved_variants[0].images.append(variant_images_map[thumbnail_path])
-                    saved_variants[0].save()
 
         # Create the product
         product = Products(

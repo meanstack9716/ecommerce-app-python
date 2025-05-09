@@ -32,13 +32,11 @@ class ProductVariantImage(db.Document):
     variant_id = ReferenceField(ProductVariant, required=False)
     image_url = db.StringField(required=True, max_length=255)
     alt_text = db.StringField(max_length=255)
-    is_primary = db.BooleanField(default=False)
     
     meta = {
         'collection': 'product_variant_images',
         'indexes': [
             'variant_id',
-            'is_primary'
         ]
     }
     
@@ -67,7 +65,6 @@ class Products(db.Document):
     status = db.StringField(choices=['active', 'inactive'], default='active')
     variants = db.ListField(ReferenceField('ProductVariant'))
     
-    thumbnail_url = db.StringField()
     created_at = db.DateTimeField(default=datetime.utcnow)
     updated_at = db.DateTimeField(default=datetime.utcnow)
     

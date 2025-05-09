@@ -25,7 +25,7 @@ def create_app(config_class=Config):
     from app.models.address import Address, AddressDetail
     from app.models.identification import Identification
     from app.models.category_modal import Category, SubCategory, SubSubCategory
-    from app.models.products import Products, ProductVariant, ProductVariantImage
+    from app.models.products import Products, ProductVariant
 
     from app.seed_data import seed_data
 

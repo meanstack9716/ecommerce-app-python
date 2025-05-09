@@ -153,42 +153,36 @@ def edit_product(product_id):
     if not product:
         return "Product not found", 404
 
-    sizes_data = {}
-    gallery_data = {}
-
+    # Organize data by color first
+    colors_data = {}
+    
     for variant in product.variants:
-        if variant.size not in sizes_data:
-            sizes_data[variant.size] = {
-                'product_id': str(product.id),
-                'value': variant.size,
-                'size_type': 'standard',
-                'id': str(variant.id) + '_size',
-                'variants': []
+        color_name = variant.color
+        color_value = variant.color_hexa_code if hasattr(variant, 'color_hexa_code') else variant.color
+        
+        if color_name not in colors_data:
+            colors_data[color_name] = {
+                'name': color_name,
+                'value': color_value,
+                'sizes': [],
+                'images': set()  # Using set to avoid duplicates
             }
-        sizes_data[variant.size]['variants'].append({
-            'value': variant.color_hexa_code if hasattr(variant, 'color_hexa_code') else variant.color,
-            'name': variant.color,
+        
+        # Add size information for this color
+        colors_data[color_name]['sizes'].append({
+            'size': variant.size,
+            'size_type': 'standard',
             'stock_quantity': variant.stock_quantity,
-            'id': str(variant.id)
+            'variant_id': str(variant.id)
         })
-
+        
+        # Add images for this color
         for image in variant.images:
-            if variant.color not in gallery_data:
-                gallery_data[variant.color] = set()
-            gallery_data[variant.color].add((str(image.id), image.image_url))
-
-    gallery = []
-    for color, image_set in gallery_data.items():
-        for img_id, img_url in image_set:
-            gallery.append({
-                'color': color,
-                'id': img_id,
-                'img_url': img_url
-            })
-
-    thumbnail_url = None
-    if product.variants and product.variants[0].images:
-        thumbnail_url = product.variants[0].images[0].image_url
+            colors_data[color_name]['images'].add(image.image_url)
+    
+    # Convert sets to lists for JSON serialization
+    for color_data in colors_data.values():
+        color_data['images'] = list(color_data['images'])
 
     product_dict = {
         'user_id': str(product.user_id.id) if product.user_id else None,
@@ -201,9 +195,7 @@ def edit_product(product_id):
         'stock_quantity': sum(v.stock_quantity for v in product.variants) if product.variants else 0,
         'final_price': product.final_price,
         'id': str(product.id),
-        'thumbnail_url': thumbnail_url,
-        'sizes': list(sizes_data.values()),
-        'gallery': gallery,
+        'colors': list(colors_data.values()),  # Now organized by color
         'category': {
             'name': product.category_id.name if product.category_id else None,
             'id': str(product.category_id.id) if product.category_id else None,
