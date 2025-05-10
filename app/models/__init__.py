@@ -6,3 +6,4 @@ from .identification import Identification
 from .category_modal import Category, SubCategory, SubSubCategory
 from .add_products import AddProducts
 from .brands import ProductBrands
+from .cart import Cart
