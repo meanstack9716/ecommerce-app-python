@@ -461,7 +461,6 @@ def edit_product():
             return create_error_response({'product': 'Product not found or unauthorized'}, 404)
 
         data = request.form.to_dict()
-        print(data, ">>>>>>>")
         update_fields = {
             'name': data.get('name'),
             'description': data.get('description'),
