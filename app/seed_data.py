@@ -17,7 +17,6 @@ def seed_categories():
         "SPORTS": ["Equipment", "Activewear", "Footwear"],
         "TOYS": ["Action Figures", "Dolls", "Puzzles"],
         "BOOKS": ["Fiction", "Non-Fiction", "Comics"],
-        "AUTOMOTIVE": ["Car Accessories", "Bike Accessories", "Tools"]
     }
 
     sub_sub_category_data = {
@@ -79,7 +78,7 @@ def seed_categories():
                         description=f"{prod_type_name} product type description",
                         category_id=category,
                         sub_category_id=subcategory,
-                        img_url=f"/seed_images/product_types/{prod_type_name.lower().replace(' ', '_')}.jpg"
+                        img_url=f"/seed_images/subcategories/{prod_type_name.lower().replace(' ', '_')}.jpg"
                     ).save()
                     print(f" SubSubCategory created: {prod_type_name}")
 

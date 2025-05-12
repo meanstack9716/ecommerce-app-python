@@ -52,24 +52,51 @@ def add_new_category():
 @category_bp.route(API_CATEGORY_LIST, methods=['GET'])
 def get_category_list():
     search_query = request.args.get('search', '').strip()
-    
+
     if search_query:
         categories = Category.objects(name__icontains=search_query)
     else:
         categories = Category.objects.all()
 
-    categories_data = [{
-        'id': str(category.id),
-        'name': category.name,
-        'description': category.description,
-        'img_url': category.img_url,
-        'created_at': category.created_at.isoformat() if category.created_at else None,
-    } for category in categories]
+    categories_data = []
+
+    for category in categories:
+        subcategories = SubCategory.objects(category=category)
+        subcategories_data = []
+
+        for subcategory in subcategories:
+            subsubcategories = SubSubCategory.objects(sub_category_id=subcategory)
+            sub_sub_categories_data = []
+
+            for subsub in subsubcategories:
+                sub_sub_categories_data.append({
+                    'id': str(subsub.id),
+                    'name': subsub.name,
+                    'description': subsub.description,
+                    'img_path': subsub.img_url or '',
+                })
+
+            subcategories_data.append({
+                'id': str(subcategory.id),
+                'name': subcategory.name,
+                'description': subcategory.description,
+                'img_path': subcategory.img_url or '',
+                'sub_sub_categories': sub_sub_categories_data,
+            })
+
+        categories_data.append({
+            'id': str(category.id),
+            'name': category.name,
+            'description': category.description,
+            'img_path': category.img_url or '',
+            'sub_categories': subcategories_data,
+        })
 
     return jsonify({
         'status': 'success',
         'data': categories_data,
     })
+
 
 @category_bp.route(API_CATEGORY_LIST_BY_ID, methods=['GET'])
 def get_category_with_children(category_id):

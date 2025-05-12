@@ -93,7 +93,7 @@ SUB_SUB_CATEGORY_ADD_API = '/api/sub-sub-category/add'
 GET_SUBSUBCATEGORIES_BY_CATEGORY_ID_API = '/api/sub-sub-categories/list';
 
 ADD_NEW_PRODUCT_API = f'/api/products/add'
-PRODUCT_LISTS_API= f'/api/products/lists'
+PRODUCT_LISTS_API= f'/api/products/list'
 EDIT_PRODUCT_API = f'/api/products/edit'
 # Sub Sub Category API Endpoint Constants End
 
