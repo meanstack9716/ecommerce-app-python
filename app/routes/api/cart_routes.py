@@ -180,7 +180,6 @@ def checkout():
     )
     order.save()
 
-    cart.status = 'converted'
     cart.items = []
     cart.shipping_address = shipping_address
     cart.shipping_method = shipping_method

@@ -23,7 +23,6 @@ class Cart(db.Document):
     items = db.EmbeddedDocumentListField(CartItem)
     total_price = db.FloatField(default=0.0)
     currency = db.StringField(default='INR')
-    status = db.StringField(choices=['active', 'abandoned', 'converted'], default='active')
     created_at = db.DateTimeField(default=datetime.utcnow)
     updated_at = db.DateTimeField(default=datetime.utcnow)
     shipping_address = db.DictField() 
