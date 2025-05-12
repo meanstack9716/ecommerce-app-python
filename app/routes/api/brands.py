@@ -14,12 +14,24 @@ def get_brands():
     try:
         brands = ProductBrands.objects()
         data = [
-            {"id": str(brand.id), "name": brand.name, "logo_path": brand.logo_path}
+            {
+                "id": str(brand.id),
+                "name": brand.name,
+                "logo_path": brand.logo_path
+            }
             for brand in brands
         ]
-        return jsonify({"data": data}), 200
+        return jsonify({
+            "success": True,
+            "message": "Brands fetched successfully",
+            "data": data
+        }), 200
     except Exception as e:
-        return create_error_response(str(e), 500)
+        return jsonify({
+            "success": False,
+            "message": "Something went wrong while fetching brands",
+            "error": str(e)
+        }), 500
 
 @brand_bp.route(ADD_BRAND_API, methods=['POST'])
 def add_new_brand():
