@@ -76,8 +76,40 @@ input {
 input::placeholder {
   font-size: 13px !important;
 }
-#mainContent.md\:ml-0 {
-  width: 100%;
-  max-width: 100%;
+/* Ensure smooth transitions for sidebar and main content */
+#sidebarContainer {
+  transition: transform 0.3s ease-in-out;
+  z-index: 40; /* Ensure sidebar is above main content */
 }
 
+#mainContent {
+  transition: margin-left 0.3s ease-in-out;
+}
+
+/* Adjust main content when sidebar is open on medium screens and above */
+@media (min-width: 768px) {
+  #mainContent.md\:ml-64 {
+    margin-left: 16rem; /* Matches sidebar width (w-64 = 16rem) */
+  }
+}
+
+/* Ensure sidebar is fixed and full height */
+#sidebarContainer {
+  height: calc(100vh - 4rem); /* Adjust for navbar height */
+  top: 4rem; /* Match navbar height */
+}
+
+/* Hide sidebar by default on mobile */
+@media (max-width: 767px) {
+  #sidebarContainer {
+    transform: translateX(-100%);
+  }
+}
+
+/* Fix navbar height and ensure it stays on top */
+.w-full.mx-auto {
+  height: 4rem; /* Set navbar height */
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
