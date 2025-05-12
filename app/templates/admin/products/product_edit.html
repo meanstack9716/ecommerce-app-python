@@ -400,6 +400,23 @@ admin_content %}
     }
 
     function addSizeBlock(selectedSize = "", selectedSizeType = "standard") {
+      const existingSizes = Array.from(
+        sizeContainer.querySelectorAll(".size-block")
+      ).map((block) => {
+        const select = block.querySelector(".size-select").value
+        const customInput = block.querySelector(".custom-size-input")
+        return customInput && !customInput.classList.contains("hidden")
+          ? customInput.value
+          : select
+      })
+
+      if (
+        existingSizes.includes(selectedSize) ||
+        (selectedSize === "custom" && existingSizes.includes(""))
+      ) {
+        return // Prevent adding duplicate size
+      }
+
       const sizeId = `size_${sizeCounter++}`
       const isNumeric = selectedSizeType === "numeric"
       const sizeOptions = isNumeric ? config.numericSizes : config.standardSizes
@@ -540,35 +557,26 @@ admin_content %}
 
       const sizeSelect = sizeBlock.querySelector(".size-select")
       sizeSelect.addEventListener("change", function () {
+        const customInput = sizeBlock.querySelector(".custom-size-input")
+        const selectedSizeType = isNumeric ? "numeric" : "standard"
+
+        // Show/hide custom size input based on selection
         if (this.value === "custom") {
-          const customInput = sizeBlock.querySelector(".custom-size-input")
           customInput.value = ""
           customInput.classList.remove("hidden")
+        } else {
+          customInput.classList.add("hidden")
+          customInput.value = ""
         }
-        const selectedSizeType = isNumeric ? "numeric" : "standard"
-        sizeContainer.innerHTML = ""
-        const colorsBySize = {}
-        productData.colors.forEach((color) => {
-          color.sizes.forEach((s) => {
-            if (s.size === this.value && s.size_type === selectedSizeType) {
-              const key = `${s.size}-${s.size_type}`
-              if (!colorsBySize[key]) {
-                colorsBySize[key] = []
-              }
-              colorsBySize[key].push(color)
-            }
-          })
-        })
 
-        for (const key in colorsBySize) {
-          const [size, type] = key.split("-")
-          addSizeBlock(size, type)
-        }
-        if (Object.keys(colorsBySize).length === 0 && this.value !== "") {
-          addSizeBlock(this.value, selectedSizeType)
-        } else if (this.value === "") {
-          initializeForm()
-        }
+        // Update the current size block's size value (if needed)
+        sizeBlock.querySelector(
+          `input[name="sizes[${sizeId}][custom_size]"]`
+        ).value = this.value === "custom" ? "" : this.value
+        sizeBlock.querySelector(`select[name="sizes[${sizeId}][name]"]`).value =
+          this.value
+
+        // Generate image upload fields (if applicable)
         generateImageUploadFields()
       })
 
@@ -783,128 +791,126 @@ admin_content %}
       })
     }
 
+    document.querySelector("button#save-btn").addEventListener("click", async function (e) {
+    e.preventDefault();
+    const formData = new FormData();
+    const variations = [];
+    
+    // 1. Add basic form fields
+    const basicFields = {
+        'name': document.getElementById("title").value,
+        'description': document.getElementById("description").value,
+        'details': document.getElementById("product-details").value,
+        'price': document.getElementById("price").value,
+        'discount_price': document.getElementById("discount_price").value,
+        'stock_quantity': document.getElementById("stock").value,
+        'sku_number': document.getElementById("sku").value,
+        'category_id': productData.category.id,
+        'subcategory_id': productData.sub_category.id,
+        'subsubcategory_id': productData.sub_sub_category.id,
+        'brand': productData.brand.id,
+    };
 
-    document
-      .querySelector("button#save-btn")
-      .addEventListener("click", function () {
-        const formData = new FormData()
-        const variations = []
-        const images = {}
+    Object.entries(basicFields).forEach(([key, value]) => {
+        formData.append(key, value);
+    });
 
-        // Get basic form values
-        const formValues = {
-          name: document.getElementById("title").value,
-          description: document.getElementById("description").value,
-          details: document.getElementById("product-details").value,
-          price: document.getElementById("price").value,
-          discount_price: document.getElementById("discount_price").value,
-          stock_quantity: document.getElementById("stock").value,
-          sku_number: document.getElementById("sku").value,
-          category_id: productData.category.id,
-          subcategory_id: productData.sub_category.id,
-          subsubcategory_id: productData.sub_sub_category.id,
-          brand: productData.brand.id,
-        }
+    // 2. Add product ID
+    const productId = productData.id
+    formData.append('product_id', productId);
 
-        // Append basic form values to FormData
-        for (const key in formValues) {
-          formData.append(key, formValues[key])
-        }
+    // 3. Process variations and images
+    document.querySelectorAll(".size-block").forEach(sizeBlock => {
+        const sizeName = sizeBlock.querySelector(".size-select").value === "custom" 
+            ? sizeBlock.querySelector(".custom-size-input").value 
+            : sizeBlock.querySelector(".size-select").value;
+        const sizeId = sizeBlock.dataset.sizeId;
 
-        const sizeBlocks = document.querySelectorAll(".size-block")
+        // Standard colors
+        sizeBlock.querySelectorAll('.standard-colors input[type="checkbox"]:checked').forEach(checkbox => {
+            const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1];
+            const colorNameInput = checkbox.closest("div").querySelector(`input[name*="[${colorHex}][name]"]`);
+            const colorName = colorNameInput ? colorNameInput.value : colorHex;
+            const quantity = parseInt(checkbox.closest("div").nextElementSibling.value) || 0;
 
-        sizeBlocks.forEach((sizeBlock) => {
-          const sizeName =
-            sizeBlock.querySelector(".size-select").value === "custom"
-              ? sizeBlock.querySelector(".custom-size-input").value
-              : sizeBlock.querySelector(".size-select").value
-          const sizeId = sizeBlock.dataset.sizeId
-
-          // Process standard colors
-          const checkedStandardColors = sizeBlock.querySelectorAll(
-            '.standard-colors input[type="checkbox"]:checked'
-          )
-          checkedStandardColors.forEach((checkbox) => {
-            const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1]
-            const colorNameInput = checkbox
-              .closest("div")
-              .querySelector(`input[name*="[${colorHex}][name]"]`)
-            const colorName = colorNameInput ? colorNameInput.value : colorHex
-            const quantityInput = checkbox.closest("div").nextElementSibling
-            const quantity = parseInt(quantityInput.value) || 0
-
-            if (sizeName && colorName && colorHex) {
-              variations.push({
+            variations.push({
                 size: sizeName,
                 color: colorName,
                 stock_quantity: quantity,
-                color_hexa_code: colorHex,
-              })
+                color_hexa_code: colorHex
+            });
 
-              // Get images from custom uploader
-              const uploadId = `upload_${sizeId}_${colorHex}`
-              const fileInput = document.getElementById(uploadId)
-              if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                Array.from(fileInput.files).forEach((file, index) => {
-                  formData.append(
-                    `images[${colorName}][${sizeName}]`,
-                    file,
-                    file.name
-                  )
-                })
-              }
+            // Process images
+            const uploadId = `upload_${sizeId}_${colorHex}`;
+            const fileInput = document.getElementById(uploadId);
+            if (fileInput?.files) {
+                Array.from(fileInput.files).forEach(file => {
+                    formData.append(`images[${colorName}][${sizeName}]`, file);
+                });
             }
-          })
+        });
 
-          // Process custom colors
-          const customColorDivs = sizeBlock.querySelectorAll(
-            ".custom-color-container > div"
-          )
-          customColorDivs.forEach((customColorDiv) => {
-            const hexInput = customColorDiv.querySelector('input[type="color"]')
-            const nameInput = customColorDiv.querySelector(
-              'input[placeholder="Color name"]'
-            )
-            const quantityInput = customColorDiv.querySelector(
-              ".custom-color-quantity"
-            )
-            const quantity = parseInt(quantityInput.value) || 0
-            const colorHexCode = hexInput ? hexInput.value : null
-            const colorName = nameInput ? nameInput.value.trim() : null
+        // Custom colors
+        sizeBlock.querySelectorAll(".custom-color-container > div").forEach(customColorDiv => {
+            const hexInput = customColorDiv.querySelector('input[type="color"]');
+            const nameInput = customColorDiv.querySelector('input[placeholder="Color name"]');
+            const quantityInput = customColorDiv.querySelector(".custom-color-quantity");
+            
+            if (hexInput && nameInput?.value.trim()) {
+                const colorHex = hexInput.value;
+                const colorName = nameInput.value.trim();
+                const quantity = parseInt(quantityInput.value) || 0;
+                const customColorId = nameInput.name.match(/\[custom\]\[(.*?)\]/)[1];
 
-            if (colorHexCode && colorName && sizeName) {
-              variations.push({
-                size: sizeName,
-                color: colorName,
-                quantity: quantity,
-                color_hexa_code: colorHexCode,
-              })
+                variations.push({
+                    size: sizeName,
+                    color: colorName,
+                    stock_quantity: quantity,
+                    color_hexa_code: colorHex
+                });
 
-              // Get images from custom uploader
-              const customColorId =
-                nameInput.name.match(/\[custom\]\[(.*?)\]/)[1]
-              const uploadId = `upload_${sizeId}_custom_${customColorId}`
-              const fileInput = document.getElementById(uploadId)
-              if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                Array.from(fileInput.files).forEach((file, index) => {
-                  formData.append(
-                    `images[${colorName}][${sizeName}]`,
-                    file,
-                    file.name
-                  )
-                })
-              }
+                // Process images
+                const uploadId = `upload_${sizeId}_custom_${customColorId}`;
+                const fileInput = document.getElementById(uploadId);
+                if (fileInput?.files) {
+                    Array.from(fileInput.files).forEach(file => {
+                        formData.append(`images[${colorName}][${sizeName}]`, file);
+                    });
+                }
             }
-          })
-        })
+        });
+    });
 
-        formData.append("variations", JSON.stringify(variations))
+    // 4. Add variations as JSON
+    formData.append("variations", JSON.stringify(variations));
 
-        // Log the formData (for debugging)
-        for (const pair of formData.entries()) {
-          console.log(pair[0], pair[1])
+    try {
+        // Show loading state
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+
+        // 5. Make API request
+        const response = await fetch("/api/products/edit", {
+            method: "PUT",
+            body: formData,
+            credentials: 'include' // Important for sessions
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Failed to update product");
         }
-      })
+
+        const result = await response.json();
+        
+    } catch (error) {
+        console.error("Update error:", error);
+        alert(`Error: ${error.message}`);
+    } finally {
+        this.disabled = false;
+        this.textContent = "Save Changes";
+    }
+});
 
     generateImageUploadFields()
   })

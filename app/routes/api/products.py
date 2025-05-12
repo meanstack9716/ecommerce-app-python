@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, session
 import json
 from datetime import datetime
-from constants import ADD_NEW_PRODUCT_API, PRODUCT_LISTS_API
+from constants import ADD_NEW_PRODUCT_API, PRODUCT_LISTS_API, EDIT_PRODUCT_API
 from app.models import Products, Category, SubCategory, SubSubCategory
 from app.models.products import ProductVariant, ProductVariantImage
 from app.utils.image_upload import upload_image
@@ -441,3 +441,157 @@ def get_product_by_id(product_id):
 
     except Exception as e:
         return create_error_response({"exception": str(e)}, status_code=500)
+
+
+@products_bp.route(EDIT_PRODUCT_API, methods=['PUT'])
+def edit_product():
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return create_error_response({'user_id': 'User not logged in'}, 401)
+        
+        try:
+            user_object_id = ObjectId(user_id)
+            product_id = ObjectId(request.form.get('product_id'))
+        except Exception:
+            return create_error_response({'id': 'Invalid ID format'}, 400)
+
+        product = Products.objects(id=product_id, user_id=user_object_id).first()
+        if not product:
+            return create_error_response({'product': 'Product not found or unauthorized'}, 404)
+
+        data = request.form.to_dict()
+        
+        update_fields = {
+            'name': data.get('name'),
+            'description': data.get('description'),
+            'details': data.get('details'),
+            'price': float(data.get('price', 0)),
+            'discount_price': float(data.get('discount_price', 0)),
+            'stock_quantity': int(data.get('stock_quantity', 0)),
+            'sku_number': data.get('sku_number'),
+            'category_id': ObjectId(data.get('category_id')),
+            'subcategory_id': ObjectId(data.get('subcategory_id')),
+            'subsubcategory_id': ObjectId(data.get('subsubcategory_id')),
+            'updated_at': datetime.utcnow()
+        }
+
+        brand_value = data.get('brand_id')
+        other_brand_name = data.get('other_brand')
+        
+        if brand_value and brand_value != 'other':
+            brand = ProductBrands.objects(id=brand_value).first()
+            if not brand:
+                return create_error_response({'brand': 'Invalid brand ID'}, 400)
+            update_fields['brand_id'] = brand
+        elif brand_value == 'other' and other_brand_name:
+            brand = ProductBrands.objects(name__iexact=other_brand_name.strip()).first()
+            if not brand:
+                brand = ProductBrands(
+                    name=other_brand_name.strip(),
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
+                )
+                brand.save()
+            update_fields['brand_id'] = brand
+
+        try:
+            variations_list = json.loads(data.get('variations', '[]'))
+        except json.JSONDecodeError:
+            return create_error_response({'variations': 'Invalid variations format'}, 400)
+
+        color_size_images = {}
+        for file_key in request.files:
+            if file_key.startswith('images[') and ']' in file_key:
+                try:
+                    parts = file_key.split('[')
+                    color = parts[1].split(']')[0]
+                    size = parts[2].split(']')[0]
+                    
+                    if color not in color_size_images:
+                        color_size_images[color] = {}
+                    if size not in color_size_images[color]:
+                        color_size_images[color][size] = []
+                        
+                    for file in request.files.getlist(file_key):
+                        image_path, error = upload_image(file)
+                        if error:
+                            return create_error_response({'images': error}, 400)
+                        color_size_images[color][size].append(image_path)
+                except Exception as e:
+                    return create_error_response({'images': f'Invalid image key format: {str(e)}'}, 400)
+
+        existing_variants = {f"{v.size}_{v.color}": v for v in product.variants}
+        new_variant_keys = {f"{v['size']}_{v['color']}" for v in variations_list}
+        
+        for var in variations_list:
+            try:
+                variant_key = f"{var['size']}_{var['color']}"
+                
+                if variant_key in existing_variants:
+                    variant = existing_variants[variant_key]
+                    variant.stock_quantity = int(var.get('stock_quantity', 0))
+                    variant.color_hexa_code = var.get('color_hexa_code')
+                    variant.updated_at = datetime.utcnow()
+                    
+                    if variant_key in color_size_images:
+                        variant.images = []
+                        for image_url in color_size_images[variant_key]:
+                            image = ProductVariantImage(
+                                variant_id=variant.id,
+                                product_id=product.id,
+                                image_url=image_url,
+                                alt_text=f"{update_fields['name']} - {var['color']} - {var['size']}",
+                            )
+                            image.save()
+                            variant.images.append(image)
+                    
+                    variant.save()
+                else:
+                    variant = ProductVariant(
+                        size=var['size'],
+                        color=var['color'],
+                        color_hexa_code=var.get('color_hexa_code'),
+                        stock_quantity=int(var.get('stock_quantity', 0)),
+                        product_id=product.id
+                    )
+                    
+                    if variant_key in color_size_images:
+                        for image_url in color_size_images[variant_key]:
+                            image = ProductVariantImage(
+                                variant_id=variant.id,
+                                product_id=product.id,
+                                image_url=image_url,
+                                alt_text=f"{update_fields['name']} - {var['color']} - {var['size']}",
+                            )
+                            image.save()
+                            variant.images.append(image)
+                    
+                    variant.save()
+                    product.variants.append(variant)
+                    
+            except (KeyError, ValueError) as e:
+                return create_error_response({'variations': f'Invalid variation data: {str(e)}'}, 400)
+
+        for variant_key, variant in existing_variants.items():
+            if variant_key not in new_variant_keys:
+                ProductVariantImage.objects(variant_id=variant.id).delete()
+                product.variants.remove(variant)
+                variant.delete()
+
+        product.update(**update_fields)
+        product.save()
+
+        return jsonify({
+            "message": "Product updated successfully",
+            "id": str(product.id),
+            "product": {
+                "name": product.name,
+                "price": float(product.price),
+                "discount_price": float(product.discount_price) if product.discount_price else None,
+                "final_price": float(product.final_price)
+            }
+        }), 200
+
+    except Exception as error:
+        return create_error_response({'unexpected_error': str(error)}, 500)

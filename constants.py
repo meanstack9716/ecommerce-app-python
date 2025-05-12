@@ -94,6 +94,7 @@ GET_SUBSUBCATEGORIES_BY_CATEGORY_ID_API = '/api/sub-sub-categories/list';
 
 ADD_NEW_PRODUCT_API = f'/api/products/add'
 PRODUCT_LISTS_API= f'/api/products/lists'
+EDIT_PRODUCT_API = f'/api/products/edit'
 # Sub Sub Category API Endpoint Constants End
 
 # Brand Endpoint API Start

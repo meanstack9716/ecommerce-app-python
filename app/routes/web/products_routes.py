@@ -217,20 +217,4 @@ def edit_product(product_id):
     return render_template('admin/products/product_edit.html', product=product_dict)
 
 
-@admin_api.route('/products/<product_id>/update', methods=['POST'])
-def update_product(product_id):
-    product = Products.objects(id=product_id).first()
-    if not product:
-        return "Product not found", 404
 
-    product.name = request.form.get('title')
-    product.description = request.form.get('description')
-    product.price = float(request.form.get('price'))
-    product.discount_price = int(request.form.get('discount_percent'))
-    product.sku_number = request.form.get('sku')
-
-    # Add logic to handle categories, variants, images, etc.
-
-    product.save()
-
-    return redirect(url_for('admin_api.product_details', product_id=product_id))
