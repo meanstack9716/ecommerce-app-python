@@ -21,11 +21,11 @@ APPROVAL_STATUSES = ['pending', 'approved', 'cancelled']
 # API Endpoint Constants
 BASE_URL = ''
 
-REGISTER = f'{BASE_URL}/register'
-LOGIN = f'{BASE_URL}/login'
-FORGOT_PASSWORD = f'{BASE_URL}/send-email-code'
-VERIFY_OTP = f'{BASE_URL}/verify-email-code'
-RESET_PASSWORD = f'{BASE_URL}/reset-password'
+REGISTER = f'{BASE_URL}/api/register'
+LOGIN = f'{BASE_URL}/api/login'
+FORGOT_PASSWORD = f'{BASE_URL}/api/send-email-code'
+VERIFY_OTP = f'{BASE_URL}/api/verify-email-code'
+RESET_PASSWORD = f'{BASE_URL}/api/reset-password'
 
 # WEB Endpoint Constants Start
 Login_WEB_URL = f'/login'

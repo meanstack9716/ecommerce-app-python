@@ -85,21 +85,22 @@ def login():
         return create_error_response({"email": email_error}, 400)
 
     user = User.objects(email=email).first()
-    if not user:
-        return create_error_response({"email": "Email or password is wrong."}, 404)
+    if not user or not user.check_password(password):
+        return create_error_response({"email": "Email or password is wrong."}, 401)
 
-    if not user.check_password(password):
-        return create_error_response({"password": "Invalid password"}, 401)
+    otp = str(random.randint(100000, 999999))
+    otp_expiry = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
 
-    access_token = create_access_token(identity=str(user.id), additional_claims={'role': user.role.name})
+    user.reset_otp = otp
+    user.otp_expiry = otp_expiry
+    user.save()
 
-    session['user_id'] = str(user.id)
-    session['user_role'] = user.role.name
+    msg = Message("Login OTP Verification", recipients=[email])
+    msg.body = f"Your login OTP is {otp}. It will expire in 10 minutes."
+    mail.send(msg)
 
-    return jsonify({
-        'message': 'Login successful',
-        'access_token': access_token
-    }), 200
+    return jsonify({'message': 'OTP sent to email. Please verify to complete login.'}), 200
+
 
 
 @auth_bp.route(FORGOT_PASSWORD, methods=['POST'])
