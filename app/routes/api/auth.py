@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, url_for, session
 from flask_jwt_extended import create_access_token
 from flask_mail import Message
 from app import bcrypt, mail
@@ -12,7 +12,6 @@ from app.models.role import Role
 from app.utils.validation import validate_email, validate_password, validate_required_fields
 from app.utils.utils import create_error_response
 from constants import OTP_EXPIRY_MINUTES, REGISTER, LOGIN, FORGOT_PASSWORD, VERIFY_OTP, RESET_PASSWORD, LOGOUT
-from flask import session
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 @auth_bp.route(REGISTER, methods=['POST'])
@@ -28,7 +27,7 @@ def register():
     print(f"Email: {email}")
     print(f"Password: {password}")
     print(f"Password Confirmation: {password_confirmation}")
-    
+
     is_valid, errors = validate_required_fields(
         {'email': email, 'password': password, 'password_confirmation': password_confirmation},
         ['email', 'password', 'password_confirmation']
@@ -73,7 +72,6 @@ def register():
 
     return jsonify({'message': 'OTP sent to email. Please verify to complete registration.'}), 200
 
-
 @auth_bp.route(LOGIN, methods=['POST'])
 def login():
     data = request.get_json()
@@ -82,7 +80,6 @@ def login():
 
     email = data.get('email', '').strip()
     password = data.get('password', '').strip()
-
     errors = {}
     if not email:
         errors['email'] = 'Email is required.'
@@ -99,6 +96,15 @@ def login():
     if not user or not user.check_password(password):
         return create_error_response({"email": "Email or password is wrong."}, 401)
 
+    if user.is_admin:
+        # Set user_id in session
+        session['user_id'] = str(user.id)
+        return jsonify({
+            'message': 'Login successful.',
+            'is_admin': True,
+            'redirect': url_for('admin_api.dashboard')
+        }), 200
+
     otp = str(random.randint(100000, 999999))
     otp_expiry = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
 
@@ -110,7 +116,10 @@ def login():
     msg.body = f"Your login OTP is {otp}. It will expire in 10 minutes."
     mail.send(msg)
 
-    return jsonify({'message': 'OTP sent to email. Please verify to complete login.'}), 200
+    return jsonify({
+        'message': 'OTP sent to email. Please verify to complete login.',
+        'is_admin': False
+    }), 200
 
 
 @auth_bp.route(FORGOT_PASSWORD, methods=['POST'])
