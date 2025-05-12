@@ -17,10 +17,18 @@ from flask import session
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 @auth_bp.route(REGISTER, methods=['POST'])
 def register():
-    email = request.form.get('email')
-    password = request.form.get('password')
-    password_confirmation = request.form.get('password_confirmation')
+    data = request.get_json()
+    if not data:
+        return create_error_response({"error": "Invalid JSON or no data provided"}, 400)
 
+    email = data.get('email')
+    password = data.get('password')
+    password_confirmation = data.get('password_confirmation')
+
+    print(f"Email: {email}")
+    print(f"Password: {password}")
+    print(f"Password Confirmation: {password_confirmation}")
+    
     is_valid, errors = validate_required_fields(
         {'email': email, 'password': password, 'password_confirmation': password_confirmation},
         ['email', 'password', 'password_confirmation']
@@ -68,8 +76,12 @@ def register():
 
 @auth_bp.route(LOGIN, methods=['POST'])
 def login():
-    email = request.form.get('email', '').strip()
-    password = request.form.get('password', '').strip()
+    data = request.get_json()
+    if not data:
+        return create_error_response({"error": "Invalid JSON or no data provided"}, 400)
+
+    email = data.get('email', '').strip()
+    password = data.get('password', '').strip()
 
     errors = {}
     if not email:
@@ -87,7 +99,6 @@ def login():
     if not user or not user.check_password(password):
         return create_error_response({"email": "Email or password is wrong."}, 401)
 
-    # Generate OTP and send email
     otp = str(random.randint(100000, 999999))
     otp_expiry = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
 
@@ -104,8 +115,11 @@ def login():
 
 @auth_bp.route(FORGOT_PASSWORD, methods=['POST'])
 def forgot_password():
-    email = request.form.get('email')
+    data = request.get_json()
+    if not data:
+        return jsonify({'message': 'Invalid JSON or no data provided'}), 400
 
+    email = data.get('email')
     if not email:
         return jsonify({'message': 'Email is required'}), 400
 
@@ -137,8 +151,12 @@ def forgot_password():
 
 @auth_bp.route(VERIFY_OTP, methods=['POST'])
 def verify_email_code():
-    email = request.form.get('email')
-    otp = request.form.get('code')
+    data = request.get_json()
+    if not data:
+        return jsonify({'errors': 'Invalid JSON or no data provided'}), 400
+
+    email = data.get('email')
+    otp = data.get('code')
 
     if not email or not otp:
         return jsonify({'errors': 'Email and OTP are required'}), 400
@@ -183,14 +201,17 @@ def verify_email_code():
     }), 200
 
 
-
 @auth_bp.route(RESET_PASSWORD, methods=['POST'])
 def reset_password():
-    email = request.form.get('email')
-    new_password = request.form.get('password')
+    data = request.get_json()
+    if not data:
+        return jsonify({'errors': 'Invalid JSON or no data provided'}), 400
+
+    email = data.get('email')
+    new_password = data.get('password')
 
     if not email or not new_password:
-        return jsonify({'errors': 'Email, and new password are required'}), 400
+        return jsonify({'errors': 'Email and new password are required'}), 400
 
     user = User.objects(email=email).first()
     if not user:
@@ -204,6 +225,7 @@ def reset_password():
     user.save()
 
     return jsonify({'message': 'Password reset successfully'}), 200
+
 
 @auth_bp.route(LOGOUT, methods=['POST'])
 def logout():
