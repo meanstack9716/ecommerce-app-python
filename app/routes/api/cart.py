@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify, session
 from app.models.cart import Cart, CartItem
+from app.models.products import ProductVariant
 from app.models.products import Products
 from datetime import datetime
 from constants import CART_ADD, CART_REMOVE, CART_LIST, CART_CHECKOUT
 from bson import ObjectId
+from constants import ALLOWED_SIZES
 
 cart_bp = Blueprint('cart', __name__)
 
@@ -14,81 +16,126 @@ def get_user_id():
 
 @cart_bp.route(CART_ADD, methods=['POST'])
 def add_to_cart():
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 400
+
+    try:
+        data = request.get_json()
+    except Exception:
+        return jsonify({"error": "Invalid JSON data"}), 400
+
+    if not isinstance(data, dict):
+        return jsonify({"error": "Invalid data format, expected JSON object"}), 400
+
+    product_id = data.get('product_id')
+    variant_id = data.get('variant_id')
+    size = data.get('size')  # Extract size from payload
+    quantity = data.get('quantity', 1)
+
     user_id = get_user_id()
     if isinstance(user_id, tuple):
         return user_id
-    
-    data = request.json
-    product_id = data.get('product_id')
-    variant_id = data.get('variant_id')
-    quantity = data.get('quantity', 1)
-    
-    if not product_id or not isinstance(quantity, int) or quantity < 1:
-        return jsonify({"error": "Invalid product_id or quantity"}), 400
 
-    product = Product.objects(id=product_id).first()
+    if not product_id:
+        return jsonify({"error": "product_id is required"}), 400
+
+    # Validate size if provided
+    if size and size not in ALLOWED_SIZES:
+        return jsonify({"error": f"Invalid size. Must be one of {ALLOWED_SIZES}"}), 400
+
+    try:
+        quantity = int(quantity)
+        if quantity < 1:
+            raise ValueError
+    except (ValueError, TypeError):
+        return jsonify({"error": "quantity must be a positive integer"}), 400
+
+    product = Products.objects(id=product_id).first()
     if not product:
         return jsonify({"error": "Product not found"}), 404
 
-    price = product.price
-    if variant_id:
-        variant = product.variants.get(variant_id)
+    price = float(product.final_price)
+
+    variant = None
+    if variant_id or size:
+        query = ProductVariant.objects(product_id=product)
+        if variant_id:
+            query = query.filter(id=variant_id)
+        if size:
+            query = query.filter(size=size)
+        variant = query.first()
         if not variant:
-            return jsonify({"error": "Variant not found"}), 404
-        price = variant.get('price', price)
+            return jsonify({"error": "Variant not found for the specified product and size"}), 404
+        price = float(product.final_price)  # Update if variant has its own price
 
     cart_item = CartItem(
         product_id=product_id,
-        variant_id=variant_id,
+        variant_id=str(variant.id) if variant else None,
+        size=size,
         quantity=quantity,
-        price=float(price),
-        original_price=float(price)
+        price=price,
+        original_price=float(product.price),
+        discount=float(product.price - product.final_price) if product.discount_price else 0.0
     )
 
     try:
-        cart_item.validate_stock(Product)
+        cart_item.validate_stock(Products)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
     cart = Cart.objects(user_id=user_id).first()
     if not cart:
-        cart = Cart(user_id=user_id, items=[])
+        cart = Cart(user_id=user_id, items=[], created_at=datetime.utcnow())
 
+    existing_item = None
     for item in cart.items:
-        if item.product_id == product_id and item.variant_id == variant_id:
-            item.quantity += quantity
-            try:
-                item.validate_stock(Product)
-            except ValueError as e:
-                return jsonify({"error": str(e)}), 400
+        if item.product_id == product_id and item.variant_id == cart_item.variant_id and item.size == size:
+            existing_item = item
             break
+
+    if existing_item:
+        existing_item.quantity += quantity
+        try:
+            existing_item.validate_stock(Products)
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 400
     else:
         cart.items.append(cart_item)
 
+    cart.updated_at = datetime.utcnow()
     cart.save()
-    return jsonify({
+
+    response_data = {
         "message": "Item added to cart",
         "cart": {
+            "id": str(cart.id),
+            "user_id": str(cart.user_id),
             "items": [
                 {
-                    "product_id": item.product_id,
-                    "variant_id": item.variant_id,
+                    "product_id": str(item.product_id),
+                    "variant_id": str(item.variant_id) if item.variant_id else None,
+                    "size": item.size,
                     "quantity": item.quantity,
                     "price": item.price,
-                    "discount": item.discount,
-                    "total_price": (item.price - item.discount) * item.quantity
+                    "original_price": item.original_price,
+                    "total_price": item.price * item.quantity
                 } for item in cart.items
             ],
-            "total_price": cart.total_price
+            "total_items": sum(item.quantity for item in cart.items),
+            "total_price": sum(item.price * item.quantity for item in cart.items),
+            "created_at": cart.created_at.isoformat(),
+            "updated_at": cart.updated_at.isoformat()
         }
-    }), 200
+    }
+
+    return jsonify(response_data), 200
 
 @cart_bp.route(CART_REMOVE, methods=['POST'])
 def remove_from_cart():
     user_id = get_user_id()
     if isinstance(user_id, tuple):
         return user_id
-    
+
     data = request.json
     product_id = data.get('product_id')
     variant_id = data.get('variant_id')
@@ -127,9 +174,9 @@ def get_cart():
     user_id = get_user_id()
     if isinstance(user_id, tuple):
         return user_id
-    
+
     cart = Cart.objects(user_id=user_id).first()
-    
+
     if not cart:
         return jsonify({"items": [], "total_price": 0.0}), 200
 
@@ -154,7 +201,7 @@ def checkout():
     user_id = get_user_id()
     if isinstance(user_id, tuple):
         return user_id
-    
+
     data = request.json
     shipping_address = data.get('shipping_address')
     shipping_method = data.get('shipping_method')
