@@ -104,3 +104,10 @@ UPDATE_BRAND_API = '/api/update-brand'
 DELETE_BRAND_API = '/delete_brand/<string:brand_id>'
 # Brand Endpoint API End
 
+
+# Cart Endpoint API Start
+CART_ADD = '/api/cart/add'
+CART_REMOVE = '/api/cart/remove'
+CART_LIST = '/api/cart/list'
+CART_CHECKOUT = '/api/cart/checkout'
+# Cart Endpoint API End
