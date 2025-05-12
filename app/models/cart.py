@@ -32,7 +32,6 @@ class Cart(db.Document):
         'indexes': [
             {'fields': ['user_id'], 'unique': True},
             'created_at',
-            'expires_at'
         ]
     }
 

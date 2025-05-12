@@ -21,7 +21,10 @@ def register():
     password = request.form.get('password')
     password_confirmation = request.form.get('password_confirmation')
 
-    is_valid, errors = validate_required_fields({'email': email, 'password': password, 'password_confirmation': password_confirmation}, ['email', 'password', 'password_confirmation'])
+    is_valid, errors = validate_required_fields(
+        {'email': email, 'password': password, 'password_confirmation': password_confirmation},
+        ['email', 'password', 'password_confirmation']
+    )
     if not is_valid:
         return create_error_response(errors, 400)
 
@@ -39,36 +42,29 @@ def register():
     if User.objects(email=email).first():
         return create_error_response({"email": "Email already exists"}, 409)
 
-    role_name = request.form.get('role', 'user')
-    role = Role.objects(name=role_name).first()
+    otp = str(random.randint(100000, 999999))
+    otp_expiry = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
 
+    role = Role.objects(name='user').first()
     if not role:
-        return create_error_response({"role": "Invalid role"}, 400)
+        return create_error_response({"role": "Default user role not found"}, 500)
+
+    msg = Message("Your OTP Code", recipients=[email])
+    msg.body = f"Your OTP is {otp}. It will expire in 10 minutes."
+    mail.send(msg)
 
     user = User(
         email=email,
         password=password,
+        reset_otp=otp,
+        otp_expiry=otp_expiry,
         role=role
     )
     user.hash_password()
     user.save()
 
-    access_token = create_access_token(identity=str(user.id), additional_claims={'role': role_name})
+    return jsonify({'message': 'OTP sent to email. Please verify to complete registration.'}), 200
 
-    user_data = {
-        'id': str(user.id),
-        'email': user.email,
-        'role': {
-            'id': str(role.id),
-            'name': role.name
-        }
-    }
-
-    return jsonify({
-        'message': 'User registered successfully',
-        'user': user_data,
-        'access_token': access_token
-    }), 200
 
 @auth_bp.route(LOGIN, methods=['POST'])
 def login():
@@ -138,8 +134,6 @@ def forgot_password():
         print(f"Error sending email: {e}")
         return jsonify({'message': 'Failed to send OTP email'}), 500
 
-from flask import request, jsonify
-from datetime import datetime
 
 @auth_bp.route(VERIFY_OTP, methods=['POST'])
 def verify_email_code():
@@ -157,14 +151,37 @@ def verify_email_code():
         return jsonify({'errors': 'No OTP requested for this email'}), 400
 
     current_time = datetime.utcnow()
+
     if user.reset_otp != otp:
         return jsonify({'message': 'Invalid OTP'}), 400
+
     if current_time > user.otp_expiry:
         return jsonify({'message': 'OTP has expired'}), 400
 
+    role = Role.objects(name='user').first()
+    if not role:
+        return jsonify({'message': 'Role not found'}), 400
+
+    user.role = role
     user.save()
 
-    return jsonify({'message': 'OTP verified successfully'}), 200
+    access_token = create_access_token(identity=str(user.id), additional_claims={'role': 'user'})
+
+    user_data = {
+        'id': str(user.id),
+        'email': user.email,
+        'role': {
+            'id': str(role.id),
+            'name': role.name
+        }
+    }
+
+    return jsonify({
+        'message': 'User registered successfully',
+        'user': user_data,
+        'access_token': access_token
+    }), 200
+
 
 
 @auth_bp.route(RESET_PASSWORD, methods=['POST'])

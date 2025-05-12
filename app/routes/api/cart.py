@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 from app.models.cart import Cart, CartItem
-from app.models.product import Product
+from app.models.products import Products
 from datetime import datetime
 from constants import CART_ADD, CART_REMOVE, CART_LIST, CART_CHECKOUT
 from bson import ObjectId

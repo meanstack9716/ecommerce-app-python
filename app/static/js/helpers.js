@@ -37,3 +37,23 @@ async function sendGetRequest(url) {
     return { success: false, error: err.message || 'Network error' };
   }
 }
+
+
+function handleErrors(errors) {
+  if (errors) {
+      Object.keys(errors).forEach(field => {
+          const fieldError = errors[field];
+          if (field === 'exception') {
+              showToast('An exception occurred, please try again later.', 'error');
+          } else if (typeof fieldError === 'object' && fieldError !== null) {
+              Object.keys(fieldError).forEach(subField => {
+                  showToast(fieldError[subField], 'error');
+              });
+          } else {
+              showToast(fieldError, 'error');
+          }
+      });
+  } else {
+      showToast('An unknown error occurred. Please try again later.', 'error');
+  }
+}

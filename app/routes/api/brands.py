@@ -36,7 +36,7 @@ def add_new_brand():
 
     if not name:
         return create_error_response('Brand name is required', 400)
-
+    
     if not description:
         return create_error_response('Description is required', 400)
 

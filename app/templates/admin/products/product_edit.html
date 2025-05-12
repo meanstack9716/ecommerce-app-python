@@ -1,0 +1,919 @@
+{% extends "base.html" %} {% block title %}Edit Product{% endblock %} {% block
+admin_content %}
+<div class="max-w-7xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+  <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">
+    Edit Product
+  </h1>
+  <form method="POST" enctype="multipart/form-data" class="space-y-8">
+    <!-- Section 1: Basic Information -->
+    <div class="bg-white p-6 mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">
+        Basic Information
+      </h3>
+      <div class="grid grid-cols-1 gap-6">
+        <!-- Title -->
+        <div>
+          <label for="title" class="block text-base font-medium text-black">
+            Title <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="title"
+            id="title"
+            placeholder="Enter product title"
+            value="{{ product.title }}"
+            class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out"
+          />
+        </div>
+
+        <!-- Description  -->
+        <div>
+          <label
+            for="description"
+            class="block text-base font-medium text-black"
+          >
+            Description <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="description"
+            id="description"
+            placeholder="Enter product description"
+            value="{{ product.description }}"
+            class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out"
+          />
+        </div>
+
+        <!-- Product Details -->
+        <div>
+          <label
+            for="product-details"
+            class="block text-base font-medium text-black mb-2"
+          >
+            Product Details <span class="text-red-500">*</span>
+          </label>
+          <div id="quill-editor" class="h-48 border border-gray-300 rounded-md">
+            {{ product.details|safe }}
+          </div>
+          <input
+            type="hidden"
+            name="product-details"
+            id="product-details"
+            value="{{ product.details }}"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Pricing & Inventory -->
+    <div class="bg-white p-6 mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">
+        Pricing & Inventory
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <label for="price" class="block text-base font-medium text-black"
+            >Price <span class="text-red-500">*</span></label
+          >
+          <div class="relative rounded-md shadow-sm">
+            <input
+              type="number"
+              name="price"
+              id="price"
+              step="0.01"
+              placeholder="0.00"
+              value="{{ product.price }}"
+              class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label
+            for="discount_price"
+            class="block text-base font-medium text-black"
+            >Discount (%)</label
+          >
+          <input
+            type="number"
+            name="discount_price"
+            id="discount_price"
+            step="0.01"
+            min="0"
+            max="100"
+            value="{{ product.discount_percent }}"
+            class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out"
+          />
+        </div>
+
+        <div>
+          <label for="stock" class="block text-base font-medium text-black"
+            >Stock <span class="text-red-500">*</span></label
+          >
+          <input
+            type="number"
+            name="stock"
+            id="stock"
+            min="0"
+            placeholder="Available quantity"
+            value="{{ product.stock_quantity }}"
+            class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out"
+          />
+        </div>
+
+        <div>
+          <label for="sku" class="block text-base font-medium text-black"
+            >SKU <span class="text-red-500">*</span></label
+          >
+          <input
+            type="text"
+            name="sku"
+            id="sku"
+            placeholder="Product identifier"
+            value="{{ product.sku }}"
+            class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Product Attributes -->
+    <div class="bg-white p-6 mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">
+        Product Attributes
+      </h3>
+      <div class="grid grid-cols-1 gap-6">
+        <div>
+          <label for="brand" class="block text-base font-medium text-black">
+            Brand <span class="text-red-500">*</span>
+          </label>
+          <div class="relative mt-1">
+            <select
+              name="brand"
+              id="brand"
+              disabled
+              class="mt-2 block w-full border rounded-md px-5 py-3 bg-gray-100 text-gray-500 cursor-not-allowed"
+            >
+              <option value="">Select a brand</option>
+            </select>
+            <span
+              class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+            >
+              expand_more
+            </span>
+          </div>
+
+          <!-- input for custom brand name -->
+          <input
+            type="text"
+            id="other-brand"
+            name="other_brand"
+            placeholder="Enter other brand"
+            class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out hidden"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">
+        Product Attributes
+      </h3>
+      <div class="flex justify-between items-center mb-6">
+        <div class="">
+          <label for="brand" class="block text-base font-medium text-black">
+            Size Type <span class="text-red-500">*</span>
+          </label>
+          <div class="flex space-x-6 mt-2">
+            <div class="flex items-center">
+              <input
+                type="radio"
+                id="size_type_standard"
+                name="size_type"
+                value="standard"
+                class="h-5 w-5 text-blue-600 focus:ring-blue-500 accent-blue-600"
+                checked
+              />
+              <label
+                for="size_type_standard"
+                class="ml-2 block font-medium text-sm text-gray-700"
+                >Standard Sizes (S, M, L, XL, etc.)</label
+              >
+            </div>
+            <div class="flex items-center">
+              <input
+                type="radio"
+                id="size_type_numeric"
+                name="size_type"
+                value="numeric"
+                class="h-5 w-6 text-blue-600 focus:ring-blue-500 ccent-blue-600"
+              />
+              <label
+                for="size_type_numeric"
+                class="ml-2 block text-sm font-medium text-gray-700"
+                >Numeric Sizes (28, 30, 32, etc.)</label
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="size-container"></div>
+    </div>
+    <div class="my-4">
+      <button
+        type="button"
+        id="add-size-btn"
+        class="w-fit flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out"
+      >
+        + Add Another Size
+      </button>
+    </div>
+
+    <div id="variant-images-container"></div>
+
+    <div class="mt-6 flex justify-end">
+      <button
+        type="button"
+        id="save-btn"
+        class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out"
+      >
+        Save Changes
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %} {% block js %}
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    const { success, data, error } = await sendGetRequest("/api/brand/lists")
+    const select = document.getElementById("brand")
+    const otherBrandInput = document.getElementById("other-brand")
+    const currentBrandId = "{{ product.brand.id }}"
+
+    if (success) {
+      const brands = data.data
+
+      brands.forEach((brand) => {
+        const option = document.createElement("option")
+        option.value = brand.id
+        option.textContent = brand.name
+        if (brand.id === currentBrandId) {
+          option.selected = true
+        }
+        select.appendChild(option)
+      })
+
+      const otherOption = document.createElement("option")
+      otherOption.value = "other"
+      otherOption.textContent = "Other"
+      select.appendChild(otherOption)
+    } else {
+      console.error("Failed to fetch brands:", error)
+    }
+
+    select.addEventListener("change", (e) => {
+      if (e.target.value === "other") {
+        otherBrandInput.classList.remove("hidden")
+      } else {
+        otherBrandInput.classList.add("hidden")
+        otherBrandInput.value = ""
+      }
+    })
+
+    // Initialize Quill editor with product details
+    const quill = new Quill("#quill-editor", {
+      theme: "snow",
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, 3, false] }],
+          ["bold", "italic", "underline", "strike"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          ["link", "image"],
+          ["clean"],
+        ],
+      },
+    })
+
+    // Set initial content
+    const detailsContent = document.querySelector("#quill-editor").textContent
+    quill.root.innerHTML = detailsContent
+
+    // Update hidden input before form submission
+    const form = document.querySelector("form")
+    form.addEventListener("submit", function () {
+      document.getElementById("product-details").value = quill.root.innerHTML
+    })
+  })
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    let productData = null
+    const variantImagesContainer = document.getElementById(
+      "variant-images-container"
+    )
+
+    // Parse product data from the template variable
+    try {
+      const productDataString = `{{product | tojson}}`
+      productData = JSON.parse(productDataString)
+    } catch (error) {
+      console.error("Error parsing product data:", error)
+      return
+    }
+
+    const config = {
+      standardColors: [
+        { name: "White", hex: "#FFFFFF" },
+        { name: "Black", hex: "#000000" },
+        { name: "Red", hex: "#FF0000" },
+        { name: "Green", hex: "#008000" },
+        { name: "Blue", hex: "#0000FF" },
+        { name: "Yellow", hex: "#FFFF00" },
+        { name: "Orange", hex: "#FFA500" },
+        { name: "Purple", hex: "#800080" },
+        { name: "Pink", hex: "#FFC0CB" },
+        { name: "Brown", hex: "#A52A2A" },
+        { name: "Gray", hex: "#808080" },
+        { name: "Cyan", hex: "#00FFFF" },
+        { name: "Magenta", hex: "#FF00FF" },
+        { name: "Lime", hex: "#00FF00" },
+        { name: "Navy", hex: "#000080" },
+        { name: "Teal", hex: "#008080" },
+        { name: "Olive", hex: "#808000" },
+        { name: "Maroon", hex: "#800000" },
+        { name: "Silver", hex: "#C0C0C0" },
+        { name: "Gold", hex: "#FFD700" },
+      ],
+      standardSizes: ["L", "XL", "XXL"],
+      numericSizes: [32, 34, 36, 38, 40],
+    }
+
+    const form = document.getElementById("product-variants-form")
+    const sizeContainer = document.getElementById("size-container")
+    const addSizeBtn = document.getElementById("add-size-btn")
+    const sizeTypeRadios = document.querySelectorAll('input[name="size_type"]')
+    let sizeCounter = 0
+
+    function getColorsForSize(size, sizeType) {
+      return productData.colors.filter((colorData) =>
+        colorData.sizes.some((s) => s.size === size && s.size_type === sizeType)
+      )
+    }
+
+    function getCurrentSizeType() {
+      return document.querySelector('input[name="size_type"]:checked').value
+    }
+
+    function getSizeDataForColorAndSize(colorValue, size) {
+      const colorData = productData.colors.find((c) => c.value === colorValue)
+      if (colorData) {
+        return colorData.sizes.find((s) => s.size === size)
+      }
+      return null
+    }
+
+    function initializeForm() {
+      const currentSizeType = getCurrentSizeType()
+      const processedSizes = {}
+
+      const hasSizesOfType = productData.colors.some((colorData) =>
+        colorData.sizes.some((s) => s.size_type === currentSizeType)
+      )
+
+      if (!hasSizesOfType) {
+        addSizeBlock("", currentSizeType)
+        return
+      }
+
+      productData.colors.forEach((colorData) => {
+        colorData.sizes.forEach((sizeData) => {
+          if (sizeData.size_type === currentSizeType) {
+            const sizeKey = `${sizeData.size}-${sizeData.size_type}`
+            if (!processedSizes[sizeKey]) {
+              addSizeBlock(sizeData.size, sizeData.size_type)
+              processedSizes[sizeKey] = true
+            }
+          }
+        })
+      })
+    }
+
+    function addSizeBlock(selectedSize = "", selectedSizeType = "standard") {
+      const existingSizes = Array.from(
+        sizeContainer.querySelectorAll(".size-block")
+      ).map((block) => {
+        const select = block.querySelector(".size-select").value
+        const customInput = block.querySelector(".custom-size-input")
+        return customInput && !customInput.classList.contains("hidden")
+          ? customInput.value
+          : select
+      })
+
+      if (
+        existingSizes.includes(selectedSize) ||
+        (selectedSize === "custom" && existingSizes.includes(""))
+      ) {
+        return // Prevent adding duplicate size
+      }
+
+      const sizeId = `size_${sizeCounter++}`
+      const isNumeric = selectedSizeType === "numeric"
+      const sizeOptions = isNumeric ? config.numericSizes : config.standardSizes
+      const availableColors = getColorsForSize(selectedSize, selectedSizeType)
+
+      const selectedSizeValue =
+        isNumeric && selectedSize
+          ? typeof selectedSize === "string"
+            ? parseInt(selectedSize)
+            : selectedSize
+          : selectedSize
+
+      const sizeBlock = document.createElement("div")
+      sizeBlock.className =
+        "size-block mb-6 p-4 border border-gray-200 rounded-lg"
+      sizeBlock.dataset.sizeId = sizeId
+
+      const isCustomSize =
+        selectedSize &&
+        (isNumeric
+          ? !config.numericSizes.includes(selectedSizeValue)
+          : !config.standardSizes.includes(selectedSize))
+
+      let colorInputs = ""
+      config.standardColors.forEach((color) => {
+        const sizeDataForColor = getSizeDataForColorAndSize(
+          color.hex,
+          selectedSize
+        )
+        const isColorAvailableForSize = !!sizeDataForColor
+        const quantity = sizeDataForColor ? sizeDataForColor.stock_quantity : 0
+
+        colorInputs += `
+      <div class="flex items-center justify-between w-full gap-4">
+          <div class="flex items-center">
+              <input type="checkbox" id="${sizeId}_${color.name}"
+                     name="sizes[${sizeId}][colors][standard][${
+          color.hex
+        }][enabled]"
+                     value="1" class="color-checkbox h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                     ${isColorAvailableForSize ? "checked" : ""}>
+              <label for="${sizeId}_${
+          color.name
+        }" class="ml-3 flex items-center font-medium text-gray-700">
+                  <span class="w-6 h-6 mr-2 rounded-full border border-gray-300" style="background-color:${
+                    color.hex
+                  }"></span>
+                  ${color.name}
+              </label>
+              <input type="hidden" name="sizes[${sizeId}][colors][standard][${
+          color.hex
+        }][name]" value="${color.name}">
+          </div>
+          <input type="number" name="sizes[${sizeId}][colors][standard][${
+          color.hex
+        }][quantity]"
+                 value="${quantity}"
+                 class="quantity-input ml-2 block w-2/3 border border-gray-300 rounded-md shadow-sm py-1 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+                   !isColorAvailableForSize ? "hidden" : ""
+                 }"
+                 placeholder="Enter quantity" min="0">
+      </div>
+    `
+      })
+
+      sizeBlock.innerHTML = `
+    <div class="grid grid-cols-1 sm:grid-cols-3 items-center mb-5 gap-4 p-4">
+        <div class="w-full col-span-2">
+            <label class="font-medium 3xl:text-xl 3xl:font-semibold">Size <span class="text-red-600">*</span></label>
+            <div class="relative mt-2">
+                <select name="sizes[${sizeId}][name]" id="sizes[${sizeId}][name]"
+                        class="size-select cursor-pointer mt-2 block appearance-none w-full border border-gray-300 rounded-md shadow-sm py-2 pl-3 pr-8 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Select size</option>
+                    ${sizeOptions
+                      .map(
+                        (size) => `
+                        <option value="${size}" ${
+                          selectedSize === size ? "selected" : ""
+                        }>${size}</option>
+                    `
+                      )
+                      .join("")}
+                    <option value="custom" ${
+                      isCustomSize ? "selected" : ""
+                    }>Custom Size</option>
+                </select>
+                <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">
+                    chevron_right
+                </span>
+            </div>
+            <input
+                type="text"
+                name="sizes[${sizeId}][custom_size]"
+                id="sizes[${sizeId}][custom_size]"
+                value="${
+                  isCustomSize && selectedSize !== "custom" ? selectedSize : ""
+                }"
+                placeholder="Enter custom size"
+                class="custom-size-input mt-3 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 ${
+                  !isCustomSize ? "hidden" : ""
+                } focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            >
+            <p class="size-error mt-1 text-sm font-medium text-red-600 hidden"></p>
+        </div>
+        <div class="flex sm:justify-end">
+            <button type="button" class="w-fit cursor-pointer font-medium remove-size-btn px-5 py-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200">
+                Remove
+            </button>
+        </div>
+    </div>
+    <div class="standard-colors mb-5 p-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
+            ${colorInputs}
+        </div>
+        <p class="color-error mt-1 text-sm font-medium text-red-600 hidden"></p>
+    </div>
+  `
+      sizeContainer.appendChild(sizeBlock)
+
+      sizeBlock.querySelectorAll(".color-checkbox").forEach((checkbox) => {
+        checkbox.addEventListener("change", function () {
+          const quantityInput =
+            this.closest(".flex.items-center").nextElementSibling
+          if (quantityInput) {
+            if (this.checked) {
+              quantityInput.classList.remove("hidden")
+              quantityInput.removeAttribute("disabled")
+              generateImageUploadFields() // Regenerate image upload fields when color is selected
+            } else {
+              quantityInput.classList.add("hidden")
+              quantityInput.setAttribute("disabled", "disabled")
+              quantityInput.value = "0"
+              generateImageUploadFields() // Regenerate to remove images for deselected color
+            }
+          }
+        })
+      })
+
+      const sizeSelect = sizeBlock.querySelector(".size-select")
+      sizeSelect.addEventListener("change", function () {
+        const customInput = sizeBlock.querySelector(".custom-size-input")
+        const selectedSizeType = isNumeric ? "numeric" : "standard"
+
+        // Show/hide custom size input based on selection
+        if (this.value === "custom") {
+          customInput.value = ""
+          customInput.classList.remove("hidden")
+        } else {
+          customInput.classList.add("hidden")
+          customInput.value = ""
+        }
+
+        // Update the current size block's size value (if needed)
+        sizeBlock.querySelector(
+          `input[name="sizes[${sizeId}][custom_size]"]`
+        ).value = this.value === "custom" ? "" : this.value
+        sizeBlock.querySelector(`select[name="sizes[${sizeId}][name]"]`).value =
+          this.value
+
+        // Generate image upload fields (if applicable)
+        generateImageUploadFields()
+      })
+
+      const removeButton = sizeBlock.querySelector(".remove-size-btn")
+      removeButton.addEventListener("click", function () {
+        sizeBlock.remove()
+        generateImageUploadFields()
+      })
+    }
+
+    sizeTypeRadios.forEach((radio) => {
+      radio.addEventListener("change", function () {
+        if (this.checked) {
+          sizeContainer.innerHTML = ""
+          initializeForm()
+          generateImageUploadFields()
+        }
+      })
+    })
+
+    addSizeBtn.addEventListener("click", function () {
+      const currentSizeType = getCurrentSizeType()
+      addSizeBlock("", currentSizeType)
+      generateImageUploadFields()
+    })
+
+    initializeForm()
+    generateImageUploadFields()
+
+    function generateImageUploadFields() {
+      variantImagesContainer.innerHTML = ""
+      const sizeBlocks = document.querySelectorAll(".size-block")
+
+      sizeBlocks.forEach((sizeBlock) => {
+        const sizeName =
+          sizeBlock.querySelector(".size-select").value === "custom"
+            ? sizeBlock.querySelector(".custom-size-input").value
+            : sizeBlock.querySelector(".size-select").value
+        const sizeId = sizeBlock.dataset.sizeId
+
+        // Standard Colors
+        const checkedStandardColors = sizeBlock.querySelectorAll(
+          '.standard-colors input[type="checkbox"]:checked'
+        )
+        checkedStandardColors.forEach((checkbox) => {
+          const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1]
+          const colorNameInput = checkbox
+            .closest("div")
+            .querySelector(`input[name*="[${colorHex}][name]"]`)
+          const colorName = colorNameInput ? colorNameInput.value : colorHex
+          const uploadId = `upload_${sizeId}_${colorHex}`
+
+          // Get existing images from productData
+          const colorData = productData.colors.find((c) => c.value === colorHex)
+          const existingImages =
+            colorData && colorData.images ? colorData.images : []
+
+          const imageUploadDiv = document.createElement("div")
+          imageUploadDiv.className =
+            "mb-6 p-4 border border-gray-300 rounded-xl shadow-sm"
+          imageUploadDiv.innerHTML = `
+        <h4 class="text-md font-semibold text-gray-700 mb-2">${sizeName} - ${colorName}</h4>
+        <div class="flex flex-col space-y-4">
+            <div class="flex items-center space-x-4">
+                <label for="${uploadId}" class="cursor-pointer flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition duration-150 ease-in-out">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    Select Images
+                </label>
+                <span class="text-sm text-gray-500">Max 8 images</span>
+            </div>
+            <input type="file" id="${uploadId}" multiple class="hidden" accept="image/*">
+            <div id="preview_${uploadId}" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2"></div>
+        </div>
+      `
+          variantImagesContainer.appendChild(imageUploadDiv)
+
+          // Set up event listeners and display existing images
+          setupCustomUpload(uploadId, existingImages)
+        })
+
+        // Custom Colors
+        const customColorDivs = sizeBlock.querySelectorAll(
+          ".custom-color-container > div"
+        )
+        customColorDivs.forEach((customColorDiv) => {
+          const hexInput = customColorDiv.querySelector('input[type="color"]')
+          const nameInput = customColorDiv.querySelector(
+            'input[placeholder="Color name"]'
+          )
+          if (hexInput && nameInput && nameInput.value.trim()) {
+            const colorHex = hexInput.value
+            const colorName = nameInput.value.trim()
+            const customColorId = nameInput.name.match(/\[custom\]\[(.*?)\]/)[1]
+            const uploadId = `upload_${sizeId}_custom_${customColorId}`
+
+            // Get existing images from productData (if any)
+            const colorData = productData.colors.find(
+              (c) => c.value === colorHex
+            )
+            const existingImages =
+              colorData && colorData.images ? colorData.images : []
+
+            const imageUploadDiv = document.createElement("div")
+            imageUploadDiv.className =
+              "mb-6 p-4 border border-gray-300 rounded-xl shadow-sm"
+            imageUploadDiv.innerHTML = `
+          <h4 class="text-md font-semibold text-gray-700 mb-2">${sizeName} - ${colorName}</h4>
+          <div class="flex flex-col space-y-4">
+              <div class="flex items-center space-x-4">
+                  <label for="${uploadId}" class="cursor-pointer flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition duration-150 ease-in-out">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      Select Images
+                  </label>
+                  <span class="text-sm text-gray-500">Max 8 images</span>
+              </div>
+              <input type="file" id="${uploadId}" multiple class="hidden" accept="image/*">
+              <div id="preview_${uploadId}" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2"></div>
+          </div>
+        `
+            variantImagesContainer.appendChild(imageUploadDiv)
+
+            // Set up event listeners and display existing images
+            setupCustomUpload(uploadId, existingImages)
+          }
+        })
+      })
+    }
+
+    function setupCustomUpload(uploadId, existingImages = []) {
+      const fileInput = document.getElementById(uploadId)
+      const previewContainer = document.getElementById(`preview_${uploadId}`)
+      const files = []
+
+      // Add existing images to the files array as objects with URLs
+      existingImages.forEach((imageUrl) => {
+        files.push({ url: imageUrl, isExisting: true })
+      })
+
+      // Initial preview with existing images
+      updatePreview(previewContainer, files)
+
+      fileInput.addEventListener("change", (e) => {
+        const newFiles = Array.from(e.target.files)
+
+        if (files.length + newFiles.length > 8) {
+          showToast(
+            "You can upload a maximum of 8 images per color variation.",
+            "error"
+          )
+          return
+        }
+
+        // Add new files to our array
+        files.push(...newFiles.map((file) => ({ file, isExisting: false })))
+
+        // Update preview
+        updatePreview(previewContainer, files)
+      })
+
+      const label = document.querySelector(`label[for="${uploadId}"]`)
+      if (label) {
+        label.addEventListener("click", (e) => {
+          if (files.length >= 8) {
+            e.preventDefault()
+            showToast(
+              "You have reached the maximum of 8 images for this variation.",
+              "error"
+            )
+          }
+        })
+      }
+    }
+
+    function updatePreview(container, files) {
+      container.innerHTML = ""
+
+      files.forEach((item, index) => {
+        const imgWrapper = document.createElement("div")
+        imgWrapper.className = "relative group"
+
+        const img = document.createElement("img")
+        img.className = "w-full h-32 object-cover rounded-lg shadow"
+
+        if (item.isExisting) {
+          // For existing images from API
+          img.src = item.url
+        } else {
+          // For newly uploaded files
+          const reader = new FileReader()
+          reader.onload = (e) => {
+            img.src = e.target.result
+          }
+          reader.readAsDataURL(item.file)
+        }
+
+        const removeBtn = document.createElement("button")
+        removeBtn.innerHTML = "×"
+        removeBtn.className =
+          "absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full text-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+        removeBtn.addEventListener("click", () => {
+          files.splice(index, 1)
+          updatePreview(container, files)
+        })
+
+        imgWrapper.appendChild(img)
+        imgWrapper.appendChild(removeBtn)
+        container.appendChild(imgWrapper)
+      })
+    }
+
+    document.querySelector("button#save-btn").addEventListener("click", async function (e) {
+    e.preventDefault();
+    const formData = new FormData();
+    const variations = [];
+    
+    // 1. Add basic form fields
+    const basicFields = {
+        'name': document.getElementById("title").value,
+        'description': document.getElementById("description").value,
+        'details': document.getElementById("product-details").value,
+        'price': document.getElementById("price").value,
+        'discount_price': document.getElementById("discount_price").value,
+        'stock_quantity': document.getElementById("stock").value,
+        'sku_number': document.getElementById("sku").value,
+        'category_id': productData.category.id,
+        'subcategory_id': productData.sub_category.id,
+        'subsubcategory_id': productData.sub_sub_category.id,
+        'brand': productData.brand.id,
+    };
+
+    Object.entries(basicFields).forEach(([key, value]) => {
+        formData.append(key, value);
+    });
+
+    // 2. Add product ID
+    const productId = productData.id
+    formData.append('product_id', productId);
+
+    // 3. Process variations and images
+    document.querySelectorAll(".size-block").forEach(sizeBlock => {
+        const sizeName = sizeBlock.querySelector(".size-select").value === "custom" 
+            ? sizeBlock.querySelector(".custom-size-input").value 
+            : sizeBlock.querySelector(".size-select").value;
+        const sizeId = sizeBlock.dataset.sizeId;
+
+        // Standard colors
+        sizeBlock.querySelectorAll('.standard-colors input[type="checkbox"]:checked').forEach(checkbox => {
+            const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1];
+            const colorNameInput = checkbox.closest("div").querySelector(`input[name*="[${colorHex}][name]"]`);
+            const colorName = colorNameInput ? colorNameInput.value : colorHex;
+            const quantity = parseInt(checkbox.closest("div").nextElementSibling.value) || 0;
+
+            variations.push({
+                size: sizeName,
+                color: colorName,
+                stock_quantity: quantity,
+                color_hexa_code: colorHex
+            });
+
+            // Process images
+            const uploadId = `upload_${sizeId}_${colorHex}`;
+            const fileInput = document.getElementById(uploadId);
+            if (fileInput?.files) {
+                Array.from(fileInput.files).forEach(file => {
+                    formData.append(`images[${colorName}][${sizeName}]`, file);
+                });
+            }
+        });
+
+        // Custom colors
+        sizeBlock.querySelectorAll(".custom-color-container > div").forEach(customColorDiv => {
+            const hexInput = customColorDiv.querySelector('input[type="color"]');
+            const nameInput = customColorDiv.querySelector('input[placeholder="Color name"]');
+            const quantityInput = customColorDiv.querySelector(".custom-color-quantity");
+            
+            if (hexInput && nameInput?.value.trim()) {
+                const colorHex = hexInput.value;
+                const colorName = nameInput.value.trim();
+                const quantity = parseInt(quantityInput.value) || 0;
+                const customColorId = nameInput.name.match(/\[custom\]\[(.*?)\]/)[1];
+
+                variations.push({
+                    size: sizeName,
+                    color: colorName,
+                    stock_quantity: quantity,
+                    color_hexa_code: colorHex
+                });
+
+                // Process images
+                const uploadId = `upload_${sizeId}_custom_${customColorId}`;
+                const fileInput = document.getElementById(uploadId);
+                if (fileInput?.files) {
+                    Array.from(fileInput.files).forEach(file => {
+                        formData.append(`images[${colorName}][${sizeName}]`, file);
+                    });
+                }
+            }
+        });
+    });
+
+    // 4. Add variations as JSON
+    formData.append("variations", JSON.stringify(variations));
+
+    try {
+        // Show loading state
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+
+        // 5. Make API request
+        const response = await fetch("/api/products/edit", {
+            method: "PUT",
+            body: formData,
+            credentials: 'include' // Important for sessions
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Failed to update product");
+        }
+
+        const result = await response.json();
+        
+    } catch (error) {
+        console.error("Update error:", error);
+        alert(`Error: ${error.message}`);
+    } finally {
+        this.disabled = false;
+        this.textContent = "Save Changes";
+    }
+});
+
+    generateImageUploadFields()
+  })
+</script>
+
+{% endblock %}
