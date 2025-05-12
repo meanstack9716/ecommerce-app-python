@@ -26,7 +26,7 @@ def add_seller():
     if not is_valid:
         return create_error_response(errors)
 
-    required_files = ['panCardFront', 'panCardBack', 'addressProofFront', 'addressProofBack']
+    required_files = ['panCardFront', 'panCardBack', 'addressProofFront']
     missing_files = {}
     for file_key in required_files:
         if file_key not in files or files.get(file_key).filename == '':
@@ -104,9 +104,7 @@ def add_seller():
             if err: raise Exception(err)
             address_proof_front_url, err = upload_image(files.get('addressProofFront'))
             if err: raise Exception(err)
-            address_proof_back_url, err = upload_image(files.get('addressProofBack'))
-            if err: raise Exception(err)
-
+        
             # ✅ Create Identification
             identification = Identification(
                 user_id=user,

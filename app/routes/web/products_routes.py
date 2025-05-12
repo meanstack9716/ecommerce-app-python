@@ -191,7 +191,7 @@ def edit_product(product_id):
         'stock_quantity': sum(v.stock_quantity for v in product.variants) if product.variants else 0,
         'final_price': product.final_price,
         'id': str(product.id),
-        'colors': list(colors_data.values()),  # Now organized by color
+        'colors': list(colors_data.values()),
         'category': {
             'name': product.category_id.name if product.category_id else None,
             'id': str(product.category_id.id) if product.category_id else None,

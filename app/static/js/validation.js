@@ -278,7 +278,6 @@ function validateBusinessDetails() {
     addressProofIdType: document.getElementById("address_proof_id_type"),
     idNumber: document.getElementById("id_number"),
     addressProofFront: document.getElementById("address_proof_front"),
-    addressProofBack: document.getElementById("address_proof_back"),
   }
 
   // Validate required fields
@@ -299,7 +298,7 @@ function validateBusinessDetails() {
     validateImage(fields.panCardFront),
     validateImage(fields.panCardBack),
     validateImage(fields.addressProofFront),
-    validateImage(fields.addressProofBack),
+    // validateImage(fields.addressProofBack),
   ].every((result) => result === true)
 
   if (!areImagesValid) return false
@@ -312,7 +311,7 @@ function validateBusinessDetails() {
     idNumber: fields.idNumber.value,
     addressProofIdType: fields.addressProofIdType.value,
     addressProofFront: fields.addressProofFront.files[0] || null,
-    addressProofBack: fields.addressProofBack.files[0] || null,
+    // addressProofBack: fields.addressProofBack.files[0] || null,
   }
 }
 

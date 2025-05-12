@@ -76,28 +76,8 @@ input {
 input::placeholder {
   font-size: 13px !important;
 }
+#mainContent.md\:ml-0 {
+  width: 100%;
+  max-width: 100%;
+}
 
-.filepond--root {
-  min-height: 150px !important;
-  max-height: 150px !important;
-  margin-bottom: 0 !important;
-}
-.filepond--drop-label {
-  min-height: 150px !important;
-  padding: 5px !important;
-}
-.filepond--file {
-  display: none !important;
-}
-.filepond--list {
-  display: none !important;
-}
-.filepond--panel-root {
-  border-radius: 0.375rem !important;
-  background-color: #f8fafc !important;
-  border: 2px dashed #cbd5e0 !important;
-}
-.filepond--label-action {
-  text-decoration: underline;
-  color: #3b82f6;
-}
