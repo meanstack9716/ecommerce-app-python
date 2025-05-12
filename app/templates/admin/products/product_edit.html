@@ -233,12 +233,13 @@ admin_content %}
 
     <div class="mt-6 flex justify-end">
       <button
-        type="button"
-        id="save-btn"
-        class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out"
-      >
-        Save Changes
-      </button>
+      disabled
+      type="button"
+      id="save-btn"
+      class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out"
+    >
+      Save Changes
+    </button>
     </div>
   </form>
 </div>
@@ -754,7 +755,7 @@ admin_content %}
     const handleFormSubmission = async (e) => {
       e.preventDefault()
       if (!validateForm()) return
-      if(!validateStep2(quill)) return
+      if (!validateStep2(quill)) return
       const formData = prepareFormData()
       if (!formData) return
 
@@ -762,6 +763,7 @@ admin_content %}
         setLoadingState(true)
         const response = await submitFormData(formData)
         handleSuccessResponse(response)
+        window.location.href = '/products/list'
       } catch (error) {
         handleSubmissionError(error)
       } finally {
@@ -1020,6 +1022,158 @@ admin_content %}
     // Initialize
     await initializeBrandSelect()
     initializeProductData()
+    // Add this to your State section
+    let initialFormState = null
+
+    // Add this function to track form state
+    const getFormState = () => {
+      return {
+        // Basic fields
+        title: document.getElementById("title").value,
+        description: document.getElementById("description").value,
+        details: quill.root.innerHTML,
+        price: document.getElementById("price").value,
+        discount_price: document.getElementById("discount_price").value,
+        stock: document.getElementById("stock").value,
+        sku: document.getElementById("sku").value,
+        brand:
+          DOM.brandSelect.value === "other"
+            ? DOM.otherBrandInput.value
+            : DOM.brandSelect.value,
+
+        // Sizes and colors
+        sizes: Array.from(document.querySelectorAll(".size-block")).map(
+          (sizeBlock) => {
+            const sizeName = getSizeNameFromBlock(sizeBlock)
+            const sizeId = sizeBlock.dataset.sizeId
+
+            // Standard colors
+            const standardColors = Array.from(
+              sizeBlock.querySelectorAll(
+                '.standard-colors input[type="checkbox"]:checked'
+              )
+            ).map((checkbox) => {
+              const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1]
+              const quantity =
+                parseInt(checkbox.closest("div").nextElementSibling.value) || 0
+              return { colorHex, quantity }
+            })
+
+            // Custom colors
+            const customColors = Array.from(
+              sizeBlock.querySelectorAll(".custom-color-container > div")
+            )
+              .map((customColorDiv) => {
+                const hexInput = customColorDiv.querySelector(
+                  'input[type="color"]'
+                )
+                const nameInput = customColorDiv.querySelector(
+                  'input[placeholder="Color name"]'
+                )
+                const quantityInput = customColorDiv.querySelector(
+                  ".custom-color-quantity"
+                )
+
+                return {
+                  colorHex: hexInput?.value,
+                  colorName: nameInput?.value,
+                  quantity: parseInt(quantityInput?.value) || 0,
+                }
+              })
+              .filter((color) => color.colorName && color.colorName.trim())
+
+            return {
+              sizeName,
+              sizeId,
+              standardColors,
+              customColors,
+            }
+          }
+        ),
+
+        // Images (just track counts since we can't easily compare file contents)
+        images: Array.from(
+          document.querySelectorAll('[id^="preview_upload_"]')
+        ).map((container) => {
+          return {
+            id: container.id,
+            count: container.querySelectorAll("img").length,
+          }
+        }),
+      }
+    }
+
+    const hasFormChanged = () => {
+      const currentState = getFormState()
+      return JSON.stringify(currentState) !== JSON.stringify(initialFormState)
+    }
+
+    initialFormState = getFormState()
+
+    const updateSaveButtonState = () => {
+      DOM.saveBtn.disabled = !hasFormChanged()
+    }
+
+    const setupFormChangeListeners = () => {
+      document
+        .getElementById("title")
+        .addEventListener("input", updateSaveButtonState)
+      document
+        .getElementById("description")
+        .addEventListener("input", updateSaveButtonState)
+      document
+        .getElementById("price")
+        .addEventListener("input", updateSaveButtonState)
+      document
+        .getElementById("discount_price")
+        .addEventListener("input", updateSaveButtonState)
+      document
+        .getElementById("stock")
+        .addEventListener("input", updateSaveButtonState)
+      document
+        .getElementById("sku")
+        .addEventListener("input", updateSaveButtonState)
+      DOM.brandSelect.addEventListener("change", updateSaveButtonState)
+      DOM.otherBrandInput.addEventListener("input", updateSaveButtonState)
+
+      quill.on("text-change", updateSaveButtonState)
+
+      // Sizes and colors
+      document.addEventListener("change", (e) => {
+        if (
+          e.target.matches(
+            '.size-select, .custom-size-input, .color-checkbox, .quantity-input, input[type="color"], input[placeholder="Color name"], .custom-color-quantity'
+          )
+        ) {
+          updateSaveButtonState()
+        }
+      })
+
+      document.addEventListener("change", (e) => {
+        if (e.target.matches('input[type="file"]')) {
+          updateSaveButtonState()
+        }
+      })
+
+      document.addEventListener("click", (e) => {
+        if (e.target.matches('[id^="preview_upload_"] button')) {
+          setTimeout(updateSaveButtonState, 0)
+        }
+      })
+
+      // Size add/remove
+      DOM.sizeContainer.addEventListener(
+        "DOMNodeRemoved",
+        updateSaveButtonState
+      )
+      DOM.addSizeBtn.addEventListener("click", () => {
+        setTimeout(updateSaveButtonState, 0)
+      })
+    }
+
+    // Call this at the end of your initialization
+    setupFormChangeListeners()
+    updateSaveButtonState()
   })
 </script>
 {% endblock %}
