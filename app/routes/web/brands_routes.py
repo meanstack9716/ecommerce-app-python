@@ -8,7 +8,7 @@ from constants import GET_BRANDS_WEB_URL, ADD_BRAND_WEB_URL, UPDATE_BRAND_WEB_UR
 def get_brand_list_page():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
-
+    
     search_query = request.args.get('search', '')
     limit = int(request.args.get('limit', 10))
 

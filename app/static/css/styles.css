@@ -38,7 +38,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d0d0d0; 
+  background: #d0d0d0;
   border-radius: 10px;
 }
 
@@ -54,10 +54,14 @@ body {
   @apply animate-pulse bg-gray-200 rounded-md;
 }
 
-select{
+select {
   font-size: 14px !important;
+  height: 46px !important;
 }
 
+input {
+  height: 46px !important;
+}
 #quill-editor {
   min-height: 150px;
   border: 1px solid #ccc;
@@ -69,6 +73,31 @@ select{
   border-radius: 0 0 6px 6px;
 }
 
-input::placeholder{
+input::placeholder {
   font-size: 13px !important;
+}
+
+.filepond--root {
+  min-height: 150px !important;
+  max-height: 150px !important;
+  margin-bottom: 0 !important;
+}
+.filepond--drop-label {
+  min-height: 150px !important;
+  padding: 5px !important;
+}
+.filepond--file {
+  display: none !important;
+}
+.filepond--list {
+  display: none !important;
+}
+.filepond--panel-root {
+  border-radius: 0.375rem !important;
+  background-color: #f8fafc !important;
+  border: 2px dashed #cbd5e0 !important;
+}
+.filepond--label-action {
+  text-decoration: underline;
+  color: #3b82f6;
 }

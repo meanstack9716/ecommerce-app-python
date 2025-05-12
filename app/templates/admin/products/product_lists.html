@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Product List{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-7xl mx-auto p-6 bg-white rounded-lg shadow">
+    <h1 class="text-3xl font-bold mb-8 text-center text-black">Product List</h1>
+    <form method="GET" class="flex flex-col sm:flex-row justify-between sm:items-end gap-3 mb-6">
+        <div class="flex items-center gap-6">
+            <input type="hidden" name="page" value="1">
+            <!-- Category Filter -->
+            <div class="flex flex-col items-start gap-2 w-full xl:w-auto">
+                <p class="m-0 text-black font-medium">Search by Category</p>
+                <div class="relative w-full sm:min-w-64">
+                    <select name="categoryId"
+                        class="border border-gray-300 cursor-pointer rounded-lg px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.name }}" {% if request.args.get('category')==cat.name %}selected{% endif
+                            %}>{{
+                            cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <span
+                        class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">
+                        chevron_right
+                    </span>
+                </div>
+            </div>
+
+            <!-- Price Range Filter -->
+            <div class="flex flex-row items-start gap-6 w-full xl:w-auto">
+                <div class="flex flex-col gap-2">
+                    <label class="m-0 text-black font-medium">Min Range</label>
+                    <input type="number" step="0.01" name="min_price" placeholder="Min"
+                        value="{{ request.args.get('min_price', '') }}"
+                        class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="m-0 text-black font-medium">Max Range</label>
+                    <input type="number" step="0.01" name="max_price" placeholder="Max"
+                        value="{{ request.args.get('max_price', '') }}"
+                        class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Filter Button -->
+        <div class="flex items-end">
+            <button type="submit"
+                class="w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                Apply Filters
+            </button>
+
+        </div>
+    </form>
+
+
+
+    {% if products.items %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full border border-gray-200 text-left text-sm text-gray-700">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Product
+                        Image</th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                        Product Name</th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Product
+                        Price
+                    </th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Product
+                        Discount
+                    </th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Product
+                        Discount Price
+                    </th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Product
+                        SKU Number
+                    </th>
+                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Action
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for product in products.items %}
+                <tr class="border-t hover:bg-gray-50">
+                    <!-- Image with Swiper and badge -->
+                    <td class="px-3 py-2 border text-center">
+                        <div class="relative w-40 mx-auto">
+                            <div class="flex justify-center">
+                                {% if product.variants %}
+                                    {% set first_variant = product.variants[0] %}
+                                    {% if first_variant.images %}
+                                        <img src="{{ first_variant.images.0.image_url }}" alt="{{ first_variant.title }}"
+                                             class="w-16 h-16 object-contain rounded" />
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <!-- Title -->
+                    <td class="px-4 py-2 border text-center">{{ product.name }}</td>
+                    <!-- Price -->
+                    <td class="px-4 py-2 border text-center">
+                        <p class="font-bold text-black">₹{{ product.price|int }}</p>
+                    </td>
+
+                    <!-- Discount -->
+                    <td class="px-4 py-2 border text-center">
+                        {% if product.discount_price > 0 %}
+                        {{ product.discount_price }}%
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-2 border text-center">
+                        <p class="font-bold text-black">₹{{ product.final_price|int }}</p>
+                    </td>
+                    <!-- SKU (from variants) -->
+                    <td class="px-4 py-2 border text-center">
+                        {% if product.sku_number %}
+                        {{ product.sku_number }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="px-4 py-2 border text-center space-x-4">
+                        <a href="{{ url_for('admin_api.edit_product', product_id=product.id) }}" class="text-blue-600 hover:underline text-sm">
+                            <span class="material-symbols-outlined">edit_square</span>
+                        </a>
+                        <a href="{{ url_for('admin_api.product_details', product_id=product.id) }}" class="text-blue-600 hover:underline text-sm"><span class="material-symbols-outlined">
+                            chevron_forward
+                            </span></a>
+                    </td>
+                    
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+    {% else %}
+    <p class="text-center text-gray-500 mt-10">No products available.</p>
+    {% endif %}
+
+
+    <!-- Pagination Controls (same as before) -->
+    <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
+        <!-- Items per page selector -->
+        <div class="flex items-center gap-2 relative w-fit">
+            <span class="text-sm text-gray-600">Items per page:</span>
+            <div class="relative">
+                <select onchange="window.location.href = this.value"
+                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 appearance-none">
+                    {% for amount in [10, 20, 50, 100] %}
+                    <option value="{{ url_for('admin_api.get_product_lists', page=1, limit=amount) }}" {% if
+                        request.args.get('limit', 12)|int==amount %}selected{% endif %}>
+                        {{ amount }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <span
+                    class="material-symbols-outlined pointer-events-none absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500">
+                    expand_more
+                </span>
+            </div>
+        </div>
+
+        <!-- Page Navigation -->
+        <div class="flex items-center gap-2">
+            {% if products.has_prev %}
+            <a href="{{ url_for('admin_api.get_product_lists', page=products.prev_num, limit=request.args.get('limit', 12)) }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition">
+                Previous
+            </a>
+            {% else %}
+            <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed text-sm">Previous</span>
+            {% endif %}
+
+            <span class="px-4 py-2 text-sm">
+                Page {{ products.page }} of {{ products.pages }}
+            </span>
+
+            {% if products.has_next %}
+            <a href="{{ url_for('admin_api.get_product_lists', page=products.next_num, limit=request.args.get('limit', 12)) }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition">
+                Next
+            </a>
+            {% else %}
+            <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block js %}
+
+
+{% endblock %}

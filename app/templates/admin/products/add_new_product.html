@@ -13,7 +13,15 @@
     {% include "admin/products/add_products_steps/product_step1_select_category.html" %}
 
     <!-- STEP 2: Select Subcategory -->
-    {% include "admin/products/add_products_steps/product_step2_select_subcategory.html" %}
+    {% include "admin/products/add_products_steps/product_step2_select_details.html" %}
+
+
+    <!-- STEP 3: Select Varient -->
+    {% include "admin/products/add_products_steps/product_step3_select_variant.html" %}
+
+    <!-- STEP 4: Select Varient Images -->
+    {% include "admin/products/add_products_steps/product_step4_select_variant_images.html" %}
+
 
     <!-- Navigation buttons -->
     <div class="flex justify-between mt-8">
@@ -21,8 +29,19 @@
         <button id="next-button" type="button" disabled
             class="w-32 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:text-gray-700 disabled:opacity-30">
             Next</button>
-        <button id="submit-button" type="submit" form="step-2"
-            class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition hidden">Submit</button>
+        <button id="submit-button" type="submit" form="step-4"
+            class="w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+            <span id="submit-text">Submit</span>
+            <div id="loading-spinner" class="hidden">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+            </div>
+        </button>
     </div>
 </div>
 {% endblock %}
@@ -42,30 +61,34 @@
                     ['clean']
                 ]
             },
-            placeholder: 'Enter product description...',
+            placeholder: 'Enter product details...',
         });
 
-        const descriptionInput = document.getElementById('description');
+        const productDetailsInput = document.getElementById('product-details');
         quill.on('text-change', function () {
-            descriptionInput.value = quill.root.innerHTML;
+            productDetailsInput.value = quill.root.innerHTML;
         });
 
 
         const categorySelect = document.getElementById('category_id');
         const subCategorySelect = document.getElementById('sub_category_id');
-        const subSubCategorySelect = document.getElementById('product_type_id');
+        const subSubCategorySelect = document.getElementById('sub_sub_categories_id');
         const backButton = document.getElementById('back-button');
         const nextButton = document.getElementById('next-button');
         const submitButton = document.getElementById('submit-button');
         const step1 = document.getElementById('step-1');
         const step2 = document.getElementById('step-2');
+        const step3 = document.getElementById('step-3');
+        const step4 = document.getElementById('step-4');
         const hiddenCategoryId = document.getElementById('hidden-category-id');
         const hiddenSubCategoryId = document.getElementById('hidden-sub-category-id');
-        const hiddenSubSubCategoryId = document.getElementById('hidden-product-type-id');
-        let currentStep = 2;
+        const hiddenSubSubCategoryId = document.getElementById('hidden-sub_sub_categories_id');
+        const variantImagesContainer = document.getElementById('variant-images-container');
+
+        let currentStep = 1;
 
         function updateUI() {
-            [step1, step2].forEach(step => step.classList.add('hidden'));
+            [step1, step2, step3, step4].forEach(step => step.classList.add('hidden'));
             backButton.classList.remove('hidden');
             nextButton.classList.remove('hidden');
             submitButton.classList.add('hidden');
@@ -75,8 +98,13 @@
                 backButton.classList.add('hidden');
             } else if (currentStep === 2) {
                 step2.classList.remove('hidden');
+            } else if (currentStep === 3) {
+                step3.classList.remove('hidden');
+            } else if (currentStep === 4) {
+                step4.classList.remove('hidden');
                 nextButton.classList.add('hidden');
                 submitButton.classList.remove('hidden');
+                generateImageUploadFields()
             }
 
             updateNextButtonState();
@@ -86,7 +114,9 @@
             if (currentStep === 1) {
                 nextButton.disabled = !categorySelect.value || !subCategorySelect.value || !subSubCategorySelect.value;
             } else if (currentStep === 2) {
-                nextButton.disabled = !subCategorySelect.value || !subSubCategorySelect.value;
+                nextButton.disabled = false;
+            } else if (currentStep === 3) {
+                nextButton.disabled = false;
             }
         }
 
@@ -142,128 +172,313 @@
 
         // Navigation buttons
         nextButton.addEventListener('click', () => {
+            let valid = true;
             if (currentStep === 1) {
                 hiddenCategoryId.value = categorySelect.value;
                 hiddenSubCategoryId.value = subCategorySelect.value;
                 hiddenSubSubCategoryId.value = subSubCategorySelect.value;
-                currentStep = 2;
+            } else if (currentStep === 2) {
+                valid = validateStep2(quill);
+            } else if (currentStep === 3) {
+                valid = validateStep3();
+            }
+
+            if (valid) {
+                currentStep++;
                 updateUI();
             }
         });
 
         backButton.addEventListener('click', () => {
-            if (currentStep === 2) {
-                currentStep = 1;
+            if (currentStep > 1) {
+                currentStep--;
                 updateUI();
             }
         });
 
-        document.getElementById('step-2').addEventListener('submit', async function (e) {
-            e.preventDefault();
+        document.getElementById('step-4').addEventListener('submit', async function (e) {
+            event.preventDefault();
+            const formData = createVariantFormData();
 
-            // Validate fields before proceeding
-            const isValid = validateFormFields();
-            if (!isValid) {
-                return;
-            }
+            // Update button state
+            const submitText = document.getElementById('submit-text');
+            const submitSpinner = document.getElementById('loading-spinner');
+            const submitButton = document.getElementById('submit-button');
 
-            // Update hidden inputs
-            hiddenCategoryId.value = categorySelect.value;
-            hiddenSubCategoryId.value = subCategorySelect.value;
-            hiddenSubSubCategoryId.value = subSubCategorySelect.value;
-
-            descriptionInput.value = quill.root.innerHTML;
-
-            const imageInput = document.getElementById('product-images');
-            const isImageValid = validateImage(imageInput);
-            if (!isImageValid) {
-                return;
-            }
-
-            const formData = new FormData(this);
-            formData.append('category', hiddenCategoryId.value);
-            formData.append('subcategory', hiddenSubCategoryId.value);
-            formData.append('product_type', hiddenSubSubCategoryId.value);
+            submitText.style.display = 'none';
+            submitSpinner.style.display = 'flex';
+            submitButton.disabled = true;
 
             try {
                 const result = await sendPostRequest('/api/products/add', formData);
 
                 if (result.success) {
                     showToast(result.message, 'success');
-                    // Reset the form
                     this.reset();
-                    // Reset Quill editor
-                    quill.root.innerHTML = '';
-                    descriptionInput.value = '';
+                    setTimeout(() => {
+                        window.location.href = '/products/list';
+                    }, 100);
                 } else {
-                    handleFormErrors(result);
+                    handleErrors(result.errors)
                 }
             } catch (error) {
                 console.error('Error:', error);
                 showToast('An error occurred, please try again later.', 'error');
+            } finally {
+                submitText.style.display = 'inline';
+                submitSpinner.style.display = 'none';
+                submitButton.disabled = false;
             }
         });
 
-        function validateFormFields() {
-            let isValid = true;
+        function createVariantFormData() {
+            const formData = new FormData();
+            const variations = [];
+            const images = {};
 
-            // Basic Information
-            isValid = validators.required(document.getElementById('title'), 'Title') && isValid;
+            // Get basic form values
+            const formValues = {
+                name: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                details: document.getElementById('product-details').value,
+                price: document.getElementById('price').value,
+                discount_price: document.getElementById('discount_price').value,
+                stock_quantity: document.getElementById('stock').value,
+                sku_number: document.getElementById('sku').value,
+                category_id: document.getElementById('hidden-category-id').value,
+                subcategory_id: document.getElementById('hidden-sub-category-id').value,
+                subsubcategory_id: document.getElementById('hidden-sub_sub_categories_id').value,
+            };
 
-            // Quill editor content validation
-            const quillContent = quill.root.innerHTML;
-            const descriptionField = document.getElementById('description');
-            descriptionField.value = quillContent;
-            isValid = validators.required(descriptionField, 'Description') && isValid;
+            // Append basic form values to FormData
+            for (const key in formValues) {
+                formData.append(key, formValues[key]);
+            }
 
+            // Handle brand ID
+            const brandSelect = document.getElementById('brand');
+            if (brandSelect) {
+                const brandValue = brandSelect.value;
+                formData.append('brand_id', brandValue === 'other' ? document.getElementById('other-brand').value : brandValue);
+            }
 
-            // Pricing & Inventory
-            isValid = validators.required(document.getElementById('price'), 'Price') && isValid;
+            // Handle thumbnail upload
+            const thumbnailInput = document.getElementById('thumbnail');
+            if (thumbnailInput && thumbnailInput.files.length > 0) {
+                formData.append('thumbnail', thumbnailInput.files[0]);
+            }
 
-            isValid = validators.required(document.getElementById('stock'), 'Stock') && isValid;
-            isValid = validators.required(document.getElementById('stock'), 'Stock') && isValid;
+            const sizeBlocks = document.querySelectorAll('.size-block');
 
-            isValid = validators.required(document.getElementById('sku'), 'SKU') && isValid;
+            sizeBlocks.forEach(sizeBlock => {
+                const sizeName = sizeBlock.querySelector('.size-select').value === 'custom'
+                    ? sizeBlock.querySelector('.custom-size-input').value
+                    : sizeBlock.querySelector('.size-select').value;
+                const sizeId = sizeBlock.dataset.sizeId;
 
-            // Product Attributes
-            isValid = validators.required(document.getElementById('brand'), 'Brand') && isValid;
-            isValid = validators.required(document.getElementById('material'), 'Material') && isValid;
-            isValid = validators.required(document.getElementById('tags'), 'Tags') && isValid;
+                // Process standard colors
+                const checkedStandardColors = sizeBlock.querySelectorAll('.standard-colors input[type="checkbox"]:checked');
+                checkedStandardColors.forEach(checkbox => {
+                    const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1];
+                    const colorNameInput = checkbox.closest('div').querySelector(`input[name*="[${colorHex}][name]"]`);
+                    const colorName = colorNameInput ? colorNameInput.value : colorHex;
+                    const quantityInput = checkbox.closest('div').nextElementSibling;
+                    const quantity = parseInt(quantityInput.value) || 0;
 
-            // Color and Size selection
+                    if (sizeName && colorName && colorHex) {
+                        variations.push({ size: sizeName, color: colorName, stock_quantity: quantity, color_hexa_code: colorHex });
 
-            // Image validation
-            const imageInput = document.getElementById('product-images');
-            isValid = validators.required(imageInput, 'Product Image') && isValid;
-
-            return isValid;
-        }
-
-        function handleFormErrors(result) {
-            if (result.errors) {
-                Object.keys(result.errors).forEach(field => {
-                    const fieldError = result.errors[field];
-                    if (field === 'exception') {
-                        showToast('An exception occurred, please try again later.', 'error');
-                    } else {
-                        // Find the field and show error
-                        const fieldElement = document.querySelector(`[name="${field}"]`) ||
-                            document.getElementById(field);
-                        if (fieldElement) {
-                            showErrorMessage(fieldElement, fieldError);
-                        } else {
-                            showToast(fieldError, 'error');
+                        // Get images from custom uploader
+                        const uploadId = `upload_${sizeId}_${colorHex}`;
+                        const fileInput = document.getElementById(uploadId);
+                        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                            Array.from(fileInput.files).forEach((file, index) => {
+                                formData.append(`images[${colorName}][${sizeName}]`, file, file.name);
+                            });
                         }
                     }
                 });
-            } else {
-                showToast(result.message || 'An error occurred', 'error');
+
+                // Process custom colors
+                const customColorDivs = sizeBlock.querySelectorAll('.custom-color-container > div');
+                customColorDivs.forEach(customColorDiv => {
+                    const hexInput = customColorDiv.querySelector('input[type="color"]');
+                    const nameInput = customColorDiv.querySelector('input[placeholder="Color name"]');
+                    const quantityInput = customColorDiv.querySelector('.custom-color-quantity');
+                    const quantity = parseInt(quantityInput.value) || 0;
+                    const colorHexCode = hexInput ? hexInput.value : null;
+                    const colorName = nameInput ? nameInput.value.trim() : null;
+
+                    if (colorHexCode && colorName && sizeName) {
+                        variations.push({ size: sizeName, color: colorName, quantity: quantity, color_hexa_code: colorHexCode });
+
+                        // Get images from custom uploader
+                        const customColorId = nameInput.name.match(/\[custom\]\[(.*?)\]/)[1];
+                        const uploadId = `upload_${sizeId}_custom_${customColorId}`;
+                        const fileInput = document.getElementById(uploadId);
+                        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                            Array.from(fileInput.files).forEach((file, index) => {
+                                formData.append(`images[${colorName}][${sizeName}]`, file, file.name);
+                            });
+                        }
+                    }
+                });
+            });
+
+            formData.append('variations', JSON.stringify(variations));
+
+            // Log the formData (for debugging)
+            for (const pair of formData.entries()) {
+                console.log(pair[0], pair[1]);
             }
-            console.error('Error:', result.errors || result.message);
+
+            return formData;
         }
 
-        // Initialize UI
         updateUI();
+
+        function generateImageUploadFields() {
+            variantImagesContainer.innerHTML = '';
+            const sizeBlocks = document.querySelectorAll('.size-block');
+
+            sizeBlocks.forEach(sizeBlock => {
+                const sizeName = sizeBlock.querySelector('.size-select').value === 'custom'
+                    ? sizeBlock.querySelector('.custom-size-input').value
+                    : sizeBlock.querySelector('.size-select').value;
+                const sizeId = sizeBlock.dataset.sizeId;
+
+                // Standard Colors
+                const checkedStandardColors = sizeBlock.querySelectorAll('.standard-colors input[type="checkbox"]:checked');
+                checkedStandardColors.forEach(checkbox => {
+                    const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1];
+                    const colorNameInput = checkbox.closest('div').querySelector(`input[name*="[${colorHex}][name]"]`);
+                    const colorName = colorNameInput ? colorNameInput.value : colorHex;
+                    const uploadId = `upload_${sizeId}_${colorHex}`;
+
+                    const imageUploadDiv = document.createElement('div');
+                    imageUploadDiv.className = 'mb-6 p-4 border border-gray-300 rounded-xl shadow-sm';
+                    imageUploadDiv.innerHTML = `
+                <h4 class="text-md font-semibold text-gray-700 mb-2">${sizeName} - ${colorName}</h4>
+                <div class="flex flex-col space-y-4">
+                    <div class="flex items-center space-x-4">
+                        <label for="${uploadId}" class="cursor-pointer flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition duration-150 ease-in-out">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            Select Images
+                        </label>
+                        <span class="text-sm text-gray-500">Max 8 images</span>
+                    </div>
+                    <input type="file" id="${uploadId}" multiple class="hidden" accept="image/*">
+                    <div id="preview_${uploadId}" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2"></div>
+                </div>
+            `;
+                    variantImagesContainer.appendChild(imageUploadDiv);
+
+                    // Set up event listeners
+                    setupCustomUpload(uploadId);
+                });
+
+                // Custom Colors
+                const customColorDivs = sizeBlock.querySelectorAll('.custom-color-container > div');
+                customColorDivs.forEach(customColorDiv => {
+                    const hexInput = customColorDiv.querySelector('input[type="color"]');
+                    const nameInput = customColorDiv.querySelector('input[placeholder="Color name"]');
+                    if (hexInput && nameInput && nameInput.value.trim()) {
+                        const colorHex = hexInput.value;
+                        const colorName = nameInput.value.trim();
+                        const customColorId = nameInput.name.match(/\[custom\]\[(.*?)\]/)[1];
+                        const uploadId = `upload_${sizeId}_custom_${customColorId}`;
+
+                        const imageUploadDiv = document.createElement('div');
+                        imageUploadDiv.className = 'mb-6 p-4 border border-gray-300 rounded-xl shadow-sm';
+                        imageUploadDiv.innerHTML = `
+                    <h4 class="text-md font-semibold text-gray-700 mb-2">${sizeName} - ${colorName}</h4>
+                    <div class="flex flex-col space-y-4">
+                        <div class="flex items-center space-x-4">
+                            <label for="${uploadId}" class="cursor-pointer flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition duration-150 ease-in-out">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                                Select Images
+                            </label>
+                            <span class="text-sm text-gray-500">Max 8 images</span>
+                        </div>
+                        <input type="file" id="${uploadId}" multiple class="hidden" accept="image/*">
+                        <div id="preview_${uploadId}" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2"></div>
+                    </div>
+                `;
+                        variantImagesContainer.appendChild(imageUploadDiv);
+
+                        // Set up event listeners
+                        setupCustomUpload(uploadId);
+                    }
+                });
+            });
+        }
+
+        function setupCustomUpload(uploadId) {
+            const fileInput = document.getElementById(uploadId);
+            const previewContainer = document.getElementById(`preview_${uploadId}`);
+            const files = [];
+
+            fileInput.addEventListener('change', (e) => {
+                const newFiles = Array.from(e.target.files);
+
+                // Check if adding these files would exceed the limit
+                if (files.length + newFiles.length > 8) {
+                    showToast('You can upload a maximum of 8 images per color variation.', 'error');
+                    return;
+                }
+
+                // Add new files to our array
+                files.push(...newFiles);
+
+                // Update preview
+                updatePreview(previewContainer, files);
+            });
+
+            // Click event for the label (to trigger file input)
+            const label = document.querySelector(`label[for="${uploadId}"]`);
+            if (label) {
+                label.addEventListener('click', (e) => {
+                    if (files.length >= 8) {
+                        e.preventDefault();
+                        showToast('You have reached the maximum of 8 images for this variation.', 'error');
+                    }
+                });
+            }
+        }
+
+        function updatePreview(container, files) {
+            container.innerHTML = '';
+
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imgWrapper = document.createElement('div');
+                    imgWrapper.className = 'relative group';
+
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'w-full h-32 object-cover rounded-lg shadow';
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.className = 'absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full text-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition';
+                    removeBtn.addEventListener('click', () => {
+                        files.splice(index, 1);
+                        updatePreview(container, files);
+                    });
+
+                    imgWrapper.appendChild(img);
+                    imgWrapper.appendChild(removeBtn);
+                    container.appendChild(imgWrapper);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
     });
+
 </script>
 {% endblock %}

@@ -6,14 +6,14 @@ from app.models import Category, SubSubCategory
 
 
 @admin_api.route(SUB_SUB_CATEGORY_WEB_URL, methods=['POST', 'GET'])
-def sub_sub_category_page():
+def add_sub_sub_category_page():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
     
     categories = Category.objects.all()
     
     return render_template(
-        'admin/categorySubCategory/sub_sub_category/sub_sub_category.html',
+        'admin/categorySubCategory/sub_sub_category/add_sub_sub_category.html',
         categories=categories,
     )
 

@@ -20,7 +20,7 @@ def seed_categories():
         "AUTOMOTIVE": ["Car Accessories", "Bike Accessories", "Tools"]
     }
 
-    product_type_data = {
+    sub_sub_category_data = {
         "Shirts": ["Casual Shirts", "Formal Shirts"],
         "Pants": ["Jeans", "Chinos"],
         "Shoes": ["Sneakers", "Formal Shoes", "Running Shoes", "Cleats"],
@@ -70,9 +70,10 @@ def seed_categories():
                 img_url=f"/seed_images/subcategories/{subcat_name.lower().replace(' ', '_')}.jpg"
             ).save()
             subcategories[subcat_name] = subcategory
+            print(f"  Subcategory created: {subcat_name}")
 
-            if subcat_name in product_type_data:
-                for prod_type_name in product_type_data[subcat_name]:
+            if subcat_name in sub_sub_category_data:
+                for prod_type_name in sub_sub_category_data[subcat_name]:
                     SubSubCategory(
                         name=prod_type_name,
                         description=f"{prod_type_name} product type description",
@@ -80,6 +81,7 @@ def seed_categories():
                         sub_category_id=subcategory,
                         img_url=f"/seed_images/product_types/{prod_type_name.lower().replace(' ', '_')}.jpg"
                     ).save()
+                    print(f" SubSubCategory created: {prod_type_name}")
 
     print("Category seeding complete!")
 
@@ -116,4 +118,3 @@ def seed_brands():
 def seed_data():
     seed_categories()
     seed_brands()
-

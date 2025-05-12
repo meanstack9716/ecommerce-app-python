@@ -77,6 +77,67 @@ const validators = {
     removeErrorMessage(field)
     return true
   },
+
+  sizeSelection: (field, fieldName) => {
+    const sizeSelect = field.querySelector('.size-select');
+    const customSizeInput = field.querySelector('.custom-size-input');
+    const sizeValue = sizeSelect.value === 'custom' ? customSizeInput.value.trim() : sizeSelect.value.trim();
+    
+    if (!sizeValue) {
+      showErrorMessage(field, `${fieldName} is required`);
+      return false;
+    }
+    removeErrorMessage(field);
+    return true;
+  },
+
+  colorQuantities: (field, fieldName) => {
+    let hasValidColor = false;
+    
+    // Check standard colors
+    const colorCheckboxes = field.querySelectorAll('.color-checkbox');
+    colorCheckboxes.forEach(checkbox => {
+      if (checkbox.checked) {
+        const quantityInput = checkbox.closest('div').nextElementSibling;
+        const quantity = parseInt(quantityInput.value, 10) || 0;
+        if (quantity > 0) {
+          hasValidColor = true;
+        }
+      }
+    });
+
+    // Check custom colors
+    const customColorContainers = field.querySelectorAll('.custom-color-container > div');
+    customColorContainers.forEach(customColor => {
+      const nameInput = customColor.querySelector('.custom-color-name');
+      const quantityInput = customColor.querySelector('.custom-color-quantity');
+      const quantity = parseInt(quantityInput.value, 10) || 0;
+      if (nameInput.value.trim() && quantity > 0) {
+        hasValidColor = true;
+      }
+    });
+
+    if (!hasValidColor) {
+      showErrorMessage(field, `${fieldName} must have at least one color with quantity greater than 0`);
+      return false;
+    }
+    
+    removeErrorMessage(field);
+    return true;
+  },
+
+  atLeastOneSize: (containerId, fieldName) => {
+    const container = document.getElementById(containerId);
+    const sizeBlocks = container.querySelectorAll('.size-block');
+    
+    if (sizeBlocks.length === 0) {
+      showErrorMessage(container, `${fieldName} must have at least one size`);
+      return false;
+    }
+    
+    removeErrorMessage(container);
+    return true;
+  }
 }
 
 // Validation personal details functions
@@ -228,7 +289,7 @@ function validateBusinessDetails() {
     validators.required(fields.addressProofIdType, "Address Proof ID Type"),
     validators.required(fields.idNumber, "ID Number"),
     validators.required(fields.addressProofFront, "Address Proof Front Photo"),
-    validators.required(fields.addressProofBack, "Address Proof Back Photo"),
+    // validators.required(fields.addressProofBack, "Address Proof Back Photo"),
     validatePANNumber(fields.panNumber),
   ].every((result) => result === true)
 
