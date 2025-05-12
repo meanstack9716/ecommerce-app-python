@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, session, request
+from flask import render_template, redirect, url_for, session, request,jsonify
 from constants import ADD_NEW_PRODUCT_WEB_URL, GET_PRODUCT_LIST_WEB_URL
 from . import admin_api
 from app.models import Category, SubCategory, SubSubCategory, Products
@@ -113,7 +113,7 @@ def product_details(product_id):
         'id': str(product.id),
         'thumbnail_url': thumbnail_url,
         'sizes': list(sizes_data.values()),
-        'gallery': gallery,  # Use the processed unique gallery list
+        'gallery': gallery,
         'category': {
             'name': product.category_id.name if product.category_id else None,
             'description': getattr(product.category_id, 'description', None),
@@ -153,7 +153,6 @@ def edit_product(product_id):
     if not product:
         return "Product not found", 404
 
-    # Organize data by color first
     colors_data = {}
     
     for variant in product.variants:
@@ -165,10 +164,9 @@ def edit_product(product_id):
                 'name': color_name,
                 'value': color_value,
                 'sizes': [],
-                'images': set()  # Using set to avoid duplicates
+                'images': set()
             }
         
-        # Add size information for this color
         colors_data[color_name]['sizes'].append({
             'size': variant.size,
             'size_type': 'standard',
@@ -176,11 +174,9 @@ def edit_product(product_id):
             'variant_id': str(variant.id)
         })
         
-        # Add images for this color
         for image in variant.images:
             colors_data[color_name]['images'].add(image.image_url)
     
-    # Convert sets to lists for JSON serialization
     for color_data in colors_data.values():
         color_data['images'] = list(color_data['images'])
 

@@ -65,23 +65,31 @@
         <table class="min-w-full border border-gray-200 text-left text-sm text-gray-700">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Product
-                        Image</th>
-                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
-                        Product Name</th>
-                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Product
+                    <th
+                        class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider text-center md:table-cell">
+                        Product Image
+                    </th>
+                    <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                        Product Name
+                    </th>
+                    <th
+                        class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider text-center md:table-cell">
                         Price
                     </th>
-                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Product
+                    <th
+                        class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider text-center md:table-cell">
                         Discount
                     </th>
-                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Product
-                        Discount Price
+                    <th
+                        class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider text-center md:table-cell">
+                        Discounted Price
                     </th>
-                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Product
-                        SKU Number
+                    <th
+                        class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider text-center lg:table-cell">
+                        SKU
                     </th>
-                    <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Action
+                    <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                        Actions
                     </th>
                 </tr>
             </thead>
@@ -89,58 +97,54 @@
             <tbody>
                 {% for product in products.items %}
                 <tr class="border-t hover:bg-gray-50">
-                    <!-- Image with Swiper and badge -->
-                    <td class="px-3 py-2 border text-center">
-                        <div class="relative w-40 mx-auto">
-                            <div class="flex justify-center">
-                                {% if product.variants %}
-                                    {% set first_variant = product.variants[0] %}
-                                    {% if first_variant.images %}
-                                        <img src="{{ first_variant.images.0.image_url }}" alt="{{ first_variant.title }}"
-                                             class="w-16 h-16 object-contain rounded" />
-                                    {% endif %}
-                                {% endif %}
-                            </div>
+                    <td class="px-3 py-2 border text-center md:table-cell">
+                        <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
+                            {% if product.variants %}
+                            {% set first_variant = product.variants[0] %}
+                            {% if first_variant.images %}
+                            <img src="{{ first_variant.images.0.image_url }}" alt="{{ product.name }}"
+                                class="max-w-full max-h-full object-contain rounded" />
+                            {% else %}
+                            <span class="text-gray-400 text-xs">No Image</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-gray-400 text-xs">No Variants</span>
+                            {% endif %}
                         </div>
                     </td>
-                    
-                    <!-- Title -->
-                    <td class="px-4 py-2 border text-center">{{ product.name }}</td>
-                    <!-- Price -->
-                    <td class="px-4 py-2 border text-center">
-                        <p class="font-bold text-black">₹{{ product.price|int }}</p>
+
+                    <td class="px-3 py-2 border text-center break-words">{{ product.name }}</td>
+                    <td class="px-3 py-2 border text-center md:table-cell">
+                        <p class="font-bold text-black text-sm">₹{{ product.price|int }}</p>
                     </td>
 
-                    <!-- Discount -->
-                    <td class="px-4 py-2 border text-center">
+                    <td class="px-3 py-2 border text-center md:table-cell">
                         {% if product.discount_price > 0 %}
-                        {{ product.discount_price }}%
+                        <span class="text-sm">{{ product.discount_price }}%</span>
                         {% else %}
-                        -
+                        <span class="text-sm">-</span>
                         {% endif %}
                     </td>
-                    <td class="px-4 py-2 border text-center">
-                        <p class="font-bold text-black">₹{{ product.final_price|int }}</p>
+                    <td class="px-3 py-2 border text-center md:table-cell">
+                        <p class="font-bold text-black text-sm">₹{{ product.final_price|int }}</p>
                     </td>
-                    <!-- SKU (from variants) -->
-                    <td class="px-4 py-2 border text-center">
-                        {% if product.sku_number %}
-                        {{ product.sku_number }}
-                        {% else %}
-                        -
-                        {% endif %}
+                    <td class="px-3 py-2 border text-center lg:table-cell">
+                        <span class="text-xs">{{ product.sku_number or '-' }}</span>
                     </td>
 
-                    <!-- Actions -->
-                    <td class="px-4 py-2 border text-center space-x-4">
-                        <a href="{{ url_for('admin_api.edit_product', product_id=product.id) }}" class="text-blue-600 hover:underline text-sm">
-                            <span class="material-symbols-outlined">edit_square</span>
-                        </a>
-                        <a href="{{ url_for('admin_api.product_details', product_id=product.id) }}" class="text-blue-600 hover:underline text-sm"><span class="material-symbols-outlined">
-                            chevron_forward
-                            </span></a>
+                    <td class="px-3 py-2 border text-center whitespace-nowrap">
+                        <div class="flex justify-center space-x-2">
+                            <a href="{{ url_for('admin_api.edit_product', product_id=product.id) }}"
+                                class="text-blue-600 hover:underline text-sm flex items-center gap-1">
+                                <span class="material-symbols-outlined align-middle text-xl">edit_square</span>
+                                <span class="hidden md:inline"></span>
+                            </a>
+                            <a href="{{ url_for('admin_api.product_details', product_id=product.id) }}"
+                                class="text-green-600 hover:underline flex items-center gap-1">
+                                <span class="material-symbols-outlined align-middle text-3xl">chevron_forward</span>
+                            </a>
+                        </div>
                     </td>
-                    
                 </tr>
                 {% endfor %}
             </tbody>
