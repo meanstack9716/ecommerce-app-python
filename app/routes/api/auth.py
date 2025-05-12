@@ -15,7 +15,7 @@ from constants import OTP_EXPIRY_MINUTES, REGISTER, LOGIN, FORGOT_PASSWORD, VERI
 from flask import session
 
 
-auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 @auth_bp.route(REGISTER, methods=['POST'])
 def register():
     email = request.form.get('email')
