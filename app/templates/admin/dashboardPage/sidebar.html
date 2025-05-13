@@ -69,17 +69,26 @@
     document.querySelectorAll('.toggle-submenu').forEach(button => {
       button.addEventListener('click', function (e) {
         e.stopPropagation();
-
         const submenu = this.nextElementSibling;
         const icon = this.querySelector('.submenu-icon');
-
         submenu.classList.toggle('hidden');
         icon.classList.toggle('rotate-180');
       });
     });
 
+    document.querySelectorAll('select, button, a').forEach(element => {
+      element.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+    });
+
     document.addEventListener('click', function (e) {
-      if (!e.target.closest('.toggle-submenu') && !e.target.closest('#search-form') && !e.target.matches('input')) {
+      if (!e.target.closest('.toggle-submenu') &&
+        !e.target.closest('#search-form') &&
+        !e.target.matches('input') &&
+        !e.target.closest('select') &&
+        !e.target.closest('button') &&
+        !e.target.closest('a')) {
         document.querySelectorAll('.submenu').forEach(submenu => {
           submenu.classList.add('hidden');
         });
