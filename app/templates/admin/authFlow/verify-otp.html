@@ -1,6 +1,6 @@
 {% extends "base.html" %} {% block content %}
 <div
-  class="min-h-screen flex flex-col gap-6 items-center justify-center bg-gray-100"
+  class="h-screen flex flex-col gap-6 items-center justify-center bg-gray-100 overflow-hidden"
 >
   <div class="w-64 lg:block">
     <img
@@ -47,6 +47,14 @@
     <p class="text-sm text-center text-gray-600 mt-4">
       Didn't receive the OTP?
       <a href="#" class="text-blue-600 hover:underline">Resend OTP</a>
+    </p>
+    <p class="text-sm mt-2 text-center text-gray-600">
+      Remember password?
+      <a
+        href="{{ url_for('admin_api.login_page') }}"
+        class="text-blue-600 hover:underline font-medium"
+        >Go to Login</a
+      >
     </p>
   </div>
 </div>
