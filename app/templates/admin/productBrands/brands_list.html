@@ -11,7 +11,7 @@
         <div class="w-full sm:w-1/2 lg:w-full">
             <div class="flex items-end space-x-4">
                 <div class="flex flex-col">
-                    <label class="block text-sm font-medium">Search Brand</label>
+                    <label class="block text-sm lg:text-base font-medium text-black">Search Brand</label>
                     <input type="text" name="brandSearch" value="{{ search }}" placeholder="Search by brand name"
                         class="mt-1 block w-full px-4 py-3 border border-gray-300 outline-none rounded-lg shadow-sm sm:text-sm w-72">
                 </div>
@@ -24,17 +24,20 @@
                 Search
             </button>
             <div class="w-full sm:w-auto mt-2 sm:mt-0">
-                <a href="#" id="clear-search" class="block text-center sm:inline text-sm text-indigo-600 hover:text-indigo-800">
+                <a href="#" id="clear-search"
+                    class="block text-center sm:inline text-sm text-indigo-600 hover:text-indigo-800">
                     Clear Search
                 </a>
             </div>
         </div>
-        
+
     </form>
 
     <!-- Brand Table -->
     {% set brand_headers = ['S.No', 'Brand Name', 'Description', 'Logo', 'Actions'] %}
-    <table class="min-w-full divide-y divide-gray-200 text-sm lg:text-base text-gray-800" id="brand-table">
+    <table
+        class="min-w-full divide-y divide-gray-200 px-3 py-3 md:px-6 md:py-4 text-center text-sm lg:text-base text-gray-800"
+        id="brand-table">
         <thead class="bg-gray-50">
             <tr>
                 {% for header in brand_headers %}
@@ -47,10 +50,10 @@
         <tbody id="brand-table-body">
             {% for brand in brands %}
             <tr class="border-t text-center">
-                <td class="px-6 py-4">{{ loop.index }}</td>
-                <td class="px-6 py-4">{{ brand.name }}</td>
-                <td class="px-6 py-4">{{ brand.description }}</td>
-                <td class="px-6 py-4 w-24">
+                <td>{{ loop.index }}</td>
+                <td>{{ brand.name }}</td>
+                <td>{{ brand.description }}</td>
+                <td class="w-24">
                     {% if brand.logo_path %}
                     <img src="{{ brand.logo_path }}" alt="{{ brand.name }} logo" class="w-full object-contain">
                     {% endif %}
