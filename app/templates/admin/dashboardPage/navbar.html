@@ -9,11 +9,12 @@
           menu
         </span>
       </button>
-      
+
       <!-- Logo -->
       <div class="flex items-center">
         <img src="{{ url_for('static', filename='images/mainLogo.png') }}" alt="Logo" class="h-8 hidden lg:block">
-        <img src="{{ url_for('static', filename='images/mainBackground.png') }}" alt="Mobile Logo" class="h-8 lg:hidden">
+        <img src="{{ url_for('static', filename='images/mainBackground.png') }}" alt="Mobile Logo"
+          class="h-8 lg:hidden">
       </div>
     </div>
 
@@ -38,12 +39,15 @@
         </button>
 
         <!-- Dropdown Menu -->
-        <div id="dropdownMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
-          <a href="/profile" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors flex items-center space-x-2">
+        <div id="dropdownMenu"
+          class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+          <a href="/profile"
+            class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors flex items-center space-x-2">
             <i class="bi bi-person text-gray-500"></i>
             <span>Profile</span>
           </a>
-          <button onclick="handleLogout()" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors flex items-center space-x-2">
+          <button onclick="handleLogout()"
+            class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors flex items-center space-x-2">
             <i class="bi bi-box-arrow-right text-gray-500"></i>
             <span>Logout</span>
           </button>
@@ -59,7 +63,7 @@
   }
 
   // Close dropdown when clicking outside
-  document.addEventListener('click', function(event) {
+  document.addEventListener('click', function (event) {
     const dropdown = document.getElementById('profileDropdown');
     if (!dropdown.contains(event.target)) {
       document.getElementById('dropdownMenu').classList.add('hidden');
@@ -75,72 +79,72 @@
 </script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const hamburger = document.getElementById('hamburgerIcon');
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('sidebarOverlay');
-      const mainContent = document.getElementById('mainContent');
+  document.addEventListener('DOMContentLoaded', function () {
+    const hamburger = document.getElementById('hamburgerIcon');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const mainContent = document.getElementById('mainContent');
 
-      // Toggle sidebar
-      function toggleSidebar() {
-        const isOpen = sidebar.classList.contains('-translate-x-full');
+    // Toggle sidebar
+    function toggleSidebar() {
+      const isOpen = sidebar.classList.contains('-translate-x-full');
+      sidebar.classList.toggle('-translate-x-full', !isOpen);
+      overlay.classList.toggle('opacity-0', !isOpen);
+      overlay.classList.toggle('pointer-events-none', !isOpen);
+
+      // Store state in localStorage
+      localStorage.setItem('sidebarOpen', isOpen);
+    }
+
+    // Initialize sidebar state
+    function initSidebar() {
+      if (window.innerWidth >= 1024) {
+        // Desktop - always open
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+      } else {
+        // Mobile - check localStorage
+        const isOpen = localStorage.getItem('sidebarOpen') === 'true';
         sidebar.classList.toggle('-translate-x-full', !isOpen);
         overlay.classList.toggle('opacity-0', !isOpen);
         overlay.classList.toggle('pointer-events-none', !isOpen);
-        
-        // Store state in localStorage
-        localStorage.setItem('sidebarOpen', isOpen);
       }
+    }
 
-      // Initialize sidebar state
-      function initSidebar() {
-        if (window.innerWidth >= 1024) {
-          // Desktop - always open
-          sidebar.classList.remove('-translate-x-full');
-          overlay.classList.add('opacity-0', 'pointer-events-none');
-        } else {
-          // Mobile - check localStorage
-          const isOpen = localStorage.getItem('sidebarOpen') === 'true';
-          sidebar.classList.toggle('-translate-x-full', !isOpen);
-          overlay.classList.toggle('opacity-0', !isOpen);
-          overlay.classList.toggle('pointer-events-none', !isOpen);
-        }
-      }
-
-      // Event listeners
-      hamburger.addEventListener('click', toggleSidebar);
-      overlay.addEventListener('click', toggleSidebar);
+    // Event listeners
+    hamburger.addEventListener('click', toggleSidebar);
+    overlay.addEventListener('click', toggleSidebar);
 
     // Close sidebar when clicking outside on mobile
-document.addEventListener('click', function(event) {
-  if (window.innerWidth >= 1024) return;
-  
-  const isClickInsideSidebar = sidebar.contains(event.target);
-  const isClickOnHamburger = hamburger.contains(event.target);
-  const isClickOnSubmenu = event.target.closest('.toggle-submenu');
-  
-  if (!isClickInsideSidebar && !isClickOnHamburger && !isClickOnSubmenu && !sidebar.classList.contains('-translate-x-full')) {
-    toggleSidebar();
-  }
-});
+    document.addEventListener('click', function (event) {
+      if (window.innerWidth >= 1024) return;
 
-      // Handle window resize
-      window.addEventListener('resize', function() {
-        if (window.innerWidth >= 1024) {
-          // Desktop - ensure sidebar is open
-          sidebar.classList.remove('-translate-x-full');
-          overlay.classList.add('opacity-0', 'pointer-events-none');
-        } else {
-          // Mobile - maintain state
-          const isOpen = localStorage.getItem('sidebarOpen') === 'true';
-          sidebar.classList.toggle('-translate-x-full', !isOpen);
-          overlay.classList.toggle('opacity-0', !isOpen);
-          overlay.classList.toggle('pointer-events-none', !isOpen);
-        }
-      });
+      const isClickInsideSidebar = sidebar.contains(event.target);
+      const isClickOnHamburger = hamburger.contains(event.target);
+      const isClickOnSubmenu = event.target.closest('.toggle-submenu');
 
-      // Initialize
-      initSidebar();
+      if (!isClickInsideSidebar && !isClickOnHamburger && !isClickOnSubmenu && !sidebar.classList.contains('-translate-x-full')) {
+        toggleSidebar();
+      }
     });
-  </script>
+
+    // Handle window resize
+    window.addEventListener('resize', function () {
+      if (window.innerWidth >= 1024) {
+        // Desktop - ensure sidebar is open
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+      } else {
+        // Mobile - maintain state
+        const isOpen = localStorage.getItem('sidebarOpen') === 'true';
+        sidebar.classList.toggle('-translate-x-full', !isOpen);
+        overlay.classList.toggle('opacity-0', !isOpen);
+        overlay.classList.toggle('pointer-events-none', !isOpen);
+      }
+    });
+
+    // Initialize
+    initSidebar();
+  });
+</script>
 {% endblock %}

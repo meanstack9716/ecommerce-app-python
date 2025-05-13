@@ -18,6 +18,29 @@ async function sendPostRequest(url, formData) {
   }
 }
 
+async function fetchJsonData(url, options = {}) {
+  try {
+      const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+              'Content-Type': 'application/json',
+              ...(options.headers || {}),
+          },
+          ...options
+      });
+
+      if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP error! ${response.status} - ${errorText}`);
+      }
+
+      return await response.json();
+  } catch (error) {
+      console.error(`API call failed: ${url}`, error);
+      throw error;
+  }
+}
+
 
 async function sendGetRequest(url) {
   try {

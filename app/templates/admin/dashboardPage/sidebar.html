@@ -26,20 +26,23 @@
         {% else %}
         <!-- Item with Submenu -->
         <li>
-          <button class="toggle-submenu w-full flex items-center justify-between p-3 rounded-lg transition-colors {% if request.endpoint in item.endpointGroup %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+          <button
+            class="toggle-submenu w-full flex items-center justify-between p-3 rounded-lg transition-colors {% if request.endpoint in item.endpointGroup %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
             <div class="flex items-center">
               <span class="material-symbols-outlined mr-3 text-lg lg:text-xl">
                 {{ item.icon }}
               </span>
               <span>{{ item.label }}</span>
             </div>
-            <span class="material-symbols-outlined submenu-icon transform transition-transform duration-200 {% if request.endpoint in item.endpointGroup %}rotate-180{% endif %}">
+            <span
+              class="material-symbols-outlined submenu-icon transform transition-transform duration-200 {% if request.endpoint in item.endpointGroup %}rotate-180{% endif %}">
               keyboard_arrow_down
             </span>
           </button>
 
           <!-- Submenu Items -->
-          <ul class="submenu pl-9  lg:gap-2 mt-3 space-y-2 {% if request.endpoint not in item.endpointGroup %}hidden{% endif %}">
+          <ul
+            class="submenu pl-9  lg:gap-2 mt-3 space-y-2 {% if request.endpoint not in item.endpointGroup %}hidden{% endif %}">
             {% for subitem in item.submenu %}
             <li>
               <a href="{{ subitem.url | safe }}"
@@ -62,31 +65,29 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Submenu toggle functionality
-      document.querySelectorAll('.toggle-submenu').forEach(button => {
-        button.addEventListener('click', function(e) {
-          e.stopPropagation(); // Prevent event from bubbling up
-          
-          const submenu = this.nextElementSibling;
-          const icon = this.querySelector('.submenu-icon');
-          
-          submenu.classList.toggle('hidden');
-          icon.classList.toggle('rotate-180');
-        });
-      });
-  
-      // Close submenus when clicking outside
-      document.addEventListener('click', function(e) {
-        if (!e.target.closest('.toggle-submenu')) {
-          document.querySelectorAll('.submenu').forEach(submenu => {
-            submenu.classList.add('hidden');
-          });
-          document.querySelectorAll('.submenu-icon').forEach(icon => {
-            icon.classList.remove('rotate-180');
-          });
-        }
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.toggle-submenu').forEach(button => {
+      button.addEventListener('click', function (e) {
+        e.stopPropagation();
+
+        const submenu = this.nextElementSibling;
+        const icon = this.querySelector('.submenu-icon');
+
+        submenu.classList.toggle('hidden');
+        icon.classList.toggle('rotate-180');
       });
     });
-  </script>
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.toggle-submenu') && !e.target.closest('#search-form') && !e.target.matches('input')) {
+        document.querySelectorAll('.submenu').forEach(submenu => {
+          submenu.classList.add('hidden');
+        });
+        document.querySelectorAll('.submenu-icon').forEach(icon => {
+          icon.classList.remove('rotate-180');
+        });
+      }
+    });
+  });
+</script>
 {% endblock %}

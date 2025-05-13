@@ -98,7 +98,7 @@ EDIT_PRODUCT_API = f'/api/products/edit'
 # Sub Sub Category API Endpoint Constants End
 
 # Brand Endpoint API Start
-GET_BRANDS_API = '/api/brand/lists'
+GET_BRANDS_LIST_API = '/api/brand/lists'
 ADD_BRAND_API = '/api/brands/add'
 UPDATE_BRAND_API = '/api/update-brand'
 DELETE_BRAND_API = '/delete_brand/<string:brand_id>'

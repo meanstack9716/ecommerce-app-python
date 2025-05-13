@@ -109,12 +109,12 @@
 {% block Js %}
 <script>
     document.addEventListener('DOMContentLoaded', async () => {
-        const { success, data, error } = await sendGetRequest('/api/brand/lists');
+        const { success, data, error } = await fetchJsonData('/api/brand/lists');
         const select = document.getElementById('brand');
         const otherBrandInput = document.getElementById('other-brand');
 
         if (success) {
-            const brands = data.data;
+            const brands = data;
 
             brands.forEach(brand => {
                 const option = document.createElement('option');
