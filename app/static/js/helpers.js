@@ -81,13 +81,13 @@ function handleErrors(errors) {
   }
 }
 
-
 function attachPaginationListeners(selector, fetchFunction) {
   const paginationLinks = document.querySelectorAll(selector);
   paginationLinks.forEach(link => {
     link.addEventListener('click', function (e) {
       e.preventDefault();
       const page = this.getAttribute('data-page');
+      console.log('Pagination link clicked, page:', page);
       fetchFunction(page);
     });
   });

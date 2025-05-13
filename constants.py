@@ -44,6 +44,8 @@ GET_SELLERS_API_URL = '/api/sellers'
 
 CATEGORY_LIST_WEB_URL = '/category-list'
 ADD_CATEGORY_WEB_URL = '/add-new-category'
+CATEGORY_LIST_WEB_URL = '/category/list'
+GET_CATEGORIES_FILTER_API_URL = '/api/categories'
 
 SUBCATEGORY_LIST_WEB_URL = f'/sub-categories/list'
 Add_SUBCATEGORY_LIST_WEB_URL = f'/subcategories/add'
