@@ -63,6 +63,7 @@
         }
     });
     async function handleLogout() {
+        console.log("dasdajskdajks")
         const result = await sendPostRequest('/auth/logout', {}, true);
 
         if (result.success) {
@@ -70,5 +71,13 @@
         }
     }
 
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('hamburgerIcon')?.addEventListener('click', function () {
+            document.getElementById('sidebar')?.classList.toggle('-translate-x-full');
+        });
+    });
 </script>
 {% endblock %}
