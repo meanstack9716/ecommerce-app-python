@@ -11,7 +11,7 @@ from app.models.user import User
 from app.models.role import Role
 from app.utils.validation import validate_email, validate_password, validate_required_fields
 from app.utils.utils import create_error_response
-from constants import OTP_EXPIRY_MINUTES, REGISTER, LOGIN, FORGOT_PASSWORD, VERIFY_OTP, RESET_PASSWORD, LOGOUT
+from constants import OTP_EXPIRY_MINUTES, REGISTER, LOGIN, FORGOT_PASSWORD, VERIFY_OTP, RESET_PASSWORD, LOGOUT, RESEND_OTP
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 @auth_bp.route(REGISTER, methods=['POST'])
@@ -236,6 +236,44 @@ def reset_password():
 
     return jsonify({'message': 'Password reset successfully'}), 200
 
+
+@auth_bp.route(RESEND_OTP, methods=['POST'])
+def resend_otp():
+    data = request.get_json()
+    if not data:
+        return jsonify({'status': 'error', 'message': 'Invalid JSON or no data provided'}), 400
+
+    email = data.get('email')
+    if not email:
+        return jsonify({'status': 'error', 'message': 'Email is required'}), 400
+
+    user = User.objects(email=email).first()
+    if not user:
+        return jsonify({'status': 'error', 'message': 'No account associated with this email address'}), 400
+
+    # Generate new OTP and set expiry
+    otp = ''.join(random.choices('0123456789', k=6))
+    expiry_time = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
+
+    # Update user's OTP and expiry
+    user.reset_otp = otp
+    user.otp_expiry = expiry_time
+    user.save()
+
+    # Send OTP email
+    msg = Message(
+        subject='Your OTP for Verification',
+        recipients=[user.email],
+        body=f"Your OTP is {otp}. It will expire in {OTP_EXPIRY_MINUTES} minutes."
+    )
+
+    try:
+        mail.send(msg)
+        print(f"Resend OTP email sent successfully to: {user.email}")
+        return jsonify({'status': 'success', 'message': 'OTP resent successfully'}), 200
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return jsonify({'status': 'error', 'message': 'Failed to resend OTP email'}), 500
 
 @auth_bp.route(LOGOUT, methods=['POST'])
 def logout():

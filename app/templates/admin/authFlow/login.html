@@ -1,7 +1,8 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %}
+{% block content %}
 <div class="flex h-screen">
   <div class="w-1/2 hidden lg:block">
-    <img src="{{ url_for('static', filename='images/loginBackgroundImage.png') }}" alt="Login image"
+    <img src="{{ url_for('static', filename='images/loginPage.png') }}" alt="Login image"
       class="object-cover w-full h-full" />
   </div>
 
@@ -20,7 +21,6 @@
           <label for="email" class="block text-sm font-medium text-black mb-1">Email</label>
           <input type="email" id="email" placeholder="Enter your email"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <div id="email-error" class="text-red-600 text-sm mt-1 hidden"></div>
         </div>
 
         <div>
@@ -33,7 +33,6 @@
               <i class="bi bi-eye text-lg"></i>
             </span>
           </div>
-          <div id="password-error" class="text-red-600 text-sm mt-1 hidden"></div>
         </div>
 
         <div class="text-right">
@@ -51,9 +50,7 @@
             </div>
           </div>
         </button>
-
       </form>
-      <div id="api-error" class="text-red-600 text-sm mt-2 text-center hidden"></div>
       <!-- <div class="text-center text-sm text-gray-600">
         Don't have an account?
         <a href="{{ url_for('admin_api.signup_page') }}" class="text-blue-600 hover:underline">Create an account</a>
@@ -61,50 +58,88 @@
     </div>
   </div>
 </div>
-{% endblock %} {% block js %}
+
+<!-- Toast Modal -->
+<div id="toast-modal" class="fixed bottom-6 right-6 hidden z-50">
+  <div id="toast-content" class="flex items-center p-4 rounded-xl shadow-xl max-w-sm bg-white border-l-4 transition-all duration-300 transform translate-x-10 opacity-0"
+    role="alert">
+    <div id="toast-icon" class="mr-3 flex-shrink-0"></div>
+    <p id="toast-message" class="text-sm font-medium flex-grow"></p>
+    <button id="toast-close" class="ml-2 flex-shrink-0 focus:outline-none">
+      <span class="material-symbols-outlined text-gray-400 hover:text-gray-600 text-lg">close</span>
+    </button>
+  </div>
+</div>
+{% endblock %}
+{% block js %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    const loginForm = document.getElementById("login-form")
-    const loginText = document.getElementById("login-text")
-    const loadingSpinner = document.getElementById("loading-spinner")
-    const apiErrorEl = document.getElementById("api-error")
+    const loginForm = document.getElementById("login-form");
+    const loginText = document.getElementById("login-text");
+    const loadingSpinner = document.getElementById("loading-spinner");
+    const toastModal = document.getElementById("toast-modal");
+    const toastContent = document.getElementById("toast-content");
+    const toastMessage = document.getElementById("toast-message");
+    const toastIcon = document.getElementById("toast-icon");
+    const toastClose = document.getElementById("toast-close");
+
+    // Toast Modal Functions
+    function showToast(message, type = "success") {
+      toastMessage.textContent = message;
+      toastContent.className = `flex items-center p-4 rounded-xl shadow-xl max-w-sm bg-white border-l-4 transition-all duration-300 transform ${
+        type === "success" ? "border-green-500" : "border-red-500"
+      }`;
+      toastIcon.innerHTML = `
+        <span class="material-symbols-outlined text-${
+          type === "success" ? "green" : "red"
+        }-600 text-xl">
+          ${type === "success" ? "check_circle" : "error"}
+        </span>
+      `;
+      toastModal.classList.remove("hidden");
+      toastContent.classList.remove("translate-x-10", "opacity-0");
+      toastContent.classList.add("translate-x-0", "opacity-100");
+
+      setTimeout(() => {
+        hideToast();
+      }, 5000);
+    }
+
+    function hideToast() {
+      toastContent.classList.add("translate-x-10", "opacity-0");
+      toastContent.classList.remove("translate-x-0", "opacity-100");
+      setTimeout(() => {
+        toastModal.classList.add("hidden");
+      }, 300);
+    }
+
+    toastClose.addEventListener("click", hideToast);
 
     loginForm.addEventListener("submit", async function (event) {
-      event.preventDefault()
+      event.preventDefault();
 
-      const emailInput = document.getElementById("email")
-      const passwordInput = document.getElementById("password")
-      const email = emailInput.value.trim()
-      const password = passwordInput.value.trim()
+      const emailInput = document.getElementById("email");
+      const passwordInput = document.getElementById("password");
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
 
-      const emailErrorEl = document.getElementById("email-error")
-      const passwordErrorEl = document.getElementById("password-error")
-
-      // Reset error messages
-      emailErrorEl.classList.add("hidden")
-      passwordErrorEl.classList.add("hidden")
-      apiErrorEl.classList.add("hidden")
-
-      let hasError = false
+      let hasError = false;
 
       if (!email) {
-        emailErrorEl.textContent = "Email is required."
-        emailErrorEl.classList.remove("hidden")
-        hasError = true
+        showToast("Email is required.", "error");
+        hasError = true;
       }
 
       if (!password) {
-        passwordErrorEl.textContent = "Password is required."
-        passwordErrorEl.classList.remove("hidden")
-        hasError = true
+        showToast("Password is required.", "error");
+        hasError = true;
       }
 
-      if (hasError) return
+      if (hasError) return;
 
       // Show spinner
-      loginText.classList.add("hidden")
-      loadingSpinner.classList.remove("hidden")
-
+      loginText.classList.add("hidden");
+      loadingSpinner.classList.remove("hidden");
 
       try {
         const response = await fetch("{{ url_for('auth.login') }}", {
@@ -114,51 +149,57 @@
           },
           body: JSON.stringify({ email, password }),
           credentials: "include",
-        })
-        const result = await response.json()
+        });
+        const result = await response.json();
 
-        loginText.classList.remove("hidden")
-        loadingSpinner.classList.add("hidden")
+        loginText.classList.remove("hidden");
+        loadingSpinner.classList.add("hidden");
 
         if (response.ok) {
           if (result.is_admin) {
-            loginForm.reset()
-            window.location.href = "{{ url_for('admin_api.dashboard') }}"
+            loginForm.reset();
+            showToast("Login successful! Redirecting to dashboard...", "success");
+            setTimeout(() => {
+              window.location.href = "{{ url_for('admin_api.dashboard') }}";
+            }, 1500);
           } else {
-            loginForm.reset()
-            apiErrorEl.textContent = result.message || "OTP sent to your email."
-            apiErrorEl.classList.remove("hidden")
+            loginForm.reset();
+            showToast(result.message || "OTP sent to your email.", "success");
           }
         } else {
-          const messages = []
-          if (result.email) messages.push(result.email)
-          if (result.password) messages.push(result.password)
-          if (result.error) messages.push(result.error)
-          apiErrorEl.textContent = messages.join(" ") || "Login failed."
-          apiErrorEl.classList.remove("hidden")
+          const messages = [];
+          // Check for errors in the 'errors' object
+          if (result.errors) {
+            if (result.errors.email) messages.push(result.errors.email);
+            if (result.errors.password) messages.push(result.errors.password);
+          }
+          // Fallback to other possible error fields
+          if (result.email) messages.push(result.email);
+          if (result.password) messages.push(result.password);
+          if (result.error) messages.push(result.error);
+          showToast(messages.join(" ") || "Login failed.", "error");
         }
       } catch (error) {
-        loginText.classList.remove("hidden")
-        loadingSpinner.classList.add("hidden")
-        apiErrorEl.textContent = "Something went wrong. Please try again."
-        apiErrorEl.classList.remove("hidden")
-        console.error(error)
+        loginText.classList.remove("hidden");
+        loadingSpinner.classList.add("hidden");
+        showToast("Something went wrong. Please try again.", "error");
+        console.error(error);
       }
-    })
-  })
+    });
+  });
 
   function togglePassword(fieldId, toggleElement) {
-    const input = document.getElementById(fieldId)
-    const icon = toggleElement.querySelector("i")
+    const input = document.getElementById(fieldId);
+    const icon = toggleElement.querySelector("i");
 
     if (input.type === "password") {
-      input.type = "text"
-      icon.classList.remove("bi-eye")
-      icon.classList.add("bi-eye-slash")
+      input.type = "text";
+      icon.classList.remove("bi-eye");
+      icon.classList.add("bi-eye-slash");
     } else {
-      input.type = "password"
-      icon.classList.remove("bi-eye-slash")
-      icon.classList.add("bi-eye")
+      input.type = "password";
+      icon.classList.remove("bi-eye-slash");
+      icon.classList.add("bi-eye");
     }
   }
 </script>
