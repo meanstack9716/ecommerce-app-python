@@ -27,7 +27,7 @@
           placeholder="Enter OTP"
           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <div id="otp-error" class="text-red-600 text-base hidden mt-1 text-center"></div>
+        <div id="otp-error" class="text-red-600 text-sm hidden mt-1"></div>
       </div>
 
       <button
@@ -62,7 +62,8 @@
     const otpField = document.getElementById("otp")
     const otpError = document.getElementById("otp-error")
     const otpMessage = document.getElementById("otp-message")
-    const submitBtn = document.querySelector(".submit-btn")
+    const loader = document.querySelector(".loader")
+    const btnText = document.querySelector(".btn-text")
 
     otpForm.addEventListener("submit", async function (event) {
       event.preventDefault()
@@ -72,12 +73,29 @@
       otpMessage.textContent = ""
       otpMessage.classList.add("hidden")
 
+      const otpValue = otpField.value.trim()
+
+      if (!otpValue) {
+        otpError.textContent = "OTP is required."
+        otpError.classList.remove("hidden")
+        return
+      }
+
+      if (!/^\d{6}$/.test(otpValue)) {
+        otpError.textContent = "OTP must be exactly 6 digits."
+        otpError.classList.remove("hidden")
+        return
+      }
+
       const payload = {
         email: emailInput.value.trim(),
-        code: otpField.value.trim(),
+        code: otpValue,
       }
 
       try {
+        loader.classList.remove("hidden")
+        btnText.classList.add("hidden")
+
         const response = await fetch("/api/auth/verify-email-code", {
           method: "POST",
           headers: {
@@ -85,7 +103,6 @@
           },
           body: JSON.stringify(payload),
         })
-
 
         const data = await response.json()
 
@@ -95,7 +112,6 @@
 
           setTimeout(() => {
             const encodedEmail = encodeURIComponent(payload.email)
-            const encodedCode = encodeURIComponent(payload.code)
             window.location.href = `/reset-password?email=${encodedEmail}`
           }, 1500)
         } else {
@@ -105,7 +121,10 @@
       } catch (error) {
         console.error("Error sending request:", error)
         otpError.textContent = "An error occurred. Please try again."
-        otpError.classList.remove("hidden") // Ensure it's visible
+        otpError.classList.remove("hidden")
+      } finally {
+        loader.classList.add("hidden")
+        btnText.classList.remove("hidden")
       }
     })
   })
