@@ -63,7 +63,6 @@
         }
     });
     async function handleLogout() {
-        console.log("dasdajskdajks")
         const result = await sendPostRequest('/api/auth/logout', {}, true);
 
         if (result.success) {
@@ -75,9 +74,31 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('hamburgerIcon')?.addEventListener('click', function () {
-            document.getElementById('sidebar')?.classList.toggle('-translate-x-full');
+        const hamburger = document.getElementById('hamburgerIcon');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+
+        let isSidebarOpen = true;
+
+        hamburger?.addEventListener('click', () => {
+            console.log("Toggle sidebar");
+
+            if (isSidebarOpen) {
+                sidebar.classList.add('w-0');
+                sidebar.classList.remove('w-72');
+                sidebar.classList.add('-translate-x-full');
+                sidebar.classList.remove('translate-x-0');
+            } else {
+                sidebar.classList.remove('w-0');
+                sidebar.classList.add('w-72');
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+            }
+
+            isSidebarOpen = !isSidebarOpen;
         });
+
     });
 </script>
+
 {% endblock %}

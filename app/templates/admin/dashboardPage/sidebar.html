@@ -30,7 +30,7 @@
                 </div>
 
                 <div
-                    class="submenu ml-6 mt-1 flex flex-col gap-3 {% if request.endpoint not in item.endpointGroup %}hidden{% endif %}">
+                    class="submenu ml-6 mt-3 flex flex-col gap-3 {% if request.endpoint not in item.endpointGroup %}hidden{% endif %}">
                     {% for subitem in item.submenu %}
                     <a href="{{ subitem.url | safe }}"
                         class="{% if request.endpoint == subitem.endpoint %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
