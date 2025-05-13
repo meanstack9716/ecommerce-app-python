@@ -40,7 +40,7 @@
     />
   </head>
 
-  <body class="bg-gray-100 min-h-screen">
+  <body class="bg-gray-100">
     {% block content %}
     <div class="flex flex-col h-screen flex-1">
       {% include "admin/dashboardPage/navbar.html" %}
@@ -48,7 +48,7 @@
       <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
         <div
           id="sidebar"
-          class="w-80 fixed inset-y-0 transform transition-transform duration-300 ease-in-out bg-white shadow-xl border-r border-[#f3f3f3] md:static md:translate-x-0"
+          class="w-72 fixed inset-y-0 transform transition-transform duration-300 ease-in-out bg-white shadow-xl border-r border-[#f3f3f3] md:static md:translate-x-0 -translate-x-full"
         >
           {% include "admin/dashboardPage/sidebar.html" %}
         </div>
@@ -62,9 +62,90 @@
       </div>
       <div id="toastContainer" class="fixed top-5 right-5 space-y-2 z-50"></div>
     </div>
+    {% endblock %}
+    {% block js %}
+    <script>
+      console.log("Script loaded and running");
 
-    {% endblock %} {% block js %}
-   
+      const hamburgerIcon = document.getElementById("hamburgerIcon");
+      const sidebar = document.getElementById("sidebar");
+      const mainContent = document.getElementById("mainContent");
+
+      console.log("Hamburger Icon:", hamburgerIcon); // Debug line
+
+      let isSidebarOpen = false;
+
+      function toggleSidebar() {
+        console.log("Toggling sidebar"); // Debug line
+        isSidebarOpen = !isSidebarOpen;
+        if (isSidebarOpen) {
+          sidebar.classList.remove("-translate-x-full");
+          sidebar.classList.add("translate-x-0");
+          document.body.classList.add("overflow-hidden");
+          hamburgerIcon.querySelector("span").textContent = "menu_open";
+        } else {
+          sidebar.classList.add("-translate-x-full");
+          sidebar.classList.remove("translate-x-0");
+          document.body.classList.remove("overflow-hidden");
+          hamburgerIcon.querySelector("span").textContent = "menu";
+        }
+      }
+
+      if (hamburgerIcon) {
+        hamburgerIcon.addEventListener("click", toggleSidebar);
+      } else {
+        console.error("Hamburger icon not found in DOM");
+      }
+
+      // Close sidebar when clicking outside on mobile
+      document.addEventListener("click", (event) => {
+        if (
+          window.innerWidth < 768 &&
+          isSidebarOpen &&
+          !sidebar.contains(event.target) &&
+          !hamburgerIcon.contains(event.target)
+        ) {
+          toggleSidebar();
+        }
+      });
+
+      window.addEventListener("resize", () => {
+        if (window.innerWidth >= 768) {
+          sidebar.classList.remove("-translate-x-full");
+          sidebar.classList.add("translate-x-0");
+          document.body.classList.remove("overflow-hidden");
+          isSidebarOpen = false;
+          if (hamburgerIcon) {
+            hamburgerIcon.querySelector("span").textContent = "menu";
+          }
+        } else if (!isSidebarOpen) {
+          sidebar.classList.add("-translate-x-full");
+          sidebar.classList.remove("translate-x-0");
+          if (hamburgerIcon) {
+            hamburgerIcon.querySelector("span").textContent = "menu";
+          }
+        }
+      });
+
+      // Profile dropdown functions
+      function toggleDropdown() {
+        document.getElementById("dropdownMenu").classList.toggle("hidden");
+      }
+
+      document.addEventListener("click", function (event) {
+        const dropdown = document.getElementById("profileDropdown");
+        if (!dropdown.contains(event.target)) {
+          document.getElementById("dropdownMenu").classList.add("hidden");
+        }
+      });
+
+      async function handleLogout() {
+        const result = await sendPostRequest("/auth/logout", {}, true);
+        if (result.success) {
+          window.location.href = "/login";
+        }
+      }
+    </script>
     {% endblock %}
   </body>
 </html>
