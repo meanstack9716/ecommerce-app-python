@@ -126,15 +126,15 @@ def login():
 def forgot_password():
     data = request.get_json()
     if not data:
-        return jsonify({'message': 'Invalid JSON or no data provided'}), 400
+        return jsonify({'status': 'error', 'message': 'Invalid JSON or no data provided'}), 400
 
     email = data.get('email')
     if not email:
-        return jsonify({'message': 'Email is required'}), 400
+        return jsonify({'status': 'error', 'message': 'Email is required'}), 400
 
     user = User.objects(email=email).first()
     if not user:
-        return jsonify({'errors': 'No account associated with this email address'}), 400
+        return jsonify({'status': 'error', 'message': 'No account associated with this email address'}), 400
 
     otp = ''.join(random.choices('0123456789', k=6))
     expiry_time = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
@@ -146,17 +146,16 @@ def forgot_password():
     msg = Message(
         subject='Your OTP for Password Reset',
         recipients=[user.email],
-        body=f"Your OTP is {otp}. It will expire in 10 minutes."
+        body=f"Your OTP is {otp}. It will expire in {OTP_EXPIRY_MINUTES} minutes."
     )
 
     try:
         mail.send(msg)
         print(f"OTP email sent successfully to: {user.email}")
-        return jsonify({'message': 'OTP sent successfully'}), 200
+        return jsonify({'status': 'success', 'message': 'OTP sent successfully'}), 200
     except Exception as e:
         print(f"Error sending email: {e}")
-        return jsonify({'message': 'Failed to send OTP email'}), 500
-
+        return jsonify({'status': 'error', 'message': 'Failed to send OTP email'}), 500
 
 @auth_bp.route(VERIFY_OTP, methods=['POST'])
 def verify_email_code():
@@ -204,7 +203,8 @@ def verify_email_code():
     }
 
     return jsonify({
-        'message': 'User registered successfully',
+        'status': 'success',
+        'message': 'Otp verified successfully',
         'user': user_data,
         'access_token': access_token
     }), 200
