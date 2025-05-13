@@ -189,6 +189,7 @@ def verify_email_code():
         return jsonify({'message': 'Role not found'}), 400
 
     user.role = role
+    session['user_id'] = str(user.id)
     user.save()
 
     access_token = create_access_token(identity=str(user.id), additional_claims={'role': 'user'})
