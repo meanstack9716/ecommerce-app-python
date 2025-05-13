@@ -110,3 +110,13 @@ CART_REMOVE = '/api/cart/remove'
 CART_LIST = '/api/cart/list'
 CART_CHECKOUT = '/api/cart/checkout'
 # Cart Endpoint API End
+
+
+WISHLIST_ADD = '/api/wishlist/add'
+WISHLIST_REMOVE = '/api/wishlist/remove'
+WISHLIST_LIST = '/api/wishlist'
+
+SAVEFORLATER_ADD = '/api/saveforlater/add'
+SAVEFORLATER_REMOVE = '/api/saveforlater/remove'
+SAVEFORLATER_LIST = '/api/saveforlater'
+SAVEFORLATER_TO_CART = '/api/saveforlater/to-cart'
