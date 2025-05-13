@@ -29,8 +29,9 @@ def add_to_cart():
 
     product_id = data.get('product_id')
     variant_id = data.get('variant_id')
-    size = data.get('size')  # Extract size from payload
+    size = data.get('size')
     quantity = data.get('quantity', 1)
+    color = data.get('color')
 
     user_id = get_user_id()
     if isinstance(user_id, tuple):
@@ -42,6 +43,9 @@ def add_to_cart():
     # Validate size if provided
     if size and size not in ALLOWED_SIZES:
         return jsonify({"error": f"Invalid size. Must be one of {ALLOWED_SIZES}"}), 400
+    
+    if not color:
+        return jsonify({"error": "color is required"}), 400
 
     try:
         quantity = int(quantity)
@@ -66,12 +70,13 @@ def add_to_cart():
         variant = query.first()
         if not variant:
             return jsonify({"error": "Variant not found for the specified product and size"}), 404
-        price = float(product.final_price)  # Update if variant has its own price
+        price = float(product.final_price)
 
     cart_item = CartItem(
         product_id=product_id,
         variant_id=str(variant.id) if variant else None,
         size=size,
+        color=color,
         quantity=quantity,
         price=price,
         original_price=float(product.price),
@@ -89,7 +94,7 @@ def add_to_cart():
 
     existing_item = None
     for item in cart.items:
-        if item.product_id == product_id and item.variant_id == cart_item.variant_id and item.size == size:
+        if (item.product_id == product_id and item.variant_id == cart_item.variant_id and item.size == size and item.color == color):
             existing_item = item
             break
 
@@ -115,6 +120,7 @@ def add_to_cart():
                     "product_id": str(item.product_id),
                     "variant_id": str(item.variant_id) if item.variant_id else None,
                     "size": item.size,
+                    "color": item.color,
                     "quantity": item.quantity,
                     "price": item.price,
                     "original_price": item.original_price,
@@ -185,6 +191,8 @@ def get_cart():
             {
                 "product_id": item.product_id,
                 "variant_id": item.variant_id,
+                "size": item.size,
+                "color": item.color,
                 "quantity": item.quantity,
                 "price": item.price,
                 "discount": item.discount,
@@ -193,8 +201,9 @@ def get_cart():
         ],
         "total_price": cart.total_price,
         "currency": cart.currency,
-        "status": cart.status
+        "status": cart.status or "active"
     }), 200
+
 
 @cart_bp.route(CART_CHECKOUT, methods=['POST'])
 def checkout():
