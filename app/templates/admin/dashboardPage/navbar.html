@@ -64,7 +64,7 @@
     });
     async function handleLogout() {
         console.log("dasdajskdajks")
-        const result = await sendPostRequest('/auth/logout', {}, true);
+        const result = await sendPostRequest('/api/auth/logout', {}, true);
 
         if (result.success) {
             window.location.href = '/login';
