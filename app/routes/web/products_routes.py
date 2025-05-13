@@ -16,16 +16,10 @@ def add_products_page():
         categories=categories,
     )
 
-@admin_api.route(GET_PRODUCT_LIST_WEB_URL, methods=['GET'])
-def get_product_lists():
-    if 'user_id' not in session:
-        return redirect(url_for('admin_api.login_page'))
-
+def get_filtered_products():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('limit', 10, type=int)
-
     category = request.args.get('category')
-    status = request.args.get('status')
     min_price = request.args.get('min_price', type=float)
     max_price = request.args.get('max_price', type=float)
 
@@ -35,9 +29,8 @@ def get_product_lists():
         category_obj = Category.objects(name=category).first()
         if category_obj:
             query['category_id'] = category_obj.id
-
-    if status:
-        query['status'] = status
+        else:
+            return None, Category.objects.all(), f"Category '{category}' not found"
 
     if min_price is not None:
         query['final_price__gte'] = min_price
@@ -45,15 +38,70 @@ def get_product_lists():
     if max_price is not None:
         query['final_price__lte'] = max_price
 
-    products = Products.objects(**query).order_by('-created_at').paginate(page=page, per_page=per_page)
-    categories = Category.objects.all()
+    try:
+        products = Products.objects(**query).order_by('-created_at').paginate(page=page, per_page=per_page)
+        return products, Category.objects.all(), None
+    except Exception as e:
+        return None, Category.objects.all(), str(e)
+
+
+@admin_api.route(GET_PRODUCT_LIST_WEB_URL, methods=['GET'])
+def get_product_lists():
+    if 'user_id' not in session:
+        return redirect(url_for('admin_api.login_page'))
+
+    products, categories, error = get_filtered_products()
 
     return render_template(
         'admin/products/product_lists.html',
         products=products,
         categories=categories,
+        error=error
     )
 
+@admin_api.route('/admin/products/api', methods=['GET'])
+def get_product_lists_api():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized', 'products': []}), 401
+
+    products, categories, error = get_filtered_products()
+
+    if error or products is None:
+        return jsonify({
+            'products': [],
+            'page': 1,
+            'pages': 1,
+            'has_prev': False,
+            'has_next': False,
+            'prev_num': None,
+            'next_num': None,
+            'error': error or 'Failed to fetch products'
+        })
+
+    product_list = [
+        {
+            'id': str(product.id),
+            'name': product.name,
+            'price': product.price,
+            'discount_price': product.discount_price if product.discount_price else 0,
+            'final_price': product.final_price,
+            'sku_number': product.sku_number or '-',
+            'image_url': product.variants[0].images[0].image_url if product.variants and product.variants[0].images else None,
+            'edit_url': url_for('admin_api.edit_product', product_id=product.id),
+            'details_url': url_for('admin_api.product_details', product_id=product.id)
+        } for product in products.items
+    ]
+
+    return jsonify({
+        'products': product_list,
+        'page': products.page,
+        'pages': products.pages,
+        'has_prev': products.has_prev,
+        'has_next': products.has_next,
+        'prev_num': products.prev_num,
+        'next_num': products.next_num
+    })
+    
 @admin_api.route('/products/<product_id>', methods=['GET'])
 def product_details(product_id):
     product = Products.objects(id=product_id).first()
