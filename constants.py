@@ -49,6 +49,7 @@ GET_CATEGORIES_FILTER_API_URL = '/api/categories'
 
 SUBCATEGORY_LIST_WEB_URL = f'/sub-categories/list'
 Add_SUBCATEGORY_LIST_WEB_URL = f'/subcategories/add'
+GET_SUBCATEGORIES_FILTER_API_URL = '/api/subcategories'
 
 SUB_SUB_CATEGORY_LIST_WEB_URL = f'/sub-sub-category-list'
 SUB_SUB_CATEGORY_WEB_URL = f'sub-sub-category/add'

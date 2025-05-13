@@ -6,15 +6,19 @@
 <div class="bg-white rounded-lg shadow p-6 mx-auto">
     <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">Subcategory List</h1>
 
-    <!-- Filter Form -->
-    <form method="GET" class="flex xl:items-end justify-between flex-col xl:flex-row gap-y-3 gap-x-8">
+    <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="flex justify-between xl:flex-row gap-y-3 gap-x-8">
         <div class="flex items-center space-x-6">
             <!-- Filter by Category -->
-            <div class="flex flex-col items-start gap-2 w-full xl:w-auto">
-                <p class="m-0 text-black font-medium">Search by Category</p>
-                <div class="relative w-full sm:min-w-64">
-                    <select name="categoryId"
-                        class="border border-gray-300 cursor-pointer rounded-lg px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
+            <div class="flex flex-col items-start gap-2 w-64 lg:w-80 xl:w-auto">
+                <label class="block text-sm lg:text-base font-medium text-black">Search by Category</label>
+                <div class="relative w-64 lg:w-80">
+                    <select id="category-filter"
+                        class="border w-64 lg:w-80 border-gray-300 cursor-pointer rounded-lg px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
                         <option value="">All Categories</option>
                         {% for cat in categories %}
                         <option value="{{ cat.id }}" {% if request.args.get('categoryId')==cat.id|string %}selected{%
@@ -31,24 +35,18 @@
             </div>
         </div>
 
-        <!-- Buttons -->
+        <!-- Clear Filter Button -->
         <div class="flex items-center gap-5 mt-4 xl:mt-0">
-            <button type="submit"
-                class="w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-                Apply Filters
-            </button>
-            {% if request.args.get('search') or request.args.get('categoryId') %}
-            <a href="{{ url_for('admin_api.get_subcategory_list_page') }}"
+            <a href="#" id="clear-filter"
                 class="text-sm font-medium px-4 py-3 border border-red-500 rounded-lg text-red-500 hover:bg-red-50 transition">
                 Clear Filter
             </a>
-            {% endif %}
         </div>
-    </form>
+    </div>
 
     <!-- Subcategory Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-        {% for subcategory in subcategories.items %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6" id="subcategory-grid">
+        {% for subcategory in subcategories %}
         <div class="bg-white border rounded-lg shadow-lg p-4 w-full h-96 relative">
             <!-- Subcategory Image -->
             <div class="mb-4 h-40">
@@ -73,7 +71,6 @@
 
                 <!-- Actions -->
                 <div class="flex justify-end w-full mt-auto">
-                    <!-- <a href="#" class="text-blue-600 hover:underline text-sm">Edit</a> -->
                     <button type="button" class="text-red-600 hover:underline text-sm" data-bs-toggle="modal"
                         data-bs-target="#subcategoryModal{{ subcategory.id }}">Delete</button>
                 </div>
@@ -82,9 +79,11 @@
         {% endfor %}
     </div>
 
-    {% if subcategories.items|length == 0 %}
-    <p class="text-center text-gray-500 mt-10">No subcategories found.</p>
+    {% if subcategories|length == 0 %}
+    <p class="text-center text-gray-500 mt-10" id="no-subcategories">No subcategories found.</p>
     {% else %}
+    <p class="text-center text-gray-500 mt-10 hidden" id="no-subcategories">No subcategories found.</p>
+    {% endif %}
 
     <!-- Pagination Controls -->
     <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
@@ -92,12 +91,10 @@
         <div class="flex items-center gap-2 relative w-fit">
             <span class="text-sm text-gray-600">Items per page:</span>
             <div class="relative">
-                <select onchange="window.location.href = this.value"
+                <select id="items-per-page"
                     class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 appearance-none">
                     {% for amount in [10, 20, 50, 100] %}
-                    <option
-                        value="{{ url_for('admin_api.get_subcategory_list_page', limit=amount, categoryId=request.args.get('categoryId', '')) }}"
-                        {% if request.args.get('limit', '10' )|int==amount %}selected{% endif %}>
+                    <option value="{{ amount }}" {% if limit==amount %}selected{% endif %}>
                         {{ amount }}
                     </option>
                     {% endfor %}
@@ -110,23 +107,23 @@
         </div>
 
         <!-- Page Navigation -->
-        <div class="flex items-center gap-2">
-            {% if subcategories.has_prev %}
-            <a href="{{ url_for('admin_api.get_subcategory_list_page', page=subcategories.prev_num, limit=request.args.get('limit', 10), categoryId=request.args.get('categoryId', '')) }}"
-                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition">
+        <div class="flex items-center gap-2" id="pagination">
+            {% if pagination.has_prev %}
+            <a href="#" data-page="{{ pagination.prev_num }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition subCategories-pagination-link">
                 Previous
             </a>
             {% else %}
             <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>
             {% endif %}
 
-            <span class="px-4 py-2">
-                Page {{ subcategories.page }} of {{ subcategories.pages }}
+            <span class="px-4 py-2 text-sm" id="page-info">
+                Page {{ pagination.page }} of {{ pagination.pages }}
             </span>
 
-            {% if subcategories.has_next %}
-            <a href="{{ url_for('admin_api.get_subcategory_list_page', page=subcategories.next_num, limit=request.args.get('limit', 10), categoryId=request.args.get('categoryId', '')) }}"
-                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition">
+            {% if pagination.has_next %}
+            <a href="#" data-page="{{ pagination.next_num }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition subCategories-pagination-link">
                 Next
             </a>
             {% else %}
@@ -134,9 +131,124 @@
             {% endif %}
         </div>
     </div>
-    {% endif %}
 </div>
 {% endblock %}
 
 {% block js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const categoryFilter = document.getElementById('category-filter');
+        const clearFilterButton = document.getElementById('clear-filter');
+        const subcategoryGrid = document.getElementById('subcategory-grid');
+        const itemsPerPageSelect = document.getElementById('items-per-page');
+        const paginationDiv = document.getElementById('pagination');
+        const noSubcategoriesMessage = document.getElementById('no-subcategories');
+        const pageInfo = document.getElementById('page-info');
+        const loader = document.getElementById('loader');
+
+        let currentPage = "{{ pagination.page|tojson }}";
+
+        // Function to fetch subcategories via AJAX
+        async function fetchSubcategories(page = currentPage) {
+            loader.classList.remove('hidden');
+            const categoryId = categoryFilter.value;
+            const limit = itemsPerPageSelect.value;
+            const url = `{{ subcategories_api_url }}?categoryId=${encodeURIComponent(categoryId)}&page=${page}&limit=${limit}`;
+
+            try {
+                const data = await fetchJsonData(url);
+
+                subcategoryGrid.innerHTML = '';
+                if (data.subcategories.length === 0) {
+                    noSubcategoriesMessage.classList.remove('hidden');
+                } else {
+                    noSubcategoriesMessage.classList.add('hidden');
+                    data.subcategories.forEach(subcategory => {
+                        const card = `
+                    <div class="bg-white border rounded-lg shadow-lg p-4 w-full h-96 relative">
+                        <div class="mb-4 h-40">
+                            <img src="/static/${subcategory.img_url}" alt="${subcategory.name}"
+                                class="w-full h-full object-contain rounded-t-lg">
+                        </div>
+                        <div class="flex flex-col items-center text-center px-2">
+                            <p class="text-sm text-gray-600 mb-2">${subcategory.category.name}</p>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">${subcategory.name}</h3>
+                            <p class="text-sm text-gray-600 mb-4 relative group">
+                                ${subcategory.description.split(' ').slice(0, 20).join(' ')}${subcategory.description.split(' ').length > 20 ? '...' : ''}
+                                <span class="absolute hidden group-hover:block w-64 bg-black text-white text-xs rounded p-2 z-10 shadow-lg left-1/2 -translate-x-1/2 top-full mt-2">
+                                    ${subcategory.description}
+                                </span>
+                            </p>
+                            <div class="flex justify-end w-full mt-auto">
+                                <button type="button" class="text-red-600 hover:underline text-sm" data-bs-toggle="modal"
+                                    data-bs-target="#subcategoryModal${subcategory.id}">Delete</button>
+                            </div>
+                        </div>
+                    </div>`;
+                        subcategoryGrid.innerHTML += card;
+                    });
+                }
+
+                // Update pagination
+                paginationDiv.innerHTML = '';
+                if (data.pagination.has_prev) {
+                    paginationDiv.innerHTML += `
+                <a href="#" data-page="${data.pagination.prev_num}"
+                    class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition subCategories-pagination-link">
+                    Previous
+                </a>`;
+                } else {
+                    paginationDiv.innerHTML += `
+                <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>`;
+                }
+
+                paginationDiv.innerHTML += `
+            <span class="px-4 py-2 text-sm" id="page-info">
+                Page ${data.pagination.page} of ${data.pagination.pages}
+            </span>`;
+
+                if (data.pagination.has_next) {
+                    paginationDiv.innerHTML += `
+                <a href="#" data-page="${data.pagination.next_num}"
+                    class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition subCategories-pagination-link">
+                    Next
+                </a>`;
+                } else {
+                    paginationDiv.innerHTML += `
+                <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>`;
+                }
+
+                // Re-attach event listeners for pagination links
+                attachPaginationListeners('.subCategories-pagination-link', fetchSubcategories);
+
+                // Update current page
+                currentPage = data.pagination.page;
+
+                // Show/hide clear filter button
+                clearFilterButton.classList.toggle('hidden', !categoryId);
+
+            } catch (error) {
+                console.error('Error fetching subcategories:', error);
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+
+        // Event listeners
+        categoryFilter.addEventListener('change', () => fetchSubcategories(1));
+        itemsPerPageSelect.addEventListener('change', () => fetchSubcategories(1));
+
+        clearFilterButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            categoryFilter.value = '';
+            fetchSubcategories(1);
+        });
+
+        attachPaginationListeners('.subCategories-pagination-link', fetchSubcategories);
+
+        // Hide clear filter button if no filters are applied
+        clearFilterButton.classList.toggle('hidden', !categoryFilter.value);
+    });
+</script>
 {% endblock %}
