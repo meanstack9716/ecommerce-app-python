@@ -36,12 +36,12 @@
     <!-- Brand Table -->
     {% set brand_headers = ['S.No', 'Brand Name', 'Description', 'Logo', 'Actions'] %}
     <table
-        class="min-w-full divide-y divide-gray-200 px-3 py-3 md:px-6 md:py-4 text-center text-sm lg:text-base text-gray-800"
+        class="min-w-full divide-y divide-gray-200 text-gray-800"
         id="brand-table">
         <thead class="bg-gray-50">
             <tr>
                 {% for header in brand_headers %}
-                <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                <th class="px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
                     {{ header }}
                 </th>
                 {% endfor %}
@@ -50,15 +50,15 @@
         <tbody id="brand-table-body">
             {% for brand in brands %}
             <tr class="border-t text-center">
-                <td>{{ loop.index }}</td>
-                <td>{{ brand.name }}</td>
-                <td>{{ brand.description }}</td>
-                <td class="w-24">
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ loop.index }}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ brand.name }}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ brand.description }}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 w-24 text-center text-sm">
                     {% if brand.logo_path %}
                     <img src="{{ brand.logo_path }}" alt="{{ brand.name }} logo" class="w-full object-contain">
                     {% endif %}
                 </td>
-                <td class="px-6 py-4 mt-3 flex items-center justify-center space-x-6">
+                <td class="px-3 py-3 md:px-6 md:py-4 mt-3 text-center text-sm flex items-center justify-center space-x-6">
                     <a href="{{ url_for('admin_api.update_brand_page', brand_id=brand.id) }}"
                         class="text-blue-600 hover:text-blue-800">Edit</a>
                     <form action="{{ url_for('admin_api.delete_brand', brand_id=brand.id) }}" method="POST"
