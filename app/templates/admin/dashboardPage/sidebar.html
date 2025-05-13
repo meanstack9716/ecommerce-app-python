@@ -1,66 +1,92 @@
 {% block content %}
-<div id="sidebar"
-    class="w-80 overflow-auto h-screen bg-white text-gray-900 fixed flex flex-col py-8 px-4 shadow-xl border-r border-[#f3f3f3] transform transition-transform duration-300 ease-in-out">
-    <nav class="flex flex-col gap-4">
-        {% for section in sidebar_menu.mainMenu %}
-        <div class="flex flex-col gap-3">
-            <p class="font-semibold text-gray-400">{{ section.title }}</p>
+<div class="h-full flex flex-col">
+  <!-- Sidebar Content -->
+  <div class="flex-1 overflow-y-auto px-3 py-4 pb-20 lg:py-4">
+    {% for section in sidebar_menu.mainMenu %}
+    <div class="mb-6">
+      <!-- Section Title -->
+      <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-2">
+        {{ section.title }}
+      </h3>
 
-            {% for item in section['items'] %}
-            {% if not item.submenu %}
-            <a href="{{ item.url | safe }}"
-                class="nav-link flex items-center gap-3 {% if request.endpoint == item.endpoint %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300">
-                <span class="material-symbols-outlined">
-                    {{ item.icon }}
-                </span>
-                <span class="ml-2 font-medium">{{ item.label }}</span>
-            </a>
-            {% else %}
-            <div>
-                <div
-                    class="toggle-submenu nav-link flex items-center justify-between gap-3 {% if request.endpoint in item.endpointGroup %}bg-indigo-700 text-white{% else %}hover:bg-indigo-700 hover:text-white{% endif %} rounded-lg px-4 py-3 transition duration-300 cursor-pointer">
-                    <div class="flex items-center gap-5">
-                        <span class="material-symbols-outlined">
-                            {{ item.icon }}
-                        </span>
-                        <span class="font-medium">{{ item.label }}</span>
-                    </div>
-                    <span
-                        class="material-symbols-outlined submenu-icon transform transition-transform {% if request.endpoint in item.endpointGroup %}rotate-180{% endif %}">keyboard_arrow_down</span>
-                </div>
-
-                <div
-                    class="submenu ml-6 mt-3 flex flex-col gap-3 {% if request.endpoint not in item.endpointGroup %}hidden{% endif %}">
-                    {% for subitem in item.submenu %}
-                    <a href="{{ subitem.url | safe }}"
-                        class="{% if request.endpoint == subitem.endpoint %}bg-indigo-100 text-indigo-700{% else %}text-gray-700 hover:text-indigo-700 hover:bg-indigo-100{% endif %} px-5 py-3 rounded transition duration-200 font-medium flex items-center space-x-3">
-                        <span class="material-symbols-outlined">
-                            {{ subitem.icon }}
-                        </span>
-                        <span>{{ subitem.label }}</span>
-                    </a>
-                    {% endfor %}
-                </div>
+      <!-- Menu Items -->
+      <ul class="space-y-1">
+        {% for item in section['items'] %}
+        {% if not item.submenu %}
+        <!-- Single Item -->
+        <li>
+          <a href="{{ item.url | safe }}"
+            class="flex items-center p-3 rounded-lg transition-colors {% if request.endpoint == item.endpoint %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+            <span class="material-symbols-outlined mr-3">
+              {{ item.icon }}
+            </span>
+            <span>{{ item.label }}</span>
+          </a>
+        </li>
+        {% else %}
+        <!-- Item with Submenu -->
+        <li>
+          <button class="toggle-submenu w-full flex items-center justify-between p-3 rounded-lg transition-colors {% if request.endpoint in item.endpointGroup %}bg-indigo-50 text-indigo-700 font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+            <div class="flex items-center">
+              <span class="material-symbols-outlined mr-3">
+                {{ item.icon }}
+              </span>
+              <span>{{ item.label }}</span>
             </div>
-            {% endif %}
+            <span class="material-symbols-outlined submenu-icon transform transition-transform duration-200 {% if request.endpoint in item.endpointGroup %}rotate-180{% endif %}">
+              keyboard_arrow_down
+            </span>
+          </button>
+
+          <!-- Submenu Items -->
+          <ul class="submenu pl-9 mt-1 space-y-1 {% if request.endpoint not in item.endpointGroup %}hidden{% endif %}">
+            {% for subitem in item.submenu %}
+            <li>
+              <a href="{{ subitem.url | safe }}"
+                class="flex items-center p-2 rounded-lg transition-colors text-sm {% if request.endpoint == subitem.endpoint %}bg-indigo-100 text-indigo-700 font-medium{% else %}text-gray-600 hover:bg-gray-50{% endif %}">
+                <span class="material-symbols-outlined text-lg mr-2">
+                  {{ subitem.icon }}
+                </span>
+                <span>{{ subitem.label }}</span>
+              </a>
+            </li>
             {% endfor %}
-        </div>
+          </ul>
+        </li>
+        {% endif %}
         {% endfor %}
-    </nav>
+      </ul>
+    </div>
+    {% endfor %}
+  </div>
 </div>
-{% endblock %}
 
-{% block Js %}
 <script>
-    const submenuItems = document.querySelectorAll('.toggle-submenu');
-    submenuItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const submenu = item.nextElementSibling;
-            submenu.classList.toggle('hidden');
-            const icon = item.querySelector('.submenu-icon');
-            icon.classList.toggle('rotate-180');
+    document.addEventListener('DOMContentLoaded', function() {
+      // Submenu toggle functionality
+      document.querySelectorAll('.toggle-submenu').forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.stopPropagation(); // Prevent event from bubbling up
+          
+          const submenu = this.nextElementSibling;
+          const icon = this.querySelector('.submenu-icon');
+          
+          submenu.classList.toggle('hidden');
+          icon.classList.toggle('rotate-180');
         });
+      });
+  
+      // Close submenus when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.toggle-submenu')) {
+          document.querySelectorAll('.submenu').forEach(submenu => {
+            submenu.classList.add('hidden');
+          });
+          document.querySelectorAll('.submenu-icon').forEach(icon => {
+            icon.classList.remove('rotate-180');
+          });
+        }
+      });
     });
-</script>
-
+  </script>
 {% endblock %}

@@ -168,7 +168,7 @@ def create_ad():
             price=price,
             stock_quantity=stock_quantity,
             discount_price=discount_price,
-            final_price=final_price,  # Store the calculated final price
+            final_price=final_price,
             material=material,
             gender=gender,
             status='active',
@@ -280,11 +280,7 @@ def list_products():
                         'img_url': image.image_url
                     })
 
-            final_price = float(product.discount_price) if product.discount_price is not None else (float(product.price) if product.price is not None else None)
-            discount_percent = None
-            if product.price is not None and final_price is not None and float(product.price) > 0:
-                discount_percent = round(((float(product.price) - final_price) / float(product.price)) * 100)
-
+            
 
             thumbnail_url = None
             if product.variants and product.variants[0].images:
@@ -296,10 +292,10 @@ def list_products():
                 'description': product.description,
                 'details': product.details,
                 'price': float(product.price) if product.price else None,
-                'discount_percent': discount_percent,
+                'discount_percent': product.discount_price,
                 'sku': product.sku_number,
                 'stock_quantity': sum(v.stock_quantity for v in product.variants) if product.variants else 0,
-                'final_price': final_price,
+                'final_price': product.final_price,
                 'id': str(product.id),
                 'thumbnail_url': thumbnail_url,
                 'sizes': list(sizes_data.values()),
@@ -381,11 +377,6 @@ def get_product_by_id(product_id):
                     'img_url': image.image_url
                 })
 
-        final_price = float(product.discount_price) if product.discount_price is not None else (float(product.price) if product.price is not None else None)
-        discount_percent = None
-        if product.price is not None and final_price is not None and float(product.price) > 0:
-            discount_percent = round(((float(product.price) - final_price) / float(product.price)) * 100)
-
         thumbnail_url = None
         if product.variants and product.variants[0].images:
             thumbnail_url = product.variants[0].images[0].image_url
@@ -396,10 +387,10 @@ def get_product_by_id(product_id):
             'description': product.description,
             'details': product.details,
             'price': float(product.price) if product.price else None,
-            'discount_percent': discount_percent,
+            'discount_percent': product.discount_price,
             'sku': product.sku_number,
             'stock_quantity': sum(v.stock_quantity for v in product.variants) if product.variants else 0,
-            'final_price': final_price,
+            'final_price': product.final_price,
             'id': str(product.id),
             'thumbnail_url': thumbnail_url,
             'sizes': list(sizes_data.values()),
