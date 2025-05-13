@@ -6,6 +6,10 @@
 <div class="bg-white rounded-lg shadow-lg p-4 md:p-8">
   <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-4 md:mb-6">All Users</h1>
 
+  <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+
   <!-- Search Section -->
   <div class="mb-6">
     <div class="flex flex-row items-end justify-between gap-4">
@@ -37,14 +41,14 @@
         </div>
       </div>
 
-      <div class="flex flex-row items-center gap-3 sm:gap-6">
+      <div class="flex flex-row items-center gap-6">
         <button id="search-button"
-          class="w-full sm:w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+          class="w-auto lg:w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
           Search
         </button>
 
-        <div class="w-full sm:w-auto text-center sm:text-left">
-          <a href="#" id="clear-search" class="text-sm text-indigo-600 hover:text-indigo-800">Clear Search</a>
+        <div class="w-fit sm:w-auto text-center sm:text-left">
+          <a href="#" id="clear-search" class="text-sm font-medium px-4 py-3 border border-red-500 rounded-lg text-red-500">Clear Search</a>
         </div>
       </div>
     </div>
@@ -103,7 +107,7 @@
     <div class="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start" id="pagination">
       {% if pagination.has_prev %}
       <a href="#"
-        class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link"
+        class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition user-pagination-link"
         data-page="{{ pagination.prev_num }}">Previous</a>
       {% else %}
       <span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Previous</span>
@@ -115,7 +119,7 @@
 
       {% if pagination.has_next %}
       <a href="#"
-        class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link"
+        class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition user-pagination-link"
         data-page="{{ pagination.next_num }}">Next</a>
       {% else %}
       <span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Next</span>
@@ -136,11 +140,12 @@
     const userTableBody = document.getElementById('user-table-body');
     const paginationDiv = document.getElementById('pagination');
     const pageInfo = document.getElementById('page-info');
-
+    const loader = document.getElementById('loader');
     let currentPage = "{{ pagination.page|tojson }}";
 
     // Function to fetch users via AJAX
     async function fetchUsers(page = 1) {
+      loader.classList.remove('hidden');
       const search = searchInput.value.trim();
       const role = roleSelect.value;
       const limit = itemsPerPageSelect.value;
@@ -170,7 +175,7 @@
         paginationDiv.innerHTML = '';
         if (data.pagination.has_prev) {
           paginationDiv.innerHTML += `
-          <a href="#" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link" data-page="${data.pagination.prev_num}">Previous</a>`;
+          <a href="#" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition user-pagination-link" data-page="${data.pagination.prev_num}">Previous</a>`;
         } else {
           paginationDiv.innerHTML += `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Previous</span>`;
         }
@@ -182,7 +187,7 @@
 
         if (data.pagination.has_next) {
           paginationDiv.innerHTML += `
-          <a href="#" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link" data-page="${data.pagination.next_num}">Next</a>`;
+          <a href="#" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition user-pagination-link" data-page="${data.pagination.next_num}">Next</a>`;
         } else {
           paginationDiv.innerHTML += `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Next</span>`;
         }
@@ -193,31 +198,22 @@
 
       } catch (error) {
         console.error('Error fetching users:', error);
+      } finally {
+        loader.classList.add('hidden');
       }
     }
 
     // Function to attach pagination link listeners
-    function attachPaginationListeners() {
-      const paginationLinks = document.querySelectorAll('.pagination-link');
-      paginationLinks.forEach(link => {
-        link.addEventListener('click', function (e) {
-          e.preventDefault();
-          const page = this.getAttribute('data-page');
-          fetchUsers(page);
-        });
-      });
-    }
+    attachPaginationListeners('.user-pagination-link', fetchUsers);
 
     // Event listeners
     searchButton.addEventListener('click', (e) => {
-      if(searchInput.value === '') return
       e.preventDefault();
       fetchUsers(1);
     });
 
     clearSearch.addEventListener('click', (e) => {
       e.preventDefault();
-      searchInput.value = '';
       roleSelect.value = '';
       fetchUsers(1);
     });
@@ -230,7 +226,6 @@
     // Optional: Trigger search on Enter key in search input
     searchInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
-        if(searchInput.value === '') return
         e.preventDefault();
         fetchUsers(1);
       }

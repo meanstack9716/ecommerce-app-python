@@ -40,6 +40,7 @@ ALL_USER_LIST_WEB_URL = f'/all-users-list'
 
 ADD_SELLER_WEB_URL = f'/add-new-seller'
 GET_SELLER_LIST_WEB_URL = f'/seller/list'
+GET_SELLERS_API_URL = '/api/sellers'
 
 CATEGORY_LIST_WEB_URL = '/category-list'
 ADD_CATEGORY_WEB_URL = '/add-new-category'
@@ -65,8 +66,6 @@ UPDATE_BRAND_WEB_URL = f'/brands/edit/<brand_id>'
 
 # WEB Endpoint Constants End
 
-
-
 # API Endpoint Constants Start
 
 # User API Endpoint Constants
@@ -77,6 +76,7 @@ DELETE_PROFILE_PIC = f'/delete-profile-pic'
 LOGOUT = f'/logout'
 ADD_SELLER = f'/add-new-seller'
 GET_SELLER_API = f'/seller/list'
+
 
 # Category API Endpoint Constants
 API_CATEGORY_LIST = '/api/categories/list'

@@ -80,3 +80,15 @@ function handleErrors(errors) {
       showToast('An unknown error occurred. Please try again later.', 'error');
   }
 }
+
+
+function attachPaginationListeners(selector, fetchFunction) {
+  const paginationLinks = document.querySelectorAll(selector);
+  paginationLinks.forEach(link => {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      const page = this.getAttribute('data-page');
+      fetchFunction(page);
+    });
+  });
+}

@@ -6,22 +6,27 @@
 <div class="bg-white rounded-lg shadow-lg p-4 md:p-8">
     <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-4 md:mb-6">Seller List</h1>
 
-    <form method="get" class="mb-6">
-        <div class="flex flex-col md:flex-row md:items-end gap-4 justify-between">
+    <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+
+    <div class="mb-6">
+        <div class="flex flex-col md:flex-row md:items-end justify-between">
             <div class="flex flex-col sm:flex-row gap-3 justify-between">
                 <!-- Search Input -->
-                <div class="">
+                <div>
                     <label class="block text-sm lg:text-base font-medium text-black mb-1 md:mb-2">Search Seller</label>
-                    <input type="text" name="search" value="{{ filters.search }}"
+                    <input type="text" id="search-input" value="{{ filters.search }}"
                         placeholder="Search by business name, email, or mobile"
                         class="block w-52 lg:w-72 px-3 py-2 md:px-4 md:py-3 border border-gray-300 outline-none rounded-lg shadow-sm text-sm">
                 </div>
 
                 <!-- Approval Status Dropdown -->
-                <div class="">
-                    <label class="block text-sm lg:text-base font-medium text-black mb-1 md:mb-2">Approval Status</label>
+                <div>
+                    <label class="block text-sm lg:text-base font-medium text-black mb-1 md:mb-2">Approval
+                        Status</label>
                     <div class="relative">
-                        <select name="approval_status"
+                        <select id="approval-status-select"
                             class="block w-52 lg:w-72 px-3 py-2 md:px-4 md:py-3 pr-8 border border-gray-300 rounded-lg shadow-sm text-sm appearance-none">
                             <option value="">All Status</option>
                             <option value="approved" {% if filters.approval_status=='approved' %}selected{% endif %}>
@@ -42,37 +47,39 @@
                 </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row items-center gap-3">
-                <button type="submit"
-                    class="w-full sm:w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+            <div class="flex flex-col sm:flex-row items-center gap-6">
+                <button id="search-button"
+                    class="w-fit lg:w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
                     Search
                 </button>
 
-                <a href="{{ url_for('admin_api.get_seller_list') }}"
-                    class="text-sm text-indigo-600 hover:text-indigo-800 text-center sm:text-left">
+                <a href="#" id="clear-search"
+                    class="text-sm font-medium px-4 py-3 border border-red-500 rounded-lg text-red-500">
                     Clear Search
                 </a>
             </div>
         </div>
-    </form>
+    </div>
 
     <!-- Table Section -->
     <div class="overflow-x-auto">
-        {% set seller_list_header = ['S.No', 'Business Name', 'Type', 'Email', 'Mobile', 'Approval', 'Address', 'Pan Number'] %}
-        <table class="min-w-full divide-y divide-gray-200">
+        {% set seller_list_header = ['S.No', 'Business Name', 'Type', 'Email', 'Mobile', 'Approval', 'Address', 'Pan
+        Number'] %}
+        <table class="min-w-full divide-y divide-gray-200" id="seller-table">
             <thead class="bg-gray-50">
                 <tr>
                     {% for header in seller_list_header %}
-                    <th class="px-3 py-2 md:px-6 md:py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
+                    <th
+                        class="px-3 py-3 md:px-4 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
                         {{ header }}
                     </th>
                     {% endfor %}
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
+            <tbody class="divide-y divide-gray-200" id="seller-table-body">
                 {% for item in sellers %}
                 <tr>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.seller.index }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.index }}</td>
                     <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.seller.businessName }}</td>
                     <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.seller.businessType }}</td>
                     <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.user.email }}</td>
@@ -88,10 +95,162 @@
         </table>
     </div>
 
-    <!-- Pagination would go here if needed -->
+    <!-- Pagination Section -->
+    <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
+        <!-- Items per page selector -->
+        <div class="flex items-center gap-2 relative w-fit">
+            <span class="text-sm text-gray-600">Items per page:</span>
+            <div class="relative">
+                <select id="items-per-page"
+                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 appearance-none">
+                    {% for amount in [10, 20, 50, 100] %}
+                    <option value="{{ amount }}" {% if limit==amount %}selected{% endif %}>
+                        {{ amount }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <span
+                    class="material-symbols-outlined pointer-events-none absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500">
+                    expand_more
+                </span>
+            </div>
+        </div>
+
+        <!-- Page Navigation -->
+        <div class="flex items-center gap-2" id="pagination">
+            {% if pagination.has_prev %}
+            <a href="#" data-page="{{ pagination.prev_num }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition seller-pagination-link">
+                Previous
+            </a>
+            {% else %}
+            <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>
+            {% endif %}
+
+            <span class="px-4 py-2 text-sm" id="page-info">
+                Page {{ pagination.page }} of {{ pagination.pages }}
+            </span>
+
+            {% if pagination.has_next %}
+            <a href="#" data-page="{{ pagination.next_num }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition seller-pagination-link">
+                Next
+            </a>
+            {% else %}
+            <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block js %}
-<!-- Optional JavaScript here -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('search-input');
+        const approvalStatusSelect = document.getElementById('approval-status-select');
+        const searchButton = document.getElementById('search-button');
+        const clearSearch = document.getElementById('clear-search');
+        const sellerTableBody = document.getElementById('seller-table-body');
+        const itemsPerPageSelect = document.getElementById('items-per-page');
+        const paginationDiv = document.getElementById('pagination');
+        const pageInfo = document.getElementById('page-info');
+        const loader = document.getElementById('loader');
+
+        let currentPage = "{{ pagination.page|tojson }}";
+
+        async function fetchSellers(page = currentPage) {
+            loader.classList.remove('hidden');
+
+            const search = searchInput.value.trim();
+            const approval_status = approvalStatusSelect.value;
+            const limit = itemsPerPageSelect.value;
+
+            const url = `{{ sellers_api_url }}?search=${encodeURIComponent(search)}&approval_status=${encodeURIComponent(approval_status)}&page=${page}&limit=${limit}`;
+
+            try {
+                const data = await fetchJsonData(url); // Use the fetchJsonData helper function
+
+                sellerTableBody.innerHTML = '';
+                data.sellers.forEach(item => {
+                    const row = `
+            <tr>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.index}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.seller.businessName}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.seller.businessType}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.user.email}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.user.phone_number}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.seller.is_approved}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm whitespace-nowrap">
+                    ${item.address.personal_address.line1}, ${item.address.personal_address.city}
+                </td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.identification.pan_number}</td>
+            </tr>`;
+                    sellerTableBody.innerHTML += row;
+                });
+
+                paginationDiv.innerHTML = '';
+                if (data.pagination.has_prev) {
+                    paginationDiv.innerHTML += `
+            <a href="#" data-page="${data.pagination.prev_num}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition seller-pagination-link">
+                Previous
+            </a>`;
+                } else {
+                    paginationDiv.innerHTML += `
+            <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>`;
+                }
+
+                paginationDiv.innerHTML += `
+        <span class="px-4 py-2 text-sm" id="page-info">
+            Page ${data.pagination.page} of ${data.pagination.pages}
+        </span>`;
+
+                if (data.pagination.has_next) {
+                    paginationDiv.innerHTML += `
+            <a href="#" data-page="${data.pagination.next_num}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition seller-pagination-link">
+                Next
+            </a>`;
+                } else {
+                    paginationDiv.innerHTML += `
+            <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>`;
+                }
+
+                attachPaginationListeners();
+
+                currentPage = data.pagination.page;
+
+            } catch (error) {
+                console.error('Error fetching sellers:', error);
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        // Helper function to attach pagination listeners
+        attachPaginationListeners('.seller-pagination-link', fetchSellers);
+
+        // Event listeners
+        searchButton.addEventListener('click', () => fetchSellers(1));
+        clearSearch.addEventListener('click', (e) => {
+            e.preventDefault();
+            searchInput.value = '';
+            approvalStatusSelect.value = '';
+            fetchSellers(1);
+        });
+
+        itemsPerPageSelect.addEventListener('change', () => fetchSellers(1));
+
+        // Trigger search on Enter key in search input
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                fetchSellers(1);
+            }
+        });
+
+        // Initial pagination listeners
+        attachPaginationListeners();
+    });
+</script>
 {% endblock %}
