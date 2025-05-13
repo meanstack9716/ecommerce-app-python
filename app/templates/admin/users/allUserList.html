@@ -6,22 +6,20 @@
 <div class="bg-white rounded-lg shadow-lg p-8">
   <h1 class="text-3xl font-semibold text-gray-800 mb-6">All Users</h1>
 
-  <form method="get" class="flex items-center space-x-4 w-full">
+  <div class="flex items-center space-x-4 w-full">
     <div class="w-full sm:w-1/2 lg:w-full mb-10">
       <div class="flex justify-between items-end space-x-4">
         <div class="flex flex-row items-center space-x-3">
           <div class="flex flex-col">
             <label class="block text-sm font-medium text-gray-700 mb-2">Search Users</label>
-            <input type="text" name="search" value="{{ filters.search }}" placeholder="Search by name, email, phone"
+            <input type="text" id="search-input" value="{{ filters.search }}" placeholder="Search by name, email, phone"
               class="mt-1 block w-full px-4 py-3 border border-gray-300 outline-none rounded-lg shadow-sm sm:text-sm w-72">
           </div>
 
           <div class="flex flex-col">
             <label class="block text-sm font-medium text-gray-700 mb-2">Search Role</label>
-
-            <!-- Role dropdown -->
             <div class="relative inline-block w-64">
-              <select name="role"
+              <select id="role-select"
                 class="mt-1 block w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg shadow-sm sm:text-sm appearance-none">
                 <option value="">All Roles</option>
                 {% for role in roles %}
@@ -35,59 +33,192 @@
               </span>
             </div>
           </div>
-
         </div>
 
         <div class="flex flex-row items-center space-x-6">
-          <button type="submit"
-            class="w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-ou">
+          <button id="search-button"
+            class="w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
             Search
           </button>
 
           <div class="w-full sm:w-auto mt-2 sm:mt-0">
-            <a href="{{ url_for('admin_api.all_users') }}" class="text-sm text-indigo-600 hover:text-indigo-800">Clear
-              Search</a>
+            <a href="#" id="clear-search" class="text-sm text-indigo-600 hover:text-indigo-800">Clear Search</a>
           </div>
         </div>
-
-
       </div>
     </div>
-  </form>
-
+  </div>
 
   <!-- Table -->
-  <table class="min-w-full divide-y divide-gray-200">
+  {% set user_table_heading_data = ['S.No', 'First Name', 'Last Name', 'Email', 'Role', 'Phone number'] %}
+  <table class="min-w-full divide-y divide-gray-200" id="user-table">
     <thead class="bg-gray-50">
       <tr>
-        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">First Name</th>
-        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Last Name</th>
-        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Email</th>
-        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Role</th>
-        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Phone number</th>
-        <!-- <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Actions</th> -->
+        {% for header in user_table_heading_data %}
+        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+          {{ header }}
+        </th>
+        {% endfor %}
       </tr>
     </thead>
-    <tbody>
+    <tbody id="user-table-body">
       {% for userData in allUsersList %}
       <tr class="border-t text-center">
-      <tr class="border-t text-center">
-        <td class="px-6 py-4">{{ userData['first_name'] }}</td>
+        <td class="px-6 py-4">{{ userData.index }}</td>
+        <td class="px- WHERE 6 py-4">{{ userData['first_name'] }}</td>
         <td class="px-6 py-4">{{ userData['last_name'] }}</td>
         <td class="px-6 py-4">{{ userData['email'] }}</td>
         <td class="px-6 py-4">{{ userData['role'] }}</td>
-
-
         <td class="px-6 py-4">{{ userData['phone_number'] }}</td>
-        <!-- <td class="px-6 py-4 flex justify-center gap-3">
-          <a href="#" aria-disabled="true" class="text-indigo-600 hover:text-green-900">View Details</a>
-        </td> -->
-      </tr>
       </tr>
       {% endfor %}
-
     </tbody>
   </table>
 
+  <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
+    <!-- Items per page selector -->
+    <div class="flex items-center gap-2 relative w-fit">
+      <span class="text-sm text-gray-600">Items per page:</span>
+      <div class="relative">
+        <select id="items-per-page"
+          class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 appearance-none">
+          {% for amount in [10, 20, 50, 100] %}
+          <option value="{{ amount }}" {% if pagination.per_page==amount %}selected{% endif %}>
+            {{ amount }}
+          </option>
+          {% endfor %}
+        </select>
+        <span
+          class="material-symbols-outlined pointer-events-none absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500">
+          expand_more
+        </span>
+      </div>
+    </div>
+
+    <!-- Page Navigation -->
+    <div class="flex items-center gap-2" id="pagination">
+      {% if pagination.has_prev %}
+      <a href="#" class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link"
+        data-page="{{ pagination.prev_num }}">Previous</a>
+      {% else %}
+      <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>
+      {% endif %}
+
+      <span class="px-4 py-2 text-sm" id="page-info">
+        Page {{ pagination.page }} of {{ pagination.pages }}
+      </span>
+
+      {% if pagination.has_next %}
+      <a href="#" class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link"
+        data-page="{{ pagination.next_num }}">Next</a>
+      {% else %}
+      <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>
+      {% endif %}
+    </div>
+  </div>
 </div>
+{% endblock %}
+
+{% block js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('search-input');
+    const roleSelect = document.getElementById('role-select');
+    const searchButton = document.getElementById('search-button');
+    const clearSearch = document.getElementById('clear-search');
+    const itemsPerPageSelect = document.getElementById('items-per-page');
+    const userTableBody = document.getElementById('user-table-body');
+    const paginationDiv = document.getElementById('pagination');
+    const pageInfo = document.getElementById('page-info');
+
+    let currentPage = {{ pagination.page }};
+
+    // Function to fetch users via AJAX
+    function fetchUsers(page = 1) {
+      const search = searchInput.value.trim();
+      const role = roleSelect.value;
+      const limit = itemsPerPageSelect.value;
+
+      fetch(`/api/users?page=${page}&search=${encodeURIComponent(search)}&role=${encodeURIComponent(role)}&limit=${limit}`)
+        .then(response => response.json())
+        .then(data => {
+          // Update table body
+          userTableBody.innerHTML = '';
+          data.users.forEach(user => {
+            const row = `
+              <tr class="border-t text-center">
+                <td class="px-6 py-4">${user.index}</td>
+                <td class="px-6 py-4">${user.first_name}</td>
+                <td class="px-6 py-4">${user.last_name}</td>
+                <td class="px-6 py-4">${user.email}</td>
+                <td class="px-6 py-4">${user.role}</td>
+                <td class="px-6 py-4">${user.phone_number}</td>
+              </tr>`;
+            userTableBody.innerHTML += row;
+          });
+
+          // Update pagination
+          paginationDiv.innerHTML = '';
+          if (data.pagination.has_prev) {
+            paginationDiv.innerHTML += `
+              <a href="#" class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link" data-page="${data.pagination.prev_num}">Previous</a>`;
+          } else {
+            paginationDiv.innerHTML += `<span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>`;
+          }
+
+          paginationDiv.innerHTML += `
+            <span class="px-4 py-2 text-sm" id="page-info">
+              Page ${data.pagination.page} of ${data.pagination.pages}
+            </span>`;
+
+          if (data.pagination.has_next) {
+            paginationDiv.innerHTML += `
+              <a href="#" class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link" data-page="${data.pagination.next_num}">Next</a>`;
+          } else {
+            paginationDiv.innerHTML += `<span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>`;
+          }
+
+          // Re-attach event listeners for pagination links
+          attachPaginationListeners();
+
+          // Update current page
+          currentPage = data.pagination.page;
+        })
+        .catch(error => console.error('Error fetching users:', error));
+    }
+
+    // Function to attach pagination link listeners
+    function attachPaginationListeners() {
+      const paginationLinks = document.querySelectorAll('.pagination-link');
+      paginationLinks.forEach(link => {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          const page = this.getAttribute('data-page');
+          fetchUsers(page);
+        });
+      });
+    }
+
+    // Event listeners
+    searchButton.addEventListener('click', () => fetchUsers(1));
+    clearSearch.addEventListener('click', (e) => {
+      e.preventDefault();
+      searchInput.value = '';
+      roleSelect.value = '';
+      fetchUsers(1);
+    });
+
+    itemsPerPageSelect.addEventListener('change', () => fetchUsers(1));
+
+    // Initial pagination listeners
+    attachPaginationListeners();
+
+    // Optional: Trigger search on Enter key in search input
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        fetchUsers(1);
+      }
+    });
+  });
+</script>
 {% endblock %}
