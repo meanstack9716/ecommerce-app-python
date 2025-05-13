@@ -5,7 +5,7 @@
 {% block admin_content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-white rounded-lg shadow">
     <h1 class="text-2xl md:text-3xl font-bold mb-6 text-center text-black">Product List</h1>
-    
+
     <!-- Filter Form - Stacked on mobile, horizontal on larger screens -->
     <form method="GET" class="flex flex-col gap-4 mb-6">
         <div class="flex flex-col sm:flex-row gap-4 w-full">
@@ -13,13 +13,16 @@
             <div class="flex-1 min-w-0">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Search by Category</label>
                 <div class="relative">
-                    <select name="categoryId" class="block w-full border border-gray-300 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
+                    <select name="category"
+                        class="block w-full border border-gray-300 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
                         <option value="">All Categories</option>
                         {% for cat in categories %}
-                        <option value="{{ cat.name }}" {% if request.args.get('category')==cat.name %}selected{% endif %}>{{ cat.name }}</option>
+                        <option value="{{ cat.name }}" {% if request.args.get('category')==cat.name %}selected{% endif
+                            %}>{{ cat.name }}</option>
                         {% endfor %}
                     </select>
-                    <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">chevron_right</span>
+                    <span
+                        class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">chevron_right</span>
                 </div>
             </div>
 
@@ -27,19 +30,24 @@
             <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Min Price</label>
-                    <input type="number" step="0.01" name="min_price" placeholder="Min" value="{{ request.args.get('min_price', '') }}" class="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    <input type="number" step="0.01" name="min_price" placeholder="Min"
+                        value="{{ request.args.get('min_price', '') }}"
+                        class="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Max Price</label>
-                    <input type="number" step="0.01" name="max_price" placeholder="Max" value="{{ request.args.get('max_price', '') }}" class="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    <input type="number" step="0.01" name="max_price" placeholder="Max"
+                        value="{{ request.args.get('max_price', '') }}"
+                        class="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                 </div>
             </div>
         </div>
 
         <input type="hidden" name="page" value="1">
-        
+
         <!-- Filter Button - Full width on mobile, auto width on sm+ -->
-        <button type="submit" class="w-full sm:w-auto self-end px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+        <button type="submit"
+            class="w-full sm:w-auto self-end px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
             Apply Filters
         </button>
     </form>
@@ -51,25 +59,32 @@
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th scope="col"
+                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                         Image
                     </th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th scope="col"
+                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                         Name
                     </th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th scope="col"
+                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                         Price
                     </th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">
+                    <th scope="col"
+                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">
                         Discount
                     </th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">
+                    <th scope="col"
+                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">
                         Final Price
                     </th>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">
+                    <th scope="col"
+                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">
                         SKU
                     </th>
-                    <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th scope="col"
+                        class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                         Actions
                     </th>
                 </tr>
@@ -80,14 +95,15 @@
                     <td class="px-4 py-3 whitespace-nowrap">
                         <div class="w-12 h-12 mx-auto flex items-center justify-center">
                             {% if product.variants %}
-                                {% set first_variant = product.variants[0] %}
-                                {% if first_variant.images %}
-                                <img src="{{ first_variant.images.0.image_url }}" alt="{{ product.name }}" class="max-w-full max-h-full object-contain rounded" />
-                                {% else %}
-                                <span class="text-gray-400 text-xs">No Image</span>
-                                {% endif %}
+                            {% set first_variant = product.variants[0] %}
+                            {% if first_variant.images %}
+                            <img src="{{ first_variant.images.0.image_url }}" alt="{{ product.name }}"
+                                class="max-w-full max-h-full object-contain rounded" />
                             {% else %}
-                                <span class="text-gray-400 text-xs">No Variants</span>
+                            <span class="text-gray-400 text-xs">No Image</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-gray-400 text-xs">No Variants</span>
                             {% endif %}
                         </div>
                     </td>
@@ -100,9 +116,9 @@
                     <td class="px-4 py-3 whitespace-nowrap hidden sm:table-cell">
                         <div class="text-sm text-gray-500">
                             {% if product.discount_price > 0 %}
-                                {{ product.discount_price }}%
+                            {{ product.discount_price }}%
                             {% else %}
-                                -
+                            -
                             {% endif %}
                         </div>
                     </td>
@@ -114,10 +130,12 @@
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-right">
                         <div class="flex justify-end space-x-2">
-                            <a href="{{ url_for('admin_api.edit_product', product_id=product.id) }}" class="text-blue-600 hover:text-blue-800" title="Edit">
+                            <a href="{{ url_for('admin_api.edit_product', product_id=product.id) }}"
+                                class="text-blue-600 hover:text-blue-800" title="Edit">
                                 <span class="material-symbols-outlined text-xl">edit_square</span>
                             </a>
-                            <a href="{{ url_for('admin_api.product_details', product_id=product.id) }}" class="text-green-600 hover:text-green-800" title="Details">
+                            <a href="{{ url_for('admin_api.product_details', product_id=product.id) }}"
+                                class="text-green-600 hover:text-green-800" title="Details">
                                 <span class="material-symbols-outlined text-xl">chevron_forward</span>
                             </a>
                         </div>
@@ -139,19 +157,23 @@
         <div class="flex items-center gap-2">
             <span class="text-sm text-gray-600">Items per page:</span>
             <div class="relative">
-                <select onchange="window.location.href = this.value" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 appearance-none">
+                <select onchange="window.location.href = this.value"
+                    class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 appearance-none">
                     {% for amount in [10, 20, 50, 100] %}
-                    <option value="{{ url_for('admin_api.get_product_lists', page=1, limit=amount) }}" {% if request.args.get('limit', 12)|int==amount %}selected{% endif %}>{{ amount }}</option>
+                    <option value="{{ url_for('admin_api.get_product_lists', page=1, limit=amount) }}" {% if
+                        request.args.get('limit', 12)|int==amount %}selected{% endif %}>{{ amount }}</option>
                     {% endfor %}
                 </select>
-                <span class="material-symbols-outlined pointer-events-none absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">expand_more</span>
+                <span
+                    class="material-symbols-outlined pointer-events-none absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">expand_more</span>
             </div>
         </div>
 
         <!-- Page Navigation -->
         <div class="flex items-center gap-2">
             {% if products.has_prev %}
-            <a href="{{ url_for('admin_api.get_product_lists', page=products.prev_num, limit=request.args.get('limit', 12)) }}" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 transition">
+            <a href="{{ url_for('admin_api.get_product_lists', page=products.prev_num, limit=request.args.get('limit', 12)) }}"
+                class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 transition">
                 Previous
             </a>
             {% else %}
@@ -163,7 +185,8 @@
             </span>
 
             {% if products.has_next %}
-            <a href="{{ url_for('admin_api.get_product_lists', page=products.next_num, limit=request.args.get('limit', 12)) }}" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 transition">
+            <a href="{{ url_for('admin_api.get_product_lists', page=products.next_num, limit=request.args.get('limit', 12)) }}"
+                class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 transition">
                 Next
             </a>
             {% else %}
