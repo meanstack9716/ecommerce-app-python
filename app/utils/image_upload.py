@@ -19,20 +19,22 @@ def upload_image(image):
         return None, 'Invalid image file type'
 
     if image:
-        image_bytes = image.read()
-        content_type = image.mimetype
-        encoded_image = base64.b64encode(image_bytes).decode('utf-8')
-
-        image_id = str(uuid.uuid4())[:8]
-
-        image_store[image_id] = {'data': encoded_image, 'content_type': content_type}
-
-        base_url = request.host_url.rstrip('/')
-        image_url = f"{base_url}/image/{image_id}"
-
-        return image_url, None
+        # Create upload folder if it doesn't exist
+        os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
+        
+        # Generate a unique filename
+        ext = image.filename.rsplit('.', 1)[1].lower()
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        
+        # Save to filesystem
+        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        image.save(filepath)
+        
+        # Return relative URL
+        return url_for('static', filename=f'uploads/{filename}', _external=True), None
 
     return None, None
+
 
 def validate_fields(data, required_fields):
     is_valid, validation_errors = validate_required_fields(data, required_fields)

@@ -113,7 +113,9 @@
                 descriptionField.value = '';
                 logoField.value = '';
                 showToast(result.message, 'success');
-                window.location.href = "{{ url_for('admin_api.get_brand_list_page') }}";
+                setTimeout(() => {
+                    window.location.href = "{{ url_for('admin_api.get_brand_list_page') }}";
+                }, 500)
             } else {
                 responseMessage.textContent = result.errors || result.message || 'An error occurred';
                 responseMessage.classList.add('text-red-500');
