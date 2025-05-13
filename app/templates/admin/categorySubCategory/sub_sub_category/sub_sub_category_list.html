@@ -6,6 +6,10 @@
 <div class="bg-white rounded-lg shadow p-6 mx-auto">
     <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">Sub-Sub Category List</h1>
 
+    <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="w-8 h-8 border-4 border-indigo-300 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+
     <div class="flex justify-end mb-6">
         <a href="{{ url_for('admin_api.add_sub_sub_category_page') }}"
             class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:text-gray-700 text-sm">
@@ -14,23 +18,26 @@
     </div>
 
     <!-- Filters -->
-    <div class="relative mt-2 flex flex-col gap-2">
-        <select id="categorySelect" name="category"
-            class="block w-full mt-1 border rounded-md px-5 py-3 appearance-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
-            <option value="">Select Category</option>
-            {% for cat in categories %}
-            <option value="{{ cat.id }}">{{ cat.name }}</option>
-            {% endfor %}
-        </select>
-        <span
-            class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-            expand_more
-        </span>
+    <div class="flex flex-col">
+        <label class="block text-sm lg:text-base font-medium text-black">Search by Category</label>
+        <div class="relative mt-2 flex flex-col gap-2">
+
+            <select id="categorySelect" name="category"
+                class="border w-full border-gray-300 cursor-pointer rounded-lg px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
+                <option value="">Select Category</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+            <span
+                class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                expand_more
+            </span>
+        </div>
     </div>
 
 
-
-    <div id="subCategoryTabs" class="mb-6 flex flex-wrap gap-2"></div>
+    <div id="subCategoryTabs" class="mb-6 flex flex-wrap gap-3 items-center my-5"></div>
 
     <!-- Product Type Cards -->
     <div id="subSubCategoryCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -40,9 +47,19 @@
 {% endblock %}
 
 {% block js %}
-
 <script>
+    const loader = document.getElementById('loader');
+
+    function showLoader() {
+        loader.classList.remove('hidden');
+    }
+
+    function hideLoader() {
+        loader.classList.add('hidden');
+    }
+
     document.getElementById('categorySelect').addEventListener('change', handleCategoryChange);
+
     async function handleCategoryChange() {
         const categoryId = document.getElementById('categorySelect').value;
         const subCategoryTabs = document.getElementById('subCategoryTabs');
@@ -52,22 +69,25 @@
         cardsContainer.innerHTML = '';
 
         if (categoryId) {
-            const { success, data } = await sendGetRequest(`/api/sub-categories/list/${categoryId}`);
-            if (success && Array.isArray(data)) {
-                // Create individual subcategory tabs
-                data.forEach(sub => {
-                    console.log(sub, )
-                    const tab = createTab(sub.name, async () => {
-                        await loadSubSubCategoryByCategory(sub.id);
+            showLoader();
+            try {
+                const { success, data } = await sendGetRequest(`/api/sub-categories/list/${categoryId}`);
+                if (success && Array.isArray(data)) {
+                    data.forEach(sub => {
+                        const tab = createTab(sub.name, async () => {
+                            await loadSubSubCategoryByCategory(sub.id);
+                        });
+                        subCategoryTabs.appendChild(tab);
                     });
-                    subCategoryTabs.appendChild(tab);
-                });
 
-                if (data.length > 0) {
-                    subCategoryTabs.querySelector('button').click();
+                    if (data.length > 0) {
+                        subCategoryTabs.querySelector('button').click();
+                    }
+                } else {
+                    cardsContainer.innerHTML = '<div class="col-span-full text-center text-red-500">Failed to load subcategories.</div>';
                 }
-            } else {
-                cardsContainer.innerHTML = '<div class="col-span-full text-center text-red-500">Failed to load subcategories.</div>';
+            } finally {
+                hideLoader();
             }
         } else {
             cardsContainer.innerHTML = '<div class="col-span-full text-center text-gray-500">Please select a category.</div>';
@@ -77,7 +97,7 @@
     function createTab(label, onClickFn) {
         const button = document.createElement('button');
         button.textContent = label;
-        button.className = 'tab-btn px-6 py-3 text-md font-medium focus:outline-none transition duration-300 ease-in-out hover:text-indigo-600 focus:text-indigo-600';
+        button.className = 'tab-btn px-8 py-2.5 rounded-full text-sm lg:text-base font-medium text-gray-700 bg-gray-100 hover:bg-indigo-100 transition-colors duration-200';
         button.onclick = async () => {
             setActiveTab(button);
             await onClickFn();
@@ -85,23 +105,31 @@
         return button;
     }
 
+
     function setActiveTab(activeBtn) {
         document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('text-indigo-600', 'border-b-4', 'border-indigo-500');
-            btn.classList.add('text-gray-600', 'border-b-2', 'border-transparent');
+            btn.classList.remove('bg-indigo-600', 'text-white', 'shadow');
+            btn.classList.add('bg-gray-100', 'text-gray-700');
         });
-        activeBtn.classList.add('text-indigo-600', 'border-b-4', 'border-indigo-500');
+        activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow');
+        activeBtn.classList.remove('bg-gray-100', 'text-gray-700');
     }
+
 
     async function loadSubSubCategoryByCategory(subCategoryId) {
         const cardsContainer = document.getElementById('subSubCategoryCards');
         cardsContainer.innerHTML = '';
 
-        const { success, data } = await sendGetRequest(`/api/sub-sub-categories/list?subCategoryId=${subCategoryId}`);
-        if (success) {
-            renderSubSubCategoryCards(data);
-        } else {
-            cardsContainer.innerHTML = '<div class="col-span-full text-center text-red-500">Failed to load product types.</div>';
+        showLoader();
+        try {
+            const { success, data } = await sendGetRequest(`/api/sub-sub-categories/list?subCategoryId=${subCategoryId}`);
+            if (success) {
+                renderSubSubCategoryCards(data);
+            } else {
+                cardsContainer.innerHTML = '<div class="col-span-full text-center text-red-500">Failed to load product types.</div>';
+            }
+        } finally {
+            hideLoader();
         }
     }
 
@@ -119,8 +147,8 @@
                 <div class="p-4">
                     <h2 class="text-xl font-semibold text-gray-800">${pt.name}</h2>
                     <p class="text-black-600 mt-2">${pt.description}</p>
-                    <p class="text-gray-600 mt-2">${pt.categoryName}</p>
-                    <p class="text-gray-600 mt-1">${pt.subcategoryName}</p>
+                    <p class="text-gray-600 mt-2 text-sm">${pt.categoryName}</p>
+                    <p class="text-gray-600 mt-1 text-sm">${pt.subcategoryName}</p>
                 </div>
             </div>`;
             cardsContainer.insertAdjacentHTML('beforeend', cardHTML);
