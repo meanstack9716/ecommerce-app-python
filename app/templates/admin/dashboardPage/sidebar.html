@@ -46,7 +46,7 @@
             {% for subitem in item.submenu %}
             <li>
               <a href="{{ subitem.url | safe }}"
-                class="flex items-center py-3 px-4 rounded-lg transition-colors text-sm lg:text-base {% if request.endpoint == subitem.endpoint %}bg-indigo-100 text-indigo-700 font-medium{% else %}text-gray-600 hover:bg-gray-50{% endif %}">
+                class="flex items-center py-2 lg:py-3 px-4 rounded-lg transition-colors text-sm lg:text-base {% if request.endpoint == subitem.endpoint %}bg-indigo-100 text-indigo-700 font-medium{% else %}text-gray-600 hover:bg-gray-50{% endif %}">
                 <span class="material-symbols-outlined text-xl mr-4">
                   {{ subitem.icon }}
                 </span>
