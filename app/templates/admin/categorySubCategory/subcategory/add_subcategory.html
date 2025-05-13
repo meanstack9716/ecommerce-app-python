@@ -53,15 +53,23 @@
                 </div>
 
                 <div>
-                    <label for="image" class="block text-base font-medium text-black mb-1">
-                        Image *
-                    </label>
-                    <div class="mt-1 flex items-start flex-col">
-                        <input type="file" id="image" name="image" accept=".png,.jpeg,.jpg,.pdf"
-                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-8 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition duration-150 ease-in-out">
+                    <div class="mb-6">
+                        {% set id = 'sub-category-image' %}
+                        {% set name = 'sub-category-image' %}
+                        {% set label = 'Sub Category Image' %}
+                        {% set required = true %}
+                        {% set multiple = false %}
+                        {% set accept = '.png,.jpeg,.jpg' %}
+                        {% set help_text = 'PNG, JPG up to 2MB' %}
+
+                        {% set label_classes = 'block text-base font-medium text-black mb-2' %}
+                        {% include 'components/image_upload.html' %}
                     </div>
                     <p class="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
                 </div>
+
+
+
 
                 <div class="pt-4 flex justify-end">
                     <button type="submit"
@@ -84,13 +92,13 @@
         const nameField = form.querySelector('#name');
         const categoryField = form.querySelector('#category');
         const descriptionField = form.querySelector('#description');
-        const imageField = form.querySelector('#image');
+        const imageField = form.querySelector('#sub-category-image');
 
         const isNameValid = validators.required(nameField, 'Subcategory Name') && validators.minLength(nameField, 3, 'Subcategory Name');
         const isCategoryValid = validators.required(categoryField, 'Parent Category') && validators.minLength(categoryField, 3, 'Parent Category');
         const isDescriptionValid = validators.required(descriptionField, 'Description') && validators.minLength(descriptionField, 10, 'Description');
 
-        const isImageValid = validators.required(imageField, 'Image') && validateImage(imageField);
+        const isImageValid = validators.required(imageField, 'Sub-Category Image') && validateImage(imageField);
 
         if (!isNameValid || !isCategoryValid || !isDescriptionValid || !isImageValid) {
             return;

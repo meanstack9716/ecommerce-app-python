@@ -76,7 +76,7 @@
       });
     });
 
-    document.querySelectorAll('select, button, a').forEach(element => {
+    document.querySelectorAll('select, button, a, input, textarea').forEach(element => {
       element.addEventListener('click', function (e) {
         e.stopPropagation();
       });
@@ -88,6 +88,7 @@
         !e.target.matches('input') &&
         !e.target.closest('select') &&
         !e.target.closest('button') &&
+        !e.target.closest('textarea') &&
         !e.target.closest('a')) {
         document.querySelectorAll('.submenu').forEach(submenu => {
           submenu.classList.add('hidden');
