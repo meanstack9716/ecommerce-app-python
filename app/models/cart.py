@@ -6,6 +6,7 @@ class CartItem(db.EmbeddedDocument):
     product_id = db.StringField(required=True)
     variant_id = db.StringField()
     size = db.StringField(choices=ALLOWED_SIZES)
+    color = db.StringField()
     quantity = db.IntField(required=True, min_value=1)
     price = db.FloatField(required=True)
     original_price = db.FloatField()
@@ -40,7 +41,7 @@ class Cart(db.Document):
     updated_at = db.DateTimeField(default=datetime.utcnow)
     shipping_address = db.DictField()
     shipping_method = db.StringField()
-
+    status = db.StringField(default='active')
     meta = {
         'indexes': [
             {'fields': ['user_id'], 'unique': True},
