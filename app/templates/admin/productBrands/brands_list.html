@@ -63,10 +63,9 @@
                     class="px-3 py-3 md:px-6 md:py-4 mt-3 text-center text-sm flex items-center justify-center space-x-6">
                     <a href="{{ url_for('admin_api.update_brand_page', brand_id=brand.id) }}"
                         class="text-blue-600 hover:text-blue-800">Edit</a>
-                    <form action="{{ url_for('admin_api.delete_brand', brand_id=brand.id) }}" method="POST"
-                        class="inline">
-                        <button type="submit" class="text-red-600 hover:text-red-800">Delete</button>
-                    </form>
+                    <a href="{{url_for('admin_api.delete_brand', brand_id=brand.id) }}"
+                        class="text-blue-600 hover:text-blue-800">Delete</a>
+
                 </td>
             </tr>
             {% else %}
