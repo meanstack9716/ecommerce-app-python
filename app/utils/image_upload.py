@@ -4,34 +4,44 @@ import uuid
 from werkzeug.utils import secure_filename
 from flask import current_app, request, url_for
 from .validation import validate_required_fields
+import socket
 
-# Allowed extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
-# In-memory image store (replace with DB or Redis for production)
 image_store = {}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def get_local_ip():
+    """Get the local IP address of the machine."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
 
 def upload_image(image):
     if image and not allowed_file(image.filename):
         return None, 'Invalid image file type'
 
     if image:
-        # Create upload folder if it doesn't exist
         os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
-        
-        # Generate a unique filename
+
         ext = image.filename.rsplit('.', 1)[1].lower()
         filename = f"{uuid.uuid4().hex}.{ext}"
-        
-        # Save to filesystem
         filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
         image.save(filepath)
-        
-        # Return relative URL
-        return url_for('static', filename=f'uploads/{filename}', _external=True), None
+
+        # Get local IP address
+        local_ip = get_local_ip()
+        file_url = f"http://{local_ip}:8080/static/uploads/{filename}"
+        return file_url, None
 
     return None, None
 
