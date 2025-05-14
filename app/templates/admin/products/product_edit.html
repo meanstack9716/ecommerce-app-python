@@ -219,16 +219,6 @@ admin_content %}
       },
     });
 
-    // Utility Functions
-    const showToast = (message, type = "error") => {
-      const toast = document.createElement("div");
-      toast.className = `fixed top-4 right-4 p-4 rounded-md text-white ${type === "success" ? "bg-green-500" : "bg-red-500"
-        }`;
-      toast.textContent = message;
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
-    };
-
     const sendGetRequest = async (url) => {
       try {
         const response = await fetch(url, { credentials: "include" });
