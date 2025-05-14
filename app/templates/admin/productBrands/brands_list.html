@@ -158,10 +158,10 @@
                                 <td class="px-6 py-4">${(data.pagination.page - 1) * data.limit + index + 1}</td>
                                 <td class="px-6 py-4">${brand.name}</td>
                                 <td class="px-6 py-4">${brand.description}</td>
-                                <td class="px-6 py-4 w-24">
-                                    ${brand.logo_path ? `<img src="${brand.logo_path}" alt="${brand.name} logo" class="w-full object-contain">` : ''}
+                                <td class="px-6 py-4 w-14">
+                                    ${brand.logo_path ? `<img src="${brand.logo_path}" alt="${brand.name} logo" class="w-full object-contain w-14 h-14">` : ''}
                                 </td>
-                                <td class="px-6 py-4 mt-3 flex items-center justify-center space-x-6">
+                                <td class=" px-6 py-4 space-x-6">
                                     <a href="/brands/edit/${brand.id}" class="text-blue-600 hover:text-blue-800">Edit</a>
                                     <form action="/brands/delete/${brand.id}" method="POST" class="inline">
                                         <button type="submit" class="text-red-600 hover:text-red-800">Delete</button>
