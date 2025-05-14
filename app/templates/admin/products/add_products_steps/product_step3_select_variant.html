@@ -58,12 +58,8 @@
                 { name: "Silver", hex: "#C0C0C0" },
                 { name: "Gold", hex: "#FFD700" }
             ],
-            standardSizes: [
-                'L', 'XL', 'XXL'
-            ],
-            numericSizes: [
-                32, 34, 36, 38, 40
-            ]
+            standardSizes: ['L', 'XL', 'XXL'],
+            numericSizes: [32, 34, 36, 38, 40]
         };
 
         const form = document.getElementById('product-variants-form');
@@ -72,11 +68,14 @@
         const sizeTypeStandard = document.getElementById('size_type_standard');
         const sizeTypeNumeric = document.getElementById('size_type_numeric');
         let sizeCounter = 0;
+
         addSizeBlock();
+
         // Event Listeners
         addSizeBtn.addEventListener('click', addSizeBlock);
         sizeTypeStandard.addEventListener('change', updateAllSizeOptions);
         sizeTypeNumeric.addEventListener('change', updateAllSizeOptions);
+
         // Functions
         function addSizeBlock() {
             const sizeId = `size_${sizeCounter++}`;
@@ -89,7 +88,7 @@
             sizeBlock.innerHTML = `
             <div class="grid grid-cols-1 sm:grid-cols-3 items-center mb-5 gap-4 p-4">
                 <div class="w-full col-span-2">
-                    <label class="font-medium 3xl:text-xl 3xl:font-semibold"">Size <span class="text-red-600">*</span></label>
+                    <label class="font-medium 3xl:text-xl 3xl:font-semibold">Size <span class="text-red-600">*</span></label>
                     <div class="relative mt-2">
                         <select name="sizes[${sizeId}][name]" id="sizes[${sizeId}][name]"
                             class="size-select cursor-pointer mt-2 block appearance-none w-full border border-gray-300 rounded-md shadow-sm py-2 pl-3 pr-8 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
@@ -155,22 +154,32 @@
             setupSizeBlockEvents(sizeBlock);
             updateRemoveButtons();
         }
+
         function setupSizeBlockEvents(sizeBlock) {
             const sizeSelect = sizeBlock.querySelector('.size-select');
             const customSizeInput = sizeBlock.querySelector('.custom-size-input');
             const removeBtn = sizeBlock.querySelector('.remove-size-btn');
             const addCustomColorBtn = sizeBlock.querySelector('.add-custom-color-btn');
             const colorCheckboxes = sizeBlock.querySelectorAll('.color-checkbox');
+
             sizeSelect.addEventListener('change', function () {
                 customSizeInput.classList.toggle('hidden', this.value !== 'custom');
+                validateSizeSelection(sizeBlock);
             });
+
+            customSizeInput.addEventListener('input', function () {
+                validateSizeSelection(sizeBlock);
+            });
+
             removeBtn.addEventListener('click', function () {
                 sizeBlock.remove();
                 updateRemoveButtons();
             });
+
             addCustomColorBtn.addEventListener('click', function () {
                 addCustomColorField(sizeBlock.querySelector('.custom-color-container'), sizeBlock.dataset.sizeId);
             });
+
             colorCheckboxes.forEach(checkbox => {
                 checkbox.addEventListener('change', function () {
                     const quantityInput = this.closest('div').nextElementSibling;
@@ -178,39 +187,86 @@
                 });
             });
         }
+
+        function validateSizeSelection(currentBlock) {
+            const sizeSelect = currentBlock.querySelector('.size-select');
+            const customSizeInput = currentBlock.querySelector('.custom-size-input');
+            const sizeError = currentBlock.querySelector('.size-error');
+            let currentSize = sizeSelect.value;
+
+            if (currentSize === 'custom') {
+                currentSize = customSizeInput.value.trim();
+            }
+
+            if (!currentSize) {
+                return; // No size selected, skip validation
+            }
+
+            const allSizeBlocks = document.querySelectorAll('.size-block');
+            let isDuplicate = false;
+
+            allSizeBlocks.forEach(block => {
+                if (block === currentBlock) return; // Skip the current block
+                const otherSelect = block.querySelector('.size-select');
+                const otherCustomInput = block.querySelector('.custom-size-input');
+                let otherSize = otherSelect.value;
+
+                if (otherSize === 'custom') {
+                    otherSize = otherCustomInput.value.trim();
+                }
+
+                if (otherSize && otherSize === currentSize) {
+                    isDuplicate = true;
+                }
+            });
+
+            if (isDuplicate) {
+                sizeError.textContent = `Size "${currentSize}" is already selected.`;
+                sizeError.classList.remove('hidden');
+                sizeSelect.value = ''; // Reset the selection
+                customSizeInput.value = ''; // Clear custom input
+                customSizeInput.classList.add('hidden');
+            } else {
+                sizeError.classList.add('hidden');
+            }
+        }
+
         function addCustomColorField(container, sizeId) {
             const colorId = `color_${Date.now()}`;
             const colorField = document.createElement('div');
             colorField.className = 'flex items-center mb-2 space-x-4 lg:w-2/3';
             colorField.innerHTML = `
-        <div class="border cursor-pointer border-gray-300 rounded-md shadow-sm py-1 px-3 flex items-center text-center w-1/2">
-            <div class="color-picker-wrapper flex items-center text-center">
-            <input type="color" name="sizes[${sizeId}][colors][custom][${colorId}][hex]"
-                value="#000000" class="h-8 w-8 border border-gray-300 rounded-lg">
-            <span class="hex-value text-sm ml-1">#000000</span>
+            <div class="border cursor-pointer border-gray-300 rounded-md shadow-sm py-1 px-3 flex items-center text-center w-1/2">
+                <div class="color-picker-wrapper flex items-center text-center">
+                    <input type="color" name="sizes[${sizeId}][colors][custom][${colorId}][hex]"
+                        value="#000000" class="h-8 w-8 border border-gray-300 rounded-lg">
+                    <span class="hex-value text-sm ml-1">#000000</span>
+                </div>
+                <input type="text" name="sizes[${sizeId}][colors][custom][${colorId}][name]"
+                    placeholder="Color name" class="custom-color-name ml-2 block w-1/2 border-none focus:outline-none">
             </div>
-            <input type="text" name="sizes[${sizeId}][colors][custom][${colorId}][name]"
-                placeholder="Color name" class="custom-color-name ml-2 block w-1/2 border-none focus:outline-none">
-        </div>
-        <input type="number" name="sizes[${sizeId}][colors][custom][${colorId}][quantity]"
-            min="0" class="custom-color-quantity block w-1/2 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter Quantity">
-        <button type="button" class="remove-color-btn ml-2">
-            <span class="material-symbols-outlined text-red-600 bg-red-100 rounded-full">cancel</span>
-        </button>
-    `;
+            <input type="number" name="sizes[${sizeId}][colors][custom][${colorId}][quantity]"
+                min="0" class="custom-color-quantity block w-1/2 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter Quantity">
+            <button type="button" class="remove-color-btn ml-2">
+                <span class="material-symbols-outlined text-red-600 bg-red-100 rounded-full">cancel</span>
+            </button>
+        `;
             container.appendChild(colorField);
-            const colorInputDiv = colorField.querySelector('.color-picker-wrapper')
+            const colorInputDiv = colorField.querySelector('.color-picker-wrapper');
             const colorInput = colorField.querySelector('input[type="color"]');
             const hexValue = colorField.querySelector('.hex-value');
             const removeBtn = colorField.querySelector('.remove-color-btn');
+
             colorInputDiv.addEventListener('click', () => {
                 if (colorInput) {
                     colorInput.click();
                 }
             });
+
             colorInput.addEventListener('input', () => hexValue.textContent = colorInput.value);
             removeBtn.addEventListener('click', () => colorField.remove());
         }
+
         function updateAllSizeOptions() {
             document.querySelectorAll('.size-block').forEach(block => {
                 const sizeSelect = block.querySelector('.size-select');
@@ -219,11 +275,13 @@
                 const customInput = block.querySelector('.custom-size-input');
                 const customValue = isCustom ? customInput.value : null;
                 const sizeOptions = sizeTypeNumeric.checked ? config.numericSizes : config.standardSizes;
+
                 sizeSelect.innerHTML = `
                 <option value="">Select size</option>
                 ${sizeOptions.map(size => `<option value="${size}">${size}</option>`).join('')}
                 <option value="custom">Custom Size</option>
             `;
+
                 if (isCustom) {
                     sizeSelect.value = 'custom';
                     customInput.value = customValue;
@@ -231,8 +289,11 @@
                 } else if (sizeOptions.includes(currentValue)) {
                     sizeSelect.value = currentValue;
                 }
+
+                validateSizeSelection(block); // Re-validate after updating options
             });
         }
+
         function updateRemoveButtons() {
             const removeButtons = document.querySelectorAll('.remove-size-btn');
             removeButtons.forEach(btn => {
@@ -250,20 +311,13 @@
                 .map(input => parseInt(input.value) || 0);
             return [...standardQuantities, ...customQuantities].some(qty => qty > 0);
         }
+
         function clearErrors() {
-            // formErrors.classList.add('hidden');
-            // errorList.innerHTML = '';
             document.querySelectorAll('.size-error, .color-error').forEach(el => {
                 el.classList.add('hidden');
             });
         }
-        function showError(fieldId, message) {
-            const field = document.getElementById(fieldId);
-            const errorElement = document.createElement('p');
-            errorElement.className = 'mt-1 text-sm text-red-600';
-            errorElement.textContent = message;
-            field.insertAdjacentElement('afterend', errorElement);
-        }
+
         function showErrorInBlock(block, className, message) {
             const errorElement = block.querySelector(`.${className}`);
             errorElement.textContent = message;
