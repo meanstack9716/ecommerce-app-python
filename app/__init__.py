@@ -53,6 +53,7 @@ def create_app(config_class=Config):
     from app.routes.api.cart import cart_bp
     from app.routes.api.wishlist_bp import wishlist_bp
     from app.routes.api.saveforlater_bp import saveforlater_bp
+    from app.routes.api.product_search_api import search_bp
 
     # Register blueprints
     app.register_blueprint(auth_bp)
@@ -67,7 +68,7 @@ def create_app(config_class=Config):
     app.register_blueprint(cart_bp)
     app.register_blueprint(wishlist_bp)
     app.register_blueprint(saveforlater_bp)
-
+    app.register_blueprint(search_bp)
 
     from app.utils.image_upload import image_store
     import base64
