@@ -3,91 +3,233 @@
 {% block title %}All Users{% endblock %}
 
 {% block admin_content %}
-<div class="bg-white rounded-lg shadow-lg p-8">
-  <h1 class="text-3xl font-semibold text-gray-800 mb-6">All Users</h1>
+<div class="bg-white rounded-lg shadow-lg p-4 md:p-8">
+  <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-4 md:mb-6">All Users</h1>
 
-  <form method="get" class="flex items-center space-x-4 w-full">
-    <div class="w-full sm:w-1/2 lg:w-full mb-10">
-      <div class="flex justify-between items-end space-x-4">
-        <div class="flex flex-row items-center space-x-3">
-          <div class="flex flex-col">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Search Users</label>
-            <input type="text" name="search" value="{{ filters.search }}" placeholder="Search by name, email, phone"
-              class="mt-1 block w-full px-4 py-3 border border-gray-300 outline-none rounded-lg shadow-sm sm:text-sm w-72">
-          </div>
+  <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+  </div>
 
-          <div class="flex flex-col">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Search Role</label>
-
-            <!-- Role dropdown -->
-            <div class="relative inline-block w-64">
-              <select name="role"
-                class="mt-1 block w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg shadow-sm sm:text-sm appearance-none">
-                <option value="">All Roles</option>
-                {% for role in roles %}
-                <option value="{{ role.name }}" {% if filters.role==role.name %}selected{% endif %}>{{ role.name }}
-                </option>
-                {% endfor %}
-              </select>
-              <span
-                class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                expand_more
-              </span>
-            </div>
-          </div>
-
+  <!-- Search Section -->
+  <div class="mb-6">
+    <div class="flex flex-row items-end justify-between gap-4">
+      <div class="flex flex-col sm:flex-row gap-3">
+        <!-- Search Input -->
+        <div class="">
+          <label class="block text-sm lg:text-base font-medium text-black mb-1 md:mb-2">Search Users</label>
+          <input type="text" id="search-input" value="{{ filters.search }}" placeholder="Search by name, email, phone"
+            class="block w-52 lg:w-72 px-3 py-2 lg:px-4 md:py-3 border border-gray-300 outline-none rounded-lg shadow-sm text-sm">
         </div>
 
-        <div class="flex flex-row items-center space-x-6">
-          <button type="submit"
-            class="w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-ou">
-            Search
-          </button>
-
-          <div class="w-full sm:w-auto mt-2 sm:mt-0">
-            <a href="{{ url_for('admin_api.all_users') }}" class="text-sm text-indigo-600 hover:text-indigo-800">Clear
-              Search</a>
+        <!-- Role Select -->
+        <div class="">
+          <label class="block text-sm lg:text-base font-medium text-black mb-1 md:mb-2">Search Role</label>
+          <div class="relative">
+            <select id="role-select"
+              class="block w-52 lg:w-72 px-3 py-2 md:px-4 md:py-3 pr-8 border border-gray-300 rounded-lg shadow-sm text-sm appearance-none">
+              <option value="">All Roles</option>
+              {% for role in roles %}
+              <option value="{{ role.name }}" {% if filters.role==role.name %}selected{% endif %}>{{ role.name }}
+              </option>
+              {% endfor %}
+            </select>
+            <span
+              class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500">
+              expand_more
+            </span>
           </div>
         </div>
+      </div>
 
+      <div class="flex flex-row items-center gap-6">
+        <button id="search-button"
+          class="w-auto lg:w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+          Search
+        </button>
 
+        <div class="w-fit sm:w-auto text-center sm:text-left">
+          <a href="#" id="clear-search" class="text-sm font-medium px-4 py-3 border border-red-500 rounded-lg text-red-500">Clear Search</a>
+        </div>
       </div>
     </div>
-  </form>
+  </div>
 
+  <!-- Table Section -->
+  <div class="overflow-x-auto">
+    {% set user_table_heading_data = ['S.No', 'First Name', 'Last Name', 'Email', 'Role', 'Phone number'] %}
+    <table class="min-w-full divide-y divide-gray-200" id="user-table">
+      <thead class="bg-gray-50">
+        <tr>
+          {% for header in user_table_heading_data %}
+          <th class="px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+            {{ header }}
+          </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody id="user-table-body" class="divide-y divide-gray-200">
+        {% for userData in allUsersList %}
+        <tr>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ userData.index }}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ userData['first_name'] }}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ userData['last_name'] }}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ userData['email'] }}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ userData['role'] }}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ userData['phone_number'] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-  <!-- Table -->
-  <table class="min-w-full divide-y divide-gray-200">
-    <thead class="bg-gray-50">
-      <tr>
-        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">First Name</th>
-        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Last Name</th>
-        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Email</th>
-        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Role</th>
-        <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Phone number</th>
-        <!-- <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Actions</th> -->
-      </tr>
-    </thead>
-    <tbody>
-      {% for userData in allUsersList %}
-      <tr class="border-t text-center">
-      <tr class="border-t text-center">
-        <td class="px-6 py-4">{{ userData['first_name'] }}</td>
-        <td class="px-6 py-4">{{ userData['last_name'] }}</td>
-        <td class="px-6 py-4">{{ userData['email'] }}</td>
-        <td class="px-6 py-4">{{ userData['role'] }}</td>
+  <!-- Pagination Section -->
+  <div class="flex flex-col sm:flex-row items-center justify-between mt-6 gap-3">
+    <!-- Items per page selector -->
+    <div class="flex items-center gap-2 relative w-full sm:w-auto">
+      <span class="text-sm text-gray-600">Items per page:</span>
+      <div class="relative">
+        <select id="items-per-page"
+          class="border border-gray-300 rounded-lg px-2 py-1 md:px-3 md:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 appearance-none">
+          {% for amount in [10, 20, 50, 100] %}
+          <option value="{{ amount }}" {% if pagination.per_page==amount %}selected{% endif %}>
+            {{ amount }}
+          </option>
+          {% endfor %}
+        </select>
+        <span
+          class="material-symbols-outlined pointer-events-none absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+          expand_more
+        </span>
+      </div>
+    </div>
 
+    <!-- Page Navigation -->
+    <div class="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start" id="pagination">
+      {% if pagination.has_prev %}
+      <a href="#"
+        class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition user-pagination-link"
+        data-page="{{ pagination.prev_num }}">Previous</a>
+      {% else %}
+      <span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Previous</span>
+      {% endif %}
 
-        <td class="px-6 py-4">{{ userData['phone_number'] }}</td>
-        <!-- <td class="px-6 py-4 flex justify-center gap-3">
-          <a href="#" aria-disabled="true" class="text-indigo-600 hover:text-green-900">View Details</a>
-        </td> -->
-      </tr>
-      </tr>
-      {% endfor %}
+      <span class="px-3 py-1 md:px-4 md:py-2 text-sm" id="page-info">
+        Page {{ pagination.page }} of {{ pagination.pages }}
+      </span>
 
-    </tbody>
-  </table>
-
+      {% if pagination.has_next %}
+      <a href="#"
+        class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition user-pagination-link"
+        data-page="{{ pagination.next_num }}">Next</a>
+      {% else %}
+      <span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Next</span>
+      {% endif %}
+    </div>
+  </div>
 </div>
+{% endblock %}
+
+{% block js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('search-input');
+    const roleSelect = document.getElementById('role-select');
+    const searchButton = document.getElementById('search-button');
+    const clearSearch = document.getElementById('clear-search');
+    const itemsPerPageSelect = document.getElementById('items-per-page');
+    const userTableBody = document.getElementById('user-table-body');
+    const paginationDiv = document.getElementById('pagination');
+    const pageInfo = document.getElementById('page-info');
+    const loader = document.getElementById('loader');
+    let currentPage = "{{ pagination.page|tojson }}";
+
+    // Function to fetch users via AJAX
+    async function fetchUsers(page = 1) {
+      loader.classList.remove('hidden');
+      const search = searchInput.value.trim();
+      const role = roleSelect.value;
+      const limit = itemsPerPageSelect.value;
+      const url = `/api/users?page=${page}&search=${encodeURIComponent(search)}&role=${encodeURIComponent(role)}&limit=${limit}`;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+
+        // Update table body
+        userTableBody.innerHTML = '';
+        data.users.forEach(user => {
+          const row = `
+          <tr class="border-t">
+            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.index}</td>
+            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.first_name}</td>
+            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.last_name}</td>
+            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.email}</td>
+            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.role}</td>
+            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.phone_number}</td>
+          </tr>`;
+          userTableBody.innerHTML += row;
+        });
+
+        // Update pagination
+        paginationDiv.innerHTML = '';
+        if (data.pagination.has_prev) {
+          paginationDiv.innerHTML += `
+          <a href="#" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition user-pagination-link" data-page="${data.pagination.prev_num}">Previous</a>`;
+        } else {
+          paginationDiv.innerHTML += `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Previous</span>`;
+        }
+
+        paginationDiv.innerHTML += `
+        <span class="px-3 py-1 md:px-4 md:py-2 text-sm" id="page-info">
+          Page ${data.pagination.page} of ${data.pagination.pages}
+        </span>`;
+
+        if (data.pagination.has_next) {
+          paginationDiv.innerHTML += `
+          <a href="#" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition user-pagination-link" data-page="${data.pagination.next_num}">Next</a>`;
+        } else {
+          paginationDiv.innerHTML += `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Next</span>`;
+        }
+
+        attachPaginationListeners();
+
+        currentPage = data.pagination.page;
+
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      } finally {
+        loader.classList.add('hidden');
+      }
+    }
+
+    // Function to attach pagination link listeners
+    attachPaginationListeners('.user-pagination-link', fetchUsers);
+
+    // Event listeners
+    searchButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      fetchUsers(1);
+    });
+
+    clearSearch.addEventListener('click', (e) => {
+      e.preventDefault();
+      roleSelect.value = '';
+      fetchUsers(1);
+    });
+
+    itemsPerPageSelect.addEventListener('change', () => fetchUsers(1));
+
+    // Initial pagination listeners
+    attachPaginationListeners();
+
+    // Optional: Trigger search on Enter key in search input
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        fetchUsers(1);
+      }
+    });
+  });
+</script>
 {% endblock %}

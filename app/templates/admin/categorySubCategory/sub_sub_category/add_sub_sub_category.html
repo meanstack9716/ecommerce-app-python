@@ -73,12 +73,18 @@
                 <!-- Product Type Image -->
 
                 <div class="mb-6">
-                    <label for="image" class="block text-base font-medium text-black mb-1">
-                        Sub-Sub Category Image
-                    </label>
-                    <div class="mt-1 flex items-start flex-col">
-                        <input type="file" id="image" name="image" accept=".png,.jpeg,.jpg,.pdf"
-                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-8 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition duration-150 ease-in-out">
+
+                    <div class="mb-6">
+                        {% set id = 'sub-sub-category-image' %}
+                        {% set name = 'sub-sub-category-image' %}
+                        {% set label = 'Sub-Sub Category Image' %}
+                        {% set required = true %}
+                        {% set multiple = false %}
+                        {% set accept = '.png,.jpeg,.jpg' %}
+                        {% set help_text = 'PNG, JPG up to 2MB' %}
+
+                        {% set label_classes = 'block text-base font-medium text-black mb-2' %}
+                        {% include 'components/image_upload.html' %}
                     </div>
                     <p class="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
                 </div>
@@ -123,7 +129,7 @@
             subcategory: document.getElementById('subcategory'),
             name: document.getElementById('name'),
             description: document.getElementById('description'),
-            image: document.getElementById('image')
+            image: document.getElementById('sub-sub-category-image')
         };
 
         const isValid = Object.keys(fields).every(field => {
@@ -141,7 +147,7 @@
                 }
             }
 
-            return isMinLengthValid; 
+            return isMinLengthValid;
         });
 
         const isValidImage = validateImage(fields.image);
@@ -168,6 +174,9 @@
         if (response.success) {
             showToast('Sub-Sub Category Added Successfully!', 'success');
             document.getElementById('subSubCategoryForm').reset();
+            setTimeout(()=>{
+                window.location.href = '{{ url_for("admin_api.sub_sub_category_list_page") }}';
+            },500)
         } else {
             if (response.errors) {
                 Object.keys(response.errors).forEach(field => {

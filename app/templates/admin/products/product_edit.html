@@ -332,7 +332,7 @@ admin_content %}
 
     // Brand Management
     const initializeBrandSelect = async () => {
-      const { success, data, error } = await sendGetRequest("/api/brand/lists")
+      const { success, data, error } = await fetchJsonData("/api/brand/lists")
       if (!success) {
         showToast("Failed to fetch brands", "error")
         console.error("Failed to fetch brands:", error)

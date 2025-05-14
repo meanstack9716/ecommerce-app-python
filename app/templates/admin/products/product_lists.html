@@ -3,211 +3,388 @@
 {% block title %}Product List{% endblock %}
 
 {% block admin_content %}
-<div class="max-w-7xl mx-auto p-6 bg-white rounded-lg shadow">
-    <h1 class="text-3xl font-bold mb-8 text-center text-black">Product List</h1>
-    <form method="GET" class="flex flex-col sm:flex-row justify-between sm:items-end gap-3 mb-6">
-        <div class="flex items-center gap-6">
-            <input type="hidden" name="page" value="1">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-white rounded-lg shadow">
+    <h1 class="text-2xl md:text-3xl font-bold mb-6 text-center text-black">Product List</h1>
+    <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+    <!-- Display Server-Side Errors -->
+    {% if error %}
+    <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Filter Form -->
+    <form id="filter-form" method="GET" class="flex flex-col gap-4 mb-6">
+        <div class="flex flex-col sm:flex-row gap-4 w-full">
             <!-- Category Filter -->
-            <div class="flex flex-col items-start gap-2 w-full xl:w-auto">
-                <p class="m-0 text-black font-medium">Search by Category</p>
-                <div class="relative w-full sm:min-w-64">
-                    <select name="categoryId"
-                        class="border border-gray-300 cursor-pointer rounded-lg px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
+            <div class="flex-1 min-w-0">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Search by Category</label>
+                <div class="relative">
+                    <select name="category"
+                        class="block w-full border border-gray-300 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
                         <option value="">All Categories</option>
                         {% for cat in categories %}
                         <option value="{{ cat.name }}" {% if request.args.get('category')==cat.name %}selected{% endif
-                            %}>{{
-                            cat.name }}</option>
+                            %}>{{ cat.name }}</option>
                         {% endfor %}
                     </select>
                     <span
-                        class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">
-                        chevron_right
-                    </span>
+                        class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">chevron_right</span>
                 </div>
             </div>
 
-            <!-- Price Range Filter -->
-            <div class="flex flex-row items-start gap-6 w-full xl:w-auto">
-                <div class="flex flex-col gap-2">
-                    <label class="m-0 text-black font-medium">Min Range</label>
+            <!-- Price Range -->
+            <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Min Price</label>
                     <input type="number" step="0.01" name="min_price" placeholder="Min"
                         value="{{ request.args.get('min_price', '') }}"
-                        class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-
+                        class="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                 </div>
-                <div class="flex flex-col gap-2">
-                    <label class="m-0 text-black font-medium">Max Range</label>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Max Price</label>
                     <input type="number" step="0.01" name="max_price" placeholder="Max"
                         value="{{ request.args.get('max_price', '') }}"
-                        class="border border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        class="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                 </div>
-
             </div>
-
         </div>
+
+        <input type="hidden" name="page" value="1">
 
         <!-- Filter Button -->
-        <div class="flex items-end">
-            <button type="submit"
-                class="w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-                Apply Filters
-            </button>
-
-        </div>
+        <button type="submit"
+            class="w-full sm:w-36 self-end px-6 py-3 tracking-wider border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+            Apply Filters
+        </button>
     </form>
 
+    <!-- Product Table -->
+    <div id="product-table-container">
+        {% if products and products.items %}
+        <div class="overflow-x-auto rounded-lg border border-gray-200">
+            {% set product_headers = [
+            {'label': 'Image', 'responsive': ''},
+            {'label': 'Name', 'responsive': ''},
+            {'label': 'Price', 'responsive': ''},
+            {'label': 'Discount', 'responsive': 'sm'},
+            {'label': 'Final Price', 'responsive': 'md'},
+            {'label': 'SKU', 'responsive': 'lg'},
+            {'label': 'Actions', 'responsive': ''}
+            ] %}
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        {% for header in product_headers %}
+                        <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap
+                                {% if header.responsive == 'sm' %} hidden sm:table-cell
+                                {% elif header.responsive == 'md' %} hidden md:table-cell
+                                {% elif header.responsive == 'lg' %} hidden lg:table-cell
+                                {% endif %}">
+                            {{ header.label }}
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
 
-
-    {% if products.items %}
-    <div class="overflow-x-auto">
-        <table class="min-w-full border border-gray-200 text-left text-sm text-gray-700">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th
-                        class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider text-center md:table-cell">
-                        Product Image
-                    </th>
-                    <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
-                        Product Name
-                    </th>
-                    <th
-                        class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider text-center md:table-cell">
-                        Price
-                    </th>
-                    <th
-                        class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider text-center md:table-cell">
-                        Discount
-                    </th>
-                    <th
-                        class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider text-center md:table-cell">
-                        Discounted Price
-                    </th>
-                    <th
-                        class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider text-center lg:table-cell">
-                        SKU
-                    </th>
-                    <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
-                        Actions
-                    </th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {% for product in products.items %}
-                <tr class="border-t hover:bg-gray-50">
-                    <td class="px-3 py-2 border text-center md:table-cell">
-                        <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
-                            {% if product.variants %}
-                            {% set first_variant = product.variants[0] %}
-                            {% if first_variant.images %}
-                            <img src="{{ first_variant.images.0.image_url }}" alt="{{ product.name }}"
-                                class="max-w-full max-h-full object-contain rounded" />
-                            {% else %}
-                            <span class="text-gray-400 text-xs">No Image</span>
-                            {% endif %}
-                            {% else %}
-                            <span class="text-gray-400 text-xs">No Variants</span>
-                            {% endif %}
-                        </div>
-                    </td>
-
-                    <td class="px-3 py-2 border text-center break-words">{{ product.name }}</td>
-                    <td class="px-3 py-2 border text-center md:table-cell">
-                        <p class="font-bold text-black text-sm">₹{{ product.price|int }}</p>
-                    </td>
-
-                    <td class="px-3 py-2 border text-center md:table-cell">
-                        {% if product.discount_price > 0 %}
-                        <span class="text-sm">{{ product.discount_price }}%</span>
-                        {% else %}
-                        <span class="text-sm">-</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-3 py-2 border text-center md:table-cell">
-                        <p class="font-bold text-black text-sm">₹{{ product.final_price|int }}</p>
-                    </td>
-                    <td class="px-3 py-2 border text-center lg:table-cell">
-                        <span class="text-xs">{{ product.sku_number or '-' }}</span>
-                    </td>
-
-                    <td class="px-3 py-2 border text-center whitespace-nowrap">
-                        <div class="flex justify-center space-x-2">
-                            <a href="{{ url_for('admin_api.edit_product', product_id=product.id) }}"
-                                class="text-blue-600 hover:underline text-sm flex items-center gap-1">
-                                <span class="material-symbols-outlined align-middle text-xl">edit_square</span>
-                                <span class="hidden md:inline"></span>
-                            </a>
-                            <a href="{{ url_for('admin_api.product_details', product_id=product.id) }}"
-                                class="text-green-600 hover:underline flex items-center gap-1">
-                                <span class="material-symbols-outlined align-middle text-3xl">chevron_forward</span>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-
-        </table>
+                <tbody id="product-table-body" class="bg-white divide-y divide-gray-200">
+                    {% for product in products.items %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-center whitespace-nowrap">
+                            <div class="w-12 h-12 mx-auto flex items-center justify-center">
+                                {% if product.variants %}
+                                {% set first_variant = product.variants[0] %}
+                                {% if first_variant.images %}
+                                <img src="{{ first_variant.images.0.image_url }}" alt="{{ product.name }}"
+                                    class="max-w-full max-h-full object-contain rounded" />
+                                {% else %}
+                                <span class="text-gray-400 text-xs">No Image</span>
+                                {% endif %}
+                                {% else %}
+                                <span class="text-gray-400 text-xs">No Variants</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center whitespace-normal max-w-xs">
+                            <div class="text-sm font-medium text-gray-900 line-clamp-2">{{ product.name }}</div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <div class="text-sm font-bold text-gray-900">₹{{ product.price|int }}</div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-center hidden sm:table-cell">
+                            <div class="text-sm text-gray-500">
+                                {% if product.discount_price > 0 %}
+                                {{ product.discount_price }}%
+                                {% else %}
+                                -
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-center hidden md:table-cell">
+                            <div class="text-sm font-bold text-gray-900">₹{{ product.final_price|int }}</div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-center hidden lg:table-cell">
+                            <div class="text-sm text-gray-500">{{ product.sku_number or '-' }}</div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-center text-right">
+                            <div class="flex justify-center space-x-2">
+                                <a href="{{ url_for('admin_api.edit_product', product_id=product.id) }}"
+                                    class="text-blue-600 hover:text-blue-800" title="Edit">
+                                    <span class="material-symbols-outlined text-xl">edit_square</span>
+                                </a>
+                                <a href="{{ url_for('admin_api.product_details', product_id=product.id) }}"
+                                    class="text-green-600 hover:text-green-800" title="Details">
+                                    <span class="material-symbols-outlined text-xl">chevron_forward</span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-10">
+            <p class="text-gray-500">No products available.</p>
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <p class="text-center text-gray-500 mt-10">No products available.</p>
-    {% endif %}
 
-
-    <!-- Pagination Controls (same as before) -->
-    <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
-        <!-- Items per page selector -->
-        <div class="flex items-center gap-2 relative w-fit">
+    <!-- Pagination -->
+    <div id="pagination-container" class="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
+        <div class="flex items-center gap-2">
             <span class="text-sm text-gray-600">Items per page:</span>
             <div class="relative">
-                <select onchange="window.location.href = this.value"
-                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 appearance-none">
+                <select onchange="updateLimit(this.value)"
+                    class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 appearance-none">
                     {% for amount in [10, 20, 50, 100] %}
-                    <option value="{{ url_for('admin_api.get_product_lists', page=1, limit=amount) }}" {% if
-                        request.args.get('limit', 12)|int==amount %}selected{% endif %}>
-                        {{ amount }}
-                    </option>
+                    <option value="{{ amount }}" {% if request.args.get('limit', 10)|int==amount %}selected{% endif %}>
+                        {{ amount }}</option>
                     {% endfor %}
                 </select>
                 <span
-                    class="material-symbols-outlined pointer-events-none absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500">
-                    expand_more
-                </span>
+                    class="material-symbols-outlined pointer-events-none absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">expand_more</span>
             </div>
         </div>
 
-        <!-- Page Navigation -->
-        <div class="flex items-center gap-2">
-            {% if products.has_prev %}
-            <a href="{{ url_for('admin_api.get_product_lists', page=products.prev_num, limit=request.args.get('limit', 12)) }}"
-                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition">
+        <div id="pagination-controls" class="flex items-center gap-2">
+            {% if products and products.has_prev %}
+            <a href="#" onclick="changePage({{ products.prev_num }})"
+                class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 transition">
                 Previous
             </a>
             {% else %}
-            <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed text-sm">Previous</span>
+            <span class="px-3 py-1.5 border rounded-lg text-gray-400 cursor-not-allowed text-sm">Previous</span>
             {% endif %}
 
-            <span class="px-4 py-2 text-sm">
-                Page {{ products.page }} of {{ products.pages }}
+            <span class="px-3 py-1.5 text-sm">
+                Page {{ products.page if products else 1 }} of {{ products.pages if products else 1 }}
             </span>
 
-            {% if products.has_next %}
-            <a href="{{ url_for('admin_api.get_product_lists', page=products.next_num, limit=request.args.get('limit', 12)) }}"
-                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition">
+            {% if products and products.has_next %}
+            <a href="#" onclick="changePage({{ products.next_num }})"
+                class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 transition">
                 Next
             </a>
             {% else %}
-            <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>
+            <span class="px-3 py-1.5 border rounded-lg text-gray-400 cursor-not-allowed text-sm">Next</span>
             {% endif %}
         </div>
     </div>
-
 </div>
-{% endblock %}
 
-{% block js %}
-
-
+<script>
+    async function fetchJsonData(url, options = {}) {
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {}),
+                },
+                ...options
+            });
+    
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! ${response.status} - ${errorText}`);
+            }
+    
+            return await response.json();
+        } catch (error) {
+            console.error(`API call failed: ${url}`, error);
+            throw error;
+        }
+    }
+    
+    // Initialize filter form
+    const filterForm = document.getElementById('filter-form');
+    filterForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        fetchProducts(1);
+    });
+    const loader = document.getElementById('loader');
+    
+    // Function to fetch products via AJAX
+    async function fetchProducts(page) {
+        loader.classList.remove('hidden'); // Show loader
+        const formData = new FormData(filterForm);
+        formData.set('page', page);
+        const params = new URLSearchParams(formData).toString();
+        const url = `/admin/products/api?${params}`;
+        const container = document.getElementById('product-table-container');
+    
+        try {
+            const data = await fetchJsonData(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+    
+            if (data.error) {
+                container.innerHTML = `
+                    <div class="text-center py-10">
+                        <p class="text-red-500">${data.error}</p>
+                    </div>
+                `;
+                updatePagination({
+                    page: 1,
+                    pages: 1,
+                    has_prev: false,
+                    has_next: false,
+                    prev_num: null,
+                    next_num: null
+                });
+            } else {
+                updateProductTable(data);
+                updatePagination(data);
+            }
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            container.innerHTML = `
+                <div class="text-center py-10">
+                    <p class="text-red-500">${error.message || 'Failed to load products. Please try again.'}</p>
+                </div>
+            `;
+            updatePagination({
+                page: 1,
+                pages: 1,
+                has_prev: false,
+                has_next: false,
+                prev_num: null,
+                next_num: null
+            });
+        } finally {
+            loader.classList.add('hidden'); // Hide loader in all cases
+        }
+    }
+    
+    // Function to update product table
+    function updateProductTable(data) {
+        const tableBody = document.getElementById('product-table-body');
+        const container = document.getElementById('product-table-container');
+    
+        if (data.products.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-10">
+                    <p class="text-gray-500">No products available.</p>
+                </div>
+            `;
+            return;
+        }
+    
+        // Rebuild table if products exist
+        container.innerHTML = `
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Image</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Name</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Price</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Discount</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Final Price</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">SKU</th>
+                            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="product-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        `;
+    
+        const newTableBody = document.getElementById('product-table-body');
+        data.products.forEach(product => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50';
+            row.innerHTML = `
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="w-12 h-12 mx-auto flex items-center justify-center">
+                        ${product.image_url ?
+                    `<img src="${product.image_url}" alt="${product.name}" class="max-w-full max-h-full object-contain rounded" />` :
+                    `<span class="text-gray-400 text-xs">No Image</span>`
+                }
+                    </div>
+                </td>
+                <td class="px-4 py-3 whitespace-normal max-w-xs">
+                    <div class="text-sm font-medium text-gray-900 line-clamp-2">${product.name}</div>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="text-sm font-bold text-gray-900">₹${Math.floor(product.price)}</div>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap hidden sm:table-cell">
+                    <div class="text-sm text-gray-500">${product.discount_price > 0 ? product.discount_price + '%' : '-'}</div>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap hidden md:table-cell">
+                    <div class="text-sm font-bold text-gray-900">₹${Math.floor(product.final_price)}</div>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap hidden lg:table-cell">
+                    <div class="text-sm text-gray-500">${product.sku_number}</div>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap text-right">
+                    <div class="flex justify-center space-x-2">
+                        <a href="${product.edit_url}" class="text-blue-600 hover:text-blue-800" title="Edit">
+                            <span class="material-symbols-outlined text-xl">edit_square</span>
+                        </a>
+                        <a href="${product.details_url}" class="text-green-600 hover:text-green-800" title="Details">
+                            <span class="material-symbols-outlined text-xl">chevron_forward</span>
+                        </a>
+                    </div>
+                </td>
+            `;
+            newTableBody.appendChild(row);
+        });
+    }
+    
+    // Function to update pagination
+    function updatePagination(data) {
+        const paginationControls = document.getElementById('pagination-controls');
+        paginationControls.innerHTML = `
+            ${data.has_prev ?
+                `<a href="#" onclick="changePage(${data.prev_num})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 transition">Previous</a>` :
+                `<span class="px-3 py-1.5 border rounded-lg text-gray-400 cursor-not-allowed text-sm">Previous</span>`
+            }
+            <span class="px-3 py-1.5 text-sm">Page ${data.page} of ${data.pages}</span>
+            ${data.has_next ?
+                `<a href="#" onclick="changePage(${data.next_num})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 transition">Next</a>` :
+                `<span class="px-3 py-1.5 border rounded-lg text-gray-400 cursor-not-allowed text-sm">Next</span>`
+            }
+        `;
+    }
+    
+    function changePage(page) {
+        fetchProducts(page);
+    }
+    
+    function updateLimit(limit) {
+        const formData = new FormData(filterForm);
+        formData.set('limit', limit);
+        formData.set('page', 1); // Reset to page 1
+        fetchProducts(1); // Use AJAX instead of page reload
+        const params = new URLSearchParams(formData).toString();
+        history.pushState({}, '', `/admin/products?${params}`);
+    }
+    </script>
 {% endblock %}

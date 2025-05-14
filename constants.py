@@ -26,6 +26,7 @@ LOGIN = f'{BASE_URL}/login'
 FORGOT_PASSWORD = f'{BASE_URL}/send-email-code'
 VERIFY_OTP = f'{BASE_URL}/verify-email-code'
 RESET_PASSWORD = f'{BASE_URL}/reset-password'
+RESEND_OTP = f'{BASE_URL}/resend-otp'
 
 # WEB Endpoint Constants Start
 Login_WEB_URL = f'/login'
@@ -40,12 +41,16 @@ ALL_USER_LIST_WEB_URL = f'/all-users-list'
 
 ADD_SELLER_WEB_URL = f'/add-new-seller'
 GET_SELLER_LIST_WEB_URL = f'/seller/list'
+GET_SELLERS_API_URL = '/api/sellers'
 
 CATEGORY_LIST_WEB_URL = '/category-list'
 ADD_CATEGORY_WEB_URL = '/add-new-category'
+CATEGORY_LIST_WEB_URL = '/category/list'
+GET_CATEGORIES_FILTER_API_URL = '/api/categories'
 
 SUBCATEGORY_LIST_WEB_URL = f'/sub-categories/list'
 Add_SUBCATEGORY_LIST_WEB_URL = f'/subcategories/add'
+GET_SUBCATEGORIES_FILTER_API_URL = '/api/subcategories'
 
 SUB_SUB_CATEGORY_LIST_WEB_URL = f'/sub-sub-category-list'
 SUB_SUB_CATEGORY_WEB_URL = f'sub-sub-category/add'
@@ -65,8 +70,6 @@ UPDATE_BRAND_WEB_URL = f'/brands/edit/<brand_id>'
 
 # WEB Endpoint Constants End
 
-
-
 # API Endpoint Constants Start
 
 # User API Endpoint Constants
@@ -77,6 +80,7 @@ DELETE_PROFILE_PIC = f'/delete-profile-pic'
 LOGOUT = f'/logout'
 ADD_SELLER = f'/add-new-seller'
 GET_SELLER_API = f'/seller/list'
+
 
 # Category API Endpoint Constants
 API_CATEGORY_LIST = '/api/categories/list'
@@ -98,7 +102,7 @@ EDIT_PRODUCT_API = f'/api/products/edit'
 # Sub Sub Category API Endpoint Constants End
 
 # Brand Endpoint API Start
-GET_BRANDS_API = '/api/brand/lists'
+GET_BRANDS_LIST_API = '/api/brand/lists'
 ADD_BRAND_API = '/api/brands/add'
 UPDATE_BRAND_API = '/api/update-brand'
 DELETE_BRAND_API = '/delete_brand/<string:brand_id>'
