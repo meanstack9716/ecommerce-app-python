@@ -3,7 +3,7 @@ function showToast(message, type = 'success', duration = 3000) {
     const toastContainer = document.getElementById('toastContainer');
     
     const toast = document.createElement('div');
-    toast.classList.add('p-3', 'rounded-md', 'shadow-lg', 'text-white', 'w-80', 'max-w-xs', 'transition-all', 'duration-300');
+    toast.classList.add('p-3', 'text-sm' ,'rounded-md', 'shadow-lg', 'text-white', 'w-80', 'max-w-xs', 'transition-all', 'duration-300');
     
     if (type === 'success') {
       toast.classList.add('bg-green-600');
