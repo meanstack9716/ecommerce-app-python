@@ -4,11 +4,13 @@ from .config import Config
 from app.models import User
 import os
 from app.utils.sidebar import sidebar_context
+from flask_cors import CORS
 
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
-
+    CORS(app)
+    
     app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')
     app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 
