@@ -110,7 +110,7 @@ def add_seller():
                 user_id=user,
                 address_proof_id_type=data.get('addressProofIdType'),
                 address_proof_front=address_proof_front_url,
-                address_proof_back=address_proof_back_url,
+                # address_proof_back=address_proof_back_url,
                 pan_number=data.get('panNumber'),
                 pan_card_front=pan_card_front_url,
                 pan_card_back=pan_card_back_url
