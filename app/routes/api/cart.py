@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 from app.models.cart import Cart, CartItem
-from app.models.products import ProductVariant
+from app.models.products import ProductVariant, ProductVariantImage
 from app.models.products import Products
 from datetime import datetime
 from constants import CART_ADD, CART_REMOVE, CART_LIST, CART_CHECKOUT
@@ -186,24 +186,51 @@ def get_cart():
     if not cart:
         return jsonify({"items": [], "total_price": 0.0}), 200
 
-    return jsonify({
-        "items": [
-            {
-                "product_id": item.product_id,
-                "variant_id": item.variant_id,
-                "size": item.size,
-                "color": item.color,
-                "quantity": item.quantity,
-                "price": item.price,
-                "discount": item.discount,
-                "total_price": (item.price - item.discount) * item.quantity
-            } for item in cart.items
-        ],
-        "total_price": cart.total_price,
-        "currency": cart.currency,
-        "status": cart.status or "active"
-    }), 200
+    items = []
+    for item in cart.items:
+        product = Products.objects(id=item.product_id).first()
 
+        variant = ProductVariant.objects(id=item.variant_id).first() if item.variant_id else None
+        variant_data = None
+
+        product_image = None
+        if item.product_id:
+            first_variant = ProductVariant.objects(product_id=item.product_id).first()
+            if first_variant:
+                first_image = ProductVariantImage.objects(variant_id=first_variant.id).first()
+                if first_image:
+                    product_image = {
+                        "image_url": first_image.image_url,
+                        "alt_text": first_image.alt_text
+                    }
+
+        item_data = {
+            "product_id": str(item.product_id),
+            "size": item.size,
+            "color": item.color,
+            "quantity": item.quantity,
+            "product": {
+                "name": product.name if product else "Unknown Product",
+                "details": product.details if product else None,
+                "description": product.description if product else None,
+                "sku_number": product.sku_number if product else None,
+                "category_id": str(product.category_id.id) if product and product.category_id else None,
+                "subcategory_id": str(product.subcategory_id.id) if product and product.subcategory_id else None,
+                "subsubcategory_id": str(product.subsubcategory_id.id) if product and product.subsubcategory_id else None,
+                "brand_id": str(product.brand_id.id) if product and product.brand_id else None,
+                "material": product.material if product else None,
+                "price": float(product.price) if product else 0.0,
+                "discount_percentage": float(product.discount_price) if product and product.discount_price else None,
+                "final_price": float(product.final_price) if product else 0.0,
+                "stock_quantity": product.stock_quantity if product else 0,
+                "image": product_image
+            },
+        }
+        items.append(item_data)
+
+    return jsonify({
+        "items": items,
+    }), 200
 
 @cart_bp.route(CART_CHECKOUT, methods=['POST'])
 def checkout():
