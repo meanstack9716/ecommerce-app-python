@@ -42,7 +42,6 @@ def fetch_brands():
     search_query = request.args.get('search', '')
     limit = int(request.args.get('limit', 10))
     page = int(request.args.get('page', 1))
-
     if search_query:
         brands = ProductBrands.objects(name__icontains=search_query)
     else:

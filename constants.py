@@ -105,7 +105,7 @@ EDIT_PRODUCT_API = f'/api/products/edit'
 GET_BRANDS_LIST_API = '/api/brand/lists'
 ADD_BRAND_API = '/api/brands/add'
 UPDATE_BRAND_API = '/api/update-brand'
-DELETE_BRAND_API = '/delete-brand/<brand_id>'
+DELETE_BRAND_API = '/brands/delete/<brand_id>'
 # Brand Endpoint API End
 
 # Cart Endpoint API Start
