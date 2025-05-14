@@ -4,6 +4,7 @@
         <label for="{{ id }}" class="{{ label_classes|default('block text-sm font-medium text-gray-700 mb-2') }}">
             {{ label }} {% if required %}<span class="text-red-500">*</span>{% endif %}
         </label>
+
         <!-- Upload area -->
         <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"
             id="{{ id }}-dropzone">
@@ -27,7 +28,27 @@
             </div>
         </div>
 
-        <!-- Image preview container -->
+        <!-- Existing image preview -->
+        <div id="{{ id }}-existing-preview" class="mt-4 mb-4">
+            {% if existing_image %}
+            <div class="relative group inline-block">
+                <div class="aspect-square overflow-hidden rounded-lg bg-gray-100 w-32 h-32">
+                    <img src="{{ existing_image }}" alt="Current Brand Logo"
+                        class="w-full h-full object-cover transition-opacity group-hover:opacity-75">
+                </div>
+                <button type="button"
+                    class="material-symbols-outlined text-md leading-none absolute -top-1 -right-1 text-white w-8 h-8 flex items-center justify-center transition-colors cursor-pointer bg-red-500 rounded-full"
+                    onclick="removeExistingImage('{{ id }}')">
+                    cancel
+                </button>
+                <input type="hidden" id="{{ id }}-existing-image" name="{{ name }}-existing"
+                    value="{{ existing_image }}">
+            </div>
+            {% endif %}
+        </div>
+
+
+        <!-- New image preview container -->
         <div id="{{ id }}-preview"
             class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 hidden">
             <!-- Preview images will be inserted here -->
@@ -36,10 +57,10 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const dropzone = document.getElementById('{{ id }}-dropzone');
         const fileInput = document.getElementById('{{ id }}');
-        
+
         // Prevent default drag behaviors
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropzone.addEventListener(eventName, preventDefaults, false);
@@ -75,25 +96,25 @@
         function handleDrop(e) {
             const dt = e.dataTransfer;
             const files = dt.files;
-            
+
             if (files.length) {
                 // Create new DataTransfer to update files
                 const dataTransfer = new DataTransfer();
-                
+
                 // Add existing files (if multiple is enabled)
                 if (fileInput.multiple && fileInput.files) {
                     Array.from(fileInput.files).forEach(file => {
                         dataTransfer.items.add(file);
                     });
                 }
-                
+
                 // Add new files
                 Array.from(files).forEach(file => {
                     dataTransfer.items.add(file);
                 });
-                
+
                 fileInput.files = dataTransfer.files;
-                
+
                 // Trigger the change event
                 const event = new Event('change');
                 fileInput.dispatchEvent(event);
@@ -146,11 +167,31 @@
 
             if (!hasValidFiles) {
                 previewContainer.classList.add('hidden');
-                input.value = ''; 
+                input.value = '';
             }
         } else {
             previewContainer.classList.add('hidden');
         }
+    }
+
+    function removeExistingImage(inputId) {
+        const existingPreview = document.getElementById(inputId + '-existing-preview');
+        const fileInput = document.getElementById(inputId);
+
+        const removeField = document.createElement('input');
+        removeField.type = 'hidden';
+        removeField.name = 'remove_existing_image';
+        removeField.value = 'true';
+        document.getElementById('editBrandForm').appendChild(removeField);
+
+        existingPreview.innerHTML = '';
+
+        if (fileInput) {
+            fileInput.value = '';
+        }
+
+        const saveButton = document.querySelector("button[type='submit']");
+        saveButton.disabled = false;
     }
 
     function removeImage(button, inputId, index) {

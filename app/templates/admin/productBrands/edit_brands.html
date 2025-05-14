@@ -39,17 +39,17 @@
             <div class="bg-white">
                 {% set id = 'brand-logo' %}
                 {% set name = 'images' %}
-                {% set label = 'Upload Brand Logo' %}
+                {% set label = 'Brand Logo' %}
                 {% set required = true %}
                 {% set multiple = false %}
                 {% set accept = '.png,.jpeg,.jpg,.webp,.avif' %}
                 {% set help_text = 'PNG, JPG, JPEG up to 2MB' %}
                 {% set label_classes = 'block text-base font-medium text-black' %}
+                {% set existing_image = brand.logo_path %}
 
                 {% include 'components/image_upload.html' %}
             </div>
         </div>
-
         <div class="pt-4 flex justify-end">
             <button type="submit"
                 class="w-48 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
@@ -73,7 +73,7 @@
     let initialValues = {
         name: "{{ brand.name }}",
         description: "{{ brand.description }}",
-        logo: "{{ brand.logo }}"
+        logo: "{{ brand.logo_path }}"
     };
 
     const saveButton = document.querySelector("button[type='submit']");
@@ -166,6 +166,4 @@
         field.addEventListener('input', checkIfChanged);
     });
 </script>
-
-
 {% endblock %}
