@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, session
 from app.models.order import Order
 from app.models.user import User
 from datetime import datetime
-from app.models.cart import Cart, CartItem
+from app.models.productCart import ProductCart
 from app.models.products import Products, ProductVariant, ProductVariantImage
 
 order_bp = Blueprint('order', __name__)
