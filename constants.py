@@ -115,6 +115,12 @@ CART_LIST = '/api/cart/list'
 CART_CHECKOUT = '/api/cart/checkout'
 # Cart Endpoint API End
 
+# Address Endpoint Start
+ADDRESS_ADD = '/api/address/add'
+ADDRESS_UPDATE = '/api/address/update/<address_id>'
+ADDRESS_REMOVE = '/api/address/remove/<address_id>'
+ADDRESS_LIST = '/api/address/list'
+# Address Endpoint End
 
 WISHLIST_ADD = '/api/wishlist/add'
 WISHLIST_REMOVE = '/api/wishlist/remove'

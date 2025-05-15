@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, session
-from app.models.order import Order
+from app.models.order import Order, OrderItem
 from app.models.user import User
+from app.models.address import Address
 from datetime import datetime
 from app.models.productCart import ProductCart
 from app.models.products import Products, ProductVariant, ProductVariantImage
@@ -35,7 +36,7 @@ def place_order():
     if not cart_items:
         return jsonify({"error": "No cart items found"}), 400
 
-    shipping_address = UserAddress.objects(
+    shipping_address = Address.objects(
         user_id=user_id,
         id=data['shipping_address_id']
     ).first()
@@ -46,7 +47,7 @@ def place_order():
     total_amount = 0
 
     for cart_item in cart_items:
-        product = Product.objects(id=cart_item.product_id).first()
+        product = Products.objects(id=cart_item.product_id).first()
         if not product:
             continue 
 
@@ -79,7 +80,7 @@ def place_order():
         status='pending',
         shipping_address={
             'id': str(shipping_address.id),
-            'name': shipping_address.name,
+            # 'name': shipping_address.name,
             'address_line1': shipping_address.address_line1,
             'address_line2': shipping_address.address_line2,
             'city': shipping_address.city,
