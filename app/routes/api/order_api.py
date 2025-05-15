@@ -4,6 +4,8 @@ from app.models.user import User
 from datetime import datetime
 from app.models.productCart import ProductCart
 from app.models.products import Products, ProductVariant, ProductVariantImage
+import random
+import string
 
 order_bp = Blueprint('order', __name__)
 
@@ -12,48 +14,96 @@ def get_user_id():
         return jsonify({"error": "Unauthorized"}), 401
     return session['user_id']
 
-@order_bp.route('/api/orders', methods=['POST'])
-def create_order():
+@order_bp.route('/api/orders/new', methods=['POST'])
+def place_order():
     user_id = get_user_id()
     if isinstance(user_id, tuple):
         return user_id
 
     data = request.json
-    required_fields = ['shipping_address', 'shipping_method', 'payment_method']
+    required_fields = ['cart_items_ids', 'shipping_address_id', 'payment_method']
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
 
-    cart = Cart.objects(user_id=user_id).first()
-    if not cart or not cart.items:
-        return jsonify({"error": "Cart is empty"}), 400
+    cart_items_query = ProductCart.objects(user_id=user_id)
+    
+    if data['cart_items_ids']:
+        cart_items = cart_items_query.filter(id__in=data['cart_items_ids'])
+    else:
+        cart_items = cart_items_query
+    
+    if not cart_items:
+        return jsonify({"error": "No cart items found"}), 400
 
-    try:
-        cart.validate_cart(Products)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+    shipping_address = UserAddress.objects(
+        user_id=user_id,
+        id=data['shipping_address_id']
+    ).first()
+    if not shipping_address:
+        return jsonify({"error": "Invalid shipping address"}), 400
 
-    from app.models.order import Order
+    order_items = []
+    total_amount = 0
+
+    for cart_item in cart_items:
+        product = Product.objects(id=cart_item.product_id).first()
+        if not product:
+            continue 
+
+        price = float(product.price)
+        discount_percent = float(product.discount_percent) if hasattr(product, 'discount_percent') else 0
+        final_price = price * (1 - discount_percent / 100)
+        item_total = final_price * cart_item.quantity
+
+        order_item = OrderItem(
+            product_id=product,
+            selected_size=cart_item.selected_size,
+            selected_color=cart_item.selected_color,
+            selected_color_name=cart_item.selected_color_name,
+            quantity=cart_item.quantity,
+            price=price,
+            discount_percent=discount_percent,
+            final_price=final_price
+        )
+        order_items.append(order_item)
+        total_amount += item_total
+
+    order_number = 'ORD-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+
     order = Order(
         user_id=user_id,
-        items=cart.items,
-        total_price=cart.total_price,
-        currency=cart.currency,
-        shipping_address=shipping_address,
-        shipping_method=shipping_method,
-        status='pending'
+        seller_id=None,
+        order_number=order_number,
+        items=order_items,
+        total_amount=total_amount,
+        status='pending',
+        shipping_address={
+            'id': str(shipping_address.id),
+            'name': shipping_address.name,
+            'address_line1': shipping_address.address_line1,
+            'address_line2': shipping_address.address_line2,
+            'city': shipping_address.city,
+            'state': shipping_address.state,
+            'postal_code': shipping_address.postal_code,
+            'country': shipping_address.country,
+            'phone': shipping_address.phone
+        },
+        payment_method=data['payment_method'],
+        payment_status='pending',
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
     )
     order.save()
 
-    cart.items = []
-    cart.shipping_address = shipping_address
-    cart.shipping_method = shipping_method
-    cart.save()
+    cart_items.delete()
 
     return jsonify({
         "message": "Order placed successfully",
         "order_id": str(order.id),
-        "total_price": order.total_price
-    }), 200
+        "order_number": order.order_number,
+        "total_amount": float(total_amount),
+        "items_count": len(order_items)
+    }), 201
 
 @order_bp.route('/api/orders', methods=['GET'])
 def get_orders():
