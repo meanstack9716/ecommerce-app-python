@@ -251,7 +251,6 @@ def checkout():
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
-    from app.models.order import Order
     order = Order(
         user_id=user_id,
         items=cart.items,
