@@ -2,7 +2,9 @@ from flask import render_template, session, redirect, url_for, request
 from . import admin_api
 from app.models import ProductBrands
 from constants import GET_BRANDS_WEB_URL, ADD_BRAND_WEB_URL, UPDATE_BRAND_WEB_URL, DELETE_BRAND_API
+from app.utils.image_upload import get_local_ip
 
+local_ip = get_local_ip()
 
 @admin_api.route(GET_BRANDS_WEB_URL)
 def get_brand_list_page():
@@ -24,7 +26,8 @@ def get_brand_list_page():
                            brands=brands_paginated.items, 
                            pagination=brands_paginated, 
                            search=search_query, 
-                           limit=limit)
+                           limit=limit,
+                           local_ip=local_ip)
 
 
 @admin_api.route(ADD_BRAND_WEB_URL)

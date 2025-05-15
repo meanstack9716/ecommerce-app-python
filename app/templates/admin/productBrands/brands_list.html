@@ -56,7 +56,7 @@
                 <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ brand.description }}</td>
                 <td class="px-3 py-3 md:px-6 md:py-4 w-24 text-center text-sm">
                     {% if brand.logo_path %}
-                    <img src="{{ brand.logo_path }}" alt="{{ brand.name }} logo" class="w-full object-contain">
+                    <img src="http://{{ local_ip }}:8080/static/uploads/{{ brand.logo_path }}" alt="{{ brand.name }} logo" class="w-full object-contain">
                     {% endif %}
                 </td>
                 <td
@@ -162,7 +162,7 @@
                                 <td class="px-6 py-4">${brand.name}</td>
                                 <td class="px-6 py-4">${brand.description}</td>
                                 <td class="px-6 py-4 w-14">
-                                    ${brand.logo_path ? `<img src="${brand.logo_path}" alt="${brand.name} logo" class="w-full object-contain w-14 h-14">` : ''}
+                                    ${brand.logo_path ? `<img src="http://{{ local_ip }}:8080/static/uploads/${brand.logo_path}" alt="${brand.name} logo" class="w-full object-contain w-14 h-14">` : ''}
                                 </td>
                                 <td class=" px-6 py-4 space-x-6">
                                     <a href="/brands/edit/${brand.id}" class="text-blue-600 hover:text-blue-800">Edit</a>

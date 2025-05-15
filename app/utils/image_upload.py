@@ -38,11 +38,7 @@ def upload_image(image):
         filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
         image.save(filepath)
 
-        # Get local IP address
-        local_ip = get_local_ip()
-        file_url = f"http://{local_ip}:8080/static/uploads/{filename}"
-        return file_url, None
-
+        return filename, None  # only return filename
     return None, None
 
 
