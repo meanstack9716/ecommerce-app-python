@@ -3,7 +3,7 @@ from datetime import datetime
 from mongoengine import Document, StringField, IntField, ReferenceField, DateTimeField
 
 class ProductCart(db.Document):
-    product_id = db.StringField(required=True)
+    product_id = db.ReferenceField('Products', required=False)
     user_id = db.StringField(required=True)
     selected_size = db.StringField()
     selected_color = db.StringField()

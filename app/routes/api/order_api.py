@@ -7,6 +7,8 @@ from app.models.productCart import ProductCart
 from app.models.products import Products, ProductVariant, ProductVariantImage
 import random
 import string
+from bson import ObjectId
+import decimal
 
 order_bp = Blueprint('order', __name__)
 
@@ -44,67 +46,74 @@ def place_order():
         return jsonify({"error": "Invalid shipping address"}), 400
 
     order_items = []
-    total_amount = 0
+    total_amount = decimal.Decimal('0.00')
 
     for cart_item in cart_items:
-        product = Products.objects(id=cart_item.product_id).first()
+        product = cart_item.product_id
         if not product:
-            continue 
+            continue
 
-        price = float(product.price)
-        discount_percent = float(product.discount_percent) if hasattr(product, 'discount_percent') else 0
+        price = decimal.Decimal(str(product.price))
+        discount_percent = decimal.Decimal(str(product.discount_percent)) if hasattr(product, 'discount_percent') else decimal.Decimal('0')
         final_price = price * (1 - discount_percent / 100)
         item_total = final_price * cart_item.quantity
 
         order_item = OrderItem(
-            product_id=product,
+            product_id=product.id,
             selected_size=cart_item.selected_size,
             selected_color=cart_item.selected_color,
             selected_color_name=cart_item.selected_color_name,
             quantity=cart_item.quantity,
             price=price,
             discount_percent=discount_percent,
-            final_price=final_price
+            final_price=int(final_price),
         )
         order_items.append(order_item)
         total_amount += item_total
 
-    order_number = 'ORD-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+    while True:
+        order_number = 'ORD-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+        if not Order.objects(order_number=order_number).first():
+            break
 
-    order = Order(
-        user_id=user_id,
-        seller_id=None,
-        order_number=order_number,
-        items=order_items,
-        total_amount=total_amount,
-        status='pending',
-        shipping_address={
-            'id': str(shipping_address.id),
-            # 'name': shipping_address.name,
-            'address_line1': shipping_address.address_line1,
-            'address_line2': shipping_address.address_line2,
-            'city': shipping_address.city,
-            'state': shipping_address.state,
-            'postal_code': shipping_address.postal_code,
-            'country': shipping_address.country,
-            'phone': shipping_address.phone
-        },
-        payment_method=data['payment_method'],
-        payment_status='pending',
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
-    )
-    order.save()
+    seller_id = product.seller_id if order_items and hasattr(product, 'seller_id') else None
 
-    cart_items.delete()
+    try:
+        order = Order(
+            user_id=user_id,
+            seller_id=seller_id,
+            order_number=order_number,
+            items=order_items,
+            total_amount=total_amount,
+            status='pending',
+            shipping_address={
+                'id': str(shipping_address.id),
+                'address_line1': shipping_address.address.line1,
+                'address_line2': shipping_address.address.line2,
+                'city': shipping_address.address.city,
+                'state': shipping_address.address.state,
+                'postal_code': shipping_address.address.postal_code,
+                'country': shipping_address.address.country,
+            },
+            payment_method=data['payment_method'],
+            payment_status='pending',
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        order.save()
 
-    return jsonify({
-        "message": "Order placed successfully",
-        "order_id": str(order.id),
-        "order_number": order.order_number,
-        "total_amount": float(total_amount),
-        "items_count": len(order_items)
-    }), 201
+        cart_items.delete()
+
+        return jsonify({
+            "message": "Order placed successfully",
+            "order_id": str(order.id),
+            "order_number": order.order_number,
+            "total_amount": float(total_amount),
+            "items_count": len(order_items)
+        }), 201
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to place order: {str(e)}"}), 500
 
 @order_bp.route('/api/orders', methods=['GET'])
 def get_orders():

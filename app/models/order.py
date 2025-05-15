@@ -3,7 +3,7 @@ from datetime import datetime
 from mongoengine import EmbeddedDocument, EmbeddedDocumentField
 
 class OrderItem(EmbeddedDocument):
-    product_id = db.ReferenceField('Product', required=True)
+    product_id = db.ReferenceField('Products', required=True)
     selected_size = db.StringField()
     selected_color = db.StringField()
     selected_color_name = db.StringField()

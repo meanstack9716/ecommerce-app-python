@@ -50,12 +50,11 @@ def create_address():
         # Create the address detail
         address_detail = AddressDetail(**address_data)
         
-        # Create the address document
         address = Address(
             user_id=user_id,
             address=address_detail,
             address_type=address_type,
-            is_primary=False  # Default to not primary, can be updated later
+            is_primary=False
         )
         
         address.save()
