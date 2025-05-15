@@ -57,7 +57,7 @@ def seed_categories():
         category = Category(
             name=cat_name,
             description=f"{cat_name} category description",
-            img_url=f"/seed_images/categories/{cat_name.lower()}.jpg"
+            img_url=f"seed_images/categories/{cat_name.lower()}.jpg"
         ).save()
         categories[cat_name] = category
 
