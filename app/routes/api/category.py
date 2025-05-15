@@ -148,23 +148,3 @@ def get_category_with_children(category_id):
         'status': 'success',
         'data': category_data
     })
-
-
-@category_bp.route('/delete_category/<string:category_id>', methods=['POST'])
-def delete_category(category_id):
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    try:
-        category = Category.objects(id=ObjectId(category_id)).first()
-        if not category:
-            return create_error_response({'error': 'Category not found'}, 404)
-
-        category.delete()
-
-        return jsonify({
-            'status': 'success',
-            'message': 'Category deleted successfully'
-        })
-    except Exception as e:
-        return create_error_response({'error': str(e)}, 500)
