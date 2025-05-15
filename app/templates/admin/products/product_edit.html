@@ -748,7 +748,7 @@ admin_content %}
         img.className = "w-full h-32 object-cover rounded-lg shadow";
 
         if (item.isExisting) {
-          img.src = item.url;
+          img.src = `http://{{ local_ip }}:8080/static/uploads/${item.url}`;
         } else {
           const reader = new FileReader();
           reader.onload = (e) => (img.src = e.target.result);

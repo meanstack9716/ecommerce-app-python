@@ -97,7 +97,7 @@
                                 {% if product.variants %}
                                 {% set first_variant = product.variants[0] %}
                                 {% if first_variant.images %}
-                                <img src="{{ first_variant.images.0.image_url }}" alt="{{ product.name }}"
+                                <img src="http://{{ local_ip }}:8080/static/uploads/{{ first_variant.images.0.image_url }}" alt="{{ product.name }}"
                                     class="max-w-full max-h-full object-contain rounded" />
                                 {% else %}
                                 <span class="text-gray-400 text-xs">No Image</span>
