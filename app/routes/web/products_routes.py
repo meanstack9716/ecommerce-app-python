@@ -1,8 +1,10 @@
 from flask import render_template, redirect, url_for, session, request,jsonify
-from constants import ADD_NEW_PRODUCT_WEB_URL, GET_PRODUCT_LIST_WEB_URL
+from constants import ADD_NEW_PRODUCT_WEB_URL, GET_PRODUCT_LIST_WEB_URL, GET_PRODUCT_DETAILS_WEB_URL, GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL
 from . import admin_api
 from app.models import Category, SubCategory, SubSubCategory, Products
+from app.utils.image_upload import get_local_ip
 
+local_ip = get_local_ip()
 
 @admin_api.route(ADD_NEW_PRODUCT_WEB_URL, methods=['GET'])
 def add_products_page():
@@ -56,53 +58,11 @@ def get_product_lists():
         'admin/products/product_lists.html',
         products=products,
         categories=categories,
+        local_ip=local_ip,
         error=error
     )
 
-@admin_api.route('/admin/products/api', methods=['GET'])
-def get_product_lists_api():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized', 'products': []}), 401
-
-    products, categories, error = get_filtered_products()
-
-    if error or products is None:
-        return jsonify({
-            'products': [],
-            'page': 1,
-            'pages': 1,
-            'has_prev': False,
-            'has_next': False,
-            'prev_num': None,
-            'next_num': None,
-            'error': error or 'Failed to fetch products'
-        })
-
-    product_list = [
-        {
-            'id': str(product.id),
-            'name': product.name,
-            'price': product.price,
-            'discount_price': product.discount_price if product.discount_price else 0,
-            'final_price': product.final_price,
-            'sku_number': product.sku_number or '-',
-            'image_url': product.variants[0].images[0].image_url if product.variants and product.variants[0].images else None,
-            'edit_url': url_for('admin_api.edit_product', product_id=product.id),
-            'details_url': url_for('admin_api.product_details', product_id=product.id)
-        } for product in products.items
-    ]
-
-    return jsonify({
-        'products': product_list,
-        'page': products.page,
-        'pages': products.pages,
-        'has_prev': products.has_prev,
-        'has_next': products.has_next,
-        'prev_num': products.prev_num,
-        'next_num': products.next_num
-    })
-    
-@admin_api.route('/products/<product_id>', methods=['GET'])
+@admin_api.route(GET_PRODUCT_DETAILS_WEB_URL, methods=['GET'])
 def product_details(product_id):
     product = Products.objects(id=product_id).first()
     if not product:
@@ -191,11 +151,11 @@ def product_details(product_id):
         }
     }
 
-    return render_template('admin/products/product_details.html', product=product_dict)
+    return render_template('admin/products/product_details.html', product=product_dict, local_ip=local_ip)
 
 
 
-@admin_api.route('/products/<product_id>/edit', methods=['GET'])
+@admin_api.route(GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL, methods=['GET'])
 def edit_product(product_id):
     product = Products.objects(id=product_id).first()
     if not product:
@@ -258,7 +218,4 @@ def edit_product(product_id):
         }
     }
 
-    return render_template('admin/products/product_edit.html', product=product_dict)
-
-
-
+    return render_template('admin/products/product_edit.html', product=product_dict, local_ip=local_ip)

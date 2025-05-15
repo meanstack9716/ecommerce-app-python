@@ -2,7 +2,9 @@ from flask import render_template, redirect, url_for, session, request, jsonify
 from constants import CATEGORY_LIST_WEB_URL, ADD_CATEGORY_WEB_URL, GET_CATEGORIES_FILTER_API_URL
 from . import admin_api
 from app.models import Category
+from app.utils.image_upload import get_local_ip
 
+local_ip = get_local_ip()
 
 def fetch_categories_data(search='', category_id='', page=1, per_page=10):
     query = Category.objects
@@ -62,7 +64,8 @@ def get_category_list_page():
         all_categories=data['all_categories'],
         pagination=data['pagination'],
         limit=per_page,
-        categories_api_url=GET_CATEGORIES_FILTER_API_URL
+        categories_api_url=GET_CATEGORIES_FILTER_API_URL,
+        local_ip=local_ip
     )
 
 @admin_api.route(GET_CATEGORIES_FILTER_API_URL, methods=['GET'])

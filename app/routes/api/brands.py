@@ -2,12 +2,13 @@ from flask import Blueprint, request, jsonify, session
 from app.models import ProductBrands
 from constants import GET_BRANDS_LIST_API, ADD_BRAND_API, UPDATE_BRAND_API
 from app.utils.utils import create_error_response
-from app.utils.image_upload import upload_image
+from app.utils.image_upload import upload_image, get_local_ip
 from app.utils.validation import validate_required_fields
 
 from datetime import datetime
 
 brand_bp = Blueprint('brand_bp', __name__)
+local_ip = get_local_ip()
 
 @brand_bp.route(GET_BRANDS_LIST_API, methods=['GET'])
 def fetch_brands():
@@ -60,6 +61,7 @@ def fetch_brands():
 
     return jsonify({
         'data': brands_data,
+        'local_ip': local_ip,
         'pagination': {
             'page': brands_paginated.page,
             'pages': brands_paginated.pages,

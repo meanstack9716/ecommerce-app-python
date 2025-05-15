@@ -8,14 +8,14 @@
         <div class="lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
             <div class="mb-8 lg:mb-0">
                 <div class="relative overflow-hidden border border-gray-200">
-                    <img id="mainProductImage" src="{{ product.gallery[0].img_url }}" alt="{{ product.title }}"
+                    <img id="mainProductImage" src="http://{{ local_ip }}:8080/static/uploads/{{ product.gallery[0].img_url }}" alt="{{ product.title }}"
                         class="w-full h-96 object-contain transition-opacity duration-300 ease-in-out">
                 </div>
                 <div class="mt-4 grid grid-cols-4 gap-3" id="colorThumbnails">
                     {% for image in product.gallery %}
                     <div class="relative rounded-md overflow-hidden shadow-sm border border-gray-200 hover:border-blue-500 cursor-pointer transition-shadow duration-200 ease-in-out"
                         onclick="changeMainImage(this)" data-color="{{ image.color }}">
-                        <img src="{{ image.img_url }}" alt="{{ product.title }} - {{ image.color }}"
+                        <img src="http://{{ local_ip }}:8080/static/uploads/{{ image.img_url }}" alt="{{ product.title }} - {{ image.color }}"
                             class="w-full h-20 object-cover">
                         <div class="absolute inset-0 flex items-center justify-center"
                             id="colorIndicator-{{ loop.index0 }}">
@@ -162,15 +162,15 @@
             }
             // Check if this image URL has already been displayed
             if (!displayedImages.has("{{ image.img_url }}")) {
-                displayedImages.add("{{ image.img_url }}");
+                displayedImages.add({{ image.img_url }}");
                 const thumbnailDiv = document.createElement('div');
                 thumbnailDiv.className = 'relative rounded-md overflow-hidden shadow-sm border border-gray-200 hover:border-blue-500 cursor-pointer transition-shadow duration-200 ease-in-out';
                 thumbnailDiv.setAttribute('onclick', 'changeMainImage(this)');
                 thumbnailDiv.setAttribute('data-color', "{{ image.color }}");
                 thumbnailDiv.innerHTML = `
-                        <img src="{{ image.img_url }}"
-                             alt="{{ product.title }} - {{ image.color }}"
-                             class="w-full h-20 object-cover">
+                      <img src="http://{{ local_ip }}:8080/static/uploads/{{ image.img_url }}"
+                        alt="{{ product.title }} - {{ image.color }}"
+                        class="w-full h-20 object-cover">
                         <div class="absolute inset-0 flex items-center justify-center" id="colorIndicator-{{ loop.index0 }}">
                             ${"{{ image.color }}".toLowerCase() === selectedColor.toLowerCase() ?
                         '<svg class="w-6 h-6 text-blue-500 fill-current" viewBox="0 0 24 24"><path d="M20.293 4.293l-1.414-1.414L15 6.586 9.707 1.293 8.293 2.707l5.293 5.293-5.293 5.293L9.707 15 15 20.293l1.414-1.414L10.707 13.586z"/></svg>' :

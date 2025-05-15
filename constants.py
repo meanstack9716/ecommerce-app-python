@@ -57,6 +57,8 @@ SUB_SUB_CATEGORY_WEB_URL = f'sub-sub-category/add'
 
 ADD_NEW_PRODUCT_WEB_URL = f'products/add'
 GET_PRODUCT_LIST_WEB_URL = f'products/list'
+GET_PRODUCT_DETAILS_WEB_URL = f'/products/<product_id>'
+GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL = f'/products/edit/<product_id>'
 
 GET_BRANDS_WEB_URL = f'/brands/list'
 ADD_BRAND_WEB_URL = f'/brands/add'
