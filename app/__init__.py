@@ -24,7 +24,7 @@ def create_app(config_class=Config):
     from app.models.role import Role
     from app.models.seller import Seller
     from app.models.brands import ProductBrands
-    from app.models.address import Address, AddressDetail
+    from app.models.address import Address
     from app.models.identification import Identification
     from app.models.category_modal import Category, SubCategory, SubSubCategory
     from app.models.products import Products, ProductVariant

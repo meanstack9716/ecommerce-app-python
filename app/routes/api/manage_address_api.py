@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session
-from app.models.address import Address, AddressDetail
+from app.models.address import Address
 from datetime import datetime
 from bson import ObjectId
 from mongoengine.errors import ValidationError, DoesNotExist
@@ -16,138 +16,180 @@ def get_user_id():
 @address_bp.route(ADDRESS_ADD, methods=['POST'])
 def create_address():
     if not request.is_json:
-        return create_error_response({"error": "Request must be JSON"}, 401)
+        return create_error_response({"error": "Request must be JSON"}, 400)  # Changed from 401 to 400
+    
     try:
         data = request.get_json()
-    except Exception:
+    except Exception as e:
         return create_error_response({"error": "Invalid JSON data"}, 400)
 
     user_id = get_user_id()
-    if isinstance(user_id, tuple):
+    if isinstance(user_id, tuple):  # Assuming this returns an error response
         return user_id
 
-    if 'address' not in data:
-        return create_error_response({"error": "address is required"}, 400)
-    if 'addressType' not in data:
-        return create_error_response({"error": "addressType is required"}, 400)
-
-    address_data = data['address']
-    address_type = data['addressType']
-    
-    required_fields = ['line1', 'city', 'state', 'postal_code', 'country']
+    # Validate required fields
+    required_fields = ['line1', 'city', 'state', 'postal_code', 'country', 'addressType']
     for field in required_fields:
-        if field not in address_data:
-            return create_error_response({"error": f"{field} is required in address"}, 400)
+        if field not in data:
+            return create_error_response({"error": f"{field} is required"}, 400)
 
+    address_type = data['addressType']
     valid_types = ['Home', 'Office', 'Work', 'Store', 'Business', 'Other']
     if address_type not in valid_types:
         return create_error_response({"error": f"Invalid addressType. Must be one of {valid_types}"}, 400)
 
     try:
-        # Set the address type in the address data
-        address_data['type'] = address_type
-        
-        # Create the address detail
-        address_detail = AddressDetail(**address_data)
-        
+        # Create the address directly (no embedded document needed)
         address = Address(
             user_id=user_id,
-            address=address_detail,
+            line1=data['line1'],
+            line2=data.get('line2', ''),  # Optional field
+            city=data['city'],
+            state=data['state'],
+            postal_code=data['postal_code'],
+            country=data['country'],
             address_type=address_type,
-            is_primary=False
+            is_primary=data.get('is_primary', False)  # Default to False if not provided
         )
         
+        # This will trigger the clean() method which handles primary address logic
         address.save()
         
         return jsonify({
             "message": "Address created successfully",
-            "address": {
+            "data": {
                 "id": str(address.id),
                 "user_id": str(address.user_id.id),
-                "addressType": address_type,
-                "address": address_detail.to_mongo().to_dict(),
-                "is_primary": address.is_primary
+                "addressType": address.address_type,
+                "line1": address.line1,
+                "line2": address.line2,
+                "city": address.city,
+                "state": address.state,
+                "postal_code": address.postal_code,
+                "country": address.country,
+                "is_primary": address.is_primary,
+                "created_at": address.created_at.isoformat() if address.created_at else None
             }
         }), 201
 
     except ValidationError as e:
         return create_error_response({"error": str(e)}, 400)
     except Exception as e:
-        return create_error_response({"error": str(e)}, 500)
-
+        logger.error(f"Error creating address: {str(e)}")  # Added logging
+        return create_error_response({"error": "Internal server error"}, 500)
         
 @address_bp.route(ADDRESS_UPDATE, methods=['PUT'])
-def update_address(address_id):
+def update_address():
     if not request.is_json:
-        return jsonify({"error": "Request must be JSON"}), 400
+        return create_error_response({"error": "Request must be JSON"}, 400)
+
+    try:
+        data = request.get_json()
+    except Exception as e:
+        return create_error_response({"error": "Invalid JSON data"}, 400)
+
+    address_id = data.get('address_id')
+    if not address_id:
+        return create_error_response({"error": "address_id is required"}, 400)
 
     user_id = get_user_id()
-    if isinstance(user_id, tuple):
+    if isinstance(user_id, tuple):  # Assuming this returns an error response
         return user_id
 
     try:
         address = Address.objects.get(id=ObjectId(address_id), user_id=user_id)
     except DoesNotExist:
-        return jsonify({"error": "Address not found"}), 404
+        return create_error_response({"error": "Address not found"}, 404)
+    except Exception as e:
+        return create_error_response({"error": "Invalid address ID"}, 400)
 
-    data = request.get_json()
-    
-    if 'addressType' not in data:
-        return jsonify({"error": "addressType is required for update"}), 400
-    if 'address' not in data:
-        return jsonify({"error": "address is required for update"}), 400
-
-    address_data = data['address']
-    address_type = data['addressType']
-
-    required_fields = ['line1', 'city', 'state', 'postal_code', 'country']
+    # Validate required fields
+    required_fields = ['line1', 'city', 'state', 'postal_code', 'country', 'type']
     for field in required_fields:
-        if field not in address_data:
-            return jsonify({"error": f"{field} is required in address"}), 400
+        if field not in data:
+            return create_error_response({"error": f"{field} is required"}, 400)
+
+    valid_types = ['Home', 'Office', 'Work', 'Store', 'Business', 'Other']
+    if data['type'] not in valid_types:
+        return create_error_response({"error": f"Invalid addressType. Must be one of {valid_types}"}, 400)
 
     try:
-        address_detail = AddressDetail(**address_data)
+        # Update address fields directly
+        address.line1 = data['line1']
+        address.line2 = data.get('line2', address.line2)
+        address.city = data['city']
+        address.state = data['state']
+        address.postal_code = data['postal_code']
+        address.country = data['country']
+        address.address_type = data['type']
+        address.is_primary = data.get('is_primary', address.is_primary)
         
-        if address_type in ['Home', 'Other']:
-            address.personal_address = address_detail
-            address.business_address = None
-        else:
-            if 'type' not in address_data:
-                address_detail.type = address_type
-            address.business_address = address_detail
-            address.personal_address = None
-
         address.save()
         
         return jsonify({
             "message": "Address updated successfully",
-            "address": {
+            "data": {
                 "id": str(address.id),
                 "user_id": str(address.user_id.id),
-                "addressType": address_type,
-                "address": address_detail.to_mongo().to_dict()
+                "addressType": address.address_type,
+                "is_primary": address.is_primary,
+                "line1": address.line1,
+                "line2": address.line2,
+                "city": address.city,
+                "state": address.state,
+                "postal_code": address.postal_code,
+                "country": address.country,
+                "created_at": address.created_at.isoformat() if address.created_at else None,
+                "updated_at": datetime.utcnow().isoformat()
             }
         }), 200
-
     except ValidationError as e:
-        return jsonify({"error": str(e)}), 400
+        return create_error_response({"error": str(e)}, 400)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Error updating address: {str(e)}")
+        return create_error_response({"error": "Internal server error"}, 500)
+
 
 @address_bp.route(ADDRESS_REMOVE, methods=['DELETE'])
 def delete_address(address_id):
+    payload = {}
+    if request.is_json:
+        try:
+            payload = request.get_json()
+        except Exception as e:
+            return create_error_response({"error": "Invalid JSON payload"}, 400)
+
+    if not address_id or not ObjectId.is_valid(address_id):
+        return create_error_response({"error": "Invalid address ID format"}, 400)
+
     user_id = get_user_id()
     if isinstance(user_id, tuple):
         return user_id
 
     try:
         address = Address.objects.get(id=ObjectId(address_id), user_id=user_id)
+        
+        if payload.get("force") != True and address.is_primary:
+            return create_error_response(
+                {"error": "Cannot delete primary address. Use 'force': true to override."}, 
+                400
+            )
+        
         address.delete()
-        return jsonify({"message": "Address deleted successfully"}), 200
+        
+        return jsonify({
+            "message": "Address deleted successfully",
+            "data": {
+                "deleted_id": address_id,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        }), 200
+        
     except DoesNotExist:
-        return jsonify({"error": "Address not found"}), 404
+        return create_error_response({"error": "Address not found or not owned by user"}, 404)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Error deleting address {address_id}: {str(e)}")
+        return create_error_response({"error": "Internal server error"}, 500)
 
 @address_bp.route(ADDRESS_LIST, methods=['GET'])
 def get_addresses():
@@ -155,24 +197,30 @@ def get_addresses():
     if isinstance(user_id, tuple):
         return user_id
 
-    addresses = Address.objects(user_id=user_id)
-    
-    result = []
-    for address in addresses:
-        if address.personal_address:
-            address_type = address.personal_address.type if address.personal_address.type else 'Home'
-            address_data = address.personal_address.to_mongo().to_dict()
-        else:
-            address_type = address.business_address.type
-            address_data = address.business_address.to_mongo().to_dict()
+    try:
+        addresses = Address.objects(user_id=user_id).order_by('-created_at')
         
-        result.append({
-            "id": str(address.id),
-            "user_id": str(address.user_id.id),
-            "addressType": address_type,
-            "address": address_data,
-            "created_at": address.created_at.isoformat(),
-            "updated_at": address.updated_at.isoformat()
-        })
+        result = []
+        for address in addresses:
+            result.append({
+                "id": str(address.id),
+                "user_id": str(address.user_id.id),
+                "addressType": address.address_type,
+                "line1": address.line1,
+                "line2": address.line2,
+                "city": address.city,
+                "state": address.state,
+                "postal_code": address.postal_code,
+                "country": address.country,
+                "is_primary": address.is_primary,
+                "created_at": address.created_at.isoformat() if address.created_at else None,
+            })
 
-    return jsonify({"addresses": result}), 200
+        return jsonify({
+            "message": "Addresses retrieved successfully",
+            "count": len(result),
+            "data": result
+        }), 200
+
+    except Exception as e:
+        return create_error_response({"error": "Internal server error"}, 500)

@@ -1,19 +1,17 @@
 from app import db
-from mongoengine import EmbeddedDocument, Document, StringField, EmbeddedDocumentField, ReferenceField, BooleanField
+from mongoengine import Document, ReferenceField, StringField, BooleanField, DateTimeField
 from datetime import datetime
 
-class AddressDetail(db.EmbeddedDocument):
+class Address(db.Document):
+    user_id = db.ReferenceField('User', required=True)
+    
     line1 = db.StringField(required=True)
     line2 = db.StringField()
     city = db.StringField(required=True)
     state = db.StringField(required=True)
     postal_code = db.StringField(required=True)
     country = db.StringField(required=True)
-    type = db.StringField(choices=['Office', 'Home', 'Work', 'Store', 'Other', 'Business'], required=True)
-
-class Address(db.Document):
-    user_id = db.ReferenceField('User', required=True)
-    address = db.EmbeddedDocumentField(AddressDetail, required=True)
+    
     address_type = db.StringField(choices=['Home', 'Office', 'Work', 'Store', 'Business', 'Other'], required=True)
     is_primary = db.BooleanField(default=False)
     created_at = db.DateTimeField(default=datetime.utcnow)

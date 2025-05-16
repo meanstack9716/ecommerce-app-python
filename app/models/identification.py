@@ -8,4 +8,5 @@ class Identification(db.Document):
     address_proof_back = db.StringField()
     pan_number = db.StringField(required=True)
     pan_card_front = db.StringField()
+    id_number = db.StringField()
     created_at = db.DateTimeField(default=datetime.utcnow)

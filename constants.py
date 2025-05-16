@@ -118,7 +118,7 @@ CART_CHECKOUT = '/api/cart/checkout'
 
 # Address Endpoint Start
 ADDRESS_ADD = '/api/address/add'
-ADDRESS_UPDATE = '/api/address/update/<address_id>'
+ADDRESS_UPDATE = '/api/address/update'
 ADDRESS_REMOVE = '/api/address/remove/<address_id>'
 ADDRESS_LIST = '/api/address/list'
 # Address Endpoint End
