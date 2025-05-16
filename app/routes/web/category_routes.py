@@ -1,8 +1,10 @@
-from flask import render_template, redirect, url_for, session, request, jsonify
-from constants import CATEGORY_LIST_WEB_URL, ADD_CATEGORY_WEB_URL, GET_CATEGORIES_FILTER_API_URL
+from flask import render_template, redirect, url_for, session, request, jsonify, flash
+from constants import CATEGORY_LIST_WEB_URL, ADD_CATEGORY_WEB_URL, GET_CATEGORIES_FILTER_API_URL, DELETE_CATEGORIES_API_WEB_URL
 from . import admin_api
-from app.models import Category
+from app.models import Category, SubCategory, SubSubCategory 
 from app.utils.image_upload import get_local_ip
+from app.utils.utils import create_error_response
+from bson import ObjectId
 
 local_ip = get_local_ip()
 
@@ -85,6 +87,7 @@ def get_categories():
         'all_categories': data['all_categories'],
         'pagination': data['pagination']
     })
+
 @admin_api.route(ADD_CATEGORY_WEB_URL)
 def add_new_category_page():
     if 'user_id' not in session:
@@ -92,3 +95,26 @@ def add_new_category_page():
     return render_template('admin/categorySubCategory/category/add_new_category.html')
 
 
+@admin_api.route(DELETE_CATEGORIES_API_WEB_URL, methods=['POST'])
+def delete_category(category_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        category = Category.objects(id=ObjectId(category_id)).first()
+        if not category:
+            return create_error_response({'error': 'Category not found'}, 404)
+
+        SubSubCategory.objects(category_id=category).delete()
+
+        SubCategory.objects(category=category).delete()
+
+        category.delete()
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Category and related subcategories deleted successfully'
+        })
+
+    except Exception as e:
+        return create_error_response({'error': str(e)}, 500)
