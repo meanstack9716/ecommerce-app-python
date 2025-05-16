@@ -11,7 +11,7 @@ from app.models.user import User
 from app.models.role import Role
 from app.utils.validation import validate_email, validate_password, validate_required_fields
 from app.utils.utils import create_error_response
-from constants import OTP_EXPIRY_MINUTES, REGISTER, LOGIN, FORGOT_PASSWORD, VERIFY_OTP, RESET_PASSWORD, LOGOUT, RESEND_OTP
+from constants import OTP_EXPIRY_MINUTES, REGISTER, LOGIN, FORGOT_PASSWORD, VERIFY_OTP, RESET_PASSWORD, LOGOUT, RESEND_OTP, AUTHENTICATE_USER
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 @auth_bp.route(REGISTER, methods=['POST'])
@@ -96,15 +96,6 @@ def login():
     if not user or not user.check_password(password):
         return create_error_response({"email": "Email or password is wrong."}, 401)
 
-    if user.is_admin:
-        # Set user_id in session
-        session['user_id'] = str(user.id)
-        return jsonify({
-            'message': 'Login successful.',
-            'is_admin': True,
-            'redirect': url_for('admin_api.dashboard')
-        }), 200
-
     otp = str(random.randint(100000, 999999))
     otp_expiry = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
 
@@ -117,10 +108,13 @@ def login():
     mail.send(msg)
 
     return jsonify({
-        'message': 'OTP sent to email. Please verify to complete login.',
-        'is_admin': False
+        'message': 'OTP sent to email. Please verify to complete login.'
     }), 200
 
+
+@auth_bp.route(AUTHENTICATE_USER, methods=['POST'])
+def authenticate_user():
+    return handle_otp_verification(include_token=True)
 
 @auth_bp.route(FORGOT_PASSWORD, methods=['POST'])
 def forgot_password():
@@ -157,59 +151,10 @@ def forgot_password():
         print(f"Error sending email: {e}")
         return jsonify({'status': 'error', 'message': 'Failed to send OTP email'}), 500
 
+
 @auth_bp.route(VERIFY_OTP, methods=['POST'])
 def verify_email_code():
-    data = request.get_json()
-    if not data:
-        return jsonify({'errors': 'Invalid JSON or no data provided'}), 400
-
-    email = data.get('email')
-    otp = data.get('code')
-
-    if not email or not otp:
-        return jsonify({'errors': 'Email and OTP are required'}), 400
-
-    user = User.objects(email=email).first()
-    if not user:
-        return jsonify({'errors': 'Invalid email or OTP'}), 400
-
-    if not user.reset_otp or not user.otp_expiry:
-        return jsonify({'errors': 'No OTP requested for this email'}), 400
-
-    current_time = datetime.utcnow()
-
-    if user.reset_otp != otp:
-        return jsonify({'message': 'Invalid OTP'}), 400
-
-    if current_time > user.otp_expiry:
-        return jsonify({'message': 'OTP has expired'}), 400
-
-    role = Role.objects(name='user').first()
-    if not role:
-        return jsonify({'message': 'Role not found'}), 400
-
-    user.role = role
-    session['user_id'] = str(user.id)
-    user.save()
-
-    access_token = create_access_token(identity=str(user.id), additional_claims={'role': 'user'})
-
-    user_data = {
-        'id': str(user.id),
-        'email': user.email,
-        'role': {
-            'id': str(role.id),
-            'name': role.name
-        }
-    }
-
-    return jsonify({
-        'status': 'success',
-        'message': 'Otp verified successfully',
-        'user': user_data,
-        'access_token': access_token
-    }), 200
-
+    return handle_otp_verification(include_token=False)
 
 @auth_bp.route(RESET_PASSWORD, methods=['POST'])
 def reset_password():
@@ -227,7 +172,6 @@ def reset_password():
     if not user:
         return jsonify({'message': 'User not found'}), 404
 
-    # Reset password
     user.password = new_password
     user.hash_password()
     user.reset_otp = None
@@ -260,7 +204,6 @@ def resend_otp():
     user.otp_expiry = expiry_time
     user.save()
 
-    # Send OTP email
     msg = Message(
         subject='Your OTP for Verification',
         recipients=[user.email],
@@ -281,3 +224,58 @@ def logout():
     return jsonify({'message': 'Logout successful'}), 200
 
 
+def handle_otp_verification(include_token):
+    """Common handler for OTP verification with optional token generation."""
+    data = request.get_json()
+    if not data:
+        return jsonify({'status': 'error', 'message': 'Invalid JSON or no data provided'}), 400
+
+    email = data.get('email')
+    otp = data.get('code')
+
+    if not email or not otp:
+        return jsonify({'status': 'error', 'message': 'Email and OTP are required'}), 400
+
+    user = User.objects(email=email).first()
+    if not user:
+        return jsonify({'status': 'error', 'message': 'Invalid email or OTP'}), 400
+
+    if not user.reset_otp or not user.otp_expiry:
+        return jsonify({'status': 'error', 'message': 'No OTP requested for this email'}), 400
+
+    current_time = datetime.utcnow()
+    if user.reset_otp != otp:
+        return jsonify({'status': 'error', 'message': 'Invalid OTP'}), 400
+
+    if current_time > user.otp_expiry:
+        return jsonify({'status': 'error', 'message': 'OTP has expired'}), 400
+
+    role = Role.objects(name='user').first()
+    if not role:
+        return jsonify({'status': 'error', 'message': 'Role not found'}), 400
+
+    if not user.role:
+        user.role = role
+        user.save()
+
+    session['user_id'] = str(user.id)
+    user_data = {
+        'id': str(user.id),
+        'email': user.email,
+        'role': {
+            'id': str(role.id),
+            'name': role.name
+        }
+    }
+
+    response_data = {
+        'status': 'success',
+        'message': 'OTP verified successfully',
+        'user': user_data
+    }
+
+    if include_token:
+        access_token = create_access_token(identity=str(user.id), additional_claims={'role': 'user'})
+        response_data['token'] = f'Bearer {access_token}'
+
+    return jsonify(response_data), 200

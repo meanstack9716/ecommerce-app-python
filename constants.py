@@ -19,14 +19,13 @@ ALLOWED_GENDERS = ['Men', 'Women', 'Unisex', 'Kids']
 APPROVAL_STATUSES = ['pending', 'approved', 'cancelled']
 
 # API Endpoint Constants
-BASE_URL = ''
-
-REGISTER = f'{BASE_URL}/register'
-LOGIN = f'{BASE_URL}/login'
-FORGOT_PASSWORD = f'{BASE_URL}/send-email-code'
-VERIFY_OTP = f'{BASE_URL}/verify-email-code'
-RESET_PASSWORD = f'{BASE_URL}/reset-password'
-RESEND_OTP = f'{BASE_URL}/resend-otp'
+REGISTER = f'/register'
+LOGIN = f'/login'
+FORGOT_PASSWORD = f'/send-email-code'
+VERIFY_OTP = f'/verify-email-code'
+AUTHENTICATE_USER = f'/verify-user'
+RESET_PASSWORD = f'/reset-password'
+RESEND_OTP = f'/resend-otp'
 
 # WEB Endpoint Constants Start
 Login_WEB_URL = f'/login'
@@ -46,7 +45,8 @@ GET_SELLERS_API_URL = '/api/sellers'
 CATEGORY_LIST_WEB_URL = '/category-list'
 ADD_CATEGORY_WEB_URL = '/add-new-category'
 CATEGORY_LIST_WEB_URL = '/category/list'
-GET_CATEGORIES_FILTER_API_URL = '/api/categories'
+GET_CATEGORIES_FILTER_API_URL = '/categories-list'
+DELETE_CATEGORIES_API_WEB_URL = '/delete_category/<category_id>'
 
 SUBCATEGORY_LIST_WEB_URL = f'/sub-categories/list'
 Add_SUBCATEGORY_LIST_WEB_URL = f'/subcategories/add'
