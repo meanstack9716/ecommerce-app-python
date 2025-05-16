@@ -79,65 +79,73 @@ const validators = {
   },
 
   sizeSelection: (field, fieldName) => {
-    const sizeSelect = field.querySelector('.size-select');
-    const customSizeInput = field.querySelector('.custom-size-input');
-    const sizeValue = sizeSelect.value === 'custom' ? customSizeInput.value.trim() : sizeSelect.value.trim();
-    
+    const sizeSelect = field.querySelector(".size-select")
+    const customSizeInput = field.querySelector(".custom-size-input")
+    const sizeValue =
+      sizeSelect.value === "custom"
+        ? customSizeInput.value.trim()
+        : sizeSelect.value.trim()
+
     if (!sizeValue) {
-      showErrorMessage(field, `${fieldName} is required`);
-      return false;
+      showErrorMessage(field, `${fieldName} is required`)
+      return false
     }
-    removeErrorMessage(field);
-    return true;
+    removeErrorMessage(field)
+    return true
   },
 
   colorQuantities: (field, fieldName) => {
-    let hasValidColor = false;
-    
+    let hasValidColor = false
+
     // Check standard colors
-    const colorCheckboxes = field.querySelectorAll('.color-checkbox');
-    colorCheckboxes.forEach(checkbox => {
+    const colorCheckboxes = field.querySelectorAll(".color-checkbox")
+    colorCheckboxes.forEach((checkbox) => {
       if (checkbox.checked) {
-        const quantityInput = checkbox.closest('div').nextElementSibling;
-        const quantity = parseInt(quantityInput.value, 10) || 0;
+        const quantityInput = checkbox.closest("div").nextElementSibling
+        const quantity = parseInt(quantityInput.value, 10) || 0
         if (quantity > 0) {
-          hasValidColor = true;
+          hasValidColor = true
         }
       }
-    });
+    })
 
     // Check custom colors
-    const customColorContainers = field.querySelectorAll('.custom-color-container > div');
-    customColorContainers.forEach(customColor => {
-      const nameInput = customColor.querySelector('.custom-color-name');
-      const quantityInput = customColor.querySelector('.custom-color-quantity');
-      const quantity = parseInt(quantityInput.value, 10) || 0;
+    const customColorContainers = field.querySelectorAll(
+      ".custom-color-container > div"
+    )
+    customColorContainers.forEach((customColor) => {
+      const nameInput = customColor.querySelector(".custom-color-name")
+      const quantityInput = customColor.querySelector(".custom-color-quantity")
+      const quantity = parseInt(quantityInput.value, 10) || 0
       if (nameInput.value.trim() && quantity > 0) {
-        hasValidColor = true;
+        hasValidColor = true
       }
-    });
+    })
 
     if (!hasValidColor) {
-      showErrorMessage(field, `${fieldName} must have at least one color with quantity greater than 0`);
-      return false;
+      showErrorMessage(
+        field,
+        `${fieldName} must have at least one color with quantity greater than 0`
+      )
+      return false
     }
-    
-    removeErrorMessage(field);
-    return true;
+
+    removeErrorMessage(field)
+    return true
   },
 
   atLeastOneSize: (containerId, fieldName) => {
-    const container = document.getElementById(containerId);
-    const sizeBlocks = container.querySelectorAll('.size-block');
-    
+    const container = document.getElementById(containerId)
+    const sizeBlocks = container.querySelectorAll(".size-block")
+
     if (sizeBlocks.length === 0) {
-      showErrorMessage(container, `${fieldName} must have at least one size`);
-      return false;
+      showErrorMessage(container, `${fieldName} must have at least one size`)
+      return false
     }
-    
-    removeErrorMessage(container);
-    return true;
-  }
+
+    removeErrorMessage(container)
+    return true
+  },
 }
 
 // Validation personal details functions
@@ -147,10 +155,10 @@ function validatePersonalInfo() {
     lastName: document.getElementById("last_name"),
     email: document.getElementById("email"),
     phoneNumber: document.getElementById("phone_number"),
-    streetLine1: document.getElementById("street_line1"),
+    line1: document.getElementById("street_line1"),
     city: document.getElementById("city"),
     state: document.getElementById("state"),
-    pincode: document.getElementById("pincode"),
+    postal_code: document.getElementById("postal_code"),
     country: document.getElementById("country"),
   }
 
@@ -164,8 +172,8 @@ function validatePersonalInfo() {
     validators.email(fields.email),
     validators.phone(fields.phoneNumber),
 
-    validators.required(fields.streetLine1, "Street address") &&
-      validators.minLength(fields.streetLine1, 8, "Street address"),
+    validators.required(fields.line1, "Street address") &&
+      validators.minLength(fields.line1, 8, "Street address"),
 
     validators.required(fields.city, "City") &&
       validators.minLength(fields.city, 3, "City"),
@@ -173,7 +181,7 @@ function validatePersonalInfo() {
     validators.required(fields.state, "State") &&
       validators.minLength(fields.state, 3, "State"),
 
-    validators.required(fields.pincode, "Pincode"),
+    validators.required(fields.postal_code, "postal_code"),
 
     validators.required(fields.country, "Country") &&
       validators.minLength(fields.country, 3, "Country"),
@@ -187,11 +195,11 @@ function validatePersonalInfo() {
     email: fields.email.value.trim(),
     phoneNumber: fields.phoneNumber.value.trim(),
     address: {
-      streetLine1: fields.streetLine1.value.trim(),
+      line1: fields.line1.value.trim(),
       streetLine2: document.getElementById("street_line2")?.value.trim() || "",
       city: fields.city.value.trim(),
       state: fields.state.value.trim(),
-      pincode: fields.pincode.value.trim(),
+      postal_code: fields.postal_code.value.trim(),
       country: fields.country.value.trim(),
     },
   }
@@ -207,11 +215,11 @@ function validateBusinessInfo() {
     businessAddressType: document.querySelector(
       'input[name="business_address_type"]:checked'
     ),
-    streetLine1: document.getElementById("business_street_line1"),
+    line1: document.getElementById("business_street_line1"),
     streetLine2: document.getElementById("business_street_line2"),
     city: document.getElementById("business_city"),
     state: document.getElementById("business_state"),
-    pincode: document.getElementById("business_pincode"),
+    postal_code: document.getElementById("business_pincode"),
     country: document.getElementById("business_country"),
   }
 
@@ -230,8 +238,8 @@ function validateBusinessInfo() {
       "#business_address_type_container"
     ),
 
-    validators.required(fields.streetLine1, "Street address") &&
-      validators.minLength(fields.streetLine1, 8, "Street address"),
+    validators.required(fields.line1, "Street address") &&
+      validators.minLength(fields.line1, 8, "Street address"),
 
     validators.required(fields.gstNumber, "GST number"),
 
@@ -240,7 +248,7 @@ function validateBusinessInfo() {
 
     validators.required(fields.state, "State"),
 
-    validators.required(fields.pincode, "Pincode"),
+    validators.required(fields.postal_code, "Postal Code"),
 
     validators.required(fields.country, "Country") &&
       validators.minLength(fields.country, 3, "Country"),
@@ -259,11 +267,11 @@ function validateBusinessInfo() {
     businessMobile: fields.businessMobile.value.trim(),
     gstNumber: fields.gstNumber.value.trim(),
     businessAddress: {
-      streetLine1: fields.streetLine1.value.trim(),
+      line1: fields.line1.value.trim(),
       streetLine2: fields.streetLine2.value.trim(),
       city: fields.city.value.trim(),
       state: fields.state.value.trim(),
-      pincode: fields.pincode.value.trim(),
+      postal_code: fields.postal_code.value.trim(),
       country: fields.country.value.trim(),
       type: fields.businessAddressType.value.trim(),
     },
@@ -274,7 +282,6 @@ function validateBusinessDetails() {
   const fields = {
     panNumber: document.getElementById("pan_card_number"),
     panCardFront: document.getElementById("pan_card_front"),
-    panCardBack: document.getElementById("pan_card_back"),
     addressProofIdType: document.getElementById("address_proof_id_type"),
     idNumber: document.getElementById("id_number"),
     addressProofFront: document.getElementById("address_proof_front"),
@@ -284,7 +291,6 @@ function validateBusinessDetails() {
   const isRequiredValid = [
     validators.required(fields.panNumber, "PAN number"),
     validators.required(fields.panCardFront, "PAN Card Front Photo"),
-    validators.required(fields.panCardBack, "PAN Card Back Photo"),
     validators.required(fields.addressProofIdType, "Address Proof ID Type"),
     validators.required(fields.idNumber, "ID Number"),
     validators.required(fields.addressProofFront, "Address Proof Front Photo"),
@@ -296,7 +302,6 @@ function validateBusinessDetails() {
 
   const areImagesValid = [
     validateImage(fields.panCardFront),
-    validateImage(fields.panCardBack),
     validateImage(fields.addressProofFront),
     // validateImage(fields.addressProofBack),
   ].every((result) => result === true)
@@ -307,7 +312,6 @@ function validateBusinessDetails() {
   return {
     panNumber: fields.panNumber.value.trim(),
     panCardFront: fields.panCardFront.files[0] || null,
-    panCardBack: fields.panCardBack.files[0] || null,
     idNumber: fields.idNumber.value,
     addressProofIdType: fields.addressProofIdType.value,
     addressProofFront: fields.addressProofFront.files[0] || null,

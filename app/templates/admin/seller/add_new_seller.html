@@ -152,7 +152,8 @@
 
       // Show the loader (spinner)
       loader.classList.remove('hidden');
-      nextBtn.classList.add('hidden');
+      nextBtnText.classList.add('hidden');
+      nextBtn.disabled = true;
 
       try {
 
@@ -186,7 +187,6 @@
 
         // Add files
         formDataObj.append('panCardFront', formData.businessDetails.panCardFront);
-        formDataObj.append('panCardBack', formData.businessDetails.panCardBack);
         formDataObj.append('addressProofFront', formData.businessDetails.addressProofFront);
         formDataObj.append('addressProofBack', formData.businessDetails.addressProofBack);
 
@@ -196,7 +196,6 @@
 
         const result = await sendPostRequest('/user/add-new-seller', formDataObj);
 
-        // Hide the loader (spinner)
         loader.classList.add('hidden');
         nextBtn.classList.remove('hidden');
 
@@ -210,7 +209,8 @@
         }
       } catch (error) {
         loader.classList.add('hidden');
-        nextBtn.classList.remove('hidden');
+        nextBtnText.classList.remove('hidden');
+        nextBtn.disabled = false;
         console.error('Submission error:', error);
         showToast('Submission error: Please try again later.', 'error');
       }
