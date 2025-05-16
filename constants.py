@@ -112,6 +112,7 @@ DELETE_BRAND_API = '/brands/delete/<brand_id>'
 # Cart Endpoint API Start
 CART_ADD = '/api/cart/add'
 CART_REMOVE = '/api/cart/remove'
+CART_REMOVE_ALL = '/api/cart/remove-all'
 CART_LIST = '/api/cart/list'
 CART_CHECKOUT = '/api/cart/checkout'
 # Cart Endpoint API End
