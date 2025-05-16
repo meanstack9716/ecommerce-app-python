@@ -3,7 +3,8 @@ from . import admin_api
 from app.models import Seller, Identification
 from mongoengine.queryset.visitor import Q
 from constants import ADD_SELLER_WEB_URL, GET_SELLER_LIST_WEB_URL, GET_SELLERS_API_URL
-
+from app.models import User
+from app.models import Address
 
 @admin_api.route(ADD_SELLER_WEB_URL)
 def add_new_seller():
@@ -12,39 +13,44 @@ def add_new_seller():
     return render_template("admin/seller/add_new_seller.html")
 
 def fetch_sellers_data(search_query='', approval_status='', page=1, per_page=10):
-    # Fetch all sellers
-    sellers = Seller.objects.all()
+    query = Seller.objects
 
-    # Apply approval status filter
     if approval_status:
-        sellers = sellers.filter(is_approved=approval_status)
+        query = query.filter(is_approved=approval_status)
 
-    # Apply search filter
-    filtered_sellers = []
-    for seller in sellers:
-        user = seller.user_id
-        if (
-            (search_query.lower() in seller.businessName.lower()) or
-            (search_query.lower() in user.email.lower()) or
-            (search_query.lower() in user.phone_number.lower())
-        ):
-            filtered_sellers.append(seller)
+    if search_query:
+        user_query = Q(email__icontains=search_query) | Q(phone_number__icontains=search_query)
+        matching_users = User.objects(user_query)
+        matching_user_ids = [user.id for user in matching_users]
 
-    # Calculate pagination info
-    total_count = len(filtered_sellers)
-    total_pages = (total_count + per_page - 1) // per_page  # Ceiling division
+        address_query = Q(address__city__icontains=search_query) | Q(address__line1__icontains=search_query)
+        matching_addresses = Address.objects(address_query)
+        matching_address_ids = [address.id for address in matching_addresses]
 
-    # Apply pagination
+        search_regex = Q(businessName__icontains=search_query)
+        if matching_user_ids:
+            search_regex |= Q(user_id__in=matching_user_ids)
+        if matching_address_ids:
+            search_regex |= Q(address__in=matching_address_ids)
+
+        query = query.filter(search_regex)
+
+    total_count = query.count()
+    total_pages = (total_count + per_page - 1) // per_page
+
     start_idx = (page - 1) * per_page
-    end_idx = start_idx + per_page
-    paginated_sellers = filtered_sellers[start_idx:end_idx]
+    paginated_sellers = query.skip(start_idx).limit(per_page)
 
-    # Enrich seller data
     enriched_sellers = []
     for idx, seller in enumerate(paginated_sellers, start=start_idx + 1):
         user = seller.user_id
         address = seller.address
         identification = Identification.objects(user_id=user).first()
+
+        address_data = {
+            "line1": address.address.line1 if address and address.address else "",
+            "city": address.address.city if address and address.address else ""
+        }
 
         enriched_sellers.append({
             "index": idx,
@@ -54,14 +60,11 @@ def fetch_sellers_data(search_query='', approval_status='', page=1, per_page=10)
                 "is_approved": seller.is_approved
             },
             "user": {
-                "email": user.email,
-                "phone_number": user.phone_number
+                "email": user.email if user else "",
+                "phone_number": user.phone_number if user else ""
             },
             "address": {
-                "personal_address": {
-                    "line1": address.personal_address.line1,
-                    "city": address.personal_address.city
-                }
+                "personal_address": address_data
             },
             "identification": {
                 "pan_number": identification.pan_number if identification else "---"
@@ -81,6 +84,7 @@ def fetch_sellers_data(search_query='', approval_status='', page=1, per_page=10)
             'per_page': per_page
         }
     }
+
 
 @admin_api.route(GET_SELLER_LIST_WEB_URL)
 def get_seller_list():

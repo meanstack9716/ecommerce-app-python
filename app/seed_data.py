@@ -86,16 +86,16 @@ def seed_categories():
 
 def seed_brands():
     brand_data = [
-        {"name": "Nike", "description": "Global leader in sportswear.", "logo_path": "/uploads/nike_logo.png"},
-        {"name": "Adidas", "description": "Known for innovation and performance.", "logo_path": "/uploads/adidas_logo.png"},
-        {"name": "Puma", "description": "Performance and lifestyle brand.", "logo_path": "/uploads/puma_logo.png"},
-        {"name": "Reebok", "description": "Fitness and lifestyle brand.", "logo_path": "/uploads/reebok_logo.png"},
-        {"name": "Under Armour", "description": "Brand known for its performance gear.", "logo_path": "/uploads/under_armour_logo.png"},
-        {"name": "New Balance", "description": "Premium sports and lifestyle footwear.", "logo_path": "/uploads/new_balance_logo.png"},
-        {"name": "Asics", "description": "Japanese brand known for athletic shoes.", "logo_path": "/uploads/asics_logo.png"},
-        {"name": "Fila", "description": "Sporty, yet stylish apparel.", "logo_path": "/uploads/fila_logo.png"},
-        {"name": "Converse", "description": "Iconic American footwear brand.", "logo_path": "/uploads/converse_logo.png"},
-        {"name": "Vans", "description": "Skateboarding and streetwear culture.", "logo_path": "/uploads/vans_logo.png"}
+        {"name": "Nike", "description": "Global leader in sportswear.", "logo_path": "nike_logo.png"},
+        {"name": "Adidas", "description": "Known for innovation and performance.", "logo_path": "adidas_logo.png"},
+        {"name": "Puma", "description": "Performance and lifestyle brand.", "logo_path": "puma_logo.png"},
+        {"name": "Reebok", "description": "Fitness and lifestyle brand.", "logo_path": "reebok_logo.png"},
+        {"name": "Under Armour", "description": "Brand known for its performance gear.", "logo_path": "under_armour_logo.png"},
+        {"name": "New Balance", "description": "Premium sports and lifestyle footwear.", "logo_path": "new_balance_logo.png"},
+        {"name": "Asics", "description": "Japanese brand known for athletic shoes.", "logo_path": "asics_logo.png"},
+        {"name": "Fila", "description": "Sporty, yet stylish apparel.", "logo_path": "fila_logo.png"},
+        {"name": "Converse", "description": "Iconic American footwear brand.", "logo_path": "converse_logo.png"},
+        {"name": "Vans", "description": "Skateboarding and streetwear culture.", "logo_path": "vans_logo.png"}
     ]
 
     if ProductBrands.objects.count() > 0:
