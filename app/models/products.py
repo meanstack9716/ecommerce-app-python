@@ -45,7 +45,7 @@ class ProductVariantImage(db.Document):
 
 
 class Products(db.Document):
-    user_id = ReferenceField('User', required=True)
+    seller_id = ReferenceField('User', required=True)
     name = db.StringField(required=True, max_length=255)
     details = db.StringField()
     description = db.StringField()
@@ -71,7 +71,7 @@ class Products(db.Document):
     meta = {
         'collection': 'products',
         'indexes': [
-            'user_id',
+            'seller_id',
             'name',
             'category_id',
             'subcategory_id',

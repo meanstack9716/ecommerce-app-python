@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, session
 import json
 from datetime import datetime
-from constants import ADD_NEW_PRODUCT_API, PRODUCT_LISTS_API, EDIT_PRODUCT_API
+from constants import ADD_NEW_PRODUCT_API, PRODUCT_LISTS_API, EDIT_PRODUCT_API, PRODUCT_LISTS__BY_ID_API
 from app.models import Products, Category, SubCategory, SubSubCategory
 from app.models.products import ProductVariant, ProductVariantImage
 from app.utils.image_upload import upload_image
@@ -156,7 +156,7 @@ def create_ad():
 
         # Create the product
         product = Products(
-            user_id=user_object_id,
+            seller_id=user_object_id,
             name=data['name'],
             description=data.get('description'),
             details=data.get('details'),
@@ -287,7 +287,7 @@ def list_products():
                 thumbnail_url = product.variants[0].images[0].image_url
 
             product_dict = {
-                'user_id': str(product.user_id.id) if product.user_id else None,
+                'seller_id': str(product.seller_id.id) if product.seller_id else None,
                 'title': product.name,
                 'description': product.description,
                 'details': product.details,
@@ -340,7 +340,7 @@ def list_products():
         return create_error_response({"exception": str(e)}, status_code=500)
 
 
-@products_bp.route('/api/products/<string:product_id>', methods=['GET'])
+@products_bp.route(PRODUCT_LISTS__BY_ID_API, methods=['GET'])
 def get_product_by_id(product_id):
     try:
         product = Products.objects(id=product_id).first()
@@ -382,7 +382,7 @@ def get_product_by_id(product_id):
             thumbnail_url = product.variants[0].images[0].image_url
 
         product_data = {
-            'user_id': str(product.user_id.id) if product.user_id else None,
+            'seller_id': str(product.seller_id.id) if product.seller_id else None,
             'title': product.name,
             'description': product.description,
             'details': product.details,
@@ -450,7 +450,7 @@ def edit_product():
             return create_error_response({'id': 'Invalid ID format'}, 400)
 
         # Find the product
-        product = Products.objects(id=product_id, user_id=user_object_id).first()
+        product = Products.objects(id=product_id, seller_id=user_object_id).first()
         if not product:
             return create_error_response({'product': 'Product not found or unauthorized'}, 404)
 

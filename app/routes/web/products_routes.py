@@ -46,13 +46,44 @@ def get_filtered_products():
     except Exception as e:
         return None, Category.objects.all(), str(e)
 
-
 @admin_api.route(GET_PRODUCT_LIST_WEB_URL, methods=['GET'])
 def get_product_lists():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
 
     products, categories, error = get_filtered_products()
+
+    # Handle AJAX request
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        if error:
+            return jsonify({'error': error}), 400
+
+        product_data = []
+        for product in products.items:
+            image_url = None
+            if product.variants and product.variants[0].images:
+                image_url = f"http://{local_ip}:8080/static/uploads/{product.variants[0].images[0].image_url}"
+
+            product_data.append({
+                'name': product.name,
+                'price': product.price,
+                'discount_price': product.discount_price,
+                'final_price': product.final_price,
+                'sku_number': product.sku_number or '-',
+                'image_url': image_url,
+                'edit_url': url_for('admin_api.edit_product', product_id=product.id),
+                'details_url': url_for('admin_api.product_details', product_id=product.id)
+            })
+
+        return jsonify({
+            'products': product_data,
+            'page': products.page,
+            'pages': products.pages,
+            'has_prev': products.has_prev,
+            'has_next': products.has_next,
+            'prev_num': products.prev_num,
+            'next_num': products.next_num
+        })
 
     return render_template(
         'admin/products/product_lists.html',
@@ -109,7 +140,7 @@ def product_details(product_id):
         thumbnail_url = product.variants[0].images[0].image_url
 
     product_dict = {
-        'user_id': str(product.user_id.id) if product.user_id else None,
+        'seller_id': str(product.seller_id.id) if product.seller_id else None,
         'title': product.name,
         'description': product.description,
         'details': product.details,
@@ -189,7 +220,7 @@ def edit_product(product_id):
         color_data['images'] = list(color_data['images'])
 
     product_dict = {
-        'user_id': str(product.user_id.id) if product.user_id else None,
+        'seller_id': str(product.seller_id.id) if product.seller_id else None,
         'title': product.name,
         'description': product.description,
         'details': product.details,

@@ -55,8 +55,8 @@ GET_SUBCATEGORIES_FILTER_API_URL = '/api/subcategories'
 SUB_SUB_CATEGORY_LIST_WEB_URL = f'/sub-sub-category-list'
 SUB_SUB_CATEGORY_WEB_URL = f'sub-sub-category/add'
 
-ADD_NEW_PRODUCT_WEB_URL = f'products/add'
-GET_PRODUCT_LIST_WEB_URL = f'products/list'
+ADD_NEW_PRODUCT_WEB_URL = f'/products/add'
+GET_PRODUCT_LIST_WEB_URL = f'/products/list'
 GET_PRODUCT_DETAILS_WEB_URL = f'/products/<product_id>'
 GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL = f'/products/edit/<product_id>'
 
@@ -99,6 +99,7 @@ GET_SUBSUBCATEGORIES_BY_CATEGORY_ID_API = '/api/sub-sub-categories/list';
 
 ADD_NEW_PRODUCT_API = f'/api/products/add'
 PRODUCT_LISTS_API= f'/api/products/list'
+PRODUCT_LISTS__BY_ID_API = f'/api/products/<string:product_id>'
 EDIT_PRODUCT_API = f'/api/products/edit'
 # Sub Sub Category API Endpoint Constants End
 

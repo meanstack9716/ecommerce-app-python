@@ -23,6 +23,7 @@ class Order(db.Document):
     ], default='pending')
     shipping_address = db.DictField(required=True)
     payment_method = db.StringField(required=True)
+    order_note = db.StringField(default='')
     payment_status = db.StringField(
         choices=['pending', 'paid', 'failed', 'refunded'],
         default='pending'

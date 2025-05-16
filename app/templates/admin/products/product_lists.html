@@ -10,13 +10,13 @@
     </div>
     <!-- Display Server-Side Errors -->
     {% if error %}
-    <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+    <div id="error-message" class="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
         {{ error }}
     </div>
     {% endif %}
 
     <!-- Filter Form -->
-    <form id="filter-form" method="GET" class="flex flex-col gap-4 mb-6">
+    <form id="filter-form" class="flex flex-col gap-4 mb-6">
         <div class="flex flex-col sm:flex-row gap-4 w-full">
             <!-- Category Filter -->
             <div class="flex-1 min-w-0">
@@ -196,96 +196,53 @@
 </div>
 
 <script>
-    async function fetchJsonData(url, options = {}) {
-        try {
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(options.headers || {}),
-                },
-                ...options
-            });
-    
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP error! ${response.status} - ${errorText}`);
-            }
-    
-            return await response.json();
-        } catch (error) {
-            console.error(`API call failed: ${url}`, error);
-            throw error;
-        }
-    }
-    
-    // Initialize filter form
     const filterForm = document.getElementById('filter-form');
-    filterForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        fetchProducts(1);
-    });
     const loader = document.getElementById('loader');
-    
-    // Function to fetch products via AJAX
-    async function fetchProducts(page) {
-        loader.classList.remove('hidden'); // Show loader
+    const errorMessage = document.getElementById('error-message');
+
+    async function fetchProducts() {
+        loader.classList.remove('hidden');
+        if (errorMessage) errorMessage.remove();
+
         const formData = new FormData(filterForm);
-        formData.set('page', page);
-        const params = new URLSearchParams(formData).toString();
-        const url = `/admin/products/api?${params}`;
-        const container = document.getElementById('product-table-container');
-    
+        const params = new URLSearchParams(formData);
+
         try {
-            const data = await fetchJsonData(url, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+            const response = await fetch('/products/list?' + params.toString(), {
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
-    
+            const data = await response.json();
+
             if (data.error) {
+                const container = document.getElementById('product-table-container');
                 container.innerHTML = `
-                    <div class="text-center py-10">
-                        <p class="text-red-500">${data.error}</p>
+                    <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-lg" id="error-message">
+                        ${data.error}
                     </div>
                 `;
-                updatePagination({
-                    page: 1,
-                    pages: 1,
-                    has_prev: false,
-                    has_next: false,
-                    prev_num: null,
-                    next_num: null
-                });
+                updatePagination({ page: 1, pages: 1, has_prev: false, has_next: false });
             } else {
                 updateProductTable(data);
                 updatePagination(data);
             }
         } catch (error) {
             console.error('Error fetching products:', error);
+            const container = document.getElementById('product-table-container');
             container.innerHTML = `
-                <div class="text-center py-10">
-                    <p class="text-red-500">${error.message || 'Failed to load products. Please try again.'}</p>
+                <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-lg" id="error-message">
+                    Failed to load products. Please try again.
                 </div>
             `;
-            updatePagination({
-                page: 1,
-                pages: 1,
-                has_prev: false,
-                has_next: false,
-                prev_num: null,
-                next_num: null
-            });
         } finally {
-            loader.classList.add('hidden'); // Hide loader in all cases
+            loader.classList.add('hidden');
         }
     }
-    
-    // Function to update product table
+
     function updateProductTable(data) {
         const tableBody = document.getElementById('product-table-body');
         const container = document.getElementById('product-table-container');
-    
+
         if (data.products.length === 0) {
             container.innerHTML = `
                 <div class="text-center py-10">
@@ -294,56 +251,55 @@
             `;
             return;
         }
-    
-        // Rebuild table if products exist
+
         container.innerHTML = `
             <div class="overflow-x-auto rounded-lg border border-gray-200">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Image</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Name</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Price</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Discount</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Final Price</th>
-                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">SKU</th>
-                            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Image</th>
+                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Name</th>
+                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Price</th>
+                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Discount</th>
+                            <th scope="col" class="px-4 py-3 text-center text-xs  text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Final Price</th>
+                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">SKU</th>
+                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="product-table-body" class="bg-white divide-y divide-gray-200"></tbody>
                 </table>
             </div>
         `;
-    
+
         const newTableBody = document.getElementById('product-table-body');
         data.products.forEach(product => {
             const row = document.createElement('tr');
             row.className = 'hover:bg-gray-50';
             row.innerHTML = `
-                <td class="px-4 py-3 whitespace-nowrap">
+                <td class="px-4 py-3 text-center whitespace-nowrap">
                     <div class="w-12 h-12 mx-auto flex items-center justify-center">
                         ${product.image_url ?
-                    `<img src="${product.image_url}" alt="${product.name}" class="max-w-full max-h-full object-contain rounded" />` :
-                    `<span class="text-gray-400 text-xs">No Image</span>`
-                }
+                            `<img src="${product.image_url}" alt="${product.name}" class="max-w-full max-h-full object-contain rounded" />` :
+                            `<span class="text-gray-400 text-xs">No Image</span>`
+                        }
                     </div>
                 </td>
-                <td class="px-4 py-3 whitespace-normal max-w-xs">
+                <td class="px-4 py-3 text-center whitespace-normal max-w-xs">
                     <div class="text-sm font-medium text-gray-900 line-clamp-2">${product.name}</div>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap">
                     <div class="text-sm font-bold text-gray-900">₹${Math.floor(product.price)}</div>
                 </td>
-                <td class="px-4 py-3 whitespace-nowrap hidden sm:table-cell">
+                <td class="px-4 py-3 whitespace-nowrap text-center hidden sm:table-cell">
                     <div class="text-sm text-gray-500">${product.discount_price > 0 ? product.discount_price + '%' : '-'}</div>
                 </td>
-                <td class="px-4 py-3 whitespace-nowrap hidden md:table-cell">
+                <td class="px-4 py-3 whitespace-nowrap text-center hidden md:table-cell">
                     <div class="text-sm font-bold text-gray-900">₹${Math.floor(product.final_price)}</div>
                 </td>
-                <td class="px-4 py-3 whitespace-nowrap hidden lg:table-cell">
-                    <div class="text-sm text-gray-500">${product.sku_number}</div>
+                <td class="px-4 py-3 whitespace-nowrap text-center hidden lg:table-cell">
+                    <div class="text-sm text-gray-500">${product.sku_number || '-'}</div>
                 </td>
-                <td class="px-4 py-3 whitespace-nowrap text-right">
+                <td class="px-4 py-3 whitespace-nowrap text-center text-right">
                     <div class="flex justify-center space-x-2">
                         <a href="${product.edit_url}" class="text-blue-600 hover:text-blue-800" title="Edit">
                             <span class="material-symbols-outlined text-xl">edit_square</span>
@@ -357,34 +313,41 @@
             newTableBody.appendChild(row);
         });
     }
-    
-    // Function to update pagination
+
     function updatePagination(data) {
         const paginationControls = document.getElementById('pagination-controls');
         paginationControls.innerHTML = `
             ${data.has_prev ?
-                `<a href="#" onclick="changePage(${data.prev_num})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 transition">Previous</a>` :
+                `<a href="#" onclick="changePage(${data.prev_num}); return false;" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 transition">Previous</a>` :
                 `<span class="px-3 py-1.5 border rounded-lg text-gray-400 cursor-not-allowed text-sm">Previous</span>`
             }
             <span class="px-3 py-1.5 text-sm">Page ${data.page} of ${data.pages}</span>
             ${data.has_next ?
-                `<a href="#" onclick="changePage(${data.next_num})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 transition">Next</a>` :
+                `<a href="#" onclick="changePage(${data.next_num}); return false;" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 transition">Next</a>` :
                 `<span class="px-3 py-1.5 border rounded-lg text-gray-400 cursor-not-allowed text-sm">Next</span>`
             }
         `;
     }
-    
+
     function changePage(page) {
-        fetchProducts(page);
+        const pageInput = filterForm.querySelector('input[name="page"]');
+        pageInput.value = page;
+        fetchProducts();
     }
-    
+
     function updateLimit(limit) {
-        const formData = new FormData(filterForm);
-        formData.set('limit', limit);
-        formData.set('page', 1); // Reset to page 1
-        fetchProducts(1); // Use AJAX instead of page reload
-        const params = new URLSearchParams(formData).toString();
-        history.pushState({}, '', `/admin/products?${params}`);
+        const pageInput = filterForm.querySelector('input[name="page"]');
+        pageInput.value = 1;
+        const limitSelect = filterForm.querySelector('select[onchange]');
+        limitSelect.value = limit;
+        fetchProducts();
     }
-    </script>
+
+    filterForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const pageInput = filterForm.querySelector('input[name="page"]');
+        pageInput.value = 1;
+        fetchProducts();
+    });
+</script>
 {% endblock %}
