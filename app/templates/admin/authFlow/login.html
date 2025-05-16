@@ -61,7 +61,8 @@
 
 <!-- Toast Modal -->
 <div id="toast-modal" class="fixed bottom-6 right-6 hidden z-50">
-  <div id="toast-content" class="flex items-center p-4 rounded-xl shadow-xl max-w-sm bg-white border-l-4 transition-all duration-300 transform translate-x-10 opacity-0"
+  <div id="toast-content"
+    class="flex items-center p-4 rounded-xl shadow-xl max-w-sm bg-white border-l-4 transition-all duration-300 transform translate-x-10 opacity-0"
     role="alert">
     <div id="toast-icon" class="mr-3 flex-shrink-0"></div>
     <p id="toast-message" class="text-sm font-medium flex-grow"></p>
@@ -86,12 +87,10 @@
     // Toast Modal Functions
     function showToast(message, type = "success") {
       toastMessage.textContent = message;
-      toastContent.className = `flex items-center p-4 rounded-xl shadow-xl max-w-sm bg-white border-l-4 transition-all duration-300 transform ${
-        type === "success" ? "border-green-500" : "border-red-500"
-      }`;
+      toastContent.className = `flex items-center p-4 rounded-xl shadow-xl max-w-sm bg-white border-l-4 transition-all duration-300 transform ${type === "success" ? "border-green-500" : "border-red-500"
+        }`;
       toastIcon.innerHTML = `
-        <span class="material-symbols-outlined text-${
-          type === "success" ? "green" : "red"
+        <span class="material-symbols-outlined text-${type === "success" ? "green" : "red"
         }-600 text-xl">
           ${type === "success" ? "check_circle" : "error"}
         </span>
@@ -123,61 +122,39 @@
       const email = emailInput.value.trim();
       const password = passwordInput.value.trim();
 
-      let hasError = false;
-
       if (!email) {
         showToast("Email is required.", "error");
-        hasError = true;
+        return;
       }
 
       if (!password) {
         showToast("Password is required.", "error");
-        hasError = true;
+        return;
       }
-
-      if (hasError) return;
 
       // Show spinner
       loginText.classList.add("hidden");
       loadingSpinner.classList.remove("hidden");
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('password', password);
+      const url = "{{ url_for('admin_api.login_page') }}";
 
       try {
-        const response = await fetch("{{ url_for('auth.login') }}", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
-          credentials: "include",
-        });
-        const result = await response.json();
+        const response = await sendPostRequest(url, formData);
 
         loginText.classList.remove("hidden");
         loadingSpinner.classList.add("hidden");
 
-        if (response.ok) {
-          if (result.is_admin) {
-            loginForm.reset();
-            showToast("Login successful! Redirecting to dashboard...", "success");
-            setTimeout(() => {
-              window.location.href = "{{ url_for('admin_api.dashboard') }}";
-            }, 1500);
-          } else {
-            loginForm.reset();
-            showToast(result.message || "OTP sent to your email.", "success");
-          }
+        if (response.success === true) {
+          loginForm.reset();
+          showToast("Login successful! Redirecting to dashboard...", "success");
+          setTimeout(() => {
+            window.location.href = "{{ url_for('admin_api.dashboard') }}";
+          }, 500);
         } else {
-          const messages = [];
-          // Check for errors in the 'errors' object
-          if (result.errors) {
-            if (result.errors.email) messages.push(result.errors.email);
-            if (result.errors.password) messages.push(result.errors.password);
-          }
-          // Fallback to other possible error fields
-          if (result.email) messages.push(result.email);
-          if (result.password) messages.push(result.password);
-          if (result.error) messages.push(result.error);
-          showToast(messages.join(" ") || "Login failed.", "error");
+          const errorMessage = response.errors.error || "Login failed.";
+          showToast(errorMessage, "error");
         }
       } catch (error) {
         loginText.classList.remove("hidden");
@@ -185,6 +162,7 @@
         showToast("Something went wrong. Please try again.", "error");
         console.error(error);
       }
+
     });
   });
 
