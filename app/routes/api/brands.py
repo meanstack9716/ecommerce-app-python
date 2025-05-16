@@ -61,7 +61,10 @@ def fetch_brands():
 
     return jsonify({
         'data': brands_data,
+<<<<<<< HEAD
         'local_ip': local_ip,
+=======
+>>>>>>> c9a6bd93fc3159d8386ee8c81b2604b297efef29
         'pagination': {
             'page': brands_paginated.page,
             'pages': brands_paginated.pages,
