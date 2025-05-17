@@ -17,10 +17,10 @@ def get_user_id():
 def create_address():
     if not request.is_json:
         return create_error_response({"error": "Request must be JSON"}, 400)
-    
+
     try:
         data = request.get_json()
-    except Exception as e:
+    except Exception:
         return create_error_response({"error": "Invalid JSON data"}, 400)
 
     user_id = get_user_id()
@@ -46,12 +46,14 @@ def create_address():
             state=data['state'],
             postal_code=data['postal_code'],
             country=data['country'],
+            contact_name=data.get('contact_name'),
+            contact_number=data.get('contact_number'),
             address_type=address_type,
             is_primary=data.get('is_primary', False)
         )
-        
+
         address.save()
-        
+
         return jsonify({
             "message": "Address created successfully",
             "data": {
@@ -64,6 +66,8 @@ def create_address():
                 "state": address.state,
                 "postal_code": address.postal_code,
                 "country": address.country,
+                "contact_name": address.contact_name,
+                "contact_number": address.contact_number,
                 "is_primary": address.is_primary,
                 "created_at": address.created_at.isoformat() if address.created_at else None
             }
@@ -72,9 +76,9 @@ def create_address():
     except ValidationError as e:
         return create_error_response({"error": str(e)}, 400)
     except Exception as e:
-        logger.error(f"Error creating address: {str(e)}")  # Added logging
         return create_error_response({"error": "Internal server error"}, 500)
-        
+
+
 @address_bp.route(ADDRESS_UPDATE, methods=['PUT'])
 def update_address():
     if not request.is_json:
@@ -82,7 +86,7 @@ def update_address():
 
     try:
         data = request.get_json()
-    except Exception as e:
+    except Exception:
         return create_error_response({"error": "Invalid JSON data"}, 400)
 
     address_id = data.get('address_id')
@@ -97,7 +101,7 @@ def update_address():
         address = Address.objects.get(id=ObjectId(address_id), user_id=user_id)
     except DoesNotExist:
         return create_error_response({"error": "Address not found"}, 404)
-    except Exception as e:
+    except Exception:
         return create_error_response({"error": "Invalid address ID"}, 400)
 
     required_fields = ['line1', 'city', 'state', 'postal_code', 'country', 'type']
@@ -119,8 +123,14 @@ def update_address():
         address.address_type = data['type']
         address.is_primary = data.get('is_primary', address.is_primary)
         
+        # Optional fields
+        if 'contact_name' in data:
+            address.contact_name = data['contact_name']
+        if 'contact_number' in data:
+            address.contact_number = data['contact_number']
+
         address.save()
-        
+
         return jsonify({
             "message": "Address updated successfully",
             "data": {
@@ -134,6 +144,8 @@ def update_address():
                 "state": address.state,
                 "postal_code": address.postal_code,
                 "country": address.country,
+                "contact_name": address.contact_name,
+                "contact_number": address.contact_number,
                 "created_at": address.created_at.isoformat() if address.created_at else None,
                 "updated_at": datetime.utcnow().isoformat()
             }
@@ -141,8 +153,8 @@ def update_address():
     except ValidationError as e:
         return create_error_response({"error": str(e)}, 400)
     except Exception as e:
-        logger.error(f"Error updating address: {str(e)}")
         return create_error_response({"error": "Internal server error"}, 500)
+
 
 
 @address_bp.route(ADDRESS_REMOVE, methods=['DELETE'])
@@ -163,15 +175,15 @@ def delete_address(address_id):
 
     try:
         address = Address.objects.get(id=ObjectId(address_id), user_id=user_id)
-        
+
         if payload.get("force") != True and address.is_primary:
             return create_error_response(
-                {"error": "Cannot delete primary address. Use 'force': true to override."}, 
+                {"error": "Cannot delete primary address. Use 'force': true to override."},
                 400
             )
-        
+
         address.delete()
-        
+
         return jsonify({
             "message": "Address deleted successfully",
             "data": {
@@ -179,11 +191,10 @@ def delete_address(address_id):
                 "timestamp": datetime.utcnow().isoformat()
             }
         }), 200
-        
+
     except DoesNotExist:
         return create_error_response({"error": "Address not found or not owned by user"}, 404)
     except Exception as e:
-        logger.error(f"Error deleting address {address_id}: {str(e)}")
         return create_error_response({"error": "Internal server error"}, 500)
 
 @address_bp.route(ADDRESS_LIST, methods=['GET'])
@@ -194,12 +205,14 @@ def get_addresses():
 
     try:
         addresses = Address.objects(user_id=user_id).order_by('-created_at')
-        
+
         result = []
         for address in addresses:
             result.append({
                 "id": str(address.id),
                 "user_id": str(address.user_id.id),
+                "contact_name": address.contact_name,
+                "contact_number": address.contact_number,
                 "addressType": address.address_type,
                 "line1": address.line1,
                 "line2": address.line2,

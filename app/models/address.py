@@ -11,7 +11,8 @@ class Address(db.Document):
     state = db.StringField(required=True)
     postal_code = db.StringField(required=True)
     country = db.StringField(required=True)
-    
+    contact_name = db.StringField()
+    contact_number = db.IntField()
     address_type = db.StringField(choices=['Home', 'Office', 'Work', 'Store', 'Business', 'Other'], required=True)
     is_primary = db.BooleanField(default=False)
     created_at = db.DateTimeField(default=datetime.utcnow)
