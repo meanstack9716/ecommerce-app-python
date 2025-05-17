@@ -4,7 +4,7 @@ from constants import GET_BRANDS_LIST_API, ADD_BRAND_API, UPDATE_BRAND_API
 from app.utils.utils import create_error_response
 from app.utils.image_upload import upload_image, get_local_ip
 from app.utils.validation import validate_required_fields
-from flask import current_app
+
 from datetime import datetime
 
 brand_bp = Blueprint('brand_bp', __name__)
@@ -24,7 +24,7 @@ def fetch_brands():
                 {
                     "id": str(brand.id),
                     "name": brand.name,
-                    "logo_path": f"http://{local_ip}:{port}/static/uploads/{brand.logo_path}"
+                    "logo_path": brand.logo_path
                 }
                 for brand in brands
             ]
@@ -55,13 +55,12 @@ def fetch_brands():
             'id': str(brand.id),
             'name': brand.name,
             'description': brand.description,
-            'logo_path': f"http://{local_ip}:{port}/static/uploads/{brand.logo_path}" or ''
+            'logo_path': brand.logo_path or ''
         } for brand in brands_paginated.items
     ]
 
     return jsonify({
         'data': brands_data,
-        'local_ip': local_ip,
         'pagination': {
             'page': brands_paginated.page,
             'pages': brands_paginated.pages,
