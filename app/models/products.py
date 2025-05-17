@@ -4,14 +4,15 @@ from app.models import Category, SubCategory, SubSubCategory
 from app.models.brands import ProductBrands
 from constants import ALLOWED_SIZES, ALLOWED_GENDERS
 from mongoengine import ReferenceField
+from app.models import Seller
 
 class ProductVariant(db.Document):
-    product_id = ReferenceField('Products', required=False)
+    product_id = db.ReferenceField('Products', required=False)
     size = db.StringField(required=True, choices=ALLOWED_SIZES)
     color = db.StringField(required=True, max_length=50)
     color_hexa_code = db.StringField(max_length=7)
     stock_quantity = db.IntField(default=0)
-    images = db.ListField(ReferenceField('ProductVariantImage'))
+    images = db.ListField(db.ReferenceField('ProductVariantImage'))
     created_at = db.DateTimeField(default=datetime.utcnow)
     
     meta = {
@@ -29,7 +30,7 @@ class ProductVariant(db.Document):
 
 
 class ProductVariantImage(db.Document):
-    variant_id = ReferenceField(ProductVariant, required=False)
+    variant_id = db.ReferenceField(ProductVariant, required=False)
     image_url = db.StringField(required=True, max_length=255)
     alt_text = db.StringField(max_length=255)
     
@@ -45,7 +46,7 @@ class ProductVariantImage(db.Document):
 
 
 class Products(db.Document):
-    user_id = ReferenceField('User', required=True)
+    seller_id = db.ReferenceField(Seller, required=True)
     name = db.StringField(required=True, max_length=255)
     details = db.StringField()
     description = db.StringField()
@@ -71,7 +72,7 @@ class Products(db.Document):
     meta = {
         'collection': 'products',
         'indexes': [
-            'user_id',
+            'seller_id',
             'name',
             'category_id',
             'subcategory_id',

@@ -5,6 +5,8 @@ from app.utils.validation import validate_required_fields
 from app.utils.image_upload import upload_image, validate_fields
 from app.utils.utils import create_error_response
 from bson import ObjectId
+from flask import current_app
+from app.utils.image_upload import get_local_ip
 
 category_bp = Blueprint('category_bp', __name__)
 
@@ -52,7 +54,8 @@ def add_new_category():
 @category_bp.route(API_CATEGORY_LIST, methods=['GET'])
 def get_category_list():
     search_query = request.args.get('search', '').strip()
-
+    local_ip = get_local_ip()
+    port = current_app.config.get('SERVER_PORT', 8080)
     if search_query:
         categories = Category.objects(name__icontains=search_query)
     else:
@@ -73,14 +76,14 @@ def get_category_list():
                     'id': str(subsub.id),
                     'name': subsub.name,
                     'description': subsub.description,
-                    'img_path': subsub.img_url or '',
+                    'img_url': f"http://{local_ip}:{port}/static/uploads/{subsub.img_url}" or '',
                 })
 
             subcategories_data.append({
                 'id': str(subcategory.id),
                 'name': subcategory.name,
                 'description': subcategory.description,
-                'img_path': subcategory.img_url or '',
+                'img_url': f"http://{local_ip}:{port}/static/uploads/{subcategory.img_url}" or '',
                 'sub_sub_categories': sub_sub_categories_data,
             })
 
@@ -88,7 +91,7 @@ def get_category_list():
             'id': str(category.id),
             'name': category.name,
             'description': category.description,
-            'img_path': category.img_url or '',
+            'img_url': f"http://{local_ip}:{port}/static/uploads/{category.img_url}" or '',
             'sub_categories': subcategories_data,
         })
 

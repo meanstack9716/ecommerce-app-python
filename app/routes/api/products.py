@@ -4,12 +4,13 @@ from datetime import datetime
 from constants import ADD_NEW_PRODUCT_API, PRODUCT_LISTS_API, EDIT_PRODUCT_API, PRODUCT_LISTS__BY_ID_API
 from app.models import Products, Category, SubCategory, SubSubCategory, Seller, User
 from app.models.products import ProductVariant, ProductVariantImage
-from app.utils.image_upload import upload_image
+from app.utils.image_upload import upload_image, get_local_ip
 from app.utils.validation import validate_required_fields
 from app.utils.utils import create_error_response
 from app.models.brands import ProductBrands
 from bson import ObjectId
 from constants import ALLOWED_SIZES, ALLOWED_GENDERS
+from flask import current_app
 
 from app.extensions import db
 
@@ -206,25 +207,20 @@ def create_ad():
 @products_bp.route(PRODUCT_LISTS_API, methods=['GET'])
 def list_products():
     try:
-        # Pagination params
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 10))
-
-        # Filter params
         category_id = request.args.get('category_id')
         subcategory_id = request.args.get('subcategory_id')
         subsubcategory_id = request.args.get('subsubcategory_id')
         brand_id = request.args.get('brand_id')
         status = request.args.get('status')
-
-        # Sorting params
         sort_by = request.args.get('sort_by', 'created_at')
         sort_order = request.args.get('sort_order', 'desc')
-
-        # Query base
         query = Products.objects()
 
-        # Apply filters
+        local_ip = get_local_ip()
+        port = current_app.config.get('SERVER_PORT', 8080)
+
         if category_id:
             query = query.filter(category_id=category_id)
         if subcategory_id:
@@ -236,15 +232,12 @@ def list_products():
         if status:
             query = query.filter(status=status)
 
-        # Sorting
         if sort_order == 'desc':
             query = query.order_by(f'-{sort_by}')
         else:
             query = query.order_by(f'+{sort_by}')
 
-        # Paginate
         paginated_products = query.paginate(page=page, per_page=per_page)
-
         products_data = []
 
         for product in paginated_products.items:
@@ -252,12 +245,11 @@ def list_products():
             gallery_data = {}
 
             for variant in product.variants:
-                # Populate sizes_data
                 if variant.size not in sizes_data:
                     sizes_data[variant.size] = {
                         'product_id': str(product.id),
                         'value': variant.size,
-                        'size_type': 'standard', 
+                        'size_type': 'standard',
                         'id': str(variant.id) + '_size',
                         'variants': []
                     }
@@ -274,17 +266,35 @@ def list_products():
                     gallery_data[variant.color].append({
                         'color': variant.color,
                         'id': str(image.id),
-                        'img_url': image.image_url
+                        'img_url': f"http://{local_ip}:{port}/static/uploads/{image.image_url}"
                     })
-
-            
 
             thumbnail_url = None
             if product.variants and product.variants[0].images:
-                thumbnail_url = product.variants[0].images[0].image_url
+                image_url = product.variants[0].images[0].image_url
+                thumbnail_url =  f"http://{local_ip}:{port}/static/uploads/{image_url}"
+
+            seller_data = None
+            if product.seller_id:
+                try:
+                    user = User.objects(id=product.seller_id.id).first()
+                    if user:
+                        seller = Seller.objects(user_id=user.id).first()
+                        if seller:
+                            seller_data = {
+                                'id': str(seller.id),
+                                'businessName': seller.businessName
+                            }
+                        else:
+                            seller_data = {'id': str(product.seller_id.id), 'businessName': 'Unknown Seller'}
+                    else:
+                        seller_data = {'id': str(product.seller_id.id), 'businessName': 'Unknown Seller'}
+                except Exception as e:
+                    print(f"Error fetching seller for product {product.id}: {str(e)}")
+                    seller_data = {'id': str(product.seller_id.id), 'businessName': 'Unknown Seller'}
 
             product_dict = {
-                'seller_id': str(product.seller_id.id) if product.seller_id else None,
+                'seller': seller_data,
                 'title': product.name,
                 'description': product.description,
                 'details': product.details,
@@ -329,13 +339,18 @@ def list_products():
 
         response = {
             'data': products_data,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total_pages': paginated_products.pages,
+                'total_items': paginated_products.total
+            }
         }
 
         return jsonify(response), 200
 
     except Exception as e:
         return create_error_response({"exception": str(e)}, status_code=500)
-
 
 @products_bp.route(PRODUCT_LISTS__BY_ID_API, methods=['GET'])
 def get_product_by_id(product_id):
