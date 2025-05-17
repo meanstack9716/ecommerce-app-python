@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, session
 import json
 from datetime import datetime
 from constants import ADD_NEW_PRODUCT_API, PRODUCT_LISTS_API, EDIT_PRODUCT_API, PRODUCT_LISTS__BY_ID_API
-from app.models import Products, Category, SubCategory, SubSubCategory
+from app.models import Products, Category, SubCategory, SubSubCategory, Seller, User
 from app.models.products import ProductVariant, ProductVariantImage
 from app.utils.image_upload import upload_image
 from app.utils.validation import validate_required_fields
@@ -26,6 +26,14 @@ def create_ad():
         except Exception:
             return create_error_response({'user_id': 'Invalid user ID'}, 400)
 
+        user = User.objects(id=user_object_id).first()
+        if not user:
+            return create_error_response({'user_id': 'User not found'}, 404)
+
+        seller = Seller.objects(user_id=user_object_id).first()
+        if not seller:
+            return create_error_response({'seller': 'Seller profile not found'}, 400)
+
         required_fields = ['name', 'price', 'category_id', 'subcategory_id', 'subsubcategory_id', 'details', 'description', 'stock_quantity', 'sku_number']
         form_data = request.form.to_dict(flat=False)
         data = {k: v[0] if len(v) == 1 else v for k, v in form_data.items()}
@@ -34,7 +42,6 @@ def create_ad():
         if not is_valid:
             return create_error_response({'validation': validation_errors}, 400)
 
-        # Fetch category references
         category = Category.objects(id=data['category_id']).first()
         subcategory = SubCategory.objects(id=data['subcategory_id']).first()
         subsubcategory = SubSubCategory.objects(id=data['subsubcategory_id']).first()
@@ -62,7 +69,6 @@ def create_ad():
         if not sku_number:
             return create_error_response({'sku_number': 'SKU number is required'}, 400)
 
-        # Handle brand
         brand = None
         brand_value = data.get('brand_id')
         other_brand_name = data.get('other_brand')
@@ -81,7 +87,6 @@ def create_ad():
                 )
                 brand.save()
 
-        # Process variations
         try:
             variations_list = json.loads(data.get('variations', '[]'))
         except json.JSONDecodeError:
@@ -105,12 +110,10 @@ def create_ad():
             except (KeyError, ValueError) as e:
                 return create_error_response({'variations': f'Invalid variation data: {str(e)}'}, 400)
 
-        # Process color-specific images and store their URLs temporarily
         color_size_images = {}
         for file_key in request.files:
             if file_key.startswith('images[') and ']' in file_key:
                 try:
-                    # Extract color and size from key format: image[color][size]
                     parts = file_key.split('[')
                     color = parts[1].split(']')[0]
                     size = parts[2].split(']')[0]
@@ -128,15 +131,12 @@ def create_ad():
                 except Exception as e:
                     return create_error_response({'images': f'Invalid image key format: {str(e)}'}, 400)
 
-
-        # Save all variants
         saved_variants = []
         for variant in variants:
             variant.save()
             saved_variants.append(variant)
 
-        # Create and associate ProductVariantImage objects
-        variant_images_map = {}  # To store already created image objects by URL
+        variant_images_map = {}
 
         for variant in saved_variants:
             color = variant.color
@@ -154,9 +154,8 @@ def create_ad():
                     variant.images.append(variant_images_map[image_url])
             variant.save()
 
-        # Create the product
         product = Products(
-            seller_id=user_object_id,
+            seller_id=seller.id,
             name=data['name'],
             description=data.get('description'),
             details=data.get('details'),
@@ -178,7 +177,6 @@ def create_ad():
         )
         product.save()
 
-        # Now assign the correct product_id to the ProductVariantImage objects
         for image_obj in variant_images_map.values():
             for variant in saved_variants:
                 if image_obj in variant.images:
@@ -186,7 +184,6 @@ def create_ad():
                     image_obj.save()
                     break
 
-        # Finally, update variants with the correct product_id
         for variant in saved_variants:
             variant.product_id = product
             variant.save()

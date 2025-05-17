@@ -201,7 +201,9 @@
     const errorMessage = document.getElementById('error-message');
 
     async function fetchProducts() {
-        loader.classList.remove('hidden');
+        if (!filterForm) return;
+        
+        loader?.classList?.remove('hidden');
         if (errorMessage) errorMessage.remove();
 
         const formData = new FormData(filterForm);
@@ -212,15 +214,15 @@
                 method: 'GET',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
 
             if (data.error) {
-                const container = document.getElementById('product-table-container');
-                container.innerHTML = `
-                    <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-lg" id="error-message">
-                        ${data.error}
-                    </div>
-                `;
+                showErrorMessage(data.error);
                 updatePagination({ page: 1, pages: 1, has_prev: false, has_next: false });
             } else {
                 updateProductTable(data);
@@ -228,22 +230,28 @@
             }
         } catch (error) {
             console.error('Error fetching products:', error);
-            const container = document.getElementById('product-table-container');
-            container.innerHTML = `
-                <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-lg" id="error-message">
-                    Failed to load products. Please try again.
-                </div>
-            `;
+            showErrorMessage('Failed to fetch products. Please try again.');
         } finally {
-            loader.classList.add('hidden');
+            loader?.classList?.add('hidden');
         }
     }
 
-    function updateProductTable(data) {
-        const tableBody = document.getElementById('product-table-body');
+    function showErrorMessage(message) {
         const container = document.getElementById('product-table-container');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-lg" id="error-message">
+                ${message}
+            </div>
+        `;
+    }
 
-        if (data.products.length === 0) {
+    function updateProductTable(data) {
+        const container = document.getElementById('product-table-container');
+        if (!container) return;
+
+        if (!data.products || data.products.length === 0) {
             container.innerHTML = `
                 <div class="text-center py-10">
                     <p class="text-gray-500">No products available.</p>
@@ -261,7 +269,7 @@
                             <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Name</th>
                             <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Price</th>
                             <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Discount</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs  text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Final Price</th>
+                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Final Price</th>
                             <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">SKU</th>
                             <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
                         </tr>
@@ -271,7 +279,9 @@
             </div>
         `;
 
-        const newTableBody = document.getElementById('product-table-body');
+        const tableBody = document.getElementById('product-table-body');
+        if (!tableBody) return;
+
         data.products.forEach(product => {
             const row = document.createElement('tr');
             row.className = 'hover:bg-gray-50';
@@ -279,7 +289,7 @@
                 <td class="px-4 py-3 text-center whitespace-nowrap">
                     <div class="w-12 h-12 mx-auto flex items-center justify-center">
                         ${product.image_url ?
-                            `<img src="${product.image_url}" alt="${product.name}" class="max-w-full max-h-full object-contain rounded" />` :
+                            `<img src="${product.image_url}" alt="${product.name}" class="max-w-full max-h-full object-contain rounded" loading="lazy" />` :
                             `<span class="text-gray-400 text-xs">No Image</span>`
                         }
                     </div>
@@ -288,40 +298,42 @@
                     <div class="text-sm font-medium text-gray-900 line-clamp-2">${product.name}</div>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap">
-                    <div class="text-sm font-bold text-gray-900">₹${Math.floor(product.price)}</div>
+                    <div class="text-sm font-bold text-gray-900">₹${Math.floor(product.price || 0)}</div>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-center hidden sm:table-cell">
                     <div class="text-sm text-gray-500">${product.discount_price > 0 ? product.discount_price + '%' : '-'}</div>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-center hidden md:table-cell">
-                    <div class="text-sm font-bold text-gray-900">₹${Math.floor(product.final_price)}</div>
+                    <div class="text-sm font-bold text-gray-900">₹${Math.floor(product.final_price || 0)}</div>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-center hidden lg:table-cell">
                     <div class="text-sm text-gray-500">${product.sku_number || '-'}</div>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-center text-right">
                     <div class="flex justify-center space-x-2">
-                        <a href="${product.edit_url}" class="text-blue-600 hover:text-blue-800" title="Edit">
+                        <a href="${product.edit_url || '#'}" class="text-blue-600 hover:text-blue-800" title="Edit">
                             <span class="material-symbols-outlined text-xl">edit_square</span>
                         </a>
-                        <a href="${product.details_url}" class="text-green-600 hover:text-green-800" title="Details">
+                        <a href="${product.details_url || '#'}" class="text-green-600 hover:text-green-800" title="Details">
                             <span class="material-symbols-outlined text-xl">chevron_forward</span>
                         </a>
                     </div>
                 </td>
             `;
-            newTableBody.appendChild(row);
+            tableBody.appendChild(row);
         });
     }
 
     function updatePagination(data) {
         const paginationControls = document.getElementById('pagination-controls');
+        if (!paginationControls) return;
+
         paginationControls.innerHTML = `
             ${data.has_prev ?
                 `<a href="#" onclick="changePage(${data.prev_num}); return false;" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 transition">Previous</a>` :
                 `<span class="px-3 py-1.5 border rounded-lg text-gray-400 cursor-not-allowed text-sm">Previous</span>`
             }
-            <span class="px-3 py-1.5 text-sm">Page ${data.page} of ${data.pages}</span>
+            <span class="px-3 py-1.5 text-sm">Page ${data.page || 1} of ${data.pages || 1}</span>
             ${data.has_next ?
                 `<a href="#" onclick="changePage(${data.next_num}); return false;" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 transition">Next</a>` :
                 `<span class="px-3 py-1.5 border rounded-lg text-gray-400 cursor-not-allowed text-sm">Next</span>`
@@ -330,24 +342,37 @@
     }
 
     function changePage(page) {
+        if (!filterForm) return;
+        
         const pageInput = filterForm.querySelector('input[name="page"]');
-        pageInput.value = page;
-        fetchProducts();
+        if (pageInput) {
+            pageInput.value = page;
+            fetchProducts();
+        }
     }
 
     function updateLimit(limit) {
+        if (!filterForm) return;
+        
         const pageInput = filterForm.querySelector('input[name="page"]');
-        pageInput.value = 1;
         const limitSelect = filterForm.querySelector('select[onchange]');
-        limitSelect.value = limit;
+        
+        if (pageInput) pageInput.value = 1;
+        if (limitSelect) limitSelect.value = limit;
+        
         fetchProducts();
     }
 
-    filterForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        const pageInput = filterForm.querySelector('input[name="page"]');
-        pageInput.value = 1;
-        fetchProducts();
+    // Initialize event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        if (filterForm) {
+            filterForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const pageInput = filterForm.querySelector('input[name="page"]');
+                if (pageInput) pageInput.value = 1;
+                fetchProducts();
+            });
+        }
     });
 </script>
 {% endblock %}
