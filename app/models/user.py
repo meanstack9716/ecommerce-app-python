@@ -22,6 +22,7 @@ class User(db.Document):
     profile_pic = db.StringField()
     cloudinary_id = db.StringField()
     is_admin = db.BooleanField(default=False)
+    is_email_verified = db.BooleanField(default=False)
 
     def hash_password(self):
         self.password = generate_password_hash(self.password).decode('utf8')
@@ -81,7 +82,8 @@ class User(db.Document):
                 password=os.getenv("DEFAULT_ADMIN_PASSWORD", "securepassword"),
                 phone_number=os.getenv("DEFAULT_ADMIN_PHONE", "9999999999"),
                 role=role,
-                is_admin=True
+                is_admin=True,
+                is_email_verified=True
             )
             admin.hash_password()
             admin.save()

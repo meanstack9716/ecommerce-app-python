@@ -101,6 +101,7 @@ ADD_NEW_PRODUCT_API = f'/api/products/add'
 PRODUCT_LISTS_API= f'/api/products/list'
 PRODUCT_LISTS__BY_ID_API = f'/api/products/<string:product_id>'
 EDIT_PRODUCT_API = f'/api/products/edit'
+PRODUCT_LISTS_BY_ID_API = f'/api/products/<string:product_id>'
 # Sub Sub Category API Endpoint Constants End
 
 # Brand Endpoint API Start
