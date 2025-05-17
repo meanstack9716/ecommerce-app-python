@@ -169,9 +169,8 @@ def place_order():
     }), 201
 
 
-@order_bp.route('/api/orders', methods=['GET'])
+@order_bp.route('/api/orders/list', methods=['GET'])
 def get_orders():
-    """Get all orders for current user"""
     user_id = get_user_id()
     if isinstance(user_id, tuple):
         return user_id
@@ -184,14 +183,48 @@ def get_orders():
     
     total = Order.objects(user_id=user_id).count()
     
+    def get_safe_reference(ref):
+        try:
+            return str(ref.id) if ref else None
+        except:
+            return None
+    
     return jsonify({
         'data': [{
             'id': str(order.id),
-            'total_price': float(order.total_price),
-            'status': order.status,
-            'payment_status': order.payment_status,
-            'created_at': order.created_at.isoformat(),
-            'item_count': len(order.items)
+            'user_id': get_safe_reference(order.user_id),
+            'seller_id': str(order.seller_id) if order.seller_id else None,
+            'order_number': order.order_number,
+            'total_amount': float(order.total_amount),
+            'status': order.status.capitalize(),
+            'shipping_address': ', '.join(filter(None, [
+                order.shipping_address.get('street', ''),
+                order.shipping_address.get('house_number', ''),
+                order.shipping_address.get('city', ''),
+                order.shipping_address.get('state', ''),
+                order.shipping_address.get('country', ''),
+                f"- {order.shipping_address.get('postal_code', '')}" if order.shipping_address.get('postal_code') else None
+            ])) if isinstance(order.shipping_address, dict) else str(order.shipping_address),
+            'shipping_address_type': order.shipping_address.get('type', '') if isinstance(order.shipping_address, dict) else '',
+            'payment_method': order.payment_method,
+            'payment_status': order.payment_status.capitalize(),
+            'order_note': order.order_note,
+            'created_at': order.created_at.isoformat() + 'Z' if order.created_at else None,
+            'updated_at': order.updated_at.isoformat() + 'Z' if order.updated_at else None,
+            'items': [{
+                'id': str(item.id) if hasattr(item, 'id') else None,
+                'order_id': str(order.id),
+                'product_id': get_safe_reference(item.product_id),
+                'selected_size': item.selected_size,
+                'selected_color': item.selected_color,
+                'selected_color_name': item.selected_color_name,
+                'quantity': item.quantity,
+                'price': float(item.price),
+                'discount_percent': float(item.discount_percent) if item.discount_percent else 0,
+                'final_price': float(item.final_price),
+                'created_at': order.created_at.isoformat() + 'Z' if order.created_at else None,
+                'updated_at': order.updated_at.isoformat() + 'Z' if order.updated_at else None
+            } for item in order.items]
         } for order in orders],
         'pagination': {
             'page': page,
@@ -199,96 +232,3 @@ def get_orders():
             'total': total
         }
     })
-
-@order_bp.route('/orders/<order_id>', methods=['GET'])
-def get_order(order_id):
-    """Get order details"""
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
-
-    order = Order.objects(id=order_id, user_id=user_id).first()
-    if not order:
-        return jsonify({"error": "Order not found"}), 404
-
-    return jsonify({
-        'id': str(order.id),
-        'items': [{
-            'product_id': str(item.product_id.id),
-            'product_name': item.product_id.name,
-            'variant_id': str(item.variant_id.id) if item.variant_id else None,
-            'quantity': item.quantity,
-            'price': float(item.price),
-            'total_price': float(item.total_price)
-        } for item in order.items],
-        'total_price': float(order.total_price),
-        'status': order.status,
-        'payment_status': order.payment_status,
-        'shipping_address': order.shipping_address,
-        'shipping_method': order.shipping_method,
-        'tracking_number': order.tracking_number,
-        'created_at': order.created_at.isoformat()
-    })
-
-@order_bp.route('/orders/<order_id>/cancel', methods=['POST'])
-def cancel_order(order_id):
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
-
-    order = Order.objects(id=order_id, user_id=user_id).first()
-    if not order:
-        return jsonify({"error": "Order not found"}), 404
-
-    if order.status not in ['pending', 'processing']:
-        return jsonify({"error": "Order cannot be cancelled at this stage"}), 400
-
-    order.update_status('cancelled')
-    return jsonify({"message": "Order cancelled successfully"})
-
-@order_bp.route('/admin/orders', methods=['GET'])
-def admin_get_orders():
-    
-    status = request.args.get('status')
-    query = {}
-    if status:
-        query['status'] = status
-    
-    page = int(request.args.get('page', 1))
-    per_page = int(request.args.get('per_page', 20))
-    
-    orders = Order.objects(**query).order_by('-created_at') \
-             .skip((page-1)*per_page).limit(per_page)
-    
-    return jsonify({
-        'data': [{
-            'id': str(order.id),
-            'user_id': str(order.user_id.id),
-            'total_price': float(order.total_price),
-            'status': order.status,
-            'created_at': order.created_at.isoformat()
-        } for order in orders]
-    })
-
-@order_bp.route('/admin/orders/<order_id>/status', methods=['PUT'])
-def admin_update_order_status(order_id):
-        
-    data = request.json
-    new_status = data.get('status')
-    tracking_number = data.get('tracking_number')
-    
-    if not new_status:
-        return jsonify({"error": "Status is required"}), 400
-    
-    order = Order.objects(id=order_id).first()
-    if not order:
-        return jsonify({"error": "Order not found"}), 404
-    
-    try:
-        order.update_status(new_status)
-        if tracking_number:
-            order.tracking_number = tracking_number
-            order.save()
-        return jsonify({"message": "Order status updated"})
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400

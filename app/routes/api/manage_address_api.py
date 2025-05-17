@@ -16,7 +16,7 @@ def get_user_id():
 @address_bp.route(ADDRESS_ADD, methods=['POST'])
 def create_address():
     if not request.is_json:
-        return create_error_response({"error": "Request must be JSON"}, 400)  # Changed from 401 to 400
+        return create_error_response({"error": "Request must be JSON"}, 400)
     
     try:
         data = request.get_json()
@@ -24,10 +24,9 @@ def create_address():
         return create_error_response({"error": "Invalid JSON data"}, 400)
 
     user_id = get_user_id()
-    if isinstance(user_id, tuple):  # Assuming this returns an error response
+    if isinstance(user_id, tuple):
         return user_id
 
-    # Validate required fields
     required_fields = ['line1', 'city', 'state', 'postal_code', 'country', 'addressType']
     for field in required_fields:
         if field not in data:
@@ -39,20 +38,18 @@ def create_address():
         return create_error_response({"error": f"Invalid addressType. Must be one of {valid_types}"}, 400)
 
     try:
-        # Create the address directly (no embedded document needed)
         address = Address(
             user_id=user_id,
             line1=data['line1'],
-            line2=data.get('line2', ''),  # Optional field
+            line2=data.get('line2', ''),
             city=data['city'],
             state=data['state'],
             postal_code=data['postal_code'],
             country=data['country'],
             address_type=address_type,
-            is_primary=data.get('is_primary', False)  # Default to False if not provided
+            is_primary=data.get('is_primary', False)
         )
         
-        # This will trigger the clean() method which handles primary address logic
         address.save()
         
         return jsonify({
@@ -93,7 +90,7 @@ def update_address():
         return create_error_response({"error": "address_id is required"}, 400)
 
     user_id = get_user_id()
-    if isinstance(user_id, tuple):  # Assuming this returns an error response
+    if isinstance(user_id, tuple):
         return user_id
 
     try:
@@ -103,7 +100,6 @@ def update_address():
     except Exception as e:
         return create_error_response({"error": "Invalid address ID"}, 400)
 
-    # Validate required fields
     required_fields = ['line1', 'city', 'state', 'postal_code', 'country', 'type']
     for field in required_fields:
         if field not in data:
@@ -114,7 +110,6 @@ def update_address():
         return create_error_response({"error": f"Invalid addressType. Must be one of {valid_types}"}, 400)
 
     try:
-        # Update address fields directly
         address.line1 = data['line1']
         address.line2 = data.get('line2', address.line2)
         address.city = data['city']
