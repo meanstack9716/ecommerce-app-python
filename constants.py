@@ -47,6 +47,7 @@ ADD_CATEGORY_WEB_URL = '/add-new-category'
 CATEGORY_LIST_WEB_URL = '/category/list'
 GET_CATEGORIES_FILTER_API_URL = '/categories-list'
 DELETE_CATEGORIES_API_WEB_URL = '/delete_category/<category_id>'
+EDIT_CATEGORY_WEB_URL = '/category/edit/<category_id>'
 
 SUBCATEGORY_LIST_WEB_URL = f'/sub-categories/list'
 Add_SUBCATEGORY_LIST_WEB_URL = f'/subcategories/add'
