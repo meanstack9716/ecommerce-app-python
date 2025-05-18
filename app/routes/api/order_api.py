@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, session
 from app.models.order import Order, OrderItem
 from app.models.user import User
-from app.models.address import Address
+from app.models import Address, Seller
 from datetime import datetime
 from app.models.productCart import ProductCart
 from app.models.products import Products, ProductVariant, ProductVariantImage
@@ -21,7 +21,6 @@ def get_user_id():
 
 @order_bp.route('/api/orders/new', methods=['POST'])
 def place_order():
-    # Authentication check
     user_id = get_user_id()
     if isinstance(user_id, tuple):
         return user_id
@@ -174,14 +173,8 @@ def get_orders():
     user_id = get_user_id()
     if isinstance(user_id, tuple):
         return user_id
-
-    page = int(request.args.get('page', 1))
-    per_page = int(request.args.get('per_page', 10))
     
-    orders = Order.objects(user_id=user_id).order_by('-created_at') \
-             .skip((page-1)*per_page).limit(per_page)
-    
-    total = Order.objects(user_id=user_id).count()
+    orders = Order.objects(user_id=user_id).order_by('-created_at')
     
     def get_safe_reference(ref):
         try:
@@ -189,46 +182,36 @@ def get_orders():
         except:
             return None
     
-    return jsonify({
-        'data': [{
+    order_list = []
+    for order in orders:
+        seller_details = {}
+        if order.seller_id:  # This is a ReferenceField
+            seller = Seller.objects(id=order.seller_id.id).first()
+            if seller:
+                seller_details = {
+                    'seller_name': seller.businessName,
+                    'seller_contact': seller.businessMobile,
+                    'seller_email': seller.businessEmail
+                }
+        
+        order_data = {
             'id': str(order.id),
-            'user_id': get_safe_reference(order.user_id),
-            'seller_id': str(order.seller_id) if order.seller_id else None,
             'order_number': order.order_number,
             'total_amount': float(order.total_amount),
-            'status': order.status.capitalize(),
-            'shipping_address': ', '.join(filter(None, [
-                order.shipping_address.get('street', ''),
-                order.shipping_address.get('house_number', ''),
-                order.shipping_address.get('city', ''),
-                order.shipping_address.get('state', ''),
-                order.shipping_address.get('country', ''),
-                f"- {order.shipping_address.get('postal_code', '')}" if order.shipping_address.get('postal_code') else None
-            ])) if isinstance(order.shipping_address, dict) else str(order.shipping_address),
-            'shipping_address_type': order.shipping_address.get('type', '') if isinstance(order.shipping_address, dict) else '',
+            'orderStatus': order.status.capitalize(),
             'payment_method': order.payment_method,
             'payment_status': order.payment_status.capitalize(),
-            'order_note': order.order_note,
             'created_at': order.created_at.isoformat() + 'Z' if order.created_at else None,
-            'updated_at': order.updated_at.isoformat() + 'Z' if order.updated_at else None,
+            'seller_details': seller_details,
             'items': [{
-                'id': str(item.id) if hasattr(item, 'id') else None,
-                'order_id': str(order.id),
                 'product_id': get_safe_reference(item.product_id),
                 'selected_size': item.selected_size,
                 'selected_color': item.selected_color,
-                'selected_color_name': item.selected_color_name,
                 'quantity': item.quantity,
                 'price': float(item.price),
-                'discount_percent': float(item.discount_percent) if item.discount_percent else 0,
-                'final_price': float(item.final_price),
-                'created_at': order.created_at.isoformat() + 'Z' if order.created_at else None,
-                'updated_at': order.updated_at.isoformat() + 'Z' if order.updated_at else None
+                'final_price': float(item.final_price)
             } for item in order.items]
-        } for order in orders],
-        'pagination': {
-            'page': page,
-            'per_page': per_page,
-            'total': total
         }
-    })
+        order_list.append(order_data)
+    
+    return jsonify(order_list)

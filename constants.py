@@ -68,8 +68,8 @@ GET_BRANDS_WEB_URL = f'/brands/list'
 ADD_BRAND_WEB_URL = f'/brands/add'
 UPDATE_BRAND_WEB_URL = f'/brands/edit/<brand_id>'
 
-
-
+ORDER_LIST_WEB_URL = f'/orders/list'
+ORDER_STATUS_UPDATE = f'/orders/<order_id>/update-status'
 # WEB Endpoint Constants End
 
 # API Endpoint Constants Start

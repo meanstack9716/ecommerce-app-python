@@ -3,178 +3,86 @@
 {% block title %}Orders{% endblock %}
 
 {% block admin_content %}
-<div class="bg-white rounded-lg shadow-lg p-8">
-  <h1 class="text-3xl font-semibold text-gray-800 mb-6">Order Management</h1>
+<div class="bg-white rounded-lg shadow-md p-6">
+  <h1 class="text-2xl font-bold text-gray-900 mb-6">Order Management</h1>
 
   <!-- Search and Filter Form -->
-  <form id="search-form" class="flex flex-col sm:flex-row items-end justify-between w-full mb-10 gap-4">
-    <div class="w-full sm:w-1/2">
+  <form id="search-form" class="flex flex-col sm:flex-row items-end justify-between w-full mb-8 gap-4">
+    <div class="w-full sm:w-2/3">
       <div class="flex flex-col sm:flex-row items-end gap-4">
         <div class="flex-1">
-          <label class="block text-sm font-medium text-gray-700">Search Orders</label>
-          <input type="text" name="orderSearch" placeholder="Search by order number or customer"
-            class="mt-1 block w-full px-4 py-3 border border-gray-300 outline-none rounded-lg shadow-sm sm:text-sm">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Search Orders</label>
+          <input type="text" name="orderSearch" placeholder="Search by order number"
+            class="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200">
         </div>
         <div class="w-full sm:w-48">
-          <label class="block text-sm font-medium text-gray-700">Status Filter</label>
-          <div class="relative w-64 lg:w-80">
-            <select name="statusFilter"
-              class="mt-1 appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm sm:text-sm">
-              <option value="">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="processing">Processing</option>
-              <option value="shipped">Shipped</option>
-              <option value="outOfDelivery">Out for Delivery</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
-              <option value="return">Return</option>
-              <option value="refund">Refund</option>
-            </select>
-            <span
-              class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">
-              chevron_right
-            </span>
-          </div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Status Filter</label>
+          <select name="statusFilter" class="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="outOfDelivery">Out for Delivery</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="return">Return</option>
+            <option value="refund">Refund</option>
+          </select>
         </div>
       </div>
     </div>
 
     <div class="flex gap-4 w-full sm:w-auto">
-      <button type="submit"
-        class="w-full sm:w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+      <button type="submit" class="w-full sm:w-32 py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200">
         Filter
       </button>
-      <button type="reset" id="clear-search"
-        class="w-full sm:w-36 py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+      <button type="button" id="clear-search" class="w-full sm:w-32 py-2 px-4 border border-gray-200 rounded-md hover:bg-gray-50 transition duration-200">
         Clear
       </button>
     </div>
   </form>
 
   <!-- Orders Table -->
-  <div class="overflow-x-auto h-screen">
+  <div class="overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
         <tr>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Order #
+          {% for header in ['Order #', 'Date', 'Total', 'Status', 'Payment', 'Actions'] %}
+          <th class="px-6 py-3 text-sm font-semibold text-gray-600 uppercase tracking-wider text-center">
+            {{ header }}
           </th>
-
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Date
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Total
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Status
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Payment
-          </th>
-          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Actions
-          </th>
+          {% endfor %}
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
-        {% for order in orders %}
+      <tbody id="orders-table-body" class="bg-white divide-y divide-gray-200 text-center">
         <tr>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-            {{ order.order_number }}
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            {{ order.created_at.strftime('%b %d, %Y') }}
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-            ${{ order.total_amount }}
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="relative" x-data="{ open: false }">
-              <button @click="open = !open" class="inline-flex justify-center w-full px-3 py-1 rounded-full text-xs font-medium 
-                                {% if order.status == 'pending' %}bg-yellow-100 text-yellow-800
-                                {% elif order.status == 'confirmed' %}bg-blue-100 text-blue-800
-                                {% elif order.status == 'processing' %}bg-indigo-100 text-indigo-800
-                                {% elif order.status == 'shipped' %}bg-purple-100 text-purple-800
-                                {% elif order.status == 'outOfDelivery' %}bg-orange-100 text-orange-800
-                                {% elif order.status == 'delivered' %}bg-green-100 text-green-800
-                                {% elif order.status == 'cancelled' or order.status == 'return' or order.status == 'refund' %}bg-red-100 text-red-800
-                                {% endif %}">
-                {{ order.status|title }}
-                <svg class="-mr-1 ml-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                  fill="currentColor">
-                  <path fill-rule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clip-rule="evenodd" />
-                </svg>
-              </button>
-
-              <div x-show="open" @click.away="open = false"
-                class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                <div class="py-1" role="menu" aria-orientation="vertical">
-                  {% for status in ['pending', 'confirmed', 'processing', 'shipped', 'outOfDelivery', 'delivered',
-                  'cancelled', 'return', 'refund'] %}
-                  <form method="POST" action="{{ url_for('admin_api.update_order_status', order_id=order.id) }}"
-                    class="block w-full text-left">
-                    <input type="hidden" name="status" value="{{ status }}">
-                    <button type="submit"
-                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left {% if order.status == status %}bg-gray-100 font-medium{% endif %}"
-                      role="menuitem">
-                      {{ status|title }}
-                    </button>
-                  </form>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <span class="px-2 py-1 rounded-full text-xs font-medium 
-                            {% if order.payment_status == 'paid' %}bg-green-100 text-green-800
-                            {% elif order.payment_status == 'pending' %}bg-yellow-100 text-yellow-800
-                            {% elif order.payment_status == 'failed' %}bg-red-100 text-red-800
-                            {% elif order.payment_status == 'refunded' %}bg-gray-100 text-gray-800
-                            {% endif %}">
-              {{ order.payment_status|title }}
-            </span>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            <a href="#" class="text-indigo-600 hover:text-indigo-900 mr-4">View</a>
-          </td>
+          <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Loading orders...</td>
         </tr>
-        {% else %}
-        <tr>
-          <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">No orders found.</td>
-        </tr>
-        {% endfor %}
       </tbody>
     </table>
   </div>
 
   <!-- Pagination -->
-  <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
-    <div class="flex items-center gap-2 relative w-fit">
+  <div class="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
+    <div class="flex items-center gap-2">
       <span class="text-sm text-gray-600">Orders per page:</span>
-      <div class="relative">
-        <select id="items-per-page"
-          class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 appearance-none">
-          <option value="10">10</option>
-          <option value="20">20</option>
-          <option value="50">50</option>
-          <option value="100">100</option>
-        </select>
-      </div>
+      <select id="items-per-page" class="border border-gray-200 rounded-md px-3 py-1 focus:ring-2 focus:ring-blue-500">
+        <option value="10" selected>10</option>
+        <option value="20">20</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
     </div>
 
     <div class="flex items-center gap-2">
-      <button class="px-4 py-2 border rounded-lg text-sm hover:bg-gray-100 disabled:opacity-50" disabled>
+      <button id="prev-page" class="px-4 py-2 border rounded-md text-sm hover:bg-gray-100 disabled:opacity-50" disabled>
         Previous
       </button>
-      <span class="px-4 py-2 text-sm">
+      <span id="page-info" class="px-4 py-2 text-sm">
         Page 1 of 1
       </span>
-      <button class="px-4 py-2 border rounded-lg text-sm hover:bg-gray-100 disabled:opacity-50" disabled>
+      <button id="next-page" class="px-4 py-2 border rounded-md text-sm hover:bg-gray-100 disabled:opacity-50" disabled>
         Next
       </button>
     </div>
@@ -183,30 +91,176 @@
 {% endblock %}
 
 {% block js %}
-<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 <script>
-  // Add your JavaScript for search, pagination, etc. here
-  document.addEventListener('DOMContentLoaded', function () {
-    // Search form submission
-    document.getElementById('search-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      // Implement search functionality
-      console.log('Search submitted');
-    });
+document.addEventListener('DOMContentLoaded', () => {
+  const searchForm = document.getElementById('search-form');
+  const clearSearchBtn = document.getElementById('clear-search');
+  const itemsPerPageSelect = document.getElementById('items-per-page');
+  const prevPageBtn = document.getElementById('prev-page');
+  const nextPageBtn = document.getElementById('next-page');
+  const pageInfo = document.getElementById('page-info');
+  const ordersTableBody = document.getElementById('orders-table-body');
 
-    // Clear search
-    document.getElementById('clear-search').addEventListener('click', function (e) {
-      e.preventDefault();
-      document.getElementById('search-form').reset();
-      // Implement clear functionality
-      console.log('Search cleared');
-    });
+  let currentPage = 1;
+  let itemsPerPage = 10;
+  let totalPages = 1;
 
-    // Items per page change
-    document.getElementById('items-per-page').addEventListener('change', function () {
-      // Implement pagination change
-      console.log('Items per page changed to:', this.value);
-    });
+  // Function to fetch orders
+  const fetchOrders = async () => {
+    const search = searchForm.querySelector('input[name="orderSearch"]').value;
+    const status = searchForm.querySelector('select[name="statusFilter"]').value;
+
+    try {
+      const response = await fetch('/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          page: currentPage,
+          items_per_page: itemsPerPage,
+          search,
+          status,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
+
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Update table
+      ordersTableBody.innerHTML = '';
+      if (data.orders.length === 0) {
+        ordersTableBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No orders found.</td>
+          </tr>
+        `;
+      } else {
+        data.orders.forEach(order => {
+          const statusClasses = {
+            pending: 'bg-yellow-100 text-yellow-800',
+            confirmed: 'bg-blue-100 text-blue-800',
+            processing: 'bg-indigo-100 text-indigo-800',
+            shipped: 'bg-purple-100 text-purple-800',
+            outOfDelivery: 'bg-orange-100 text-orange-800',
+            delivered: 'bg-green-100 text-green-800',
+            cancelled: 'bg-red-100 text-red-800',
+            return: 'bg-red-100 text-red-800',
+            refund: 'bg-red-100 text-red-800',
+          };
+
+          const paymentClasses = {
+            paid: 'bg-green-100 text-green-800',
+            pending: 'bg-yellow-100 text-yellow-800',
+            failed: 'bg-red-100 text-red-800',
+            refunded: 'bg-gray-100 text-gray-800',
+          };
+
+          const row = `
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.order_number}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$${parseFloat(order.total_amount).toFixed(2)}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="relative" x-data="{ open: false }">
+                  <button @click="open = !open" class="inline-flex justify-center w-full px-3 py-1 rounded-full text-xs font-medium ${statusClasses[order.status] || 'bg-gray-100 text-gray-800'}">
+                    ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    <svg class="-mr-1 ml-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                  <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                    <div class="py-1" role="menu" aria-orientation="vertical">
+                      ${['pending', 'confirmed', 'processing', 'shipped', 'outOfDelivery', 'delivered', 'cancelled', 'return', 'refund'].map(status => `
+                        <form method="POST" action="/orders/${order.id}/status" class="block w-full text-left">
+                          <input type="hidden" name="status" value="${status}">
+                          <button type="submit" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left ${order.status === status ? 'bg-gray-100 font-medium' : ''}" role="menuitem">
+                            ${status.charAt(0).toUpperCase() + status.slice(1)}
+                          </button>
+                        </form>
+                      `).join('')}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 py-1 rounded-full text-xs font-medium ${paymentClasses[order.payment_status] || 'bg-gray-100 text-gray-800'}">
+                  ${order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <a href="/orders/${order.id}" class="text-blue-600 hover:text-blue-800">View</a>
+              </td>
+            </tr>
+          `;
+          ordersTableBody.innerHTML += row;
+        });
+      }
+
+      // Update pagination
+      totalPages = data.total_pages;
+      pageInfo.textContent = `Page ${data.current_page} of ${data.total_pages}`;
+      prevPageBtn.disabled = data.current_page === 1;
+      nextPageBtn.disabled = data.current_page === data.total_pages;
+      currentPage = data.current_page;
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      ordersTableBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="px-6 py-4 text-center text-sm text-red-500">Error loading orders. Please try again.</td>
+        </tr>
+      `;
+    }
+  };
+
+  // Initial fetch
+  fetchOrders();
+
+  // Form submission
+  searchForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    currentPage = 1;
+    fetchOrders();
   });
+
+  // Clear search
+  clearSearchBtn.addEventListener('click', () => {
+    searchForm.querySelector('input[name="orderSearch"]').value = '';
+    searchForm.querySelector('select[name="statusFilter"]').value = '';
+    itemsPerPageSelect.value = '10';
+    itemsPerPage = 10;
+    currentPage = 1;
+    fetchOrders();
+  });
+
+  // Items per page change
+  itemsPerPageSelect.addEventListener('change', () => {
+    itemsPerPage = parseInt(itemsPerPageSelect.value);
+    currentPage = 1;
+    fetchOrders();
+  });
+
+  // Pagination buttons
+  prevPageBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      fetchOrders();
+    }
+  });
+
+  nextPageBtn.addEventListener('click', () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      fetchOrders();
+    }
+  });
+});
 </script>
 {% endblock %}

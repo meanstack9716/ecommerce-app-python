@@ -124,7 +124,7 @@
           {
             "label": "Orders",
             "icon": "list_alt",
-            "endpoint": "admin_api.orders"
+            "endpoint": "admin_api.product_order_list_page"
           },
           {
             "label": "Settings",
