@@ -3,6 +3,7 @@ from . import admin_api
 from app.models import ProductBrands
 from constants import GET_BRANDS_WEB_URL, ADD_BRAND_WEB_URL, UPDATE_BRAND_WEB_URL, DELETE_BRAND_API
 from app.utils.image_upload import get_local_ip
+from flask import current_app
 
 local_ip = get_local_ip()
 
@@ -45,6 +46,13 @@ def update_brand_page(brand_id):
     brand = ProductBrands.objects(id=brand_id).first()
     if not brand:
         return redirect(url_for('admin_api.get_brand_list_page'))
+
+    port = current_app.config.get('SERVER_PORT', 8080)
+    base_url = f"http://{local_ip}:{port}/static/uploads/"
+
+    if brand.logo_path:
+        brand.logo_path = f"{base_url}/{brand.logo_path.lstrip('/')}"
+
     return render_template('admin/productBrands/edit_brands.html', brand=brand)
 
 @admin_api.route(DELETE_BRAND_API, methods=['POST'])
