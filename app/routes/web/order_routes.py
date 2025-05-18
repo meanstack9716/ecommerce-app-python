@@ -2,7 +2,7 @@ from flask import render_template, session, redirect, url_for, jsonify, request
 from . import admin_api
 from app.models import Order, User, Seller
 from bson import ObjectId
-from constants import ORDER_LIST_WEB_URL, ORDER_STATUS_UPDATE_WEB_URL, ORDER_STATUS
+from constants import ORDER_LIST_WEB_URL, ORDER_STATUS_UPDATE_WEB_URL, ORDER_STATUS, ORDER_DETAILS_PAGE_WEB_URL
 from app.utils.utils import create_error_response
 
 
@@ -149,3 +149,38 @@ def update_order_status(order_id):
     except Exception as e:
         print(f"Error updating order status: {str(e)}")
         return create_error_response({'error': f'Server error: {str(e)}'}, 500)
+
+
+@admin_api.route(ORDER_DETAILS_PAGE_WEB_URL, methods=['GET'])
+def order_details_page(order_id):
+    if 'user_id' not in session:
+        return redirect(url_for('admin_api.login_page'))
+    
+    user = User.objects(id=session['user_id']).first()
+    if not user:
+        return redirect(url_for('admin_api.login_page'))
+
+    try:
+        order = Order.objects(id=ObjectId(order_id)).first()
+        if not order:
+            return render_template("admin/orderPage/orders.html"), 404
+        
+        if not user.is_admin:
+            seller = Seller.objects(user_id=user.id).first()
+            if not seller or str(order.seller_id.id) != str(seller.id):
+                return render_template("admin/orderPage/orders.html"), 403
+
+        customer = None
+        if order.customer_id:
+            customer = User.objects(id=order.customer_id).first()
+
+        return render_template(
+            "admin/orderPage/orderDetails.html",
+            order=order,
+            customer=customer,
+            is_admin=user.is_admin
+        )
+
+    except Exception as e:
+        print(f"Error in order_details_page: {str(e)}")
+        return render_template("admin/orderPage/orders.html"), 500

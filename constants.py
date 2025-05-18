@@ -72,6 +72,7 @@ UPDATE_BRAND_WEB_URL = f'/brands/edit/<brand_id>'
 
 ORDER_LIST_WEB_URL = '/orders'
 ORDER_STATUS_UPDATE_WEB_URL = f'/orders/<order_id>/update-status'
+ORDER_DETAILS_PAGE_WEB_URL = f'/order-details/<order_id>'
 # WEB Endpoint Constants End
 
 # API Endpoint Constants Start

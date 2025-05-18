@@ -3,25 +3,25 @@
 {% block title %}Orders{% endblock %}
 
 {% block admin_content %}
-<div class="bg-white rounded-xl shadow-sm p-6 max-w-7xl mx-auto">
-  <h1 class="text-2xl font-semibold text-gray-800 mb-6">Order Management</h1>
+<div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 max-w-full mx-auto">
+  <h1 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">Order Management</h1>
 
   <!-- Toast Container -->
 
   <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
-    <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+    <div class="w-6 h-6 sm:w-8 sm:h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
   </div>
 
   <!-- Search and Filter Form -->
   <form id="search-form" class="flex flex-col md:flex-row items-end justify-between gap-4 mb-8">
     <div class="flex flex-col md:flex-row gap-4 w-full md:w-2/3">
-      <div class="w-full md:w-72">
+      <div class="w-full md:w-2/5">
         <label for="orderSearch" class="block text-sm font-medium text-gray-700 mb-1.5">Search Orders</label>
         <input type="text" id="orderSearch" name="orderSearch" placeholder="Search by order number"
           class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150"
           aria-label="Search orders by number">
       </div>
-      <div class="w-full md:w-48">
+      <div class="w-full md:w-2/5">
         <label for="statusFilter" class="block text-sm font-medium text-gray-700 mb-1.5">Status Filter</label>
         <div class="relative">
           <select id="statusFilter" name="statusFilter"
@@ -58,30 +58,30 @@
   </form>
 
   <!-- Orders Table -->
-  <div class="border border-gray-200 rounded-lg">
+  <div class="border border-gray-200 rounded-lg overflow-x-auto">
     {% set order_list_header = ['Order #', 'Date', 'Total', 'Status', 'Payment', 'Actions'] %}
     <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50 text-sm">
+      <thead class="bg-gray-50 text-xs">
         <tr>
           {% for header in order_list_header %}
-          <th class="px-3 py-3 md:px-4 md:py-4 font-medium text-gray-500 uppercase tracking-wider text-center">
+          <th class="px-2 py-2 sm:px-4 sm:py-3 font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
             {{ header }}
           </th>
           {% endfor %}
         </tr>
       </thead>
-      <tbody id="orders-table-body" class="bg-white divide-y divide-gray-200 text-center text-sm">
+      <tbody id="orders-table-body" class="bg-white divide-y divide-gray-200 text-center text-xs">
       </tbody>
     </table>
   </div>
 
   <!-- Pagination -->
-  <div class="flex flex-col md:flex-row items-center justify-between mt-6 gap-4">
-    <div class="flex items-center gap-3">
-      <span class="text-sm font-medium text-gray-600">Orders per page:</span>
+  <div class="flex flex-col sm:flex-row items-center justify-between mt-4 sm:mt-6 gap-4">
+    <div class="flex items-center gap-2 sm:gap-3">
+      <span class="text-xs sm:text-sm font-medium text-gray-600">Orders per page:</span>
       <div class="relative">
         <select id="items-per-page"
-          class="py-2 w-20 px-2 appearance-none text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150"
+          class="py-1.5 px-2 w-16 sm:w-20 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150 appearance-none"
           aria-label="Select orders per page">
           <option value="10" selected>10</option>
           <option value="20">20</option>
@@ -89,22 +89,22 @@
           <option value="100">100</option>
         </select>
         <span
-          class="material-symbols-outlined pointer-events-none absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500">
+          class="material-symbols-outlined pointer-events-none absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">
           expand_more
         </span>
       </div>
     </div>
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2 sm:gap-3">
       <button id="prev-page"
-        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition duration-150"
+        class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition duration-150"
         disabled>
         Previous
       </button>
-      <span id="page-info" class="px-4 py-2 text-sm font-medium text-gray-600">
+      <span id="page-info" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-gray-600">
         Page 1 of 1
       </span>
       <button id="next-page"
-        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition duration-150"
+        class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition duration-150"
         disabled>
         Next
       </button>
@@ -136,18 +136,6 @@
       });
     };
 
-    // Function to fetch JSON data
-    const fetchJsonData = async (url, options) => {
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-      });
-      return response.json();
-    };
-
     // Function to fetch orders
     const fetchOrders = async () => {
       loader.classList.remove('hidden');
@@ -169,39 +157,38 @@
           throw new Error(data.error);
         }
 
-        // Update table
         ordersTableBody.innerHTML = '';
         if (data.orders.length === 0) {
           ordersTableBody.innerHTML = `
             <tr>
-              <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No orders found.</td>
+              <td colspan="6" class="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm text-gray-500">No orders found.</td>
             </tr>
           `;
         } else {
           data.orders.forEach(order => {
             const row = `
               <tr>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.order_number}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$${parseFloat(order.total_amount).toFixed(2)}</td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${order.order_number}</td>
+                <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">$${parseFloat(order.total_amount).toFixed(2)}</td>
+                <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
                   <div class="relative">
                     <button 
-                      class="status-btn w-40 inline-flex items-center justify-between px-3 py-3 text-sm font-medium text-gray-700 border border-sky-400 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150"
+                      class="status-btn w-full sm:w-40 inline-flex items-center justify-between px-2 py-2 sm:px-3 sm:py-3 text-xs sm:text-sm font-medium text-gray-700 border border-sky-400 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150"
                       aria-haspopup="true"
                       aria-label="Change order status"
                     >
                       <span class="text-gray-700 px-2 py-0.5 rounded">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
-                      <svg class="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                      <svg class="w-3 h-3 sm:w-4 sm:h-4 ml-1 sm:ml-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
-                    <div class="dropdown-menu absolute left-0 mt-1 w-36 rounded-md shadow-lg bg-white ring-1 ring-gray-200 z-20 transition-all duration-150" style="display: none;">
+                    <div class="dropdown-menu absolute left-0 mt-1 w-full sm:w-36 rounded-md shadow-lg bg-white ring-1 ring-gray-200 z-20 transition-all duration-150" style="display: none;">
                       <div class="py-1">
                         ${['pending', 'confirmed', 'processing', 'shipped', 'outOfDelivery', 'delivered', 'cancelled', 'return', 'refund'].map(status => `
                           <form class="status-form block w-full" data-order-id="${order.id}">
                             <input type="hidden" name="status" value="${status}">
                             <button 
                               type="submit" 
-                              class="block w-full px-3 py-1.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-100 text-left ${order.status === status ? 'bg-blue-50 text-blue-700 font-medium' : ''}"
+                              class="block w-full px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-100 text-left ${order.status === status ? 'bg-blue-50 text-blue-700 font-medium' : ''}"
                             >
                               ${status.charAt(0).toUpperCase() + status.slice(1)}
                             </button>
@@ -211,13 +198,13 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="rounded font-medium">
+                <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+                  <span class="rounded text-xs sm:text-sm font-medium">
                     ${order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                  <a href="/orders/${order.id}" class="text-blue-600 hover:text-blue-800">View</a>
+                <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium">
+                  <a href="/order-details/${order.id}" class="text-blue-600 hover:text-blue-800">View</a>
                 </td>
               </tr>
             `;
@@ -236,7 +223,6 @@
           });
         });
 
-        // Setup status form submission
         document.querySelectorAll('.status-form').forEach(form => {
           form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -280,7 +266,7 @@
         console.error('Error fetching orders:', error);
         ordersTableBody.innerHTML = `
           <tr>
-            <td colspan="6" class="px-6 py-4 text-center text-sm text-red-500">Error loading orders. Please try again.</td>
+            <td colspan="6" class="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm text-red-500">Error loading orders. Please try again.</td>
           </tr>
         `;
         showToast('Error loading orders. Please try again.', 'error');
@@ -289,7 +275,6 @@
       }
     };
 
-    // Initial fetch
     fetchOrders();
 
     // Form submission
