@@ -1,15 +1,12 @@
 from flask import Blueprint, request, jsonify, session
-from app.models.order import Order, OrderItem
-from app.models.user import User
-from app.models import Address, Seller
+from app.models import Address, Seller, User, ProductCart, Products, ProductVariant, ProductVariantImage,  Order, OrderItem
 from datetime import datetime
-from app.models.productCart import ProductCart
-from app.models.products import Products, ProductVariant, ProductVariantImage
 import random
 import string
 from bson import ObjectId
 import decimal
 from app.utils.utils import create_error_response
+from constants import ORDER_PLACE_API, ORDER_LIST__API
 
 order_bp = Blueprint('order', __name__)
 
@@ -19,7 +16,7 @@ def get_user_id():
     return session['user_id']
 
 
-@order_bp.route('/api/orders/new', methods=['POST'])
+@order_bp.route(ORDER_PLACE_API, methods=['POST'])
 def place_order():
     user_id = get_user_id()
     if isinstance(user_id, tuple):
@@ -168,7 +165,7 @@ def place_order():
     }), 201
 
 
-@order_bp.route('/api/orders/list', methods=['GET'])
+@order_bp.route(ORDER_LIST__API, methods=['GET'])
 def get_orders():
     user_id = get_user_id()
     if isinstance(user_id, tuple):

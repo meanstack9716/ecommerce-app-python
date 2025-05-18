@@ -2,8 +2,10 @@ from flask import render_template, session, redirect, url_for, jsonify, request
 from . import admin_api
 from app.models import Order, User
 from bson import ObjectId
+from constants import ORDER_LIST_WEB_URL, ORDER_STATUS_UPDATE_WEB_URL
+from app.utils.utils import create_error_response
 
-@admin_api.route('/orders')
+@admin_api.route(ORDER_LIST_WEB_URL, methods=['GET'])
 def product_order_list_page():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
@@ -14,16 +16,12 @@ def product_order_list_page():
 
     try:
         items_per_page = 10
-        if user.is_admin:
-            orders = Order.objects().order_by('-created_at').limit(items_per_page)
-            total_orders = Order.objects().count()
-        else:
-            orders = Order.objects(seller_id=ObjectId(user.id)).order_by('-created_at').limit(items_per_page)
-            total_orders = Order.objects(seller_id=ObjectId(user.id)).count()
+        query = {} if user.is_admin else {'seller_id': ObjectId(user.id)}
         
+        total_orders = Order.objects(__raw__=query).count()
         total_pages = (total_orders + items_per_page - 1) // items_per_page
-
-        print(f"Initial orders fetched: {len(orders)} for user_id: {session['user_id']}, is_admin: {user.is_admin}")
+        
+        orders = Order.objects(__raw__=query).order_by('-created_at').limit(items_per_page)
 
         return render_template(
             "admin/orderPage/orders.html",
@@ -31,13 +29,14 @@ def product_order_list_page():
             current_page=1,
             total_pages=total_pages,
             total_orders=total_orders,
-            items_per_page=items_per_page
+            items_per_page=items_per_page,
+            is_admin=user.is_admin
         )
     except Exception as e:
         print(f"Error in product_order_list_page: {str(e)}")
-        return jsonify({'error': 'Server error occurred'}), 500
+        return render_template("admin/error.html", error_message="Failed to load orders"), 500
 
-@admin_api.route('/orders', methods=['POST'])
+@admin_api.route(ORDER_LIST_WEB_URL, methods=['POST'])
 def get_orders():
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -48,75 +47,81 @@ def get_orders():
 
     try:
         data = request.get_json() or {}
-        page = int(data.get('page', 1))
-        items_per_page = int(data.get('items_per_page', 10))
+        page = max(1, int(data.get('page', 1)))
+        items_per_page = max(1, min(int(data.get('items_per_page', 10)), 100))
         search = data.get('search', '').strip()
         status = data.get('status', '').strip()
 
-        query = {}
-        if not user.is_admin:
-            query['seller_id'] = ObjectId(user.id)
+        query = {} if user.is_admin else {'seller_id': ObjectId(user.id)}
         
         if search:
             query['$or'] = [
-                {'order_number': {'$regex': search, '$options': 'i'}}
+                {'order_number': {'$regex': search, '$options': 'i'}},
+                {'customer_name': {'$regex': search, '$options': 'i'}},
+                {'customer_email': {'$regex': search, '$options': 'i'}}
             ]
         
-        if status:
+        if status and status != 'all':
             query['status'] = status
 
-        print(f"Query: {query}, Page: {page}, Items per page: {items_per_page}")
-
         total_orders = Order.objects(__raw__=query).count()
-        total_pages = (total_orders + items_per_page - 1) // items_per_page
+        total_pages = max(1, (total_orders + items_per_page - 1) // items_per_page)
+        page = min(page, total_pages)
         
-        orders = Order.objects(__raw__=query).order_by('-created_at').skip((page - 1) * items_per_page).limit(items_per_page)
-        
+        orders = Order.objects(__raw__=query)\
+                     .order_by('-created_at')\
+                     .skip((page - 1) * items_per_page)\
+                     .limit(items_per_page)
+
         orders_data = [{
             'id': str(order.id),
             'order_number': order.order_number,
             'created_at': order.created_at.isoformat(),
             'total_amount': float(order.total_amount),
             'status': order.status,
-            'payment_status': order.payment_status
+            'payment_status': order.payment_status,
+            'customer_name': getattr(order, 'customer_name', ''),
+            'customer_email': getattr(order, 'customer_email', '')
         } for order in orders]
 
-        print(f"Fetched orders: {len(orders_data)}")
-
         return jsonify({
+            'success': True,
             'orders': orders_data,
             'current_page': page,
             'total_pages': total_pages,
-            'total_orders': total_orders
+            'total_orders': total_orders,
+            'items_per_page': items_per_page
         })
 
+    except ValueError as e:
+        print(f"Invalid request parameters: {str(e)}")
+        return jsonify({'error': 'Invalid request parameters'}), 400
     except Exception as e:
         print(f"Error fetching orders: {str(e)}")
-        return jsonify({'error': f'Server error: {str(e)}'}), 500
+        return jsonify({'error': 'Server error occurred'}), 500
 
-@admin_api.route('/orders/<order_id>/status', methods=['POST'])
+@admin_api.route(ORDER_STATUS_UPDATE_WEB_URL, methods=['POST'])
 def update_order_status(order_id):
     if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
+        return create_error_response({'error': 'Unauthorized'}, 401)
     
     user = User.objects(id=session['user_id']).first()
     if not user:
-        return jsonify({'error': 'User not found'}), 401
+        return create_error_response({'error': 'User not found'}, 401)
 
     try:
         order = Order.objects(id=order_id).first()
         if not order:
-            return jsonify({'error': 'Order not found'}), 404
+            return create_error_response({'error': 'Order not found'}, 404)
         
-        # Check if user is authorized to update this order
         if not user.is_admin and str(order.seller_id) != str(user.id):
-            return jsonify({'error': 'Unauthorized to update this order'}), 403
+            return create_error_response({'error': 'Unauthorized to update this order'}, 403)
 
-        status = request.form.get('status')
+        status = request.form.get('status')  # Use form data
         valid_statuses = ['pending', 'confirmed', 'processing', 'shipped', 'outOfDelivery', 'delivered', 'cancelled', 'return', 'refund']
         
         if status not in valid_statuses:
-            return jsonify({'error': 'Invalid status'}), 400
+            return create_error_response({'error': 'Invalid status'}, 400)
 
         order.status = status
         order.save()
@@ -127,4 +132,4 @@ def update_order_status(order_id):
 
     except Exception as e:
         print(f"Error updating order status: {str(e)}")
-        return jsonify({'error': f'Server error: {str(e)}'}), 500
+        return create_error_response({'error': f'Server error: {str(e)}'}, 500)
