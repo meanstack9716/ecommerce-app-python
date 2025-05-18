@@ -18,6 +18,8 @@ ALLOWED_GENDERS = ['Men', 'Women', 'Unisex', 'Kids']
 
 APPROVAL_STATUSES = ['pending', 'approved', 'cancelled']
 
+ORDER_STATUS = ['pending', 'confirmed', 'processing', 'shipped', 'outOfDelivery', 'delivered', 'cancelled', 'return', 'refund']
+
 # API Endpoint Constants
 REGISTER = f'/register'
 LOGIN = f'/login'

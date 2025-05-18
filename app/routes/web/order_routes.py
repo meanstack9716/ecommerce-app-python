@@ -2,8 +2,9 @@ from flask import render_template, session, redirect, url_for, jsonify, request
 from . import admin_api
 from app.models import Order, User
 from bson import ObjectId
-from constants import ORDER_LIST_WEB_URL, ORDER_STATUS_UPDATE_WEB_URL
+from constants import ORDER_LIST_WEB_URL, ORDER_STATUS_UPDATE_WEB_URL, ORDER_STATUS
 from app.utils.utils import create_error_response
+
 
 @admin_api.route(ORDER_LIST_WEB_URL, methods=['GET'])
 def product_order_list_page():
@@ -117,8 +118,8 @@ def update_order_status(order_id):
         if not user.is_admin and str(order.seller_id) != str(user.id):
             return create_error_response({'error': 'Unauthorized to update this order'}, 403)
 
-        status = request.form.get('status')  # Use form data
-        valid_statuses = ['pending', 'confirmed', 'processing', 'shipped', 'outOfDelivery', 'delivered', 'cancelled', 'return', 'refund']
+        status = request.form.get('status')
+        valid_statuses = ORDER_STATUS
         
         if status not in valid_statuses:
             return create_error_response({'error': 'Invalid status'}, 400)
