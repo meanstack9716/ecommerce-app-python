@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import User, Role, Seller, Address, Identification, AddressDetail
+from app.models import User, Role, Seller, Address, Identification
 import cloudinary.uploader
 from constants import GET_USER_PROFILE, UPDATE_PROFILE, UPDATE_PROFILE_PIC, DELETE_PROFILE_PIC, ADD_SELLER
 from app.utils.validation import validate_email, validate_password, validate_required_fields

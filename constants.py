@@ -55,8 +55,8 @@ GET_SUBCATEGORIES_FILTER_API_URL = '/api/subcategories'
 SUB_SUB_CATEGORY_LIST_WEB_URL = f'/sub-sub-category-list'
 SUB_SUB_CATEGORY_WEB_URL = f'sub-sub-category/add'
 
-ADD_NEW_PRODUCT_WEB_URL = f'products/add'
-GET_PRODUCT_LIST_WEB_URL = f'products/list'
+ADD_NEW_PRODUCT_WEB_URL = f'/products/add'
+GET_PRODUCT_LIST_WEB_URL = f'/products/list'
 GET_PRODUCT_DETAILS_WEB_URL = f'/products/<product_id>'
 GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL = f'/products/edit/<product_id>'
 
@@ -68,8 +68,8 @@ GET_BRANDS_WEB_URL = f'/brands/list'
 ADD_BRAND_WEB_URL = f'/brands/add'
 UPDATE_BRAND_WEB_URL = f'/brands/edit/<brand_id>'
 
-
-
+ORDER_LIST_WEB_URL = f'/orders/list'
+ORDER_STATUS_UPDATE = f'/orders/<order_id>/update-status'
 # WEB Endpoint Constants End
 
 # API Endpoint Constants Start
@@ -99,6 +99,7 @@ GET_SUBSUBCATEGORIES_BY_CATEGORY_ID_API = '/api/sub-sub-categories/list';
 
 ADD_NEW_PRODUCT_API = f'/api/products/add'
 PRODUCT_LISTS_API= f'/api/products/list'
+PRODUCT_LISTS__BY_ID_API = f'/api/products/<string:product_id>'
 EDIT_PRODUCT_API = f'/api/products/edit'
 PRODUCT_LISTS_BY_ID_API = f'/api/products/<string:product_id>'
 # Sub Sub Category API Endpoint Constants End
@@ -113,10 +114,17 @@ DELETE_BRAND_API = '/brands/delete/<brand_id>'
 # Cart Endpoint API Start
 CART_ADD = '/api/cart/add'
 CART_REMOVE = '/api/cart/remove'
+CART_REMOVE_ALL = '/api/cart/remove-all'
 CART_LIST = '/api/cart/list'
 CART_CHECKOUT = '/api/cart/checkout'
 # Cart Endpoint API End
 
+# Address Endpoint Start
+ADDRESS_ADD = '/api/address/add'
+ADDRESS_UPDATE = '/api/address/update'
+ADDRESS_REMOVE = '/api/address/remove/<address_id>'
+ADDRESS_LIST = '/api/address/list'
+# Address Endpoint End
 
 WISHLIST_ADD = '/api/wishlist/add'
 WISHLIST_REMOVE = '/api/wishlist/remove'

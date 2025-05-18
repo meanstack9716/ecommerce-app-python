@@ -110,6 +110,38 @@ def get_product_lists():
             'next_num': products.next_num
         })
 
+    # Handle AJAX request
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        if error:
+            return jsonify({'error': error}), 400
+
+        product_data = []
+        for product in products.items:
+            image_url = None
+            if product.variants and product.variants[0].images:
+                image_url = f"http://{local_ip}:8080/static/uploads/{product.variants[0].images[0].image_url}"
+
+            product_data.append({
+                'name': product.name,
+                'price': product.price,
+                'discount_price': product.discount_price,
+                'final_price': product.final_price,
+                'sku_number': product.sku_number or '-',
+                'image_url': image_url,
+                'edit_url': url_for('admin_api.edit_product', product_id=product.id),
+                'details_url': url_for('admin_api.product_details', product_id=product.id)
+            })
+
+        return jsonify({
+            'products': product_data,
+            'page': products.page,
+            'pages': products.pages,
+            'has_prev': products.has_prev,
+            'has_next': products.has_next,
+            'prev_num': products.prev_num,
+            'next_num': products.next_num
+        })
+
     return render_template(
         'admin/products/product_lists.html',
         products=products,

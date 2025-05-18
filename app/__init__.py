@@ -24,7 +24,7 @@ def create_app(config_class=Config):
     from app.models.role import Role
     from app.models.seller import Seller
     from app.models.brands import ProductBrands
-    from app.models.address import Address, AddressDetail
+    from app.models.address import Address
     from app.models.identification import Identification
     from app.models.category_modal import Category, SubCategory, SubSubCategory
     from app.models.products import Products, ProductVariant
@@ -54,6 +54,8 @@ def create_app(config_class=Config):
     from app.routes.api.wishlist_bp import wishlist_bp
     from app.routes.api.saveforlater_bp import saveforlater_bp
     from app.routes.api.product_search_api import search_bp
+    from app.routes.api.order_api import order_bp
+    from app.routes.api.manage_address_api import address_bp
 
     # Register blueprints
     app.register_blueprint(auth_bp)
@@ -69,6 +71,8 @@ def create_app(config_class=Config):
     app.register_blueprint(wishlist_bp)
     app.register_blueprint(saveforlater_bp)
     app.register_blueprint(search_bp)
+    app.register_blueprint(order_bp)
+    app.register_blueprint(address_bp)
 
     from app.utils.image_upload import image_store
     import base64

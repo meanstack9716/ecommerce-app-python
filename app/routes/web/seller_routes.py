@@ -19,14 +19,17 @@ def fetch_sellers_data(search_query='', approval_status='', page=1, per_page=10)
         query = query.filter(is_approved=approval_status)
 
     if search_query:
+        # Search in User fields
         user_query = Q(email__icontains=search_query) | Q(phone_number__icontains=search_query)
         matching_users = User.objects(user_query)
         matching_user_ids = [user.id for user in matching_users]
 
-        address_query = Q(address__city__icontains=search_query) | Q(address__line1__icontains=search_query)
+        # Search in Address fields (direct fields now)
+        address_query = Q(city__icontains=search_query) | Q(line1__icontains=search_query)
         matching_addresses = Address.objects(address_query)
         matching_address_ids = [address.id for address in matching_addresses]
 
+        # Build the main search query
         search_regex = Q(businessName__icontains=search_query)
         if matching_user_ids:
             search_regex |= Q(user_id__in=matching_user_ids)
@@ -47,44 +50,59 @@ def fetch_sellers_data(search_query='', approval_status='', page=1, per_page=10)
         address = seller.address
         identification = Identification.objects(user_id=user).first()
 
+        # Simplified address data access (direct fields)
         address_data = {
-            "line1": address.address.line1 if address and address.address else "",
-            "city": address.address.city if address and address.address else ""
+            "line1": address.line1 if address else "",
+            "city": address.city if address else "",
+            "state": address.state if address else "",
+            "postal_code": address.postal_code if address else "",
+            "country": address.country if address else ""
         }
 
         enriched_sellers.append({
             "index": idx,
             "seller": {
+                "id": str(seller.id),
                 "businessName": seller.businessName,
                 "businessType": seller.businessType,
-                "is_approved": seller.is_approved
+                "businessEmail": seller.businessEmail,
+                "gst_number": seller.gst_number,
+                "is_approved": seller.is_approved,
+                "created_at": seller.created_at.isoformat() if seller.created_at else None
             },
             "user": {
+                "id": str(user.id) if user else "",
                 "email": user.email if user else "",
+                "first_name": user.first_name if user else "",
+                "last_name": user.last_name if user else "",
                 "phone_number": user.phone_number if user else ""
             },
-            "address": {
-                "personal_address": address_data
-            },
+            "address": address_data,
             "identification": {
-                "pan_number": identification.pan_number if identification else "---"
+                "pan_number": identification.pan_number if identification else None,
+                "address_proof_id_type": identification.address_proof_id_type if identification else None
             }
         })
 
     return {
-        'sellers': enriched_sellers,
-        'pagination': {
-            'page': page,
-            'pages': total_pages,
-            'has_prev': page > 1,
-            'has_next': page < total_pages,
-            'prev_num': page - 1 if page > 1 else None,
-            'next_num': page + 1 if page < total_pages else None,
-            'total': total_count,
-            'per_page': per_page
+        'data': enriched_sellers,
+        'meta': {
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total_count': total_count,
+                'total_pages': total_pages,
+                'has_prev': page > 1,
+                'has_next': page < total_pages,
+                'prev_page': page - 1 if page > 1 else None,
+                'next_page': page + 1 if page < total_pages else None
+            },
+            'filters': {
+                'search_query': search_query,
+                'approval_status': approval_status
+            }
         }
     }
-
 
 @admin_api.route(GET_SELLER_LIST_WEB_URL)
 def get_seller_list():
@@ -100,9 +118,9 @@ def get_seller_list():
 
     return render_template(
         "admin/seller/seller_list.html",
-        sellers=data['sellers'],
-        filters={'search': search_query, 'approval_status': approval_status},
-        pagination=data['pagination'],
+        sellers=data['data'],
+        filters=data['meta']['filters'],
+        pagination=data['meta']['pagination'],
         limit=per_page,
         sellers_api_url=GET_SELLERS_API_URL
     )
@@ -120,7 +138,6 @@ def get_sellers():
     data = fetch_sellers_data(search_query, approval_status, page, per_page)
 
     return jsonify({
-        'sellers': data['sellers'],
-        'pagination': data['pagination'],
-        'filters': {'search': search_query, 'approval_status': approval_status}
+        'data': data['data'],
+        'meta': data['meta']
     })

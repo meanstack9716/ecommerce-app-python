@@ -86,7 +86,7 @@
                     <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.user.phone_number }}</td>
                     <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.seller.is_approved }}</td>
                     <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm whitespace-nowrap">
-                        {{ item.address.personal_address.line1 }}, {{ item.address.personal_address.city }}
+                        {{ item.address.line1 }}, {{ item.address.city }}
                     </td>
                     <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.identification.pan_number }}</td>
                 </tr>
@@ -169,10 +169,18 @@
             const url = `{{ sellers_api_url }}?search=${encodeURIComponent(search)}&approval_status=${encodeURIComponent(approval_status)}&page=${page}&limit=${limit}`;
 
             try {
-                const data = await fetchJsonData(url); // Use the fetchJsonData helper function
+                const data = await fetchJsonData(url);
+
+                const sellers = Array.isArray(data) ? data : data.data || [];
+
+                if (!sellers.length) {
+                    sellerTableBody.innerHTML = '<tr><td colspan="8" class="px-3 py-3 md:px-6 md:py-4 text-center text-sm text-gray-500">No sellers found</td></tr>';
+                    paginationDiv.innerHTML = '<span class="px-4 py-2 text-sm">Page 1 of 1</span>';
+                    return;
+                }
 
                 sellerTableBody.innerHTML = '';
-                data.sellers.forEach(item => {
+                sellers.forEach(item => {
                     const row = `
             <tr>
                 <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.index}</td>
@@ -182,7 +190,7 @@
                 <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.user.phone_number}</td>
                 <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.seller.is_approved}</td>
                 <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm whitespace-nowrap">
-                    ${item.address.personal_address.line1}, ${item.address.personal_address.city}
+                    ${item.address.line1}, ${item.address.city}
                 </td>
                 <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.identification.pan_number}</td>
             </tr>`;

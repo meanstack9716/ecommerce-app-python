@@ -1,11 +1,15 @@
 from flask import Blueprint, request, jsonify, session
-from app.models.cart import Cart, CartItem
-from app.models.products import ProductVariant, ProductVariantImage
-from app.models.products import Products
+from app.models.productCart import ProductCart
+from app.models.products import Products, ProductVariant, ProductVariantImage
 from datetime import datetime
-from constants import CART_ADD, CART_REMOVE, CART_LIST, CART_CHECKOUT
+from constants import CART_ADD, CART_REMOVE, CART_LIST, CART_CHECKOUT, CART_REMOVE_ALL
 from bson import ObjectId
 from constants import ALLOWED_SIZES
+from app.utils.utils import create_error_response
+from app.utils.image_upload import get_local_ip
+from flask import current_app
+
+
 
 cart_bp = Blueprint('cart', __name__)
 
@@ -16,126 +20,183 @@ def get_user_id():
 
 @cart_bp.route(CART_ADD, methods=['POST'])
 def add_to_cart():
+    user_id_response = get_user_id()
+    if isinstance(user_id_response, tuple):
+        return user_id_response
+    user_id = user_id_response
+
     if not request.is_json:
-        return jsonify({"error": "Request must be JSON"}), 400
+        return create_error_response({"error": "Request must be JSON"}, 400)
 
     try:
         data = request.get_json()
     except Exception:
-        return jsonify({"error": "Invalid JSON data"}), 400
+        return create_error_response({"error": "Invalid JSON data"}, 400)
 
     if not isinstance(data, dict):
-        return jsonify({"error": "Invalid data format, expected JSON object"}), 400
+        return create_error_response({"error": "Invalid data format, expected JSON object"}, 400)
 
-    product_id = data.get('product_id')
-    variant_id = data.get('variant_id')
-    size = data.get('size')
+    required_fields = ['product_id', 'selected_size', 'selected_color']
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return create_error_response({"error": f"Missing required field: {field}"}, 400)
+
     quantity = data.get('quantity', 1)
-    color = data.get('color')
+    if not isinstance(quantity, int) or quantity <= 0:
+        return create_error_response({"error": "Quantity must be a positive integer"}, 400)
 
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
-
-    if not product_id:
-        return jsonify({"error": "product_id is required"}), 400
-
-    # Validate size if provided
-    if size and size not in ALLOWED_SIZES:
-        return jsonify({"error": f"Invalid size. Must be one of {ALLOWED_SIZES}"}), 400
-    
-    if not color:
-        return jsonify({"error": "color is required"}), 400
-
-    try:
-        quantity = int(quantity)
-        if quantity < 1:
-            raise ValueError
-    except (ValueError, TypeError):
-        return jsonify({"error": "quantity must be a positive integer"}), 400
-
-    product = Products.objects(id=product_id).first()
+    product = Products.objects(id=data['product_id']).first()
     if not product:
-        return jsonify({"error": "Product not found"}), 404
+        return create_error_response({"error": "Product not found"}, 404)
 
-    price = float(product.final_price)
+    variant = ProductVariant.objects(
+        product_id=data['product_id'],
+        size=data['selected_size'],
+        color_hexa_code=data['selected_color']
+    ).first()
 
-    variant = None
-    if variant_id or size:
-        query = ProductVariant.objects(product_id=product)
-        if variant_id:
-            query = query.filter(id=variant_id)
-        if size:
-            query = query.filter(size=size)
-        variant = query.first()
-        if not variant:
-            return jsonify({"error": "Variant not found for the specified product and size"}), 404
-        price = float(product.final_price)
+    if not variant:
+        return create_error_response({"error": f"No variant found for size {data['selected_size']} and color {data['selected_color']}"}, 404)
 
-    cart_item = CartItem(
-        product_id=product_id,
-        variant_id=str(variant.id) if variant else None,
-        size=size,
-        color=color,
-        quantity=quantity,
-        price=price,
-        original_price=float(product.price),
-        discount=float(product.price - product.final_price) if product.discount_price else 0.0
-    )
+    if variant.stock_quantity < quantity:
+        return create_error_response({
+            "error": f"Insufficient stock for size {data['selected_size']} and color {data['selected_color']}. Available: {variant.stock_quantity}"
+        }, 400)
 
-    try:
-        cart_item.validate_stock(Products)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+    selected_color_name = variant.color
 
-    cart = Cart.objects(user_id=user_id).first()
-    if not cart:
-        cart = Cart(user_id=user_id, items=[], created_at=datetime.utcnow())
-
-    existing_item = None
-    for item in cart.items:
-        if (item.product_id == product_id and item.variant_id == cart_item.variant_id and item.size == size and item.color == color):
-            existing_item = item
-            break
+    existing_item = ProductCart.objects(
+        product_id=data['product_id'],
+        user_id=user_id,
+        selected_size=data['selected_size'],
+        selected_color=data['selected_color']
+    ).first()
 
     if existing_item:
-        existing_item.quantity += quantity
-        try:
-            existing_item.validate_stock(Products)
-        except ValueError as e:
-            return jsonify({"error": str(e)}), 400
-    else:
-        cart.items.append(cart_item)
+        new_quantity = existing_item.quantity + quantity
+        if new_quantity > variant.stock_quantity:
+            return create_error_response({
+                "error": f"Cannot add {new_quantity} items. Only {variant.stock_quantity} available in stock."
+            }, 400)
 
-    cart.updated_at = datetime.utcnow()
-    cart.save()
+        existing_item.quantity = new_quantity
+        existing_item.updated_at = datetime.utcnow()
+        existing_item.selected_color_name = selected_color_name
+        existing_item.save()
+        cart_item = existing_item
+        message = "Cart item quantity updated"
+    else:
+        cart_item = ProductCart(
+            product_id=data['product_id'],
+            user_id=user_id,
+            quantity=quantity,
+            selected_size=data['selected_size'],
+            selected_color=data['selected_color'],
+            selected_color_name=selected_color_name 
+        )
+        cart_item.save()
+        message = "Item added to cart"
 
     response_data = {
-        "message": "Item added to cart",
-        "cart": {
-            "id": str(cart.id),
-            "user_id": str(cart.user_id),
-            "items": [
-                {
-                    "product_id": str(item.product_id),
-                    "variant_id": str(item.variant_id) if item.variant_id else None,
-                    "size": item.size,
-                    "color": item.color,
-                    "quantity": item.quantity,
-                    "price": item.price,
-                    "original_price": item.original_price,
-                    "total_price": item.price * item.quantity
-                } for item in cart.items
-            ],
-            "total_items": sum(item.quantity for item in cart.items),
-            "total_price": sum(item.price * item.quantity for item in cart.items),
-            "created_at": cart.created_at.isoformat(),
-            "updated_at": cart.updated_at.isoformat()
+        "message": message,
+        "data": {
+            "id": str(cart_item.id),
+            "product_id": str(cart_item.product_id),
+            "user_id": str(cart_item.user_id),
+            "quantity": cart_item.quantity,
+            "selected_size": cart_item.selected_size,
+            "selected_color": cart_item.selected_color,
+            "selected_color_name": cart_item.selected_color_name
         }
     }
 
     return jsonify(response_data), 200
 
+@cart_bp.route(CART_LIST, methods=['GET'])
+def get_cart():
+    user_id = get_user_id()
+    if isinstance(user_id, tuple):
+        return user_id
+    local_ip = get_local_ip()
+    port = current_app.config.get('SERVER_PORT', 8080)
+    
+    cart_items = ProductCart.objects(user_id=user_id).select_related()
+    
+    cart_data = []
+    for item in cart_items:
+        product_data = None
+        if item.product_id:
+            product = item.product_id
+            
+            sizes = []
+            # Only include variants that match the selected color
+            for variant in product.variants:
+                if variant.color_hexa_code == item.selected_color:  # Filter by selected color
+                    size_exists = False
+                    for size in sizes:
+                        if size['value'] == variant.size:
+                            size_exists = True
+                            size['variants'].append({
+                                'value': variant.color_hexa_code,
+                                'name': variant.color,
+                                'stock_quantity': variant.stock_quantity,
+                                'id': str(variant.id)
+                            })
+                            break
+                    
+                    if not size_exists:
+                        sizes.append({
+                            'product_id': str(product.id),
+                            'value': variant.size,
+                            'size_type': 'standard',
+                            'id': str(variant.id),
+                            'variants': [{
+                                'value': variant.color_hexa_code,
+                                'name': variant.color,
+                                'stock_quantity': variant.stock_quantity,
+                                'id': str(variant.id)
+                            }]
+                        })
+            
+            # Build gallery with only the selected color's images
+            gallery = []
+            for variant in product.variants:
+                if variant.color_hexa_code == item.selected_color:  # Filter by selected color
+                    for image in variant.images:
+                        gallery.append({
+                            'color': variant.color,
+                            'id': str(image.id),
+                            'img_url': f"http://{local_ip}:{port}/static/uploads/{image.image_url}"
+                        })
+            
+            product_data = {
+                'id': str(product.id),
+                'title': product.name,
+                'details': product.details,
+                'description': product.description,
+                'stock_quantity': product.stock_quantity,
+                'price': float(product.price),
+                'discount_price': float(product.discount_price) if product.discount_price else None,
+                'final_price': float(product.final_price),
+                'status': product.status,
+                'sizes': sizes,
+                'gallery': gallery
+            }
+        
+        cart_data.append({
+            'id': str(item.id),
+            'selected_size': item.selected_size,
+            'selected_color': item.selected_color,
+            'selected_color_name': item.selected_color_name,
+            'quantity': item.quantity,
+            'product': product_data,
+        })
+    
+    return {
+        'status': 'success',
+        'data': cart_data
+    }
+    
 @cart_bp.route(CART_REMOVE, methods=['POST'])
 def remove_from_cart():
     user_id = get_user_id()
@@ -143,133 +204,64 @@ def remove_from_cart():
         return user_id
 
     data = request.json
-    product_id = data.get('product_id')
-    variant_id = data.get('variant_id')
+    item_ids = data.get('item_ids')
 
-    if not product_id:
-        return jsonify({"error": "product_id is required"}), 400
+    if not item_ids or not isinstance(item_ids, list):
+        return create_error_response({"error": "item_ids array is required"}, 400)
 
-    cart = Cart.objects(user_id=user_id).first()
-    if not cart:
-        return jsonify({"error": "Cart not found"}), 404
+    delete_result = ProductCart.objects(
+        id__in=item_ids,
+        user_id=user_id
+    ).delete()
 
-    cart.items = [
-        item for item in cart.items
-        if not (item.product_id == product_id and item.variant_id == variant_id)
-    ]
-    cart.save()
+    if delete_result == 0:
+        return create_error_response({
+            "error": "No matching items found in cart",
+            "details": "Either items don't exist or don't belong to this user"
+        }, 404)
+
+    remaining_items = ProductCart.objects(user_id=user_id)
+    
+    cart_data = [{
+        "item_id": str(item.id),
+        "product_id": str(item.product_id.id) if item.product_id else None,
+        "selected_size": item.selected_size,
+        "selected_color": item.selected_color,
+        "selected_color_name": item.selected_color_name,
+        "quantity": item.quantity,
+        "created_at": item.created_at.isoformat(),
+        "updated_at": item.updated_at.isoformat()
+    } for item in remaining_items]
+
     return jsonify({
-        "message": "Item removed from cart",
-        "cart": {
-            "items": [
-                {
-                    "product_id": item.product_id,
-                    "variant_id": item.variant_id,
-                    "quantity": item.quantity,
-                    "price": item.price,
-                    "discount": item.discount,
-                    "total_price": (item.price - item.discount) * item.quantity
-                } for item in cart.items
-            ],
-            "total_price": cart.total_price
+        "status": "success",
+        "message": f"Removed {delete_result} item(s) from cart",
+        "data": {
+            "remaining_items": cart_data,
+            "remaining_count": len(cart_data)
         }
     }), 200
 
-@cart_bp.route(CART_LIST, methods=['GET'])
-def get_cart():
+
+@cart_bp.route(CART_REMOVE_ALL, methods=['DELETE'])
+def remove_all_from_cart():
     user_id = get_user_id()
     if isinstance(user_id, tuple):
         return user_id
 
-    cart = Cart.objects(user_id=user_id).first()
+    delete_result = ProductCart.objects(user_id=user_id).delete()
 
-    if not cart:
-        return jsonify({"items": [], "total_price": 0.0}), 200
+    if delete_result == 0:
+        return create_error_response({
+            "error": "No items found in cart",
+            "details": "The cart is already empty"
+        }, 404)
 
-    items = []
-    for item in cart.items:
-        product = Products.objects(id=item.product_id).first()
-
-        variant = ProductVariant.objects(id=item.variant_id).first() if item.variant_id else None
-        variant_data = None
-
-        product_image = None
-        if item.product_id:
-            first_variant = ProductVariant.objects(product_id=item.product_id).first()
-            if first_variant:
-                first_image = ProductVariantImage.objects(variant_id=first_variant.id).first()
-                if first_image:
-                    product_image = {
-                        "image_url": first_image.image_url,
-                        "alt_text": first_image.alt_text
-                    }
-
-        item_data = {
-            "product_id": str(item.product_id),
-            "size": item.size,
-            "color": item.color,
-            "quantity": item.quantity,
-            "product": {
-                "name": product.name if product else "Unknown Product",
-                "details": product.details if product else None,
-                "description": product.description if product else None,
-                "sku_number": product.sku_number if product else None,
-                "category_id": str(product.category_id.id) if product and product.category_id else None,
-                "subcategory_id": str(product.subcategory_id.id) if product and product.subcategory_id else None,
-                "subsubcategory_id": str(product.subsubcategory_id.id) if product and product.subsubcategory_id else None,
-                "brand_id": str(product.brand_id.id) if product and product.brand_id else None,
-                "material": product.material if product else None,
-                "price": float(product.price) if product else 0.0,
-                "discount_percentage": float(product.discount_price) if product and product.discount_price else None,
-                "final_price": float(product.final_price) if product else 0.0,
-                "stock_quantity": product.stock_quantity if product else 0,
-                "image": product_image
-            },
+    return jsonify({
+        "status": "success",
+        "message": f"Removed all {delete_result} item(s) from cart",
+        "data": {
+            "remaining_items": [],
+            "remaining_count": 0
         }
-        items.append(item_data)
-
-    return jsonify({
-        "items": items,
-    }), 200
-
-@cart_bp.route(CART_CHECKOUT, methods=['POST'])
-def checkout():
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
-
-    data = request.json
-    shipping_address = data.get('shipping_address')
-    shipping_method = data.get('shipping_method')
-
-    cart = Cart.objects(user_id=user_id).first()
-    if not cart or not cart.items:
-        return jsonify({"error": "Cart is empty"}), 400
-
-    try:
-        cart.validate_cart(Product)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-
-    from app.models.order import Order
-    order = Order(
-        user_id=user_id,
-        items=cart.items,
-        total_price=cart.total_price,
-        currency=cart.currency,
-        shipping_address=shipping_address,
-        shipping_method=shipping_method,
-        status='pending'
-    )
-    order.save()
-
-    cart.items = []
-    cart.shipping_address = shipping_address
-    cart.shipping_method = shipping_method
-    cart.save()
-
-    return jsonify({
-        "message": "Order placed successfully",
-        "order_id": str(order.id),
-        "total_price": order.total_price
     }), 200

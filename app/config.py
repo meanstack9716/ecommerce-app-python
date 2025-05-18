@@ -30,3 +30,5 @@ class Config:
         api_key=os.getenv('CLOUDINARY_API_KEY'),
         api_secret=os.getenv('CLOUDINARY_API_SECRET')
     )
+    SERVER_PORT = int(os.getenv('SERVER_PORT', 8080))
+    ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')
