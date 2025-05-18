@@ -1,6 +1,6 @@
 from flask import render_template, session, redirect, url_for, jsonify, request
 from . import admin_api
-from app.models import Order, User
+from app.models import Order, User, Seller
 from bson import ObjectId
 from constants import ORDER_LIST_WEB_URL, ORDER_STATUS_UPDATE_WEB_URL, ORDER_STATUS
 from app.utils.utils import create_error_response
@@ -17,7 +17,14 @@ def product_order_list_page():
 
     try:
         items_per_page = 10
-        query = {} if user.is_admin else {'seller_id': ObjectId(user.id)}
+        
+        if user.is_admin:
+            query = {}
+        else:
+            seller = Seller.objects(user_id=ObjectId(user.id)).first()
+            if not seller:
+                return render_template("admin/orderPage/orders.html"), 403
+            query = {'seller_id': seller.id}
         
         total_orders = Order.objects(__raw__=query).count()
         total_pages = (total_orders + items_per_page - 1) // items_per_page
@@ -35,16 +42,16 @@ def product_order_list_page():
         )
     except Exception as e:
         print(f"Error in product_order_list_page: {str(e)}")
-        return render_template("admin/error.html", error_message="Failed to load orders"), 500
+        return render_template("admin/orderPage/orders.html"), 500
 
 @admin_api.route(ORDER_LIST_WEB_URL, methods=['POST'])
 def get_orders():
     if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
+        return redirect(url_for('admin_api.login_page'))
     
     user = User.objects(id=session['user_id']).first()
     if not user:
-        return jsonify({'error': 'User not found'}), 401
+        return redirect(url_for('admin_api.login_page'))
 
     try:
         data = request.get_json() or {}
@@ -53,7 +60,13 @@ def get_orders():
         search = data.get('search', '').strip()
         status = data.get('status', '').strip()
 
-        query = {} if user.is_admin else {'seller_id': ObjectId(user.id)}
+        if user.is_admin:
+            query = {}
+        else:
+            seller = Seller.objects(user_id=user.id).first()
+            if not seller:
+                return jsonify({'error': 'Seller profile not found'}), 403
+            query = {'seller_id': seller.id}
         
         if search:
             query['$or'] = [
@@ -96,10 +109,10 @@ def get_orders():
 
     except ValueError as e:
         print(f"Invalid request parameters: {str(e)}")
-        return jsonify({'error': 'Invalid request parameters'}), 400
+        return create_error_response({'error': 'Invalid request parameters'}, 400)
     except Exception as e:
         print(f"Error fetching orders: {str(e)}")
-        return jsonify({'error': 'Server error occurred'}), 500
+        return create_error_response({'error': 'Server error occurred'}, 500)
 
 @admin_api.route(ORDER_STATUS_UPDATE_WEB_URL, methods=['POST'])
 def update_order_status(order_id):
@@ -115,8 +128,10 @@ def update_order_status(order_id):
         if not order:
             return create_error_response({'error': 'Order not found'}, 404)
         
-        if not user.is_admin and str(order.seller_id) != str(user.id):
-            return create_error_response({'error': 'Unauthorized to update this order'}, 403)
+        if not user.is_admin:
+            seller = Seller.objects(user_id=user.id).first()
+            if not seller or str(order.seller_id.id) != str(seller.id):
+                return create_error_response({'error': 'Unauthorized to update this order'}, 403)
 
         status = request.form.get('status')
         valid_statuses = ORDER_STATUS
