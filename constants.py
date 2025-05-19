@@ -20,6 +20,8 @@ APPROVAL_STATUSES = ['pending', 'approved', 'cancelled']
 
 ORDER_STATUS = ['pending', 'confirmed', 'processing', 'shipped', 'outOfDelivery', 'delivered', 'cancelled', 'return', 'refund']
 
+ADDRESS_TYPES = ['Home', 'Office', 'Work', 'Store', 'Business', 'Other']
+
 # API Endpoint Constants
 REGISTER = f'/register'
 LOGIN = f'/login'
@@ -128,6 +130,7 @@ ADDRESS_ADD = '/api/address/add'
 ADDRESS_UPDATE = '/api/address/update'
 ADDRESS_REMOVE = '/api/address/remove/<address_id>'
 ADDRESS_LIST = '/api/address/list'
+ADDRESS_TYPES_API = '/api/address/types-list'
 # Address Endpoint End
 
 WISHLIST_ADD = '/api/wishlist/add'

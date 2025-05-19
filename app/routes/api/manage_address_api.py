@@ -3,7 +3,7 @@ from app.models.address import Address
 from datetime import datetime
 from bson import ObjectId
 from mongoengine.errors import ValidationError, DoesNotExist
-from constants import ADDRESS_ADD, ADDRESS_UPDATE, ADDRESS_REMOVE, ADDRESS_LIST
+from constants import ADDRESS_ADD, ADDRESS_UPDATE, ADDRESS_REMOVE, ADDRESS_LIST, ADDRESS_TYPES, ADDRESS_TYPES_API
 from app.utils.utils import create_error_response
 
 address_bp = Blueprint('address', __name__)
@@ -33,7 +33,7 @@ def create_address():
             return create_error_response({"error": f"{field} is required"}, 400)
 
     address_type = data['addressType']
-    valid_types = ['Home', 'Office', 'Work', 'Store', 'Business', 'Other']
+    valid_types = ADDRESS_TYPES
     if address_type not in valid_types:
         return create_error_response({"error": f"Invalid addressType. Must be one of {valid_types}"}, 400)
 
@@ -109,7 +109,7 @@ def update_address():
         if field not in data:
             return create_error_response({"error": f"{field} is required"}, 400)
 
-    valid_types = ['Home', 'Office', 'Work', 'Store', 'Business', 'Other']
+    valid_types = ADDRESS_TYPES
     if data['type'] not in valid_types:
         return create_error_response({"error": f"Invalid addressType. Must be one of {valid_types}"}, 400)
 
@@ -228,6 +228,23 @@ def get_addresses():
             "message": "Addresses retrieved successfully",
             "count": len(result),
             "data": result
+        }), 200
+
+    except Exception as e:
+        return create_error_response({"error": "Internal server error"}, 500)
+
+
+@address_bp.route(ADDRESS_TYPES_API, methods=['GET'])
+def get_addresses_types():
+    user_id = get_user_id()
+    if isinstance(user_id, tuple):
+        return user_id
+
+    try:
+        address_types = ADDRESS_TYPES
+        return jsonify({
+            "message": "Address types retrieved successfully",
+            "data": address_types
         }), 200
 
     except Exception as e:
