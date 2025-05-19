@@ -70,7 +70,7 @@
                 <tr>
                     {% for header in seller_list_header %}
                     <th
-                        class="px-3 py-3 md:px-4 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                        class="px-3 py-3 md:px-4 border border-gray-200 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
                         {{ header }}
                     </th>
                     {% endfor %}
@@ -79,16 +79,16 @@
             <tbody class="divide-y divide-gray-200" id="seller-table-body">
                 {% for item in sellers %}
                 <tr>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.index }}</td>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.seller.businessName }}</td>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.seller.businessType }}</td>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.user.email }}</td>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.user.phone_number }}</td>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.seller.is_approved }}</td>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm whitespace-nowrap">
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.index }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.seller.businessName }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.seller.businessType }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.user.email }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.user.phone_number }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.seller.is_approved }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm whitespace-nowrap border border-gray-200">
                         {{ item.address.line1 }}, {{ item.address.city }}
                     </td>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ item.identification.pan_number }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.identification.pan_number }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

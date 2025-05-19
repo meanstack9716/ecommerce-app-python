@@ -61,7 +61,7 @@
       <thead class="bg-gray-50">
         <tr>
           {% for header in user_table_heading_data %}
-          <th class="px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+          <th class="border border-gray-200 px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
             {{ header }}
           </th>
           {% endfor %}
@@ -70,12 +70,12 @@
       <tbody id="user-table-body" class="divide-y divide-gray-200">
         {% for userData in allUsersList %}
         <tr>
-          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ userData.index }}</td>
-          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ userData['first_name'] }}</td>
-          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ userData['last_name'] }}</td>
-          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ userData['email'] }}</td>
-          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ userData['role'] }}</td>
-          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ userData['phone_number'] }}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData.index }}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData['first_name'] }}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData['last_name'] }}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData['email'] }}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData['role'] }}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData['phone_number'] }}</td>
         </tr>
         {% endfor %}
       </tbody>

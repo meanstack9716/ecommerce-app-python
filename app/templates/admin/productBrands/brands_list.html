@@ -25,7 +25,7 @@
                 class="w-full sm:w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
                 Search
             </button>
-            <div class="w-full sm:w-auto mt-2 sm:mt-0">
+            <div class="w-full sm:w-auto mt-2 sm:mt-0 ">
                 <a href="#" id="clear-search"
                     class="text-sm font-medium px-4 py-3 border border-red-500 rounded-lg text-red-500">
                     Clear Search
@@ -42,7 +42,7 @@
             <tr>
                 {% for header in brand_headers %}
                 <th
-                    class="px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                    class="border border-gray-200 px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
                     {{ header }}
                 </th>
                 {% endfor %}
@@ -50,26 +50,32 @@
         </thead>
         <tbody id="brand-table-body">
             {% for brand in brands %}
-            <tr class="border-t text-center">
-                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ loop.index }}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ brand.name }}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">{{ brand.description }}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 w-24 text-center text-sm">
+            <tr class="text-center">
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">{{ loop.index }}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">{{ brand.name }}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">{{ brand.description }}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 w-24 text-sm border border-gray-200">
                     {% if brand.logo_path %}
-                    <img src="http://{{ local_ip }}:8080/static/uploads/{{ brand.logo_path }}" alt="{{ brand.name }} logo" class="w-full object-contain">
+                    <img src="http://{{ local_ip }}:8080/static/uploads/{{ brand.logo_path }}"
+                        alt="{{ brand.name }} logo" class="w-full object-contain">
                     {% endif %}
                 </td>
-                <td
-                    class="px-3 py-3 md:px-6 md:py-4 mt-3 text-center text-sm flex items-center justify-center space-x-6">
-                    <a href="{{ url_for('admin_api.update_brand_page', brand_id=brand.id) }}"
-                        class="text-blue-600 hover:text-blue-800">Edit</a>
-                    <form action="{{ url_for('admin_api.delete_brand', brand_id=brand.id) }}" method="POST"
-                        style="display:inline;">
-                        <input type="hidden" name="page" value="{{ pagination.page }}">
-                        <input type="hidden" name="search" value="{{ search }}">
-                        <input type="hidden" name="limit" value="{{ limit }}">
-                        <button type="submit" class="text-red-600 hover:text-red-800">Delete</button>
-                    </form>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    <div class="flex space-x-6 justify-center">
+                        <a href="{{ url_for('admin_api.update_brand_page', brand_id=brand.id) }}"
+                            class="text-blue-600 hover:text-blue-800"><span class="material-symbols-outlined">
+                                edit_square
+                            </span></a>
+                        <form action="{{ url_for('admin_api.delete_brand', brand_id=brand.id) }}" method="POST">
+                            <input type="hidden" name="page" value="{{ pagination.page }}">
+                            <input type="hidden" name="search" value="{{ search }}">
+                            <input type="hidden" name="limit" value="{{ limit }}">
+                            <button type="submit" class="text-red-600 hover:text-red-800"><span
+                                    class="material-symbols-outlined">
+                                    delete
+                                </span></button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             {% else %}
