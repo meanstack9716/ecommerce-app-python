@@ -99,9 +99,9 @@
     try {
       const { status, data } = await fetchJsonData('/api/sales/overview');
       if (status === 'success') {
-        document.getElementById('total-sales').textContent = `${data.total_sales.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        document.getElementById('total-sales').textContent = `₹${data.total_sales.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
         document.getElementById('order-count').textContent = data.order_count.toLocaleString('en-US');
-        document.getElementById('avg-order-value').textContent = `${data.avg_order_value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        document.getElementById('avg-order-value').textContent = `₹${data.avg_order_value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
       }
     } catch (error) {
       console.error('Error loading overview:', error);
@@ -119,7 +119,7 @@
           data: {
             labels: data.labels,
             datasets: [{
-              label: 'Sales ($)',
+              label: 'Sales (₹)',
               data: data.sales,
               borderColor: 'rgb(59, 130, 246)',
               backgroundColor: 'rgba(59, 130, 246, 0.2)',
@@ -130,7 +130,7 @@
           options: {
             responsive: true,
             scales: {
-              y: { beginAtZero: true, title: { display: true, text: 'Sales ($)' } },
+              y: { beginAtZero: true, title: { display: true, text: 'Sales (₹)' } },
               x: { title: { display: true, text: 'Month' } }
             }
           }
@@ -190,7 +190,7 @@
             <td class="px-6 py-4">${order.order_id}</td>
             <td class="px-6 py-4">${order.customer}</td>
             <td class="px-6 py-4">${order.product}</td>
-            <td class="px-6 py-4">$${order.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+            <td class="px-6 py-4">₹${order.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
             <td class="px-6 py-4">${order.date}</td>
           `;
           tbody.appendChild(row);
