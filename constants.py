@@ -133,15 +133,28 @@ ADDRESS_LIST = '/api/address/list'
 ADDRESS_TYPES_API = '/api/address/types-list'
 # Address Endpoint End
 
+# Wishlist Endpoint Start
 WISHLIST_ADD = '/api/wishlist/add'
 WISHLIST_REMOVE = '/api/wishlist/remove'
 WISHLIST_LIST = '/api/wishlist'
+# Wishlist Endpoint End
 
+# SaveForLater Endpoint Start
 SAVEFORLATER_ADD = '/api/saveforlater/add'
 SAVEFORLATER_REMOVE = '/api/saveforlater/remove'
 SAVEFORLATER_LIST = '/api/saveforlater'
 SAVEFORLATER_TO_CART = '/api/saveforlater/to-cart'
+# SaveForLater Endpoint End
 
-
+# Orders Endpoint Start
 ORDER_PLACE_API = f'/api/orders/new'
 ORDER_LIST__API = f'/api/orders/list'
+# Orders Endpoint End
+
+# Sales OverView Endpoint Start
+SALES_OVERVIEW_API = f'/api/sales/overview'
+SALES_OVER_TIME_API = f'/api/sales/over-time'
+SALES_TOP_PRODUCTS_API = f'/api/sales/top-products'
+RECENT_SALES_API = f'/api/sales/recent'
+TOP_PRODUCT_SALES_API = f'/api/sales/top-products'
+GET_SALES_SELLER = f'/api/sales/sellers'
