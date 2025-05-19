@@ -1,7 +1,7 @@
 from app.extensions import db
 from datetime import datetime
 from mongoengine import EmbeddedDocument, EmbeddedDocumentField
-
+from constants import ORDER_STATUS
 class OrderItem(EmbeddedDocument):
     product_id = db.ReferenceField('Products', required=True)
     selected_size = db.StringField()
@@ -18,9 +18,7 @@ class Order(db.Document):
     order_number = db.StringField(required=True, unique=True)
     items = db.ListField(EmbeddedDocumentField(OrderItem), required=True)
     total_amount = db.DecimalField(required=True, precision=2)
-    status = db.StringField(choices=[
-        'pending', 'confirmed' ,'processing', 'shipped', 'outOfDelivery', 'delivered', 'cancelled', 'return', 'refund'
-    ], default='pending')
+    status = db.StringField(choices=ORDER_STATUS, default='pending')
     shipping_address = db.DictField(required=True)
     payment_method = db.StringField(required=True)
     order_note = db.StringField(default='')

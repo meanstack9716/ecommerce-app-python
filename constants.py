@@ -18,6 +18,8 @@ ALLOWED_GENDERS = ['Men', 'Women', 'Unisex', 'Kids']
 
 APPROVAL_STATUSES = ['pending', 'approved', 'cancelled']
 
+ORDER_STATUS = ['pending', 'confirmed', 'processing', 'shipped', 'outOfDelivery', 'delivered', 'cancelled', 'return', 'refund']
+
 # API Endpoint Constants
 REGISTER = f'/register'
 LOGIN = f'/login'
@@ -69,8 +71,9 @@ GET_BRANDS_WEB_URL = f'/brands/list'
 ADD_BRAND_WEB_URL = f'/brands/add'
 UPDATE_BRAND_WEB_URL = f'/brands/edit/<brand_id>'
 
-ORDER_LIST_WEB_URL = f'/orders/list'
-ORDER_STATUS_UPDATE = f'/orders/<order_id>/update-status'
+ORDER_LIST_WEB_URL = '/orders'
+ORDER_STATUS_UPDATE_WEB_URL = f'/orders/<order_id>/update-status'
+ORDER_DETAILS_PAGE_WEB_URL = f'/order-details/<order_id>'
 # WEB Endpoint Constants End
 
 # API Endpoint Constants Start
@@ -135,3 +138,7 @@ SAVEFORLATER_ADD = '/api/saveforlater/add'
 SAVEFORLATER_REMOVE = '/api/saveforlater/remove'
 SAVEFORLATER_LIST = '/api/saveforlater'
 SAVEFORLATER_TO_CART = '/api/saveforlater/to-cart'
+
+
+ORDER_PLACE_API = f'/api/orders/new'
+ORDER_LIST__API = f'/api/orders/list'
