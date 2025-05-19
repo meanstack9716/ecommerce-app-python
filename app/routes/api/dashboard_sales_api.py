@@ -5,7 +5,7 @@ from app.extensions import db
 from mongoengine.queryset.visitor import Q
 from bson import ObjectId
 from app.models import Order, User, Products, Seller
-from constants import SALES_OVERVIEW_API, SALES_OVER_TIME_API, RECENT_SALES_API
+from constants import SALES_OVERVIEW_API, SALES_OVER_TIME_API, RECENT_SALES_API, TOP_PRODUCT_SALES_API, GET_SALES_SELLER
 
 sales_api = Blueprint('sales_api', __name__)
 
@@ -199,7 +199,7 @@ def get_sales_for_period(user, seller_id, start_date, end_date):
     orders = Order.objects(query)
     return float(sum(order.total_amount for order in orders) or 0)
 
-@sales_api.route('/api/sales/sellers', methods=['GET'])
+@sales_api.route(GET_SALES_SELLER, methods=['GET'])
 def get_sellers():
     try:
         user_id = session.get('user_id')
@@ -230,7 +230,7 @@ def get_sellers():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@sales_api.route('/api/sales/top-products', methods=['GET'])
+@sales_api.route(TOP_PRODUCT_SALES_API, methods=['GET'])
 def top_products():
     try:
         user_id = session.get('user_id')
