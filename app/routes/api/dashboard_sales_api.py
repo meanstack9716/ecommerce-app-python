@@ -1,19 +1,23 @@
-from flask import Blueprint, jsonify
+import pytz
+from flask import Blueprint, jsonify, session
 from datetime import datetime, timedelta
 from app.extensions import db
 from mongoengine.queryset.visitor import Q
 from bson import ObjectId
-import pytz
-from app.models import Order
+from app.models import Order, User, Products
+from constants import SALES_OVERVIEW_API, SALES_OVER_TIME_API, SALES_TOP_PRODUCTS_API, RECENT_SALES_API_API
+
 sales_api = Blueprint('sales_api', __name__)
 
-@sales_api.route('/api/sales/overview', methods=['GET'])
+@sales_api.route(SALES_OVERVIEW_API, methods=['GET'])
 def sales_overview():
     try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return create_error_response({'user_id': 'User not logged in'}, 401)
         now = datetime.now(pytz.UTC)
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         end_of_month = (start_of_month + timedelta(days=32)).replace(day=1) - timedelta(seconds=1)
-
         orders = Order.objects(
             created_at__gte=start_of_month,
             created_at__lte=end_of_month,
@@ -35,9 +39,8 @@ def sales_overview():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@sales_api.route('/api/sales/over-time', methods=['GET'])
+@sales_api.route(SALES_OVER_TIME_API, methods=['GET'])
 def sales_over_time():
-    """Get sales data aggregated by month for the last 5 months."""
     try:
         now = datetime.now(pytz.UTC)
         months = []
@@ -58,16 +61,15 @@ def sales_over_time():
         return jsonify({
             'status': 'success',
             'data': {
-                'labels': months[::-1],  # Reverse to show oldest to newest
+                'labels': months[::-1],
                 'sales': sales_data[::-1]
             }
         }), 200
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@sales_api.route('/api/sales/top-products', methods=['GET'])
+@sales_api.route(SALES_TOP_PRODUCTS_API, methods=['GET'])
 def top_products():
-    """Get top 5 products by units sold in the current month."""
     try:
         now = datetime.now(pytz.UTC)
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -111,9 +113,8 @@ def top_products():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@sales_api.route('/api/sales/recent', methods=['GET'])
+@sales_api.route(RECENT_SALES_API_API, methods=['GET'])
 def recent_sales():
-    """Get the 5 most recent sales."""
     try:
         orders = Order.objects(
             status__in=['confirmed', 'processing', 'shipped', 'outOfDelivery', 'delivered']
@@ -121,11 +122,24 @@ def recent_sales():
 
         recent_orders = []
         for order in orders:
-            user = db.User.objects(id=order.user_id.id).first()
-            product_names = [db.Products.objects(id=item.product_id.id).first().name for item in order.items]
+            user = User.objects(id=order.user_id.id).first()
+            
+            customer_name = 'Unknown'
+            if user:
+                customer_name = f"{user.first_name or ''} {user.last_name or ''}".strip()
+                if not customer_name:
+                    customer_name = user.email.split('@')[0]
+            
+            product_names = []
+            for item in order.items:
+                if hasattr(item, 'product_id') and item.product_id:
+                    product = Products.objects(id=item.product_id.id).first()
+                    if product:
+                        product_names.append(product.name)
+            
             recent_orders.append({
                 'order_id': order.order_number,
-                'customer': user.name if user else 'Unknown',
+                'customer': customer_name,
                 'product': product_names[0] if product_names else 'Unknown',
                 'amount': float(order.total_amount),
                 'date': order.created_at.strftime('%Y-%m-%d')

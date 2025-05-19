@@ -3,6 +3,9 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block admin_content %}
+<div id="loader" class="fixed inset-0 bg-gray-100 bg-opacity-75 flex items-center justify-center z-50">
+  <div class="animate-spin rounded-full h-8 w-8 border-t-4 border-b-4 border-blue-500"></div>
+</div>
 <div class="bg-white rounded-lg shadow p-6 max-w-7xl mx-auto">
   <h1 class="text-2xl font-bold mb-6 text-gray-800">Sales Dashboard</h1>
 
@@ -63,90 +66,66 @@
 {% block js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  fetch('/api/sales/overview')
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
-        document.getElementById('total-sales').textContent = `${data.data.total_sales.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-        document.getElementById('order-count').textContent = data.data.order_count.toLocaleString('en-US');
-        document.getElementById('avg-order-value').textContent = `${data.data.avg_order_value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-      }
-    })
-    .catch(error => console.error('Error fetching overview:', error));
+  function showLoader() {
+    document.getElementById('loader').classList.remove('hidden');
+  }
 
-  // Sales Over Time Chart
-  fetch('/api/sales/over-time')
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
+  function hideLoader() {
+    document.getElementById('loader').classList.add('hidden');
+  }
+
+  // Load overview data
+  async function loadOverview() {
+    try {
+      const { status, data } = await fetchJsonData('/api/sales/overview');
+      if (status === 'success') {
+        document.getElementById('total-sales').textContent = `${data.total_sales.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        document.getElementById('order-count').textContent = data.order_count.toLocaleString('en-US');
+        document.getElementById('avg-order-value').textContent = `${data.avg_order_value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      }
+    } catch (error) {
+      console.error('Error loading overview:', error);
+    }
+  }
+
+  // Load and render sales over time chart
+  async function loadSalesChart() {
+    try {
+      const { status, data } = await fetchJsonData('/api/sales/over-time');
+      if (status === 'success') {
         const salesCtx = document.getElementById('salesChart').getContext('2d');
         new Chart(salesCtx, {
-          type: 'line',
-          data: {
-            labels: data.data.labels,
-            datasets: [{
-              label: 'Sales ($)',
-              data: data.data.sales,
-              borderColor: 'rgb(59, 130, 246)',
-              backgroundColor: 'rgba(59, 130, 246, 0.2)',
-              fill: true,
-              tension: 0.4
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: { beginAtZero: true, title: { display: true, text: 'Sales ($)' } },
-              x: { title: { display: true, text: 'Month' } }
-            }
-          }
+          // ... existing chart config
         });
       }
-    })
-    .catch(error => console.error('Error fetching sales over time:', error));
+    } catch (error) {
+      console.error('Error loading sales chart:', error);
+    }
+  }
 
-  // Top Products Chart
-  fetch('/api/sales/top-products')
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
+  // Load and render top products chart
+  async function loadProductsChart() {
+    try {
+      const { status, data } = await fetchJsonData('/api/sales/top-products');
+      if (status === 'success') {
         const productsCtx = document.getElementById('productsChart').getContext('2d');
         new Chart(productsCtx, {
-          type: 'bar',
-          data: {
-            labels: data.data.labels,
-            datasets: [{
-              label: 'Units Sold',
-              data: data.data.units,
-              backgroundColor: [
-                'rgba(59, 130, 246, 0.8)',
-                'rgba(34, 197, 94, 0.8)',
-                'rgba(249, 115, 22, 0.8)',
-                'rgba(139, 92, 246, 0.8)',
-                'rgba(236, 72, 153, 0.8)'
-              ]
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: { beginAtZero: true, title: { display: true, text: 'Units Sold' } },
-              x: { title: { display: true, text: 'Product' } }
-            }
-          }
+          // ... existing chart config
         });
       }
-    })
-    .catch(error => console.error('Error fetching top products:', error));
+    } catch (error) {
+      console.error('Error loading products chart:', error);
+    }
+  }
 
-  // Recent Sales Table
-  fetch('/api/sales/recent')
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
+  // Load recent sales data
+  async function loadRecentSales() {
+    try {
+      const { status, data } = await fetchJsonData('/api/sales/recent');
+      if (status === 'success') {
         const tbody = document.getElementById('recent-sales-body');
         tbody.innerHTML = '';
-        data.data.forEach(order => {
+        data.forEach(order => {
           const row = document.createElement('tr');
           row.className = 'bg-white border-b';
           row.innerHTML = `
@@ -159,7 +138,29 @@
           tbody.appendChild(row);
         });
       }
-    })
-    .catch(error => console.error('Error fetching recent sales:', error));
+    } catch (error) {
+      console.error('Error loading recent sales:', error);
+    }
+  }
+
+  // Initialize all dashboard components
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Show loader initially
+    showLoader();
+
+    try {
+      // Run all load functions in parallel
+      await Promise.all([
+        loadOverview(),
+        loadSalesChart(),
+        loadProductsChart(),
+        loadRecentSales()
+      ]);
+    } catch (error) {
+      console.error('Error loading dashboard:', error);
+    } finally {
+      hideLoader();
+    }
+  });
 </script>
 {% endblock %}
