@@ -3,221 +3,594 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block admin_content %}
-<div id="loader" class="fixed inset-0 bg-gray-100 bg-opacity-75 flex items-center justify-center z-50">
-  <div class="animate-spin rounded-full h-8 w-8 border-t-4 border-b-4 border-blue-500"></div>
+<!-- Loader -->
+<div id="loader"
+  class="fixed inset-0 bg-gray-100 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300">
+  <div class="flex flex-col items-center">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+    <p class="mt-3 text-sm font-medium text-gray-700">Loading dashboard...</p>
+  </div>
 </div>
-<div class="bg-white rounded-lg shadow p-6 max-w-7xl mx-auto">
-  <h1 class="text-2xl font-bold mb-6 text-gray-800">Sales Dashboard</h1>
+
+<!-- Main Dashboard Container -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <!-- Header Section -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Sales Dashboard</h1>
+      <p class="mt-1 text-sm text-gray-500">Overview of your sales performance</p>
+    </div>
+    <div class="mt-4 md:mt-0">
+      <div class="flex items-center space-x-2">
+        <span class="text-sm font-medium text-gray-600">Period:</span>
+        <div class="relative">
+          <select id="period-filter"
+            class="text-sm border w-32 appearance-none border-gray-200 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition duration-150">
+            <option value="this_month">This Month</option>
+            <option value="last_month">Last Month</option>
+            <option value="this_quarter">This Quarter</option>
+            <option value="this_year">This Year</option>
+          </select>
+          <span
+            class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500">
+            expand_more
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seller Filter (Admin Only) -->
+  {% if users.is_admin %}
+  <div class="mb-8">
+    <label for="seller-filter" class="block text-sm font-medium text-gray-700 mb-2">Filter by Seller</label>
+    <div class="relative max-w-xs">
+      <select id="seller-filter"
+        class="w-full pl-3 pr-10 py-2 appearance-none text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 rounded-md transition duration-150">
+        <option value="">All Sellers</option>
+      </select>
+      <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+        <span
+          class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500">
+          expand_more
+        </span>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <!-- Overview Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-blue-100 p-4 rounded-lg shadow">
-      <h2 class="text-lg font-semibold text-gray-700">Total Sales</h2>
-      <p class="text-2xl font-bold text-blue-600" id="total-sales">0</p>
-      <p class="text-sm text-gray-500">This Month</p>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+    <div
+      class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500 truncate">Total Sales</p>
+          <p class="mt-1 text-2xl font-semibold text-gray-900" id="total-sales">0</p>
+        </div>
+        <div class="bg-primary-50 p-3 rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+      <p class="mt-2 text-xs text-gray-500 flex items-center" id="total-sales-change"></p>
     </div>
-    <div class="bg-green-100 p-4 rounded-lg shadow">
-      <h2 class="text-lg font-semibold text-gray-700">Orders</h2>
-      <p class="text-2xl font-bold text-green-600" id="order-count">0</p>
-      <p class="text-sm text-gray-500">This Month</p>
+
+    <div
+      class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500 truncate">Total Orders</p>
+          <p class="mt-1 text-2xl font-semibold text-gray-900" id="order-count">0</p>
+        </div>
+        <div class="bg-green-50 p-3 rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </div>
+      </div>
+      <p class="mt-2 text-xs text-gray-500 flex items-center" id="order-count-change"></p>
     </div>
-    <div class="bg-yellow-100 p-4 rounded-lg shadow">
-      <h2 class="text-lg font-semibold text-gray-700">Average Order Value</h2>
-      <p class="text-2xl font-bold text-yellow-600" id="avg-order-value">0</p>
-      <p class="text-sm text-gray-500">This Month</p>
+
+    <div
+      class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500 truncate">Avg. Order Value</p>
+          <p class="mt-1 text-2xl font-semibold text-gray-900" id="avg-order-value">0</p>
+        </div>
+        <div class="bg-purple-50 p-3 rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        </div>
+      </div>
+      <p class="mt-2 text-xs text-gray-500 flex items-center" id="avg-order-change"></p>
+    </div>
+
+    <div
+      class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-500 truncate">Conversion Rate</p>
+          <p class="mt-1 text-2xl font-semibold text-gray-900" id="conversion-rate">0%</p>
+        </div>
+        <div class="bg-blue-50 p-3 rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+      </div>
+      <p class="mt-2 text-xs text-gray-500 flex items-center" id="conversion-rate-change"></p>
     </div>
   </div>
 
   <!-- Charts Section -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <!-- Sales Over Time Chart -->
-    <div class="bg-white p-4 rounded-lg shadow">
-      <h2 class="text-lg font-semibold text-gray-700 mb-4">Sales Over Time</h2>
-      <canvas id="salesChart" class="w-full h-64"></canvas>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 lg:col-span-2">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">Sales Performance</h2>
+        <div class="flex space-x-2">
+          <button id="chart-monthly" class="px-3 py-1 text-xs font-medium rounded-md bg-primary-100 text-primary-800">Monthly</button>
+          <button id="chart-weekly" class="px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-50">Weekly</button>
+          <button id="chart-daily" class="px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-50">Daily</button>
+        </div>
+      </div>
+      <div class="relative w-full h-80">
+        <canvas id="salesChart" class="w-full h-full"></canvas>
+      </div>
     </div>
-    <!-- Top Products Chart -->
-    <div class="bg-white p-4 rounded-lg shadow">
-      <h2 class="text-lg font-semibold text-gray-700 mb-4">Top Products</h2>
-      <canvas id="productsChart" class="w-full h-64"></canvas>
+
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Top Products</h2>
+      <div id="top-products" class="space-y-4">
+        <!-- Top products will be populated here -->
+      </div>
     </div>
   </div>
 
   <!-- Sales Table -->
-  <div class="bg-white p-4 rounded-lg shadow">
-    <h2 class="text-lg font-semibold text-gray-700 mb-4">Recent Sales</h2>
+  <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-gray-900">Recent Transactions</h2>
+      <button class="text-sm font-medium text-primary-600 hover:text-primary-700">View All</button>
+    </div>
     <div class="overflow-x-auto">
-      <table class="w-full text-sm text-left text-gray-500" id="recent-sales-table">
-        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+      {% set recent_header_table = ['Order ID', 'Customer', 'Product', 'Amount', 'Date', 'Status'] %}
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
           <tr>
-            <th scope="col" class="px-6 py-3">Order ID</th>
-            <th scope="col" class="px-6 py-3">Customer</th>
-            <th scope="col" class="px-6 py-3">Product</th>
-            <th scope="col" class="px-6 py-3">Amount</th>
-            <th scope="col" class="px-6 py-3">Date</th>
+            {% for header in recent_header_table %}
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              {{ header }}
+            </th>
+            {% endfor %}
           </tr>
         </thead>
-        <tbody id="recent-sales-body"></tbody>
+        <tbody id="recent-sales-body" class="bg-white divide-y divide-gray-200">
+          <!-- Table rows will be added here -->
+        </tbody>
       </table>
+    </div>
+    <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+      <div class="text-sm text-gray-500" id="pagination-info">Showing <span class="font-medium">1</span> to <span
+          class="font-medium">5</span> of <span class="font-medium">0</span> results</div>
+      <div class="flex space-x-2">
+        <button id="prev-page"
+          class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+          disabled>Previous</button>
+        <button id="next-page"
+          class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+          disabled>Next</button>
+      </div>
     </div>
   </div>
 </div>
 {% endblock %}
-{% block css %}
-<style>
-  .animate-spin {
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-</style>
-{% endblock %}
 
 {% block js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
 <script>
-  // Show loader
+  // Professional color palette
+  const colors = {
+    primary: {
+      50: '#f0f9ff',
+      100: '#e0f2fe',
+      200: '#bae6fd',
+      300: '#7dd3fc',
+      400: '#38bdf8',
+      500: '#0ea5e9',
+      600: '#0284c7',
+      700: '#0369a1',
+      800: '#075985',
+      900: '#0c4a6e',
+    },
+    gray: {
+      50: '#f9fafb',
+      100: '#f3f4f6',
+      200: '#e5e7eb',
+      300: '#d1d5db',
+      400: '#9ca3af',
+      500: '#6b7280',
+      600: '#4b5563',
+      700: '#374151',
+      800: '#1f2937',
+      900: '#111827',
+    }
+  };
+
   function showLoader() {
     document.getElementById('loader').classList.remove('hidden');
   }
 
-  // Hide loader
   function hideLoader() {
     document.getElementById('loader').classList.add('hidden');
   }
 
+  function showError(message) {
+    Toastify({
+      text: message,
+      duration: 3000,
+      close: true,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "#ef4444",
+      stopOnFocus: true,
+    }).showToast();
+  }
 
-  // Load overview data
-  async function loadOverview() {
+  async function fetchJsonData(url) {
     try {
-      const { status, data } = await fetchJsonData('/api/sales/overview');
-      if (status === 'success') {
-        document.getElementById('total-sales').textContent = `₹${data.total_sales.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-        document.getElementById('order-count').textContent = data.order_count.toLocaleString('en-US');
-        document.getElementById('avg-order-value').textContent = `₹${data.avg_order_value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.status !== 'success') {
+        throw new Error(data.message || 'API request failed');
       }
+      return data;
+    } catch (error) {
+      showError(error.message);
+      throw error;
+    }
+  }
+
+  function formatChange(value, isPercentage = false) {
+    const prefix = value >= 0 ? '+' : '';
+    const color = value >= 0 ? 'text-green-600' : 'text-red-600';
+    const icon = value >= 0
+      ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>`
+      : `<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>`;
+    const formattedValue = isPercentage
+      ? `${prefix}${value.toFixed(1)}%`
+      : `₹${Math.abs(value).toLocaleString('en-IN')}`;
+    return `<span class="${color} flex items-center">${icon}${formattedValue} from last period</span>`;
+  }
+
+  async function loadOverview(params = '') {
+    try {
+      const { data } = await fetchJsonData(`/api/sales/overview${params}`);
+      document.getElementById('total-sales').textContent = `₹${data.total_sales.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      document.getElementById('total-sales-change').innerHTML = formatChange(data.total_sales_change, true);
+      document.getElementById('order-count').textContent = data.order_count.toLocaleString('en-IN');
+      document.getElementById('order-count-change').innerHTML = formatChange(data.order_count_change, true);
+      document.getElementById('avg-order-value').textContent = `₹${data.avg_order_value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      document.getElementById('avg-order-change').innerHTML = formatChange(data.avg_order_change, true);
+      document.getElementById('conversion-rate').textContent = `${data.conversion_rate.toFixed(1)}%`;
+      document.getElementById('conversion-rate-change').innerHTML = formatChange(data.conversion_rate_change, true);
     } catch (error) {
       console.error('Error loading overview:', error);
     }
   }
 
-  // Load and render sales over time chart
-  async function loadSalesChart() {
+  async function loadSellers() {
     try {
-      const { status, data } = await fetchJsonData('/api/sales/over-time');
-      if (status === 'success') {
-        const salesCtx = document.getElementById('salesChart').getContext('2d');
-        new Chart(salesCtx, {
-          type: 'line',
-          data: {
-            labels: data.labels,
-            datasets: [{
-              label: 'Sales (₹)',
-              data: data.sales,
-              borderColor: 'rgb(59, 130, 246)',
-              backgroundColor: 'rgba(59, 130, 246, 0.2)',
-              fill: true,
-              tension: 0.4
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: { beginAtZero: true, title: { display: true, text: 'Sales (₹)' } },
-              x: { title: { display: true, text: 'Month' } }
-            }
-          }
+      const { data } = await fetchJsonData('/api/sales/sellers');
+      const select = document.getElementById('seller-filter');
+      if (select) {
+        data.forEach(seller => {
+          const option = document.createElement('option');
+          option.value = seller.id;
+          option.textContent = seller.name;
+          select.appendChild(option);
         });
       }
+    } catch (error) {
+      console.error('Error loading sellers:', error);
+    }
+  }
+
+  async function loadSalesChart(params = '') {
+    try {
+      const { data } = await fetchJsonData(`/api/sales/over-time${params}`);
+      const salesCtx = document.getElementById('salesChart').getContext('2d');
+      
+      if (window.salesChartInstance) {
+        window.salesChartInstance.destroy();
+      }
+
+      window.salesChartInstance = new Chart(salesCtx, {
+        type: 'line',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label: 'Sales (₹)',
+            data: data.sales,
+            borderColor: colors.primary[600],
+            backgroundColor: colors.primary[50],
+            fill: true,
+            tension: 0.3,
+            borderWidth: 2,
+            pointBackgroundColor: colors.primary[600],
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointHitRadius: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                color: colors.gray[700],
+                font: {
+                  family: "'Inter', sans-serif",
+                  size: 13
+                }
+              }
+            },
+            tooltip: {
+              backgroundColor: colors.gray[800],
+              titleColor: 'white',
+              bodyColor: 'white',
+              borderColor: colors.gray[600],
+              borderWidth: 1,
+              padding: 12,
+              usePointStyle: true,
+              callbacks: {
+                label: function (context) {
+                  return ` ₹${context.raw.toLocaleString('en-IN')}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                color: colors.gray[500]
+              }
+            },
+            y: {
+              grid: {
+                color: colors.gray[100]
+              },
+              ticks: {
+                color: colors.gray[500],
+                callback: function (value) {
+                  return '₹' + value.toLocaleString('en-IN');
+                }
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          }
+        }
+      });
     } catch (error) {
       console.error('Error loading sales chart:', error);
     }
   }
-  // Load and render top products chart
-  async function loadProductsChart() {
+
+  async function loadTopProducts(params = '') {
     try {
-      const { status, data } = await fetchJsonData('/api/sales/top-products');
-      if (status === 'success') {
-        const productsCtx = document.getElementById('productsChart').getContext('2d');
-        new Chart(productsCtx, {
-          type: 'bar',
-          data: {
-            labels: data.labels,
-            datasets: [{
-              label: 'Units Sold',
-              data: data.units,
-              backgroundColor: [
-                'rgba(59, 130, 246, 0.8)',
-                'rgba(34, 197, 94, 0.8)',
-                'rgba(249, 115, 22, 0.8)',
-                'rgba(139, 92, 246, 0.8)',
-                'rgba(236, 72, 153, 0.8)'
-              ]
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: { beginAtZero: true, title: { display: true, text: 'Units Sold' } },
-              x: { title: { display: true, text: 'Product' } }
-            }
-          }
-        });
-      }
+      const { data } = await fetchJsonData(`/api/sales/top-products${params}`);
+      const container = document.getElementById('top-products');
+      container.innerHTML = '';
+      const icons = [
+        { color: 'indigo', path: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+        { color: 'blue', path: 'M9 5l7 7-7 7' },
+        { color: 'green', path: 'M13 10V3L4 14h7v7l9-11h-7z' },
+        { color: 'purple', path: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4' }
+      ];
+
+      data.forEach((product, index) => {
+        const icon = icons[index % icons.length];
+        const div = document.createElement('div');
+        div.className = 'flex items-start';
+        div.innerHTML = `
+          <div class="bg-${icon.color}-100 p-2 rounded-lg mr-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-${icon.color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${icon.path}" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-sm font-medium text-gray-900">${product.name}</h3>
+            <p class="text-xs text-gray-500">${product.percentage.toFixed(1)}% of total sales</p>
+            <div class="mt-1 w-full bg-gray-200 rounded-full h-1.5">
+              <div class="bg-${icon.color}-600 h-1.5 rounded-full" style="width: ${product.percentage}%"></div>
+            </div>
+          </div>
+          <span class="text-sm font-medium text-gray-900">₹${product.amount.toLocaleString('en-IN')}</span>
+        `;
+        container.appendChild(div);
+      });
     } catch (error) {
-      console.error('Error loading products chart:', error);
+      console.error('Error loading top products:', error);
     }
   }
 
-  // Load recent sales data
-  async function loadRecentSales() {
+  async function loadRecentSales(params = '', page = 1) {
     try {
-      const { status, data } = await fetchJsonData('/api/sales/recent');
-      if (status === 'success') {
-        const tbody = document.getElementById('recent-sales-body');
-        tbody.innerHTML = '';
-        data.forEach(order => {
-          const row = document.createElement('tr');
-          row.className = 'bg-white border-b';
-          row.innerHTML = `
-            <td class="px-6 py-4">${order.order_id}</td>
-            <td class="px-6 py-4">${order.customer}</td>
-            <td class="px-6 py-4">${order.product}</td>
-            <td class="px-6 py-4">₹${order.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-            <td class="px-6 py-4">${order.date}</td>
-          `;
-          tbody.appendChild(row);
-        });
-      }
+      const { data } = await fetchJsonData(`/api/sales/recent${params}&page=${page}`);
+      const tbody = document.getElementById('recent-sales-body');
+      tbody.innerHTML = '';
+
+      data.orders.forEach(order => {
+        let statusClass, statusText;
+        if (order.status === 'completed') {
+          statusClass = 'bg-green-100 text-green-800';
+          statusText = 'Completed';
+        } else if (order.status === 'processing') {
+          statusClass = 'bg-yellow-100 text-yellow-800';
+          statusText = 'Processing';
+        } else if (order.status === 'cancelled') {
+          statusClass = 'bg-red-100 text-red-800';
+          statusText = 'Cancelled';
+        } else {
+          statusClass = 'bg-gray-100 text-gray-800';
+          statusText = 'Pending';
+        }
+
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50 transition-colors duration-150';
+        row.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.order_id}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.customer}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.product}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹${order.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(order.date).toLocaleDateString('en-IN')}</td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">${statusText}</span>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      const paginationInfo = document.getElementById('pagination-info');
+      paginationInfo.innerHTML = `Showing <span class="font-medium">${(data.page - 1) * data.per_page + 1}</span> to <span class="font-medium">${Math.min(data.page * data.per_page, data.total)}</span> of <span class="font-medium">${data.total}</span> results`;
+
+      document.getElementById('prev-page').disabled = data.page === 1;
+      document.getElementById('next-page').disabled = data.page * data.per_page >= data.total;
     } catch (error) {
       console.error('Error loading recent sales:', error);
     }
   }
 
-  // Initialize all dashboard components
+  function getQueryParams() {
+    const sellerId = document.getElementById('seller-filter')?.value || '';
+    const period = document.getElementById('period-filter').value;
+    let params = sellerId ? `?seller_id=${sellerId}` : '';
+    params += params ? `&period=${period}` : `?period=${period}`;
+    return params;
+  }
+
   document.addEventListener('DOMContentLoaded', async () => {
-    // Show loader initially
     showLoader();
 
     try {
-      // Run all load functions in parallel
+      if (document.getElementById('seller-filter')) {
+        await loadSellers();
+      }
+
+      const periodFilter = document.getElementById('period-filter');
+      const sellerFilter = document.getElementById('seller-filter');
+      const chartButtons = {
+        monthly: document.getElementById('chart-monthly'),
+        weekly: document.getElementById('chart-weekly'),
+        daily: document.getElementById('chart-daily')
+      };
+      let currentPage = 1;
+      let chartPeriod = 'monthly';
+
+      function updateChartButtons(activePeriod) {
+        Object.keys(chartButtons).forEach(period => {
+          chartButtons[period].classList.toggle('bg-primary-100', period === activePeriod);
+          chartButtons[period].classList.toggle('text-primary-800', period === activePeriod);
+          chartButtons[period].classList.toggle('text-gray-500', period !== activePeriod);
+          chartButtons[period].classList.toggle('hover:bg-gray-50', period !== activePeriod);
+        });
+      }
+
+      periodFilter.addEventListener('change', async () => {
+        showLoader();
+        try {
+          await Promise.all([
+            loadOverview(getQueryParams()),
+            loadSalesChart(`${getQueryParams()}&period=${chartPeriod}`),
+            loadTopProducts(getQueryParams()),
+            loadRecentSales(getQueryParams(), currentPage)
+          ]);
+        } finally {
+          hideLoader();
+        }
+      });
+
+      if (sellerFilter) {
+        sellerFilter.addEventListener('change', async () => {
+          showLoader();
+          try {
+            await Promise.all([
+              loadOverview(getQueryParams()),
+              loadSalesChart(`${getQueryParams()}&period=${chartPeriod}`),
+              loadTopProducts(getQueryParams()),
+              loadRecentSales(getQueryParams(), currentPage)
+            ]);
+          } finally {
+            hideLoader();
+          }
+        });
+      }
+
+      Object.keys(chartButtons).forEach(period => {
+        chartButtons[period].addEventListener('click', async () => {
+          chartPeriod = period;
+          updateChartButtons(period);
+          showLoader();
+          try {
+            await loadSalesChart(`${getQueryParams()}&period=${chartPeriod}`);
+          } finally {
+            hideLoader();
+          }
+        });
+      });
+
+      document.getElementById('prev-page').addEventListener('click', async () => {
+        if (currentPage > 1) {
+          currentPage--;
+          showLoader();
+          try {
+            await loadRecentSales(getQueryParams(), currentPage);
+          } finally {
+            hideLoader();
+          }
+        }
+      });
+
+      document.getElementById('next-page').addEventListener('click', async () => {
+        currentPage++;
+        showLoader();
+        try {
+          await loadRecentSales(getQueryParams(), currentPage);
+        } finally {
+          hideLoader();
+        }
+      });
+
       await Promise.all([
-        loadOverview(),
-        loadSalesChart(),
-        loadProductsChart(),
-        loadRecentSales()
+        loadOverview(getQueryParams()),
+        loadSalesChart(`${getQueryParams()}&period=${chartPeriod}`),
+        loadTopProducts(getQueryParams()),
+        loadRecentSales(getQueryParams(), currentPage)
       ]);
     } catch (error) {
       console.error('Error loading dashboard:', error);
     } finally {
-      // Hide loader when all data is loaded or if there's an error
       hideLoader();
     }
   });
