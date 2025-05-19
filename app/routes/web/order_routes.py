@@ -93,6 +93,7 @@ def get_orders():
             'created_at': order.created_at.isoformat(),
             'total_amount': float(order.total_amount),
             'status': order.status,
+            'payment_method': order.payment_method,
             'payment_status': order.payment_status,
             'customer_name': getattr(order, 'customer_name', ''),
             'customer_email': getattr(order, 'customer_email', '')

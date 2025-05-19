@@ -64,7 +64,7 @@
       <thead class="bg-gray-50 text-xs">
         <tr>
           {% for header in order_list_header %}
-          <th class="px-2 py-2 sm:px-4 sm:py-3 font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
+          <th class="px-2 py-2 border sm:px-4 sm:py-3 font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
             {{ header }}
           </th>
           {% endfor %}
@@ -168,13 +168,13 @@
           data.orders.forEach(order => {
             const row = `
               <tr>
-                <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${order.order_number}</td>
-                <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">${new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">$${parseFloat(order.total_amount).toFixed(2)}</td>
-                <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+                <td class="px-4 py-3 sm:px-6 sm:py-4 border whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${order.order_number}</td>
+                <td class="px-4 py-3 sm:px-6 sm:py-4 border whitespace-nowrap text-xs sm:text-sm text-gray-500">${new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                <td class="px-4 py-3 sm:px-6 sm:py-4 border whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${parseFloat(order.total_amount).toFixed(2)}</td>
+                <td class="px-4 py-3 sm:px-6 sm:py-4 border whitespace-nowrap">
                   <div class="relative">
                     <button 
-                      class="status-btn w-full sm:w-40 inline-flex items-center justify-between px-2 py-2 sm:px-3 sm:py-3 text-xs sm:text-sm font-medium text-gray-700 border border-sky-400 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150"
+                      class="status-btn w-full sm:w-50 inline-flex items-center justify-between px-2 py-2 sm:px-3 sm:py-3 text-xs sm:text-sm font-medium text-gray-700 border border-sky-400 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150"
                       aria-haspopup="true"
                       aria-label="Change order status"
                     >
@@ -198,12 +198,15 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-                  <span class="rounded text-xs sm:text-sm font-medium">
+                <td class="px-4 py-3 border sm:px-6 sm:py-4 whitespace-nowrap flex flex-col gap-2">
+                  <span class="text-xs font-medium bg-yellow-100 py-2 rounded-2xl">
+                    ${order.payment_method}
+                  </span>
+                  <span class="text-xs sm:text-sm font-medium">
                     ${order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
                   </span>
                 </td>
-                <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium">
+                <td class="px-4 py-3 border  sm:px-6 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium">
                   <a href="/order-details/${order.id}" class="text-blue-600 hover:text-blue-800">View</a>
                 </td>
               </tr>
