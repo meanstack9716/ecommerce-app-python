@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, session
 from app.models.saveforlater import SaveForLater, SaveForLaterItem
 from app.models.products import ProductVariant, Products
-from app.models.cart import Cart, CartItem
+from app.models.productCart import ProductCart
 from datetime import datetime
 from constants import SAVEFORLATER_ADD, SAVEFORLATER_REMOVE, SAVEFORLATER_LIST, SAVEFORLATER_TO_CART, ALLOWED_SIZES
 

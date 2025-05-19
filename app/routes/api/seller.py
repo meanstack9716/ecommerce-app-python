@@ -1,11 +1,11 @@
 from flask import Blueprint, request, jsonify, current_app
-from app.models import User, Role, Seller, Address, Identification, AddressDetail
+from app.models import User, Role, Seller, Address, Identification
 from app.utils.validation import validate_email, validate_required_fields
 from app.utils.utils import generate_random_password, create_error_response
 from app import db
 from mongoengine import ValidationError
 from app.utils.image_upload import upload_image, validate_fields
-from constants import ADD_SELLER
+from constants import ADD_SELLER, ADDRESS_TYPES
 
 seller_bp = Blueprint('seller', __name__, url_prefix='/user')
 
@@ -17,7 +17,8 @@ def add_seller():
 
     required_fields = [
         'email', 'first_name', 'last_name', 'phoneNumber',
-        'address[line1]', 'address[city]', 'address[state]', 'address[country]', 'address[postal_code]',
+        'address[line1]', 'address[city]', 'address[state]',
+        'address[country]', 'address[postal_code]',
         'businessName', 'businessType', 'businessEmail', 'businessMobile',
         'gstNumber', 'panNumber', 'addressProofIdType', 'idNumber'
     ]
@@ -59,45 +60,38 @@ def add_seller():
             )
             user.save(session=session)
 
-            # Create Personal Address
-            address_type = data.get('address[type]', 'Home')
-            if address_type not in ['Home', 'Office', 'Work', 'Store', 'Business', 'Other']:
-                raise ValidationError(f"Invalid address type: {address_type}")
+            # Process personal address
+            personal_address_type = data.get('address[type]', 'Home')
+            if personal_address_type not in ADDRESS_TYPES:
+                raise ValidationError(f"Invalid personal address type: {personal_address_type}")
 
             personal_address = Address(
                 user_id=user,
-                address=AddressDetail(
-                    line1=data.get('address[line1]'),
-                    line2=data.get('address[line2]', ''),
-                    city=data['address[city]'],
-                    state=data['address[state]'],
-                    postal_code=data['address[postal_code]'],
-                    country=data['address[country]'],
-                    type=address_type
-                ),
-                address_type=address_type,
+                line1=data.get('address[line1]'),
+                line2=data.get('address[streetLine2]', ''),
+                city=data.get('address[city]'),
+                state=data.get('address[state]'),
+                postal_code=data.get('address[postal_code]'),
+                country=data.get('address[country]'),
+                address_type=personal_address_type,
                 is_primary=True
             )
             personal_address.save(session=session)
 
-            # Create Business Address if provided
             business_address = None
-            if 'businessAddress[line1]' in data:
+            if data.get('businessAddress[line1]'):
                 business_address_type = data.get('businessAddress[type]', 'Business')
-                if business_address_type not in ['Home', 'Office', 'Work', 'Store', 'Business', 'Other']:
+                if business_address_type not in ADDRESS_TYPES:
                     raise ValidationError(f"Invalid business address type: {business_address_type}")
 
                 business_address = Address(
                     user_id=user,
-                    address=AddressDetail(
-                        line1=data.get('businessAddress[line1]'),
-                        line2=data.get('businessAddress[line2]', ''),
-                        city=data.get('businessAddress[city]'),
-                        state=data.get('businessAddress[state]'),
-                        postal_code=data.get('businessAddress[postal_code]'),
-                        country=data.get('businessAddress[country]'),
-                        type=business_address_type
-                    ),
+                    line1=data.get('businessAddress[line1]'),
+                    line2=data.get('businessAddress[streetLine2]', ''),
+                    city=data.get('businessAddress[city]'),
+                    state=data.get('businessAddress[state]'),
+                    postal_code=data.get('businessAddress[postal_code]'),
+                    country=data.get('businessAddress[country]'),
                     address_type=business_address_type,
                     is_primary=False
                 )
@@ -129,6 +123,7 @@ def add_seller():
                 address_proof_front=address_proof_front_url,
                 pan_number=data.get('panNumber'),
                 pan_card_front=pan_card_front_url,
+                id_number=data.get('idNumber')
             )
             identification.save(session=session)
 
@@ -137,13 +132,16 @@ def add_seller():
             return jsonify({
                 "message": "Seller registered successfully. Awaiting approval.",
                 "user_id": str(user.id),
-                "seller_id": str(seller.id)
+                "seller_id": str(seller.id),
+                "address_id": str(personal_address.id),
+                "business_address_id": str(business_address.id) if business_address else None
             }), 200
 
         except ValidationError as e:
             session.abort_transaction()
             return create_error_response({"message": f"Validation error: {str(e)}"}, 400)
-
         except Exception as e:
             session.abort_transaction()
-            return create_error_response({"message": f"Error occurred: {str(e)}"}, 500)
+            import traceback
+            traceback.print_exc()
+            return create_error_response({"message": f"Internal server error: {str(e)}"}, 500)

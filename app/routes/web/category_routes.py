@@ -1,10 +1,11 @@
 from flask import render_template, redirect, url_for, session, request, jsonify, flash
-from constants import CATEGORY_LIST_WEB_URL, ADD_CATEGORY_WEB_URL, GET_CATEGORIES_FILTER_API_URL, DELETE_CATEGORIES_API_WEB_URL
+from constants import CATEGORY_LIST_WEB_URL, ADD_CATEGORY_WEB_URL, GET_CATEGORIES_FILTER_API_URL, DELETE_CATEGORIES_API_WEB_URL, EDIT_CATEGORY_WEB_URL
 from . import admin_api
 from app.models import Category, SubCategory, SubSubCategory 
-from app.utils.image_upload import get_local_ip
+from app.utils.image_upload import get_local_ip, upload_image, validate_fields
 from app.utils.utils import create_error_response
 from bson import ObjectId
+from flask import current_app
 
 local_ip = get_local_ip()
 
@@ -136,11 +137,82 @@ def get_categories():
         'all_categories': data['all_categories'],
         'pagination': data['pagination']
     })
+
 @admin_api.route(ADD_CATEGORY_WEB_URL)
 def add_new_category_page():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
     return render_template('admin/categorySubCategory/category/add_new_category.html')
+
+@admin_api.route(EDIT_CATEGORY_WEB_URL, methods=['GET'])
+def edit_category_page(category_id):
+    if 'user_id' not in session:
+        return redirect(url_for('admin_api.login_page'))
+    
+    category = Category.objects(id=ObjectId(category_id)).first()
+    
+    if not category:
+        return create_error_response({'error': 'Category not found'}, 404)
+    
+    port = current_app.config.get('SERVER_PORT', 8080)
+    base_url = f"http://{local_ip}:{port}/static/uploads/"
+
+    if category.img_url:
+        category.img_url = f"{base_url}/{category.img_url.lstrip('/')}"
+    
+    return render_template('admin/categorySubCategory/category/edit_category.html', category=category)
+
+
+@admin_api.route('/update_category/<category_id>', methods=['POST'])
+def update_category(category_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        category = Category.objects(id=ObjectId(category_id)).first()
+        if not category:
+            return create_error_response({'error': 'Category not found'}, 404)
+
+        name = request.form.get('name')
+        description = request.form.get('description')
+        image = request.files.get('image')
+
+        required_fields = ['name', 'description']
+        is_valid, validation_errors = validate_fields({
+            'name': name,
+            'description': description
+        }, required_fields)
+
+        if not is_valid:
+            return create_error_response(validation_errors, 400)
+
+        image_filename = category.img_url
+        if image and image.filename != '':
+            image_filename, image_error = upload_image(image)
+            if image_error:
+                return create_error_response({'image': image_error}, 400)
+
+        category.update(
+            name=name,
+            description=description,
+            img_url=image_filename
+        )
+
+        category.reload()
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Category updated successfully',
+            'category': {
+                'id': str(category.id),
+                'name': category.name,
+                'description': category.description,
+                'img_url': category.img_url
+            }
+        })
+
+    except Exception as e:
+        return create_error_response({'error': str(e)}, 500)
 
 
 @admin_api.route(DELETE_CATEGORIES_API_WEB_URL, methods=['POST'])
