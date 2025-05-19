@@ -5,7 +5,7 @@ from app.utils.utils import generate_random_password, create_error_response
 from app import db
 from mongoengine import ValidationError
 from app.utils.image_upload import upload_image, validate_fields
-from constants import ADD_SELLER
+from constants import ADD_SELLER, ADDRESS_TYPES
 
 seller_bp = Blueprint('seller', __name__, url_prefix='/user')
 
@@ -62,7 +62,7 @@ def add_seller():
 
             # Process personal address
             personal_address_type = data.get('address[type]', 'Home')
-            if personal_address_type not in ['Home', 'Office', 'Work', 'Store', 'Business', 'Other']:
+            if personal_address_type not in ADDRESS_TYPES:
                 raise ValidationError(f"Invalid personal address type: {personal_address_type}")
 
             personal_address = Address(
@@ -81,7 +81,7 @@ def add_seller():
             business_address = None
             if data.get('businessAddress[line1]'):
                 business_address_type = data.get('businessAddress[type]', 'Business')
-                if business_address_type not in ['Home', 'Office', 'Work', 'Store', 'Business', 'Other']:
+                if business_address_type not in ADDRESS_TYPES:
                     raise ValidationError(f"Invalid business address type: {business_address_type}")
 
                 business_address = Address(

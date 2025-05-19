@@ -1,6 +1,7 @@
 from app import db
 from mongoengine import Document, ReferenceField, StringField, BooleanField, DateTimeField
 from datetime import datetime
+from constants import ADDRESS_TYPES
 
 class Address(db.Document):
     user_id = db.ReferenceField('User', required=True)
@@ -13,7 +14,7 @@ class Address(db.Document):
     country = db.StringField(required=True)
     contact_name = db.StringField()
     contact_number = db.IntField()
-    address_type = db.StringField(choices=['Home', 'Office', 'Work', 'Store', 'Business', 'Other'], required=True)
+    address_type = db.StringField(choices=ADDRESS_TYPES, required=True)
     is_primary = db.BooleanField(default=False)
     created_at = db.DateTimeField(default=datetime.utcnow)
     
