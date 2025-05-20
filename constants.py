@@ -148,7 +148,7 @@ SAVEFORLATER_TO_CART = '/api/saveforlater/to-cart'
 
 # Orders Endpoint Start
 ORDER_PLACE_API = f'/api/orders/new'
-ORDER_LIST__API = f'/api/orders/list'
+ORDER_LIST_API = f'/api/orders/list'
 # Orders Endpoint End
 
 # Sales OverView Endpoint Start

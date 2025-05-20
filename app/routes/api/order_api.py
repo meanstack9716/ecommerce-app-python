@@ -1,34 +1,34 @@
-from flask import Blueprint, request, jsonify, session
-from app.models import Address, Seller, User, ProductCart, Products, ProductVariant, ProductVariantImage,  Order, OrderItem
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
+from app.models import Address, Seller, User, ProductCart, Products, ProductVariant, ProductVariantImage, Order, OrderItem
 from datetime import datetime
 import random
 import string
 from bson import ObjectId
 import decimal
 from app.utils.utils import create_error_response
-from constants import ORDER_PLACE_API, ORDER_LIST__API
+from constants import ORDER_PLACE_API, ORDER_LIST_API
+from app.utils.jwt_handlers import jwt_error_handler
 
 order_bp = Blueprint('order', __name__)
 
-def get_user_id():
-    if 'user_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-    return session['user_id']
-
-
 @order_bp.route(ORDER_PLACE_API, methods=['POST'])
+@jwt_error_handler
+@jwt_required()
 def place_order():
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
+    user_id = get_jwt_identity()
+    user = User.objects(id=user_id).first()
+    
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
 
     data = request.get_json()
     if not data:
-        return jsonify({"error": "No data provided"}), 400
+        return jsonify({'error': 'No data provided'}), 400
 
     required_fields = ['cart_items_ids', 'shipping_address_id', 'payment_method']
     if not all(field in data for field in required_fields):
-        return jsonify({"error": "Missing required fields"}), 400
+        return jsonify({'error': 'Missing required fields'}), 400
 
     try:
         shipping_address = Address.objects(
@@ -38,21 +38,21 @@ def place_order():
 
         if not shipping_address:
             return jsonify({
-                "error": "Shipping address not found",
-                "message": "The specified shipping address doesn't exist or doesn't belong to you"
+                'error': 'Shipping address not found',
+                'message': 'The specified shipping address doesn\'t exist or doesn\'t belong to you'
             }), 404
 
         address_fields = ['line1', 'city', 'state', 'postal_code', 'country']
         if not all(getattr(shipping_address, field) for field in address_fields):
             return jsonify({
-                "error": "Incomplete shipping address",
-                "message": "The shipping address is missing required fields"
+                'error': 'Incomplete shipping address',
+                'message': 'The shipping address is missing required fields'
             }), 400
 
     except Exception as e:
         return jsonify({
-            "error": "Invalid shipping address",
-            "message": str(e)
+            'error': 'Invalid shipping address',
+            'message': str(e)
         }), 400
 
     cart_items_query = ProductCart.objects(user_id=user_id)
@@ -62,12 +62,12 @@ def place_order():
             cart_items_ids = [ObjectId(id) for id in data['cart_items_ids']]
             cart_items = cart_items_query.filter(id__in=cart_items_ids)
         except:
-            return jsonify({"error": "Invalid cart item IDs format"}), 400
+            return jsonify({'error': 'Invalid cart item IDs format'}), 400
     else:
         cart_items = cart_items_query
     
     if not cart_items:
-        return jsonify({"error": "No cart items found"}), 400
+        return jsonify({'error': 'No cart items found'}), 400
 
     seller_items = {}
     for cart_item in cart_items:
@@ -94,7 +94,6 @@ def place_order():
         order_items = []
         total_amount = decimal.Decimal('0.00')
 
-        # Process each item in cart
         for cart_item in seller_data['items']:
             product = cart_item.product_id
             price = decimal.Decimal(str(product.price))
@@ -142,34 +141,37 @@ def place_order():
             
             order.save()
             orders.append({
-                "order_id": str(order.id),
-                "order_number": order.order_number,
-                "total_amount": float(total_amount),
-                "items_count": len(order_items)
+                'order_id': str(order.id),
+                'order_number': order.order_number,
+                'total_amount': float(total_amount),
+                'items_count': len(order_items)
             })
 
         except Exception as e:
             for created_order in Order.objects(id__in=[o['order_id'] for o in orders]):
                 created_order.delete()
             return jsonify({
-                "error": "Failed to place order",
-                "message": str(e)
+                'error': 'Failed to place order',
+                'message': str(e)
             }), 500
 
     cart_items.delete()
 
     return jsonify({
-        "message": "Orders placed successfully",
-        "orders": orders,
-        "total_orders": len(orders)
+        'message': 'Orders placed successfully',
+        'orders': orders,
+        'total_orders': len(orders)
     }), 201
 
+@order_bp.route(ORDER_LIST_API, methods=['GET'])
+@jwt_error_handler
+@jwt_required()
+def get_order_lists():
+    user_id = get_jwt_identity()
+    user = User.objects(id=user_id).first()
 
-@order_bp.route(ORDER_LIST__API, methods=['GET'])
-def get_orders():
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
     
     orders = Order.objects(user_id=user_id).order_by('-created_at')
     
@@ -182,7 +184,7 @@ def get_orders():
     order_list = []
     for order in orders:
         seller_details = {}
-        if order.seller_id:  # This is a ReferenceField
+        if order.seller_id:
             seller = Seller.objects(id=order.seller_id.id).first()
             if seller:
                 seller_details = {
