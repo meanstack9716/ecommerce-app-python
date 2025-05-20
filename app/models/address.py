@@ -14,14 +14,14 @@ class Address(db.Document):
     country = db.StringField(required=True)
     contact_name = db.StringField()
     contact_number = db.IntField()
-    address_type = db.StringField(choices=ADDRESS_TYPES, required=True)
+    type = db.StringField(choices=ADDRESS_TYPES, required=True)
     is_primary = db.BooleanField(default=False)
     created_at = db.DateTimeField(default=datetime.utcnow)
     
     meta = {
         'indexes': [
             'user_id',
-            'address_type',
+            'type',
             'is_primary'
         ]
     }
@@ -30,7 +30,7 @@ class Address(db.Document):
         if self.is_primary:
             existing_primary = Address.objects(
                 user_id=self.user_id,
-                address_type=self.address_type,
+                type=self.type,
                 is_primary=True
             ).first()
             

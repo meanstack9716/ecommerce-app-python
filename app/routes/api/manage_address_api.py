@@ -27,15 +27,15 @@ def create_address():
     if isinstance(user_id, tuple):
         return user_id
 
-    required_fields = ['line1', 'city', 'state', 'postal_code', 'country', 'addressType']
+    required_fields = ['line1', 'city', 'state', 'postal_code', 'country', 'type']
     for field in required_fields:
         if field not in data:
             return create_error_response({"error": f"{field} is required"}, 400)
 
-    address_type = data['addressType']
+    address_type = data['type']
     valid_types = ADDRESS_TYPES
     if address_type not in valid_types:
-        return create_error_response({"error": f"Invalid addressType. Must be one of {valid_types}"}, 400)
+        return create_error_response({"error": f"Invalid type. Must be one of {valid_types}"}, 400)
 
     try:
         address = Address(
@@ -48,7 +48,7 @@ def create_address():
             country=data['country'],
             contact_name=data.get('contact_name'),
             contact_number=data.get('contact_number'),
-            address_type=address_type,
+            type=type,
             is_primary=data.get('is_primary', False)
         )
 
@@ -59,7 +59,7 @@ def create_address():
             "data": {
                 "id": str(address.id),
                 "user_id": str(address.user_id.id),
-                "type": address.address_type,
+                "type": address.type,
                 "line1": address.line1,
                 "line2": address.line2,
                 "city": address.city,
