@@ -73,6 +73,7 @@ def create_app(config_class=Config):
     app.register_blueprint(saveforlater_bp)
     app.register_blueprint(search_bp)
     app.register_blueprint(order_bp)
+    app.register_blueprint(address_bp)
     app.register_blueprint(sales_api)
 
     from app.utils.image_upload import image_store
