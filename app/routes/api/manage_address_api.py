@@ -59,7 +59,7 @@ def create_address():
             "data": {
                 "id": str(address.id),
                 "user_id": str(address.user_id.id),
-                "addressType": address.address_type,
+                "type": address.address_type,
                 "line1": address.line1,
                 "line2": address.line2,
                 "city": address.city,
@@ -136,7 +136,7 @@ def update_address():
             "data": {
                 "id": str(address.id),
                 "user_id": str(address.user_id.id),
-                "addressType": address.address_type,
+                "type": address.address_type,
                 "is_primary": address.is_primary,
                 "line1": address.line1,
                 "line2": address.line2,
@@ -213,7 +213,7 @@ def get_addresses():
                 "user_id": str(address.user_id.id),
                 "contact_name": address.contact_name,
                 "contact_number": address.contact_number,
-                "addressType": address.address_type,
+                "type": address.address_type,
                 "line1": address.line1,
                 "line2": address.line2,
                 "city": address.city,

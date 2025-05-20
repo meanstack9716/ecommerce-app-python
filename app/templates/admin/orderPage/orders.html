@@ -7,7 +7,6 @@
   <h1 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">Order Management</h1>
 
   <!-- Toast Container -->
-
   <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
     <div class="w-6 h-6 sm:w-8 sm:h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
   </div>
@@ -35,7 +34,6 @@
             <option value="outOfDelivery">Out for Delivery</option>
             <option value="delivered">Delivered</option>
             <option value="cancelled">Cancelled</option>
-            <option value="return">Return</option>
             <option value="refund">Refund</option>
           </select>
           <span
@@ -58,19 +56,37 @@
   </form>
 
   <!-- Orders Table -->
-  <div class="border border-gray-200 rounded-lg">
+  <div class="overflow-x-auto border border-gray-200 rounded-lg">
     {% set order_list_header = ['Order #', 'Date', 'Total', 'Status', 'Payment', 'Actions'] %}
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50 text-xs">
+    <table class="min-w-full divide-y divide-gray-200 table-auto">
+      <thead class="bg-gray-50 text-xs sm:table-header-group hidden">
         <tr>
           {% for header in order_list_header %}
-          <th class="px-2 py-2 border sm:px-4 sm:py-3 font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
+          <th class="px-2 py-2 border sm:px-4 sm:py-3 font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap"
+              data-label="{{ header }}">
             {{ header }}
           </th>
           {% endfor %}
         </tr>
       </thead>
       <tbody id="orders-table-body" class="bg-white divide-y divide-gray-200 text-center text-xs">
+        <!-- Sample row for demonstration; replace with dynamic data -->
+        <tr class="sm:table-row block mb-4 sm:mb-0 border border-gray-200 sm:border-0 rounded-lg sm:rounded-none">
+          <td class="sm:table-cell block px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-b border-gray-200 sm:border-b-0 flex justify-between items-center before:content-[attr(data-label)] before:font-semibold before:text-gray-600 before:pr-2"
+              data-label="Order #">12345</td>
+          <td class="sm:table-cell hidden px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-b border-gray-200 sm:border-b-0 flex justify-between items-center before:content-[attr(data-label)] before:font-semibold before:text-gray-600 before:pr-2"
+              data-label="Date">2025-05-20</td>
+          <td class="sm:table-cell block px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-b border-gray-200 sm:border-b-0 flex justify-between items-center before:content-[attr(data-label)] before:font-semibold before:text-gray-600 before:pr-2"
+              data-label="Total">$99.99</td>
+          <td class="sm:table-cell block px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-b border-gray-200 sm:border-b-0 flex justify-between items-center before:content-[attr(data-label)] before:font-semibold before:text-gray-600 before:pr-2"
+              data-label="Status">Delivered</td>
+          <td class="sm:table-cell hidden px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-b border-gray-200 sm:border-b-0 flex justify-between items-center before:content-[attr(data-label)] before:font-semibold before:text-gray-600 before:pr-2"
+              data-label="Payment">Paid</td>
+          <td class="sm:table-cell block px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-b border-gray-200 sm:border-b-0 flex justify-center items-center before:content-[attr(data-label)] before:font-semibold before:text-gray-600 before:pr-2 sm:before:content-none"
+              data-label="Actions">
+            <button class="text-indigo-600 hover:text-indigo-800">View</button>
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
