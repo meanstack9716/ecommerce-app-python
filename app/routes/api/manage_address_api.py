@@ -32,9 +32,9 @@ def create_address():
         if field not in data:
             return create_error_response({"error": f"{field} is required"}, 400)
 
-    address_type = data['type']
+    type = data['type']
     valid_types = ADDRESS_TYPES
-    if address_type not in valid_types:
+    if type not in valid_types:
         return create_error_response({"error": f"Invalid type. Must be one of {valid_types}"}, 400)
 
     try:
@@ -120,7 +120,7 @@ def update_address():
         address.state = data['state']
         address.postal_code = data['postal_code']
         address.country = data['country']
-        address.address_type = data['type']
+        address.type = data['type']
         address.is_primary = data.get('is_primary', address.is_primary)
         
         # Optional fields
@@ -136,7 +136,7 @@ def update_address():
             "data": {
                 "id": str(address.id),
                 "user_id": str(address.user_id.id),
-                "type": address.address_type,
+                "type": address.type,
                 "is_primary": address.is_primary,
                 "line1": address.line1,
                 "line2": address.line2,
@@ -213,7 +213,7 @@ def get_addresses():
                 "user_id": str(address.user_id.id),
                 "contact_name": address.contact_name,
                 "contact_number": address.contact_number,
-                "type": address.address_type,
+                "type": address.type,
                 "line1": address.line1,
                 "line2": address.line2,
                 "city": address.city,
@@ -241,10 +241,10 @@ def get_addresses_types():
         return user_id
 
     try:
-        address_types = ADDRESS_TYPES
+        type = ADDRESS_TYPES
         return jsonify({
             "message": "Address types retrieved successfully",
-            "data": address_types
+            "data": type
         }), 200
 
     except Exception as e:

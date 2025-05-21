@@ -48,7 +48,7 @@ class User(db.Document):
                 country=os.getenv("DEFAULT_ADMIN_ADDRESS_COUNTRY", "Business Country"),
                 contact_name=f"{self.first_name} {self.last_name}",
                 contact_number=int(self.phone_number) if self.phone_number and self.phone_number.isdigit() else 9999999999,
-                address_type="Business",
+                type="Business",
                 is_primary=True
             )
             address.save()

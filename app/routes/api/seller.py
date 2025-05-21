@@ -73,7 +73,7 @@ def add_seller():
                 state=data.get('address[state]'),
                 postal_code=data.get('address[postal_code]'),
                 country=data.get('address[country]'),
-                address_type=personal_address_type,
+                type=personal_address_type,
                 is_primary=True
             )
             personal_address.save(session=session)
@@ -92,7 +92,7 @@ def add_seller():
                     state=data.get('businessAddress[state]'),
                     postal_code=data.get('businessAddress[postal_code]'),
                     country=data.get('businessAddress[country]'),
-                    address_type=business_address_type,
+                    type=business_address_type,
                     is_primary=False
                 )
                 business_address.save(session=session)

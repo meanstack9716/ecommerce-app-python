@@ -130,7 +130,7 @@ def place_order():
                     'state': shipping_address.state,
                     'postal_code': shipping_address.postal_code,
                     'country': shipping_address.country,
-                    'address_type': shipping_address.address_type if shipping_address.address_type else 'home'
+                    'type': shipping_address.type if shipping_address.type else 'home'
                 },
                 payment_method=data['payment_method'],
                 payment_status='pending',
