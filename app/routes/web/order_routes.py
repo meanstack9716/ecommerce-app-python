@@ -117,8 +117,8 @@ def _get_orders_json(user):
         filters = {
             'search': data.get('search', '').strip(),
             'status': data.get('status', '').strip(),
-            'start_date': data.get('start_date'),
-            'end_date': data.get('end_date')
+            'start_date': data.get('start_date', '').strip(),
+            'end_date': data.get('end_date', '').strip()
         }
         
         pagination = _get_pagination_params('POST')
@@ -170,7 +170,7 @@ def _serialize_order(order):
         'customer_phone': getattr(order, 'customer_phone', ''),
         'items_count': len(order.items) if hasattr(order, 'items') else 0
     }
-
+    
 @admin_api.route(ORDER_STATUS_UPDATE_WEB_URL, methods=['POST'])
 def update_order_status(order_id):
     if 'user_id' not in session:

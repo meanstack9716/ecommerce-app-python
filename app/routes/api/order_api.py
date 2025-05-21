@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 from app.models import Address, Seller, User, ProductCart, Products, ProductVariant, ProductVariantImage, Order, OrderItem
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 import string
 from bson import ObjectId
@@ -9,6 +9,7 @@ import decimal
 from app.utils.utils import create_error_response
 from constants import ORDER_PLACE_API, ORDER_LIST_API
 from app.utils.jwt_handlers import jwt_error_handler
+from mongoengine.queryset.visitor import Q
 
 order_bp = Blueprint('order', __name__)
 
@@ -171,9 +172,42 @@ def get_order_lists():
     user = User.objects(id=user_id).first()
 
     if not user:
-        return jsonify({'error': 'User not found'}), 404
+        return jsonify({'status': 'error', 'message': 'User not found', 'data': None}), 404
     
-    orders = Order.objects(user_id=user_id).order_by('-created_at')
+    search = request.args.get('search', '').strip()
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    
+    orders = Order.objects(user_id=user_id)
+    
+    if search:
+        matching_products = Products.objects(name__icontains=search).only('id')
+        product_ids = [str(p.id) for p in matching_products]
+        
+        matching_sellers = Seller.objects(businessName__icontains=search).only('id')
+        seller_ids = [str(s.id) for s in matching_sellers]
+        
+        orders = orders.filter(
+            Q(order_number__icontains=search) |
+            Q(items__product_id__in=product_ids) |
+            Q(seller_id__in=seller_ids)
+        )
+    
+    if from_date:
+        try:
+            from_date_obj = datetime.strptime(from_date, '%Y-%m-%d')
+            orders = orders.filter(created_at__gte=from_date_obj)
+        except ValueError:
+            pass
+    
+    if to_date:
+        try:
+            to_date_obj = datetime.strptime(to_date, '%Y-%m-%d') + timedelta(days=1)
+            orders = orders.filter(created_at__lte=to_date_obj)
+        except ValueError:
+            pass
+    
+    orders = orders.order_by('-created_at')
     
     def get_safe_reference(ref):
         try:
@@ -204,6 +238,7 @@ def get_order_lists():
             'seller_details': seller_details,
             'items': [{
                 'product_id': get_safe_reference(item.product_id),
+                'product_name': item.product_id.name if item.product_id else None,
                 'selected_size': item.selected_size,
                 'selected_color': item.selected_color,
                 'quantity': item.quantity,
@@ -213,4 +248,8 @@ def get_order_lists():
         }
         order_list.append(order_data)
     
-    return jsonify(order_list)
+    return jsonify({
+        'status': 'success',
+        'message': 'Orders fetched successfully',
+        'data': order_list
+    })
