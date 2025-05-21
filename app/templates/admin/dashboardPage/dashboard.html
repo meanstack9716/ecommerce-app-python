@@ -60,7 +60,7 @@
   {% endif %}
 
   <!-- Overview Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
     <div
       class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
       <div class="flex items-center justify-between">
@@ -114,23 +114,6 @@
       <p class="mt-2 text-xs text-gray-500 flex items-center" id="avg-order-change"></p>
     </div>
 
-    <div
-      class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm font-medium text-gray-500 truncate">Conversion Rate</p>
-          <p class="mt-1 text-2xl font-semibold text-gray-900" id="conversion-rate">0%</p>
-        </div>
-        <div class="bg-blue-50 p-3 rounded-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-        </div>
-      </div>
-      <p class="mt-2 text-xs text-gray-500 flex items-center" id="conversion-rate-change"></p>
-    </div>
   </div>
 
   <!-- Charts Section -->
@@ -286,7 +269,6 @@
       document.getElementById('avg-order-value').textContent = `₹${data.avg_order_value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
       document.getElementById('avg-order-change').innerHTML = formatChange(data.avg_order_change, true);
       document.getElementById('conversion-rate').textContent = `${data.conversion_rate.toFixed(1)}%`;
-      document.getElementById('conversion-rate-change').innerHTML = formatChange(data.conversion_rate_change, true);
     } catch (error) {
       console.error('Error loading overview:', error);
     }

@@ -101,12 +101,6 @@ def sales_overview():
         prev_avg_order_value = prev_total_sales / prev_order_count if prev_order_count > 0 else 0
         avg_order_change = ((avg_order_value - prev_avg_order_value) / prev_avg_order_value * 100) if prev_avg_order_value > 0 else 0
 
-        total_visitors = 1000
-        prev_total_visitors = 1000
-        conversion_rate = (order_count / total_visitors * 100) if total_visitors > 0 else 0
-        prev_conversion_rate = (prev_order_count / prev_total_visitors * 100) if prev_total_visitors > 0 else 0
-        conversion_rate_change = ((conversion_rate - prev_conversion_rate) / prev_conversion_rate * 100) if prev_conversion_rate > 0 else 0
-
         return jsonify({
             'status': 'success',
             'data': {
@@ -116,8 +110,6 @@ def sales_overview():
                 'order_count_change': float(order_change),
                 'avg_order_value': float(avg_order_value),
                 'avg_order_change': float(avg_order_change),
-                'conversion_rate': float(conversion_rate),
-                'conversion_rate_change': float(conversion_rate_change)
             }
         }), 200
     except Exception as e:
