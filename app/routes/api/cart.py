@@ -197,7 +197,7 @@ def get_cart():
         'data': cart_data
     }
     
-@cart_bp.route(CART_REMOVE, methods=['POST'])
+@cart_bp.route(CART_REMOVE, methods=['DELETE'])
 def remove_from_cart():
     user_id = get_user_id()
     if isinstance(user_id, tuple):
