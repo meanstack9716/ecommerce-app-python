@@ -158,3 +158,7 @@ SALES_TOP_PRODUCTS_API = f'/api/sales/top-products'
 RECENT_SALES_API = f'/api/sales/recent'
 TOP_PRODUCT_SALES_API = f'/api/sales/top-products'
 GET_SALES_SELLER = f'/api/sales/sellers'
+
+
+PROMO_CODE_TYPES = ['percentage', 'fixed_amount']
+PROMO_CODE_APPLICABLE_TO = ['all', 'specific']
