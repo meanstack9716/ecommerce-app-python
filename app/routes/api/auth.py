@@ -100,7 +100,7 @@ def login():
 
     return jsonify({
         'message': 'Login successful.',
-        'token': access_token,
+        'token': f'Bearer {access_token}',
         'user': {
             'id': str(user.id),
             'email': user.email,
