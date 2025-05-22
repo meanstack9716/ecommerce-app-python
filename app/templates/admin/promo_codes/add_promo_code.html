@@ -14,7 +14,7 @@
             <!-- Code Field -->
             <div>
                 <label for="code" class="block text-sm font-medium text-gray-700 mb-1">Promo Code</label>
-                <input type="text" id="code" name="code" required
+                <input type="text" id="code" name="code"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="e.g. SUMMER20">
                 <p class="mt-1 text-xs text-gray-500">Unique code customers will enter</p>
@@ -40,7 +40,7 @@
             <!-- Discount Value -->
             <div>
                 <label for="discount_value" class="block text-sm font-medium text-gray-700 mb-1">Discount Value</label>
-                <input type="number" id="discount_value" name="discount_value" required min="0" step="0.01"
+                <input type="number" id="discount_value" name="discount_value" min="0" step="0.01"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="e.g. 20">
                 <p class="mt-1 text-xs text-gray-500" id="discountHint">Percentage discount (e.g. 20 for 20%)</p>
@@ -57,7 +57,8 @@
 
             <!-- Minimum Order Amount -->
             <div>
-                <label for="min_order_amount" class="block text-sm font-medium text-gray-700 mb-1">Minimum Order Amount</label>
+                <label for="min_order_amount" class="block text-sm font-medium text-gray-700 mb-1">Minimum Order
+                    Amount</label>
                 <input type="number" id="min_order_amount" name="min_order_amount" min="0" step="0.01"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Optional">
@@ -69,7 +70,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                <input type="datetime-local" id="start_date" name="start_date" required
+                <input type="datetime-local" id="start_date" name="start_date"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
             </div>
             <div>
@@ -83,14 +84,15 @@
         <!-- Usage Limits -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label for="max_uses" class="block text-sm font-medium text-gray-700 mb-1">Maximum Uses</label>
+                <label for="max_uses" class="block text-sm font-medium text-gray-700 mb-1">Total Usage Limit</label>
                 <input type="number" id="max_uses" name="max_uses" min="0"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Optional">
                 <p class="mt-1 text-xs text-gray-500">Leave empty for unlimited uses</p>
             </div>
             <div>
-                <label for="user_max_uses" class="block text-sm font-medium text-gray-700 mb-1">Uses Per Customer</label>
+                <label for="user_max_uses" class="block text-sm font-medium text-gray-700 mb-1">Uses Per
+                    Customer</label>
                 <input type="number" id="user_max_uses" name="user_max_uses" min="1" value="1"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
             </div>
@@ -127,18 +129,18 @@
                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                 <label for="is_active" class="ml-2 block text-sm text-gray-700">Active</label>
             </div>
-            <div class="flex items-center">
+            <!-- <div class="flex items-center">
                 <input id="is_single_use" name="is_single_use" type="checkbox"
                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                 <label for="is_single_use" class="ml-2 block text-sm text-gray-700">Single Use Per Customer</label>
-            </div>
+            </div> -->
         </div>
 
         <!-- Submit Button -->
         <div class="pt-4 flex justify-end">
             <button type="submit"
                 class="w-48 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-               
+
                 <span class="btn-text">Create Promo Code</span>
                 <div id="loading-spinner" class="hidden">
                     <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -158,99 +160,186 @@
 
 {% block js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Toggle max discount field based on discount type
-    const discountTypeRadios = document.querySelectorAll('input[name="discount_type"]');
-    const maxDiscountContainer = document.getElementById('maxDiscountContainer');
-    const discountHint = document.getElementById('discountHint');
-    
-    discountTypeRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.value === 'percentage') {
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Set minimum dates to current datetime
+        const now = new Date();
+        const nowString = now.toISOString().slice(0, 16);
+
+        const startDateField = document.getElementById('start_date');
+        const endDateField = document.getElementById('end_date');
+
+        startDateField.min = nowString;
+        endDateField.min = nowString;
+
+        // Update end date min when start date changes
+        startDateField.addEventListener('change', function () {
+            if (this.value) {
+                endDateField.min = this.value;
+            } else {
+                endDateField.min = nowString;
+            }
+        });
+    });
+
+    async function loadProducts() {
+        try {
+            const response = await fetch('/api/products');
+            if (!response.ok) throw new Error('Failed to load products');
+            const products = await response.json();
+
+            const select = document.getElementById('products');
+            select.innerHTML = '';
+            products.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.id;
+                option.textContent = product.name;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading products:', error);
+            showToast('Failed to load products', 'error');
+        }
+    }
+
+    function validatePromoForm() {
+        let isValid = true;
+
+        // Required fields
+        const codeField = document.getElementById('code');
+        isValid = validators.required(codeField, 'Promo code') && isValid;
+
+        const discountValueField = document.getElementById('discount_value');
+        isValid = validators.required(discountValueField, 'Discount value') && isValid;
+        isValid = validators.minValue(discountValueField, 0.01, 'Discount value') && isValid;
+
+        const startDateField = document.getElementById('start_date');
+        isValid = validators.required(startDateField, 'Start date') && isValid;
+
+        // Validate start date is not in the past
+        if (startDateField.value) {
+            const now = new Date();
+            const startDate = new Date(startDateField.value);
+            if (startDate < now) {
+                showToast('Start date cannot be in the past', 'error');
+                isValid = false;
+            }
+        }
+
+        const endDateField = document.getElementById('end_date');
+        // Validate end date if provided
+        if (endDateField.value) {
+            const now = new Date();
+            const endDate = new Date(endDateField.value);
+
+            if (endDate <= now) {
+                showToast('End date must be in the future', 'error');
+                isValid = false;
+            }
+
+            // Validate end date is after start date if both are provided
+            if (startDateField.value) {
+                const startDate = new Date(startDateField.value);
+                if (endDate <= startDate) {
+                    showToast('End date must be after start date', 'error');
+                    isValid = false;
+                }
+            }
+        }
+
+        // If percentage discount, validate max discount
+        const discountType = document.querySelector('input[name="discount_type"]:checked').value;
+        if (discountType === 'percentage') {
+            const maxDiscountField = document.getElementById('max_discount');
+            if (maxDiscountField.value) {
+                isValid = validators.minValue(maxDiscountField, 0.01, 'Maximum discount') && isValid;
+            }
+        }
+
+        return isValid;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('addPromoForm');
+
+        // Toggle discount fields
+        function toggleDiscountFields() {
+            const discountType = document.querySelector('input[name="discount_type"]:checked').value;
+            const maxDiscountContainer = document.getElementById('maxDiscountContainer');
+            const discountHint = document.getElementById('discountHint');
+
+            if (discountType === 'percentage') {
                 maxDiscountContainer.classList.remove('hidden');
                 discountHint.textContent = 'Percentage discount (e.g. 20 for 20%)';
             } else {
                 maxDiscountContainer.classList.add('hidden');
                 discountHint.textContent = 'Fixed amount discount (e.g. 20 for $20 off)';
             }
-        });
-    });
+        }
 
-    // Toggle product selection based on restriction type
-    const productRestrictionRadios = document.querySelectorAll('input[name="product_restriction"]');
-    const productSelectionContainer = document.getElementById('productSelectionContainer');
-    
-    productRestrictionRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.value === 'specific') {
+        // Toggle product restrictions
+        function toggleProductRestriction() {
+            const restrictionType = document.querySelector('input[name="product_restriction"]:checked').value;
+            const productSelectionContainer = document.getElementById('productSelectionContainer');
+
+            if (restrictionType === 'specific') {
                 productSelectionContainer.classList.remove('hidden');
-                // Here you would load products via AJAX if not already loaded
+                loadProducts();
             } else {
                 productSelectionContainer.classList.add('hidden');
             }
+        }
+
+        // Set up event listeners
+        document.querySelectorAll('input[name="discount_type"]').forEach(radio => {
+            radio.addEventListener('change', toggleDiscountFields);
         });
-    });
 
-    // Form submission
-    const form = document.getElementById('addPromoForm');
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = {
-            code: document.getElementById('code').value,
-            discount_type: document.querySelector('input[name="discount_type"]:checked').value,
-            discount_value: parseFloat(document.getElementById('discount_value').value),
-            min_order_amount: document.getElementById('min_order_amount').value ? 
-                parseFloat(document.getElementById('min_order_amount').value) : null,
-            start_date: document.getElementById('start_date').value,
-            end_date: document.getElementById('end_date').value || null,
-            max_uses: document.getElementById('max_uses').value ? 
-                parseInt(document.getElementById('max_uses').value) : null,
-            user_max_uses: parseInt(document.getElementById('user_max_uses').value),
-            is_active: document.getElementById('is_active').checked,
-            is_single_use: document.getElementById('is_single_use').checked,
-            product_restriction: document.querySelector('input[name="product_restriction"]:checked').value,
-            products: []
-        };
+        document.querySelectorAll('input[name="product_restriction"]').forEach(radio => {
+            radio.addEventListener('change', toggleProductRestriction);
+        });
 
-        if (formData.discount_type === 'percentage') {
-            formData.max_discount = document.getElementById('max_discount').value ? 
-                parseFloat(document.getElementById('max_discount').value) : null;
-        }
 
-        if (formData.product_restriction === 'specific') {
-            const productSelect = document.getElementById('products');
-            formData.products = Array.from(productSelect.selectedOptions).map(option => option.value);
-        }
 
-        // Here you would make an AJAX call to your backend
-        fetch('/admin/promo-codes/add', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Promo code created successfully!');
-                window.location.href = '/admin/promo-codes';
-            } else {
-                alert('Error: ' + data.error);
+        // Initialize fields
+        toggleDiscountFields();
+        toggleProductRestriction();
+
+        // Handle form submission
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            if (!validatePromoForm()) {
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while creating the promo code');
-        });
-    });
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const spinner = submitBtn.querySelector('#loading-spinner');
 
-    // Set default start date to now
-    const now = new Date();
-    const timezoneOffset = now.getTimezoneOffset() * 60000;
-    const localISOTime = (new Date(now - timezoneOffset)).toISOString().slice(0, 16);
-    document.getElementById('start_date').value = localISOTime;
-});
+            // Update button state
+            btnText.textContent = 'Creating...';
+            spinner.classList.remove('hidden');
+            submitBtn.disabled = true;
+
+            try {
+                const formData = new FormData(form);
+
+                const result = await sendPostRequest('/api/promo-codes', formData);
+
+                if (result.success) {
+                    showToast(result.message, 'success');
+                } else {
+                    showToast(result.errors || 'Failed to create promo code', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('An error occurred while creating the promo code', 'error');
+            } finally {
+                btnText.textContent = 'Create Promo Code';
+                spinner.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        });
+
+    });
 </script>
 {% endblock %}

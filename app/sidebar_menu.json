@@ -130,6 +130,11 @@
                 "label": "Add Promo Code",
                 "icon": "add_circle",
                 "endpoint": "admin_api.add_promo_code"
+              },
+              {
+                "label": "Promo Code List",
+                "icon": "format_list_bulleted",
+                "endpoint": "admin_api.promo_code_list"
               }
             ]
           },
