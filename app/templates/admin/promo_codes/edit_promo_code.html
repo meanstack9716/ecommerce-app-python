@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Promo Code{% endblock %}
+
+{% block admin_content %}
+<div class="bg-white rounded-lg shadow-lg p-8">
+    <h1 class="text-3xl font-semibold text-gray-800 mb-6">Edit Promo Code</h1>
+    <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+    
+    <form id="edit-promo-form" class="space-y-6">
+        <input type="hidden" id="promo_code_id" value="{{ promo_code_id }}">
+        
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <!-- Code -->
+            <div>
+                <label for="code" class="block text-sm font-medium text-gray-700">Promo Code *</label>
+                <input type="text" id="code" name="code" required
+                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            
+            <!-- Description -->
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                <input type="text" id="description" name="description"
+                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            
+            <!-- Discount Type -->
+            <div>
+                <label for="discount_type" class="block text-sm font-medium text-gray-700">Discount Type *</label>
+                <select id="discount_type" name="discount_type" required
+                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <option value="percentage">Percentage</option>
+                    <option value="fixed">Fixed Amount</option>
+                </select>
+            </div>
+            
+            <!-- Discount Value -->
+            <div>
+                <label for="discount_value" class="block text-sm font-medium text-gray-700">Discount Value *</label>
+                <input type="number" id="discount_value" name="discount_value" step="0.01" min="0" required
+                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            
+            <!-- Max Discount (for percentage) -->
+            <div id="max-discount-container" class="hidden">
+                <label for="max_discount" class="block text-sm font-medium text-gray-700">Maximum Discount Amount</label>
+                <input type="number" id="max_discount" name="max_discount" step="0.01" min="0"
+                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            
+            <!-- Start Date -->
+            <div>
+                <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date *</label>
+                <input type="datetime-local" id="start_date" name="start_date" required
+                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            
+            <!-- End Date -->
+            <div>
+                <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
+                <input type="datetime-local" id="end_date" name="end_date"
+                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            
+            <!-- Minimum Order Amount -->
+            <div>
+                <label for="min_order_amount" class="block text-sm font-medium text-gray-700">Minimum Order Amount</label>
+                <input type="number" id="min_order_amount" name="min_order_amount" step="0.01" min="0"
+                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            
+            <!-- Max Uses -->
+            <div>
+                <label for="max_uses" class="block text-sm font-medium text-gray-700">Maximum Uses</label>
+                <input type="number" id="max_uses" name="max_uses" min="1"
+                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            
+            <!-- Status -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Status</label>
+                <div class="mt-1 flex items-center">
+                    <input type="checkbox" id="is_active" name="is_active" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    <label for="is_active" class="ml-2 block text-sm text-gray-700">Active</label>
+                </div>
+            </div>
+            
+            <!-- Single Use -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Usage Type</label>
+                <div class="mt-1 flex items-center">
+                    <input type="checkbox" id="is_single_use" name="is_single_use" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    <label for="is_single_use" class="ml-2 block text-sm text-gray-700">Single Use Only</label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Product Restrictions -->
+        <div class="pt-4 border-t border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Product Restrictions</h3>
+            
+            <div class="space-y-4">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center">
+                        <input id="restrict-all" name="product_restriction" type="radio" value="all" checked
+                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                        <label for="restrict-all" class="ml-2 block text-sm text-gray-700">No restrictions (apply to all products)</label>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input id="restrict-specific" name="product_restriction" type="radio" value="specific"
+                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                        <label for="restrict-specific" class="ml-2 block text-sm text-gray-700">Specific products only</label>
+                    </div>
+                </div>
+                
+                <div id="product-selection-container" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700">Select Products</label>
+                    <select id="products" name="products" multiple
+                        class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <!-- Products will be loaded here via AJAX -->
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex justify-end space-x-4 pt-6">
+            <button type="button" id="cancel-btn" 
+                class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Cancel
+            </button>
+            <button type="submit"
+                class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Update Promo Code
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const loader = document.getElementById('loader');
+        const promoCodeId = document.getElementById('promo_code_id').value;
+        const form = document.getElementById('edit-promo-form');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const discountTypeSelect = document.getElementById('discount_type');
+        const maxDiscountContainer = document.getElementById('max-discount-container');
+        const restrictAllRadio = document.getElementById('restrict-all');
+        const restrictSpecificRadio = document.getElementById('restrict-specific');
+        const productSelectionContainer = document.getElementById('product-selection-container');
+        const productsSelect = document.getElementById('products');
+        
+        // Load promo code data
+        async function loadPromoCode() {
+            loader.classList.remove('hidden');
+            try {
+                const response = await fetch(`/api/promo-codes/${promoCodeId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Populate form fields
+                    document.getElementById('code').value = data.code;
+                    document.getElementById('description').value = data.description || '';
+                    document.getElementById('discount_type').value = data.discount_type;
+                    document.getElementById('discount_value').value = data.discount_value;
+                    document.getElementById('start_date').value = data.start_date.slice(0, 16); // Remove seconds and timezone
+                    if (data.end_date) {
+                        document.getElementById('end_date').value = data.end_date.slice(0, 16);
+                    }
+                    document.getElementById('is_active').checked = data.is_active;
+                    document.getElementById('is_single_use').checked = data.is_single_use;
+                    document.getElementById('max_uses').value = data.max_uses || '';
+                    document.getElementById('min_order_amount').value = data.min_order_amount || '';
+                    document.getElementById('max_discount').value = data.max_discount_amount || '';
+                    
+                    // Handle discount type
+                    toggleMaxDiscountField(data.discount_type);
+                    
+                    // Handle product restrictions
+                    if (data.applicable_to === 'specific') {
+                        restrictSpecificRadio.checked = true;
+                        productSelectionContainer.classList.remove('hidden');
+                        await loadProducts(data.applicable_products);
+                    }
+                    
+                } else {
+                    alert('Failed to load promo code: ' + (data.message || 'Unknown error'));
+                    window.location.href = '/admin/promo-code-list';
+                }
+            } catch (error) {
+                console.error('Error loading promo code:', error);
+                alert('An error occurred while loading the promo code');
+                window.location.href = '/admin/promo-code-list';
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+        
+        // Load products for restriction
+        async function loadProducts(selectedProductIds = []) {
+            try {
+                const response = await fetch('/api/products?limit=1000'); // Adjust as needed
+                const data = await response.json();
+                
+                if (response.ok) {
+                    productsSelect.innerHTML = '';
+                    data.data.forEach(product => {
+                        const option = document.createElement('option');
+                        option.value = product.id;
+                        option.textContent = product.name;
+                        option.selected = selectedProductIds.includes(product.id);
+                        productsSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+        
+        // Toggle max discount field based on discount type
+        function toggleMaxDiscountField(discountType) {
+            if (discountType === 'percentage') {
+                maxDiscountContainer.classList.remove('hidden');
+            } else {
+                maxDiscountContainer.classList.add('hidden');
+            }
+        }
+        
+        // Form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            loader.classList.remove('hidden');
+            
+            try {
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                
+                // Convert checkboxes to boolean
+                data.is_active = formData.has('is_active');
+                data.is_single_use = formData.has('is_single_use');
+                
+                // Get all selected products
+                if (data.product_restriction === 'specific') {
+                    data.products = Array.from(productsSelect.selectedOptions).map(opt => opt.value);
+                }
+                
+                const response = await fetch(`/api/promo-codes/${promoCodeId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('Promo code updated successfully');
+                    window.location.href = '/admin/promo-code-list';
+                } else {
+                    alert('Failed to update promo code: ' + (result.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error updating promo code:', error);
+                alert('An error occurred while updating the promo code');
+            } finally {
+                loader.classList.add('hidden');
+            }
+        });
+        
+        // Event listeners
+        discountTypeSelect.addEventListener('change', (e) => {
+            toggleMaxDiscountField(e.target.value);
+        });
+        
+        restrictAllRadio.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                productSelectionContainer.classList.add('hidden');
+            }
+        });
+        
+        restrictSpecificRadio.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                productSelectionContainer.classList.remove('hidden');
+                if (productsSelect.options.length === 0) {
+                    loadProducts();
+                }
+            }
+        });
+        
+        cancelBtn.addEventListener('click', () => {
+            window.location.href = '/admin/promo-code-list';
+        });
+        
+        // Initialize
+        loadPromoCode();
+    });
+</script>
+{% endblock %}

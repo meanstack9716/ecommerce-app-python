@@ -104,7 +104,6 @@ def login():
         'user': {
             'id': str(user.id),
             'email': user.email,
-            'name': user.name
         }
     }), 200
 
