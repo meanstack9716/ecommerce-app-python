@@ -22,6 +22,9 @@ ORDER_STATUS = ['pending', 'confirmed', 'processing', 'shipped', 'outOfDelivery'
 
 ADDRESS_TYPES = ['Home', 'Office', 'Work', 'Store', 'Business', 'Other']
 
+PROMO_CODE_TYPES = ['percentage', 'fixed_amount']
+PROMO_CODE_APPLICABLE_TO = ['all', 'specific']
+
 # API Endpoint Constants
 REGISTER = f'/register'
 LOGIN = f'/login'
@@ -76,6 +79,8 @@ UPDATE_BRAND_WEB_URL = f'/brands/edit/<brand_id>'
 ORDER_LIST_WEB_URL = '/orders'
 ORDER_STATUS_UPDATE_WEB_URL = f'/orders/<order_id>/update-status'
 ORDER_DETAILS_PAGE_WEB_URL = f'/order-details/<order_id>'
+
+ADD_PROMO_CODE_WEB_URL = '/add-promo-code'
 # WEB Endpoint Constants End
 
 # API Endpoint Constants Start
@@ -158,7 +163,3 @@ SALES_TOP_PRODUCTS_API = f'/api/sales/top-products'
 RECENT_SALES_API = f'/api/sales/recent'
 TOP_PRODUCT_SALES_API = f'/api/sales/top-products'
 GET_SALES_SELLER = f'/api/sales/sellers'
-
-
-PROMO_CODE_TYPES = ['percentage', 'fixed_amount']
-PROMO_CODE_APPLICABLE_TO = ['all', 'specific']

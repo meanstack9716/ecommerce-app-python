@@ -122,6 +122,18 @@
             ]
           },
           {
+            "label": "Promo Code",
+            "icon": "redeem",
+            "endpointGroup": ["admin_api.add_promo_code"],
+            "submenu": [
+              {
+                "label": "Add Promo Code",
+                "icon": "add_circle",
+                "endpoint": "admin_api.add_promo_code"
+              }
+            ]
+          },
+          {
             "label": "Orders",
             "icon": "list_alt",
             "endpoint": "admin_api.product_order_list_page"
