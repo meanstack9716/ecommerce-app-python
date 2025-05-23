@@ -8,6 +8,7 @@ from constants import ALLOWED_SIZES
 from app.utils.utils import create_error_response
 from app.utils.image_upload import get_local_ip
 from flask import current_app
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 
 
@@ -113,10 +114,10 @@ def add_to_cart():
     return jsonify(response_data), 200
 
 @cart_bp.route(CART_LIST, methods=['GET'])
+@jwt_required()
 def get_cart():
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
+    print(">>>>>>>>")
+    user_id = get_jwt_identity()
     local_ip = get_local_ip()
     port = current_app.config.get('SERVER_PORT', 8080)
     

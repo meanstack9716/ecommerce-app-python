@@ -11,21 +11,27 @@ class PromoCodeApplicableProducts(EmbeddedDocument):
     brand_id = db.ReferenceField('ProductBrands')
 
 class PromoCode(db.Document):
+    # Required fields
     code = db.StringField(required=True, unique=True)
-    description = db.StringField()
-    discount_type = db.StringField(required=True)
+    discount_type = db.StringField(required=True, choices=['percentage', 'fixed_amount'])
     discount_value = db.DecimalField(required=True, precision=2)
-    min_order_amount = db.DecimalField(precision=2)
-    max_discount_amount = db.DecimalField(precision=2)
     start_date = db.DateTimeField(required=True)
-    end_date = db.DateTimeField(required=True)
-    max_uses = db.IntField()
-    current_uses = db.IntField(default=0)
-    is_active = db.BooleanField(default=True)
-    is_single_use = db.BooleanField(default=False)
-    applicable_to = db.StringField(default='all')
-    applicable_products = db.ListField(EmbeddedDocumentField(PromoCodeApplicableProducts))
     created_by = db.ReferenceField('User', required=True)
+    
+    # Optional fields
+    description = db.StringField()
+    min_order_amount = db.DecimalField(precision=2, default=0.0)
+    max_discount_amount = db.DecimalField(precision=2)
+    expiry_date = db.DateTimeField()
+    max_uses = db.IntField()
+    uses_per_user = db.IntField(default=1)
+    only_first_order = db.BooleanField(default=False)
+    used_count = db.IntField(default=0)
+    is_active = db.BooleanField(default=True)
+    applicable_to = db.StringField(default='all', choices=['all', 'specific'])
+    applicable_products = db.ListField(EmbeddedDocumentField(PromoCodeApplicableProducts), default=[])
+    
+    # Automatic fields
     created_at = db.DateTimeField(default=datetime.utcnow)
     
     meta = {
@@ -33,26 +39,30 @@ class PromoCode(db.Document):
         'indexes': [
             'code',
             'start_date',
-            'end_date',
+            'expiry_date',
             'is_active',
-            'created_by'
+            'created_by',
+            'applicable_to'
         ]
     }
 
     def is_valid(self, user_id, order_amount, products):
         now = datetime.utcnow()
+        
+        # Basic validation checks
         if not self.is_active:
             return False, "Promo code is not active"
         if now < self.start_date:
             return False, "Promo code is not yet valid"
-        if now > self.end_date:
+        if self.expiry_date and now > self.expiry_date:
             return False, "Promo code has expired"
-        if self.max_uses and self.current_uses >= self.max_uses:
+        if self.max_uses and self.used_count >= self.max_uses:
             return False, "Promo code usage limit reached"
-        if self.min_order_amount and order_amount < float(self.min_order_amount):
+        if order_amount < float(self.min_order_amount):
             return False, f"Minimum order amount of {self.min_order_amount} required"
         
-        if self.applicable_to == 'specific':
+        # Product applicability check
+        if self.applicable_to == 'specific' and products:
             valid = False
             for product in products:
                 for applicable in self.applicable_products:
@@ -74,28 +84,14 @@ class PromoCode(db.Document):
             if self.max_discount_amount and discount > float(self.max_discount_amount):
                 return float(self.max_discount_amount)
             return discount
-        else:
-            if self.max_discount_amount and float(self.discount_value) > float(self.max_discount_amount):
+        else:  # fixed_amount
+            discount = float(self.discount_value)
+            if self.max_discount_amount and discount > float(self.max_discount_amount):
                 return float(self.max_discount_amount)
-            return min(float(self.discount_value), order_amount)
+            return min(discount, order_amount)
 
     def increment_usage(self):
-        self.current_uses += 1
-        if self.max_uses and self.current_uses >= self.max_uses:
+        self.used_count += 1
+        if self.max_uses and self.used_count >= self.max_uses:
             self.is_active = False
         self.save()
-
-class UserPromoCode(db.Document):
-    user_id = db.ReferenceField('User', required=True)
-    promo_code_id = db.ReferenceField('PromoCode', required=True)
-    order_id = db.ReferenceField('Order')
-    used_at = db.DateTimeField(default=datetime.utcnow)
-    
-    meta = {
-        'collection': 'user_promo_codes',
-        'indexes': [
-            'user_id',
-            'promo_code_id',
-            'order_id'
-        ]
-    }

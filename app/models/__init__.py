@@ -10,4 +10,4 @@ from .productCart import ProductCart
 from .order import Order, OrderItem
 from .wishlist import Wishlist, WishlistItem
 from .saveforlater import SaveForLater, SaveForLaterItem
-from .promo_codes import UserPromoCode, PromoCode, PromoCodeApplicableProducts
+from .promo_codes import PromoCode, PromoCodeApplicableProducts

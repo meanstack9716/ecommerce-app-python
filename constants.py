@@ -81,6 +81,7 @@ ORDER_STATUS_UPDATE_WEB_URL = f'/orders/<order_id>/update-status'
 ORDER_DETAILS_PAGE_WEB_URL = f'/order-details/<order_id>'
 
 ADD_PROMO_CODE_WEB_URL = '/add-promo-code'
+PROMO_CODE_LIST = '/promo-code-list'
 # WEB Endpoint Constants End
 
 # API Endpoint Constants Start
@@ -150,6 +151,10 @@ SAVEFORLATER_REMOVE = '/api/saveforlater/remove'
 SAVEFORLATER_LIST = '/api/saveforlater'
 SAVEFORLATER_TO_CART = '/api/saveforlater/to-cart'
 # SaveForLater Endpoint End
+
+# Search Product Endpoint Start
+SEARCH_PRODUCT_BY_KEYWORD_API = '/api/search-products'
+# Search Product Endpoint End
 
 # Orders Endpoint Start
 ORDER_PLACE_API = f'/api/orders/new'

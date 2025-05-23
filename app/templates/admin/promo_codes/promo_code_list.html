@@ -8,29 +8,39 @@
     <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
         <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
-    <!-- Search and Filter Form -->
-    <form id="search-form" class="flex items-end justify-between w-full mb-10">
-        <div class="w-full sm:w-1/2 lg:w-full">
-            <div class="flex items-end space-x-4">
-                <div class="flex flex-col">
-                    <label class="block text-sm lg:text-base font-medium text-black">Search Promo Code</label>
-                    <input type="text" name="promoSearch" value="{{ search }}" placeholder="Search by promo code"
-                        class="mt-1 block w-full px-4 py-3 border border-gray-300 outline-none rounded-lg shadow-sm sm:text-sm w-72">
-                </div>
+
+    <!-- Enhanced Search and Filter Form -->
+    <form id="search-form" class="flex flex-col sm:flex-row items-end justify-between w-full mb-10 gap-4">
+        <div class="flex flex-col sm:flex-row gap-4 w-full">
+            <div class="flex flex-col w-full sm:w-1/3">
+                <label class="block text-sm font-medium text-black">Search Promo Code</label>
+                <input type="text" name="promoSearch" value="{{ search }}" placeholder="Search by code or description"
+                    class="mt-1 block w-full px-4 py-3 border border-gray-300 outline-none rounded-lg shadow-sm sm:text-sm">
+            </div>
+            <div class="flex flex-col w-full sm:w-1/3">
+                <label class="block text-sm font-medium text-black">Status</label>
+                <select name="status" class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm sm:text-sm">
+                    <option value="">All</option>
+                    <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            <div class="flex flex-col w-full sm:w-1/3">
+                <label class="block text-sm font-medium text-black">Discount Type</label>
+                <select name="discount_type" class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm sm:text-sm">
+                    <option value="">All</option>
+                    <option value="percentage" {% if discount_type == 'percentage' %}selected{% endif %}>Percentage</option>
+                    <option value="fixed" {% if discount_type == 'fixed' %}selected{% endif %}>Fixed</option>
+                </select>
             </div>
         </div>
-
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end sm:space-x-4 w-full sm:w-1/2 lg:w-full">
-            <button type="submit"
-                class="w-full sm:w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+        <div class="flex gap-4 w-full sm:w-auto">
+            <button type="submit" class="w-full sm:w-36 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
                 Search
             </button>
-            <div class="w-full sm:w-auto mt-2 sm:mt-0 ">
-                <a href="#" id="clear-search"
-                    class="text-sm font-medium px-4 py-3 border border-red-500 rounded-lg text-red-500">
-                    Clear Search
-                </a>
-            </div>
+            <a href="#" id="clear-search" class="w-full sm:w-36 text-center py-3 px-4 border border-red-500 rounded-lg text-red-500 text-sm font-medium">
+                Clear Filters
+            </a>
         </div>
     </form>
 
@@ -40,8 +50,7 @@
         <thead class="bg-gray-50">
             <tr>
                 {% for header in promo_headers %}
-                <th
-                    class="border border-gray-200 px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                <th class="border border-gray-200 px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
                     {{ header }}
                 </th>
                 {% endfor %}
@@ -50,45 +59,47 @@
         <tbody id="promo-table-body">
             {% for promo in promos %}
             <tr class="text-center">
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">{{ loop.index }}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">{{ loop.index + (pagination.page - 1) * limit }}</td>
                 <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 font-mono">{{ promo.code }}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">{{ promo.description }}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    {{ promo.description | safe }}
+                </td>
                 <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
                     {% if promo.discount_type == 'percentage' %}
-                        {{ promo.discount_value }}%
-                        {% if promo.max_discount_amount %}
-                            (max {{ promo.max_discount_amount }})
-                        {% endif %}
+                    {{ promo.discount_value }}%
+                    {% if promo.max_discount_amount %}
+                    (max {{ promo.max_discount_amount }})
+                    {% endif %}
                     {% else %}
-                        {{ promo.discount_value }} fixed
+                    {{ promo.discount_value }} fixed
                     {% endif %}
                 </td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">{{ promo.start_date.strftime('%Y-%m-%d') }}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">{{ promo.end_date.strftime('%Y-%m-%d') }}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    {{ promo.start_date.strftime('%Y-%m-%d') if promo.start_date else 'N/A' }}
+                </td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    {{ promo.expiry_date.strftime('%Y-%m-%d') if promo.expiry_date else 'N/A' }}
+                </td>
+                
                 <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
                     {{ promo.current_uses }}{% if promo.max_uses %}/{{ promo.max_uses }}{% endif %}
                 </td>
                 <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
                     {% if promo.is_active %}
-                        <span class="badge bg-success">Active</span>
+                    <span class="badge bg-success">Active</span>
                     {% else %}
-                        <span class="badge bg-danger">Inactive</span>
+                    <span class="badge bg-danger">Inactive</span>
                     {% endif %}
                 </td>
                 <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
                     <div class="flex space-x-6 justify-center">
                         <a href="{{ url_for('admin_api.edit_promo_code', promo_code_id=promo.id) }}"
-                            class="text-blue-600 hover:text-blue-800"><span class="material-symbols-outlined">
-                                edit_square
-                            </span></a>
-                        <form action="#" method="POST">
+                            class="text-blue-600 hover:text-blue-800"><span class="material-symbols-outlined">edit_square</span></a>
+                        <form action="/admin/promo-codes/delete/{{ promo.id }}" method="POST" class="inline">
                             <input type="hidden" name="page" value="{{ pagination.page }}">
                             <input type="hidden" name="search" value="{{ search }}">
                             <input type="hidden" name="limit" value="{{ limit }}">
-                            <button type="submit" class="text-red-600 hover:text-red-800"><span
-                                    class="material-symbols-outlined">
-                                    delete
-                                </span></button>
+                            <button type="submit" class="text-red-600 hover:text-red-800"><span class="material-symbols-outlined">delete</span></button>
                         </form>
                     </div>
                 </td>
@@ -101,53 +112,57 @@
         </tbody>
     </table>
 
+    <!-- Enhanced Pagination -->
     <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
-        <!-- Items per page selector -->
-        <div class="flex items-center gap-2 relative w-fit">
+        <div class="flex items-center gap-2">
             <span class="text-sm text-gray-600">Items per page:</span>
-            <div class="relative">
-                <select id="items-per-page"
-                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 appearance-none">
-                    {% for amount in [10, 20, 50, 100] %}
-                    <option value="{{ amount }}" {% if limit==amount %}selected{% endif %}>
-                        {{ amount }}
-                    </option>
-                    {% endfor %}
-                </select>
-                <span
-                    class="material-symbols-outlined pointer-events-none absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500">
-                    expand_more
-                </span>
-            </div>
+            <select id="items-per-page" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                {% for amount in [10, 20, 50, 100] %}
+                <option value="{{ amount }}" {% if limit==amount %}selected{% endif %}>{{ amount }}</option>
+                {% endfor %}
+            </select>
         </div>
 
-        <!-- Page Navigation -->
         <div class="flex items-center gap-2" id="pagination">
-            {% if pagination.has_prev %}
-            <a href="#" data-page="{{ pagination.prev_num }}"
-                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">
+            {% if pagination.pages > 1 %}
+            <a href="#" data-page="{{ pagination.prev_num if pagination.has_prev else 1 }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link {% if not pagination.has_prev %}text-gray-400 cursor-not-allowed{% endif %}">
                 Previous
             </a>
-            {% else %}
-            <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>
+
+            {% set max_pages = 5 %}
+            {% set start_page = (pagination.page - max_pages // 2) | max(1) %}
+            {% set end_page = (start_page + max_pages - 1) | min(pagination.pages) %}
+            {% if start_page > 1 %}
+            <a href="#" data-page="1" class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">1</a>
+            {% if start_page > 2 %}
+            <span class="px-4 py-2 text-sm">...</span>
+            {% endif %}
             {% endif %}
 
-            <span class="px-4 py-2 text-sm">
-                Page {{ pagination.page }} of {{ pagination.pages }}
-            </span>
+            {% for p in range(start_page, end_page + 1) %}
+            <a href="#" data-page="{{ p }}"
+                class="px-4 py-2 border text-sm rounded-lg transition page-link {% if p == pagination.page %}bg-indigo-600 text-white{% else %}hover:bg-gray-100{% endif %}">
+                {{ p }}
+            </a>
+            {% endfor %}
 
-            {% if pagination.has_next %}
-            <a href="#" data-page="{{ pagination.next_num }}"
-                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">
+            {% if end_page < pagination.pages %}
+            {% if end_page < pagination.pages - 1 %}
+            <span class="px-4 py-2 text-sm">...</span>
+            {% endif %}
+            <a href="#" data-page="{{ pagination.pages }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">{{ pagination.pages }}</a>
+            {% endif %}
+
+            <a href="#" data-page="{{ pagination.next_num if pagination.has_next else pagination.pages }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link {% if not pagination.has_next %}text-gray-400 cursor-not-allowed{% endif %}">
                 Next
             </a>
-            {% else %}
-            <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>
             {% endif %}
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block js %}
@@ -155,16 +170,17 @@
     document.addEventListener('DOMContentLoaded', () => {
         const searchForm = document.getElementById('search-form');
         const searchInput = searchForm.querySelector('input[name="promoSearch"]');
+        const statusSelect = searchForm.querySelector('select[name="status"]');
+        const discountTypeSelect = searchForm.querySelector('select[name="discount_type"]');
         const clearSearch = document.getElementById('clear-search');
         const promoTableBody = document.getElementById('promo-table-body');
         const paginationDiv = document.getElementById('pagination');
         const itemsPerPageSelect = document.getElementById('items-per-page');
         const loader = document.getElementById('loader');
 
-        async function fetchPromos(page = 1, search = '', limit = 10) {
+        async function fetchPromos(page = 1, search = '', status = '', discount_type = '', limit = 10) {
             loader.classList.remove('hidden');
-
-            const url = `/api/promo-code-list?page=${page}&search=${encodeURIComponent(search)}&limit=${limit}`;
+            const url = `/api/promo-code-list?page=${page}&search=${encodeURIComponent(search)}&status=${status}&discount_type=${discount_type}&limit=${limit}`;
 
             try {
                 const data = await fetchJsonData(url);
@@ -180,21 +196,21 @@
                             <tr class="text-center">
                                 <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${(data.pagination.page - 1) * data.limit + index + 1}</td>
                                 <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 font-mono">${promo.code}</td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${promo.description || ''}</td>
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${promo.description}</td>
                                 <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
-                                    ${promo.discount_type === 'percentage' ? 
-                                        `${promo.discount_value}%${promo.max_discount_amount ? ` (max ${promo.max_discount_amount})` : ''}` : 
-                                        `${promo.discount_value} fixed`}
+                                    ${promo.discount_type === 'percentage' ?
+                                `${promo.discount_value}%${promo.max_discount_amount ? ` (max ${promo.max_discount_amount})` : ''}` :
+                                `${promo.discount_value} fixed`}
                                 </td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${new Date(promo.start_date).toLocaleDateString()}</td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${new Date(promo.end_date).toLocaleDateString()}</td>
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${promo.start_date ? new Date(promo.start_date).toLocaleDateString() : 'N/A'}</td>
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${promo.expiry_date ? new Date(promo.expiry_date).toLocaleDateString() : 'N/A'}</td>
                                 <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
                                     ${promo.current_uses}${promo.max_uses ? `/${promo.max_uses}` : ''}
                                 </td>
                                 <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
-                                    ${promo.is_active ? 
-                                        '<span class="badge bg-success">Active</span>' : 
-                                        '<span class="badge bg-danger">Inactive</span>'}
+                                    ${promo.is_active ?
+                                '<span class="badge bg-success">Active</span>' :
+                                '<span class="badge bg-danger">Inactive</span>'}
                                 </td>
                                 <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
                                     <div class="flex space-x-6 justify-center">
@@ -202,6 +218,11 @@
                                             <span class="material-symbols-outlined">edit_square</span>
                                         </a>
                                         <form action="/admin/promo-codes/delete/${promo.id}" method="POST" class="inline">
+                                            <input type="hidden" name="page" value="${data.pagination.page}">
+                                            <input type="hidden" name="search" value="${search}">
+                                            <input type="hidden" name="status" value="${status}">
+                                            <input type="hidden" name="discount_type" value="${discount_type}">
+                                            <input type="hidden" name="limit" value="${data.limit}">
                                             <button type="submit" class="text-red-600 hover:text-red-800">
                                                 <span class="material-symbols-outlined">delete</span>
                                             </button>
@@ -214,18 +235,46 @@
                 }
 
                 // Update pagination
-                paginationDiv.innerHTML = `
-                    ${data.pagination.has_prev ?
-                        `<a href="#" data-page="${data.pagination.prev_num}" class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">Previous</a>` :
-                        `<span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>`}
-                    <span class="px-4 py-2 text-sm">
-                        Page ${data.pagination.page} of ${data.pagination.pages}
-                    </span>
-                    ${data.pagination.has_next ?
-                        `<a href="#" data-page="${data.pagination.next_num}" class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">Next</a>` :
-                        `<span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>`}
-                `;
+                const maxPages = 5;
+                let startPage = Math.max(1, data.pagination.page - Math.floor(maxPages / 2));
+                let endPage = Math.min(data.pagination.pages, startPage + maxPages - 1);
+                if (endPage - startPage < maxPages - 1) {
+                    startPage = Math.max(1, endPage - maxPages + 1);
+                }
 
+                let paginationHTML = `
+                    <a href="#" data-page="${data.pagination.has_prev ? data.pagination.prev_num : 1}"
+                        class="px-4 py-2 border text-sm rounded-lg transition page-link ${!data.pagination.has_prev ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gray-100'}">
+                        Previous
+                    </a>`;
+
+                if (startPage > 1) {
+                    paginationHTML += `
+                        <a href="#" data-page="1" class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">1</a>
+                        ${startPage > 2 ? '<span class="px-4 py-2 text-sm">...</span>' : ''}`;
+                }
+
+                for (let p = startPage; p <= endPage; p++) {
+                    paginationHTML += `
+                        <a href="#" data-page="${p}"
+                            class="px-4 py-2 border text-sm rounded-lg transition page-link ${p === data.pagination.page ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100'}">
+                            ${p}
+                        </a>`;
+                }
+
+                if (endPage < data.pagination.pages) {
+                    paginationHTML += `
+                        ${endPage < data.pagination.pages - 1 ? '<span class="px-4 py-2 text-sm">...</span>' : ''}
+                        <a href="#" data-page="${data.pagination.pages}" class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">${data.pagination.pages}</a>`;
+                }
+
+                paginationHTML += `
+                    <a href="#" data-page="${data.pagination.has_next ? data.pagination.next_num : data.pagination.pages}"
+                        class="px-4 py-2 border text-sm rounded-lg transition page-link ${!data.pagination.has_next ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gray-100'}">
+                        Next
+                    </a>`;
+
+                paginationDiv.innerHTML = paginationHTML;
                 attachPaginationListeners();
 
             } catch (error) {
@@ -246,8 +295,10 @@
                     e.preventDefault();
                     const page = link.getAttribute('data-page');
                     const search = searchInput.value.trim();
+                    const status = statusSelect.value;
+                    const discount_type = discountTypeSelect.value;
                     const limit = itemsPerPageSelect.value;
-                    fetchPromos(page, search, limit);
+                    fetchPromos(page, search, status, discount_type, limit);
                 });
             });
         }
@@ -255,33 +306,37 @@
         searchForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const search = searchInput.value.trim();
+            const status = statusSelect.value;
+            const discount_type = discountTypeSelect.value;
             const limit = itemsPerPageSelect.value;
-            if (search !== '') {
-                fetchPromos(1, search, limit);
-            }
+            fetchPromos(1, search, status, discount_type, limit);
         });
 
         clearSearch.addEventListener('click', (e) => {
             e.preventDefault();
             searchInput.value = '';
+            statusSelect.value = '';
+            discountTypeSelect.value = '';
             const limit = itemsPerPageSelect.value;
-            fetchPromos(1, '', limit);
+            fetchPromos(1, '', '', '', limit);
         });
 
         itemsPerPageSelect.addEventListener('change', () => {
             const search = searchInput.value.trim();
+            const status = statusSelect.value;
+            const discount_type = discountTypeSelect.value;
             const limit = itemsPerPageSelect.value;
-            fetchPromos(1, search, limit);
+            fetchPromos(1, search, status, discount_type, limit);
         });
 
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 const search = searchInput.value.trim();
+                const status = statusSelect.value;
+                const discount_type = discountTypeSelect.value;
                 const limit = itemsPerPageSelect.value;
-                if (search !== '') {
-                    fetchPromos(1, search, limit);
-                }
+                fetchPromos(1, search, status, discount_type, limit);
             }
         });
 

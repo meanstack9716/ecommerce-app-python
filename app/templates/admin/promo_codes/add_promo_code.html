@@ -13,7 +13,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Code Field -->
             <div>
-                <label for="code" class="block text-sm font-medium text-gray-700 mb-1">Promo Code</label>
+                <label for="code" class="block text-sm font-bold text-gray-700 mb-1">Promo Code</label>
                 <input type="text" id="code" name="code"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="e.g. SUMMER20">
@@ -22,16 +22,16 @@
 
             <!-- Discount Type -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Discount Type</label>
                 <div class="flex space-x-4">
                     <div class="flex items-center">
                         <input id="percentage" name="discount_type" type="radio" value="percentage" checked
-                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
                         <label for="percentage" class="ml-2 block text-sm text-gray-700">Percentage</label>
                     </div>
                     <div class="flex items-center">
                         <input id="fixed" name="discount_type" type="radio" value="fixed_amount"
-                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                            class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
                         <label for="fixed" class="ml-2 block text-sm text-gray-700">Fixed Amount</label>
                     </div>
                 </div>
@@ -39,7 +39,7 @@
 
             <!-- Discount Value -->
             <div>
-                <label for="discount_value" class="block text-sm font-medium text-gray-700 mb-1">Discount Value</label>
+                <label for="discount_value" class="block text-sm font-bold text-gray-700 mb-1">Discount Value</label>
                 <input type="number" id="discount_value" name="discount_value" min="0" step="0.01"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="e.g. 20">
@@ -48,7 +48,7 @@
 
             <!-- Max Discount -->
             <div id="maxDiscountContainer" class="hidden">
-                <label for="max_discount" class="block text-sm font-medium text-gray-700 mb-1">Maximum Discount</label>
+                <label for="max_discount" class="block text-sm font-bold text-gray-700 mb-1">Maximum Discount</label>
                 <input type="number" id="max_discount" name="max_discount" min="0" step="0.01"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Optional">
@@ -57,7 +57,7 @@
 
             <!-- Minimum Order Amount -->
             <div>
-                <label for="min_order_amount" class="block text-sm font-medium text-gray-700 mb-1">Minimum Order
+                <label for="min_order_amount" class="block text-sm font-bold text-gray-700 mb-1">Minimum Order
                     Amount</label>
                 <input type="number" id="min_order_amount" name="min_order_amount" min="0" step="0.01"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
@@ -66,15 +66,25 @@
             </div>
         </div>
 
+        <!-- Description Field with Quill Editor -->
+        <div>
+            <label for="description" class="block text-sm font-bold text-gray-700 mb-1">Description</label>
+            <div id="editor-container" class="h-40 border border-gray-300 rounded-md">
+                <!-- Quill editor will be inserted here -->
+            </div>
+            <input type="hidden" id="description" name="description">
+            <p class="mt-1 text-xs text-gray-500">Description that will be shown to customers about this promo</p>
+        </div>
+
         <!-- Validity Period -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <label for="start_date" class="block text-sm font-bold text-gray-700 mb-1">Start Date</label>
                 <input type="datetime-local" id="start_date" name="start_date"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
             </div>
             <div>
-                <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <label for="end_date" class="block text-sm font-bold text-gray-700 mb-1">End Date</label>
                 <input type="datetime-local" id="end_date" name="end_date"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
                 <p class="mt-1 text-xs text-gray-500">Leave empty for no expiration</p>
@@ -84,14 +94,14 @@
         <!-- Usage Limits -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label for="max_uses" class="block text-sm font-medium text-gray-700 mb-1">Total Usage Limit</label>
+                <label for="max_uses" class="block text-sm font-bold text-gray-700 mb-1">Total Usage Limit</label>
                 <input type="number" id="max_uses" name="max_uses" min="0"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Optional">
                 <p class="mt-1 text-xs text-gray-500">Leave empty for unlimited uses</p>
             </div>
             <div>
-                <label for="user_max_uses" class="block text-sm font-medium text-gray-700 mb-1">Uses Per
+                <label for="user_max_uses" class="block text-sm font-bold text-gray-700 mb-1">Uses Per
                     Customer</label>
                 <input type="number" id="user_max_uses" name="user_max_uses" min="1" value="1"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
@@ -100,47 +110,41 @@
 
         <!-- Product Restrictions -->
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Product Restrictions</label>
-            <div class="space-y-2">
+            <label class="block text-sm font-bold text-gray-700 mb-2">Product Applicability</label>
+            <div class="flex items-center space-x-4 mb-4">
                 <div class="flex items-center">
-                    <input id="all_products" name="product_restriction" type="radio" value="all" checked
-                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
-                    <label for="all_products" class="ml-2 block text-sm text-gray-700">All Products</label>
+                    <input id="all_products" name="applicable_to" type="radio" value="all" checked
+                        class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
+                    <label for="all_products" class="ml-2 font-medium block text-sm text-gray-700">All Products</label>
                 </div>
                 <div class="flex items-center">
-                    <input id="specific_products" name="product_restriction" type="radio" value="specific"
-                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
-                    <label for="specific_products" class="ml-2 block text-sm text-gray-700">Specific Products</label>
-                </div>
-                <div id="productSelectionContainer" class="hidden mt-3">
-                    <select id="products" name="products" multiple
-                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                        <!-- Products will be loaded here via JavaScript -->
-                    </select>
-                    <p class="mt-1 text-xs text-gray-500">Select products this promo applies to</p>
+                    <input id="specific_products" name="applicable_to" type="radio" value="specific"
+                        class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
+                    <label for="specific_products" class="ml-2 block font-medium text-sm text-gray-700">Specific
+                        Products/Categories</label>
                 </div>
             </div>
+
         </div>
 
         <!-- Other Options -->
         <div class="space-y-3">
             <div class="flex items-center">
                 <input id="is_active" name="is_active" type="checkbox" checked
-                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                 <label for="is_active" class="ml-2 block text-sm text-gray-700">Active</label>
             </div>
-            <!-- <div class="flex items-center">
-                <input id="is_single_use" name="is_single_use" type="checkbox"
-                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                <label for="is_single_use" class="ml-2 block text-sm text-gray-700">Single Use Per Customer</label>
-            </div> -->
+            <div class="flex items-center">
+                <input id="only_first_order" name="only_first_order" type="checkbox"
+                    class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                <label for="only_first_order" class="ml-2 block text-sm text-gray-700">First Order Only</label>
+            </div>
         </div>
 
         <!-- Submit Button -->
         <div class="pt-4 flex justify-end">
             <button type="submit"
                 class="w-48 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-
                 <span class="btn-text">Create Promo Code</span>
                 <div id="loading-spinner" class="hidden">
                     <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -160,109 +164,54 @@
 
 {% block js %}
 <script>
-
     document.addEventListener('DOMContentLoaded', function () {
-        // Set minimum dates to current datetime
+        // Initialize Quill editor
+        let quill;
+        try {
+            quill = new Quill('#editor-container', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
+                        [{ 'indent': '-1' }, { 'indent': '+1' }],
+                        [{ 'direction': 'rtl' }],
+                        [{ 'script': 'sub' }, { 'script': 'super' }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'font': [] }],
+                        [{ 'align': [] }],
+                        ['clean'],
+                        ['link', 'image']
+                    ]
+                },
+                placeholder: 'Enter promo code description...'
+            });
+
+            const descriptionInput = document.getElementById('description');
+            quill.on('text-change', function () {
+                descriptionInput.value = quill.root.innerHTML;
+            });
+        } catch (error) {
+            showToast('Failed to initialize text editor', 'error');
+        }
+
+        // Set up date fields
         const now = new Date();
         const nowString = now.toISOString().slice(0, 16);
-
         const startDateField = document.getElementById('start_date');
         const endDateField = document.getElementById('end_date');
 
         startDateField.min = nowString;
         endDateField.min = nowString;
 
-        // Update end date min when start date changes
         startDateField.addEventListener('change', function () {
             if (this.value) {
                 endDateField.min = this.value;
-            } else {
-                endDateField.min = nowString;
             }
         });
-    });
 
-    async function loadProducts() {
-        try {
-            const response = await fetch('/api/products');
-            if (!response.ok) throw new Error('Failed to load products');
-            const products = await response.json();
-
-            const select = document.getElementById('products');
-            select.innerHTML = '';
-            products.forEach(product => {
-                const option = document.createElement('option');
-                option.value = product.id;
-                option.textContent = product.name;
-                select.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading products:', error);
-            showToast('Failed to load products', 'error');
-        }
-    }
-
-    function validatePromoForm() {
-        let isValid = true;
-
-        // Required fields
-        const codeField = document.getElementById('code');
-        isValid = validators.required(codeField, 'Promo code') && isValid;
-
-        const discountValueField = document.getElementById('discount_value');
-        isValid = validators.required(discountValueField, 'Discount value') && isValid;
-        isValid = validators.minValue(discountValueField, 0.01, 'Discount value') && isValid;
-
-        const startDateField = document.getElementById('start_date');
-        isValid = validators.required(startDateField, 'Start date') && isValid;
-
-        // Validate start date is not in the past
-        if (startDateField.value) {
-            const now = new Date();
-            const startDate = new Date(startDateField.value);
-            if (startDate < now) {
-                showToast('Start date cannot be in the past', 'error');
-                isValid = false;
-            }
-        }
-
-        const endDateField = document.getElementById('end_date');
-        // Validate end date if provided
-        if (endDateField.value) {
-            const now = new Date();
-            const endDate = new Date(endDateField.value);
-
-            if (endDate <= now) {
-                showToast('End date must be in the future', 'error');
-                isValid = false;
-            }
-
-            // Validate end date is after start date if both are provided
-            if (startDateField.value) {
-                const startDate = new Date(startDateField.value);
-                if (endDate <= startDate) {
-                    showToast('End date must be after start date', 'error');
-                    isValid = false;
-                }
-            }
-        }
-
-        // If percentage discount, validate max discount
-        const discountType = document.querySelector('input[name="discount_type"]:checked').value;
-        if (discountType === 'percentage') {
-            const maxDiscountField = document.getElementById('max_discount');
-            if (maxDiscountField.value) {
-                isValid = validators.minValue(maxDiscountField, 0.01, 'Maximum discount') && isValid;
-            }
-        }
-
-        return isValid;
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const form = document.getElementById('addPromoForm');
-
-        // Toggle discount fields
+        // Discount type toggle
         function toggleDiscountFields() {
             const discountType = document.querySelector('input[name="discount_type"]:checked').value;
             const maxDiscountContainer = document.getElementById('maxDiscountContainer');
@@ -277,40 +226,75 @@
             }
         }
 
-        // Toggle product restrictions
+        // Product applicability toggle
         function toggleProductRestriction() {
-            const restrictionType = document.querySelector('input[name="product_restriction"]:checked').value;
+            const applicableTo = document.querySelector('input[name="applicable_to"]:checked').value;
             const productSelectionContainer = document.getElementById('productSelectionContainer');
 
-            if (restrictionType === 'specific') {
+            if (applicableTo === 'specific' && productSelectionContainer) {
                 productSelectionContainer.classList.remove('hidden');
-                loadProducts();
-            } else {
+                if (!window.productsLoaded) {
+                    loadSelectionOptions();
+                    window.productsLoaded = true;
+                }
+            } else if (productSelectionContainer) {
                 productSelectionContainer.classList.add('hidden');
             }
         }
 
-        // Set up event listeners
-        document.querySelectorAll('input[name="discount_type"]').forEach(radio => {
-            radio.addEventListener('change', toggleDiscountFields);
-        });
+        // Form validation
+        function validatePromoForm() {
+            let isValid = true;
+            const form = document.getElementById('addPromoForm');
+            console.log()
+            const codeField = form.code;
+            const discountValueField = form.discount_value;
+            const startDateField = form.start_date;
+            const minimum_order_amount = form.min_order_amount;
+            const endDateField = form.end_date;
 
-        document.querySelectorAll('input[name="product_restriction"]').forEach(radio => {
-            radio.addEventListener('change', toggleProductRestriction);
-        });
+            isValid &= validators.required(codeField, 'Promo code') && validators.minLength(codeField, 3, 'Promo code');;
+            isValid &= validators.required(discountValueField, 'Discount value');
+            isValid &= validators.required(startDateField, 'Start date');
+
+            isValid &= validators.minValue(discountValueField, 0.01, 'Discount value');
+            isValid &= validators.minValue(minimum_order_amount, 1, 'Minimum Order Value');
+
+            const now = new Date();
+            const startDate = new Date(startDateField.value);
+            if (startDateField.value && startDate < now.setHours(0, 0, 0, 0)) {
+                showErrorMessage(startDateField, 'Start date cannot be in the past');
+                isValid = false;
+            } else {
+                removeErrorMessage(startDateField);
+            }
+
+            if (endDateField.value) {
+                const endDate = new Date(endDateField.value);
+                if (endDate <= startDate) {
+                    showErrorMessage(endDateField, 'End date must be after start date');
+                    isValid = false;
+                } else {
+                    removeErrorMessage(endDateField);
+                }
+            }
+
+            return Boolean(isValid);
+        }
 
 
-
-        // Initialize fields
-        toggleDiscountFields();
-        toggleProductRestriction();
-
-        // Handle form submission
+        // Form submission
+        const form = document.getElementById('addPromoForm');
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
+
+            // Sync Quill content
+            document.getElementById('description').value = quill.root.innerHTML;
+
             if (!validatePromoForm()) {
                 return;
             }
+
             const submitBtn = form.querySelector('button[type="submit"]');
             const btnText = submitBtn.querySelector('.btn-text');
             const spinner = submitBtn.querySelector('#loading-spinner');
@@ -321,25 +305,87 @@
             submitBtn.disabled = true;
 
             try {
-                const formData = new FormData(form);
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('code', form.code.value.trim().toUpperCase());
+                formData.append('description', form.description.value);
+                formData.append('discount_type', form.discount_type.value);
+                formData.append('discount_value', parseFloat(form.discount_value.value));
+                formData.append('min_order_amount', parseFloat(form.min_order_amount.value) || 0);
+                formData.append('max_discount_amount', parseFloat(form.max_discount.value) || 0);
+                formData.append('start_date', form.start_date.value);
+                if (form.end_date.value) formData.append('expiry_date', form.end_date.value);
+                if (parseInt(form.max_uses.value)) formData.append('max_uses', parseInt(form.max_uses.value));
+                formData.append('uses_per_user', parseInt(form.user_max_uses.value) || 1);
+                formData.append('only_first_order', form.only_first_order.checked);
+                formData.append('is_active', form.is_active.checked);
+                formData.append('applicable_to', form.applicable_to.value);
 
+                // Handle applicable products
+                if (form.applicable_to.value === 'specific') {
+                    const applicableProducts = [];
+
+                    // Add selected products
+                    const productsSelect = form.querySelector('#products');
+                    if (productsSelect) {
+                        Array.from(productsSelect.selectedOptions).forEach(option => {
+                            applicableProducts.push({ product_id: option.value });
+                        });
+                    }
+
+                    // Add selected categories
+                    const categoriesSelect = form.querySelector('#categories');
+                    if (categoriesSelect) {
+                        Array.from(categoriesSelect.selectedOptions).forEach(option => {
+                            applicableProducts.push({ category_id: option.value });
+                        });
+                    }
+
+                    // Add selected brands
+                    const brandsSelect = form.querySelector('#brands');
+                    if (brandsSelect) {
+                        Array.from(brandsSelect.selectedOptions).forEach(option => {
+                            applicableProducts.push({ brand_id: option.value });
+                        });
+                    }
+
+                    formData.append('applicable_products', JSON.stringify(applicableProducts));
+                }
+
+                // Send request using the separate function
                 const result = await sendPostRequest('/api/promo-codes', formData);
 
                 if (result.success) {
-                    showToast(result.message, 'success');
+                    showToast('Promo code created successfully!', 'success');
+                    form.reset();
+                    quill.setContents([]);
+                    // window.location.href = '/admin/promo-codes';
                 } else {
-                    showToast(result.errors || 'Failed to create promo code', 'error');
+                    showToast(result.errors || result.message || 'Failed to create promo code', 'error');
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Submission error:', error);
                 showToast('An error occurred while creating the promo code', 'error');
             } finally {
+                // Reset button state
                 btnText.textContent = 'Create Promo Code';
                 spinner.classList.add('hidden');
                 submitBtn.disabled = false;
             }
         });
 
+        // Initialize event listeners
+        document.querySelectorAll('input[name="discount_type"]').forEach(radio => {
+            radio.addEventListener('change', toggleDiscountFields);
+        });
+
+        document.querySelectorAll('input[name="applicable_to"]').forEach(radio => {
+            radio.addEventListener('change', toggleProductRestriction);
+        });
+
+        // Initial setup
+        toggleDiscountFields();
+        toggleProductRestriction();
     });
 </script>
 {% endblock %}

@@ -5,15 +5,11 @@ from app.models.category_modal import Category, SubCategory, SubSubCategory
 from app.models.brands import ProductBrands
 from mongoengine.queryset.visitor import Q
 from datetime import datetime
-import logging
-
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+from constants import SEARCH_PRODUCT_BY_KEYWORD_API
 
 search_bp = Blueprint('search', __name__)
 
-@search_bp.route('/api/search', methods=['GET'])
+@search_bp.route(SEARCH_PRODUCT_BY_KEYWORD_API, methods=['GET'])
 def search_products():
     try:
         keyword = request.args.get('keyword', '').strip()
