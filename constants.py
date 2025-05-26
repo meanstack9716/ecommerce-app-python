@@ -108,13 +108,15 @@ API_GET_SUBCATEGORIES_BY_CATEGORY_ID = '/api/sub-categories/list/<category_id>'
 # Sub Sub Category API Endpoint Constants
 SUB_SUB_CATEGORY_ADD_API = '/api/sub-sub-category/add'
 GET_SUBSUBCATEGORIES_BY_CATEGORY_ID_API = '/api/sub-sub-categories/list';
+# Sub Sub Category API Endpoint Constants End
 
+#Product API Endpoint Constants Start
 ADD_NEW_PRODUCT_API = f'/api/products/add'
 PRODUCT_LISTS_API= f'/api/products/list'
 PRODUCT_LISTS__BY_ID_API = f'/api/products/<string:product_id>'
 EDIT_PRODUCT_API = f'/api/products/edit'
 PRODUCT_LISTS_BY_ID_API = f'/api/products/<string:product_id>'
-# Sub Sub Category API Endpoint Constants End
+#Product API Endpoint Constants End
 
 # Brand Endpoint API Start
 GET_BRANDS_LIST_API = '/api/brand/lists'

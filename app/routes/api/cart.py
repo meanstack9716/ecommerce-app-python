@@ -116,7 +116,6 @@ def add_to_cart():
 @cart_bp.route(CART_LIST, methods=['GET'])
 @jwt_required()
 def get_cart():
-    print(">>>>>>>>")
     user_id = get_jwt_identity()
     local_ip = get_local_ip()
     port = current_app.config.get('SERVER_PORT', 8080)

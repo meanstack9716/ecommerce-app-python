@@ -199,14 +199,14 @@
             }
 
             if (!currentSize) {
-                return; // No size selected, skip validation
+                return;
             }
 
             const allSizeBlocks = document.querySelectorAll('.size-block');
             let isDuplicate = false;
 
             allSizeBlocks.forEach(block => {
-                if (block === currentBlock) return; // Skip the current block
+                if (block === currentBlock) return;
                 const otherSelect = block.querySelector('.size-select');
                 const otherCustomInput = block.querySelector('.custom-size-input');
                 let otherSize = otherSelect.value;
@@ -223,8 +223,8 @@
             if (isDuplicate) {
                 sizeError.textContent = `Size "${currentSize}" is already selected.`;
                 sizeError.classList.remove('hidden');
-                sizeSelect.value = ''; // Reset the selection
-                customSizeInput.value = ''; // Clear custom input
+                sizeSelect.value = '';
+                customSizeInput.value = '';
                 customSizeInput.classList.add('hidden');
             } else {
                 sizeError.classList.add('hidden');
@@ -290,7 +290,7 @@
                     sizeSelect.value = currentValue;
                 }
 
-                validateSizeSelection(block); // Re-validate after updating options
+                validateSizeSelection(block);
             });
         }
 

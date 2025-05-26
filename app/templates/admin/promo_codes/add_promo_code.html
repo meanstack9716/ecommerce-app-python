@@ -121,10 +121,28 @@
                     <input id="specific_products" name="applicable_to" type="radio" value="specific"
                         class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
                     <label for="specific_products" class="ml-2 block font-medium text-sm text-gray-700">Specific
-                        Products/Categories</label>
+                        Products</label>
                 </div>
             </div>
+        </div>
 
+        <!-- Product Selection Container -->
+        <div id="productSelectionContainer" class="hidden space-y-4">
+            <div class="relative">
+                <label for="product_search" class="block text-sm font-bold text-gray-700 mb-1">Select Products</label>
+                <input type="text" id="product_search" name="product_search"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Type to search and select products...">
+                <div id="product_dropdown" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden">
+                    <ul id="product_list" class="divide-y divide-gray-200">
+                        <!-- Products will be populated dynamically -->
+                    </ul>
+                </div>
+                <div id="selected_products" class="mt-2 flex flex-wrap gap-2">
+                    <!-- Selected products will appear here as tags -->
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Type to filter and select multiple products</p>
+            </div>
         </div>
 
         <!-- Other Options -->
@@ -164,6 +182,104 @@
 
 {% block js %}
 <script>
+    // Store products globally for filtering
+    let allProducts = [];
+
+    async function loadSelectionOptions() {
+        try {
+            // Fetch products
+            const productResponse = await fetch('/api/products/list?all_data=true', {
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            if (!productResponse.ok) {
+                throw new Error('Failed to fetch products');
+            }
+            const productData = await productResponse.json();
+            allProducts = (productData.data || []).map(product => ({
+                id: product.id,
+                name: product.name,
+                selected: false
+            }));
+            // Initial render of product list
+            renderProductList(allProducts);
+        } catch (error) {
+            console.error('Error loading products:', error);
+            showToast('Failed to load products', 'error');
+        }
+    }
+
+    // Function to render product list in dropdown
+    function renderProductList(products) {
+        const productList = document.getElementById('product_list');
+        productList.innerHTML = ''; // Clear existing list
+
+        if (products.length === 0) {
+            const li = document.createElement('li');
+            li.className = 'px-4 py-2 text-gray-500';
+            li.textContent = 'No products found';
+            productList.appendChild(li);
+            return;
+        }
+
+        products.forEach(product => {
+            const li = document.createElement('li');
+            li.className = 'px-4 py-2 cursor-pointer hover:bg-gray-100';
+            li.dataset.productId = product.id;
+            li.textContent = product.name;
+            productList.appendChild(li);
+
+            // Select product on click
+            li.addEventListener('click', function () {
+                if (!product.selected) {
+                    product.selected = true;
+                    renderSelectedProducts();
+                    renderProductList(allProducts.filter(p => !p.selected)); // Hide selected products
+                    document.getElementById('product_search').value = ''; // Clear input
+                    document.getElementById('product_dropdown').classList.add('hidden');
+                }
+            });
+        });
+    }
+
+    // Function to render selected products as tags
+    function renderSelectedProducts() {
+        const selectedProductsContainer = document.getElementById('selected_products');
+        selectedProductsContainer.innerHTML = ''; // Clear existing tags
+
+        const selectedProducts = allProducts.filter(product => product.selected);
+        selectedProducts.forEach(product => {
+            const tag = document.createElement('span');
+            tag.className = 'inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800';
+            tag.innerHTML = `
+                ${product.name}
+                <button type="button" class="ml-1 text-blue-600 hover:text-blue-800" data-product-id="${product.id}">
+                    &times;
+                </button>
+            `;
+            selectedProductsContainer.appendChild(tag);
+
+            // Remove product on click
+            tag.querySelector('button').addEventListener('click', function () {
+                product.selected = false;
+                renderSelectedProducts();
+                renderProductList(allProducts.filter(p => p.name.toLowerCase().includes(
+                    document.getElementById('product_search').value.toLowerCase()
+                )));
+            });
+        });
+    }
+
+    // Function to filter products based on search input
+    function filterProducts(searchTerm) {
+        const filteredProducts = allProducts.filter(product =>
+            !product.selected && product.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        renderProductList(filteredProducts);
+        document.getElementById('product_dropdown').classList.remove('hidden');
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize Quill editor
         let quill;
@@ -239,21 +355,41 @@
                 }
             } else if (productSelectionContainer) {
                 productSelectionContainer.classList.add('hidden');
+                document.getElementById('product_dropdown').classList.add('hidden');
             }
         }
+
+        // Search input handler
+        const productSearchInput = document.getElementById('product_search');
+        productSearchInput.addEventListener('input', function () {
+            filterProducts(this.value);
+        });
+
+        // Show/hide dropdown on focus/blur
+        productSearchInput.addEventListener('focus', function () {
+            filterProducts(this.value);
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            const dropdown = document.getElementById('product_dropdown');
+            const input = document.getElementById('product_search');
+            if (!dropdown.contains(e.target) && e.target !== input) {
+                dropdown.classList.add('hidden');
+            }
+        });
 
         // Form validation
         function validatePromoForm() {
             let isValid = true;
             const form = document.getElementById('addPromoForm');
-            console.log()
             const codeField = form.code;
             const discountValueField = form.discount_value;
             const startDateField = form.start_date;
             const minimum_order_amount = form.min_order_amount;
             const endDateField = form.end_date;
 
-            isValid &= validators.required(codeField, 'Promo code') && validators.minLength(codeField, 3, 'Promo code');;
+            isValid &= validators.required(codeField, 'Promo code') && validators.minLength(codeField, 3, 'Promo code');
             isValid &= validators.required(discountValueField, 'Discount value');
             isValid &= validators.required(startDateField, 'Start date');
 
@@ -281,7 +417,6 @@
 
             return Boolean(isValid);
         }
-
 
         // Form submission
         const form = document.getElementById('addPromoForm');
@@ -323,42 +458,25 @@
 
                 // Handle applicable products
                 if (form.applicable_to.value === 'specific') {
-                    const applicableProducts = [];
-
-                    // Add selected products
-                    const productsSelect = form.querySelector('#products');
-                    if (productsSelect) {
-                        Array.from(productsSelect.selectedOptions).forEach(option => {
-                            applicableProducts.push({ product_id: option.value });
-                        });
-                    }
-
-                    // Add selected categories
-                    const categoriesSelect = form.querySelector('#categories');
-                    if (categoriesSelect) {
-                        Array.from(categoriesSelect.selectedOptions).forEach(option => {
-                            applicableProducts.push({ category_id: option.value });
-                        });
-                    }
-
-                    // Add selected brands
-                    const brandsSelect = form.querySelector('#brands');
-                    if (brandsSelect) {
-                        Array.from(brandsSelect.selectedOptions).forEach(option => {
-                            applicableProducts.push({ brand_id: option.value });
-                        });
-                    }
-
+                    const applicableProducts = allProducts
+                        .filter(product => product.selected)
+                        .map(product => ({ product_id: product.id }));
                     formData.append('applicable_products', JSON.stringify(applicableProducts));
                 }
 
-                // Send request using the separate function
+                // Send request
                 const result = await sendPostRequest('/api/promo-codes', formData);
 
                 if (result.success) {
                     showToast('Promo code created successfully!', 'success');
                     form.reset();
                     quill.setContents([]);
+                    // Clear product selections
+                    allProducts.forEach(product => product.selected = false);
+                    renderSelectedProducts();
+                    renderProductList(allProducts);
+                    document.getElementById('product_search').value = '';
+                    document.getElementById('product_dropdown').classList.add('hidden');
                     // window.location.href = '/admin/promo-codes';
                 } else {
                     showToast(result.errors || result.message || 'Failed to create promo code', 'error');

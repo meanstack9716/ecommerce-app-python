@@ -89,13 +89,13 @@
             </div>
             
             <!-- Single Use -->
-            <div>
+            <!-- <div>
                 <label class="block text-sm font-medium text-gray-700">Usage Type</label>
                 <div class="mt-1 flex items-center">
                     <input type="checkbox" id="is_single_use" name="is_single_use" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
                     <label for="is_single_use" class="ml-2 block text-sm text-gray-700">Single Use Only</label>
                 </div>
-            </div>
+            </div> -->
         </div>
         
         <!-- Product Restrictions -->
@@ -173,7 +173,7 @@
                         document.getElementById('end_date').value = data.end_date.slice(0, 16);
                     }
                     document.getElementById('is_active').checked = data.is_active;
-                    document.getElementById('is_single_use').checked = data.is_single_use;
+                    // document.getElementById('is_single_use').checked = data.is_single_use;
                     document.getElementById('max_uses').value = data.max_uses || '';
                     document.getElementById('min_order_amount').value = data.min_order_amount || '';
                     document.getElementById('max_discount').value = data.max_discount_amount || '';
@@ -242,7 +242,7 @@
                 
                 // Convert checkboxes to boolean
                 data.is_active = formData.has('is_active');
-                data.is_single_use = formData.has('is_single_use');
+                // data.is_single_use = formData.has('is_single_use');
                 
                 // Get all selected products
                 if (data.product_restriction === 'specific') {

@@ -25,7 +25,6 @@ def handle_promo_code_submission():
 
     try:
         data = request.form
-        print(data, ">>>>")
         required_fields = ['code', 'discount_type', 'discount_value', 'start_date']
         
         is_valid, validation_errors = validate_fields(data, required_fields)
@@ -165,7 +164,7 @@ def edit_promo_code(promo_code_id):
             'start_date': promo_code.start_date.isoformat(),
             'expiry_date': promo_code.expiry_date.isoformat() if promo_code.expiry_date else None,
             'is_active': promo_code.is_active,
-            'is_single_use': promo_code.is_single_use,
+            # 'is_single_use': promo_code.is_single_use,
             'max_uses': promo_code.max_uses,
             'min_order_amount': float(promo_code.min_order_amount) if promo_code.min_order_amount else None,
             'max_discount_amount': float(promo_code.max_discount_amount) if promo_code.max_discount_amount else None,
@@ -185,7 +184,7 @@ def edit_promo_code(promo_code_id):
             promo_code.start_date = datetime.fromisoformat(data.get('start_date')) if data.get('start_date') else promo_code.start_date
             promo_code.expiry_date = datetime.fromisoformat(data.get('expiry_date')) if data.get('expiry_date') else promo_code.expiry_date
             promo_code.is_active = data.get('is_active', str(promo_code.is_active)).lower() == 'true'
-            promo_code.is_single_use = data.get('is_single_use', str(promo_code.is_single_use)).lower() == 'true'
+            # promo_code.is_single_use = data.get('is_single_use', str(promo_code.is_single_use)).lower() == 'true'
             promo_code.max_uses = int(data['max_uses']) if data.get('max_uses') else promo_code.max_uses
             promo_code.min_order_amount = float(data['min_order_amount']) if data.get('min_order_amount') else promo_code.min_order_amount
             promo_code.max_discount_amount = float(data['max_discount']) if data.get('max_discount') else promo_code.max_discount_amount
