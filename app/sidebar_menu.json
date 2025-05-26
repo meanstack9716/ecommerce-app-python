@@ -16,12 +16,17 @@
           {
             "label": "All User",
             "icon": "person",
-            "endpointGroup": ["admin_api.all_users", "admin_api.add_user"],
+            "endpointGroup": ["admin_api.all_users", "admin_api.add_new_user"],
             "submenu": [
               {
                 "label": "All User",
                 "icon": "patient_list",
                 "endpoint": "admin_api.all_users"
+              },
+                {
+                "label": "Add New User",
+                "icon": "person_add",
+                "endpoint": "admin_api.add_new_user"
               }
             ]
           },

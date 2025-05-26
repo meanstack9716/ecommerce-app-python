@@ -4,7 +4,16 @@
 
 {% block admin_content %}
 <div class="bg-white rounded-lg shadow-lg p-4 md:p-8">
-  <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-4 md:mb-6">All Users</h1>
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-4 md:mb-6">All Users</h1>
+
+    <div class="flex justify-end mb-6">
+      <a href="{{ url_for('admin_api.add_new_user') }}"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:text-gray-700 text-sm">
+        Add New User
+      </a>
+    </div>
+  </div>
 
   <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
     <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
@@ -48,7 +57,8 @@
         </button>
 
         <div class="w-fit sm:w-auto text-center sm:text-left">
-          <a href="#" id="clear-search" class="text-sm font-medium px-4 py-3 border border-red-500 rounded-lg text-red-500">Clear Search</a>
+          <a href="#" id="clear-search"
+            class="text-sm font-medium px-4 py-3 border border-red-500 rounded-lg text-red-500">Clear Search</a>
         </div>
       </div>
     </div>
@@ -56,12 +66,13 @@
 
   <!-- Table Section -->
   <div class="overflow-x-auto">
-    {% set user_table_heading_data = ['S.No', 'First Name', 'Last Name', 'Email', 'Role', 'Phone number'] %}
+    {% set user_table_heading_data = ['S.No', 'First Name', 'Last Name', 'Email', 'Role', 'Phone number', 'Action'] %}
     <table class="min-w-full divide-y divide-gray-200" id="user-table">
       <thead class="bg-gray-50">
         <tr>
           {% for header in user_table_heading_data %}
-          <th class="border border-gray-200 px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+          <th
+            class="border border-gray-200 px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
             {{ header }}
           </th>
           {% endfor %}
@@ -71,11 +82,20 @@
         {% for userData in allUsersList %}
         <tr>
           <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData.index }}</td>
-          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData['first_name'] }}</td>
-          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData['last_name'] }}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData['first_name'] }}
+          </td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData['last_name'] }}
+          </td>
           <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData['email'] }}</td>
           <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData['role'] }}</td>
-          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData['phone_number'] }}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ userData['phone_number']
+            }}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">
+            <a href="{{ url_for('admin_api.edit_user', user_id=userData.id) }}"
+              class="text-indigo-600 hover:text-indigo-900 inline-flex items-center">
+              <span class="material-symbols-outlined text-base mr-1">edit</span>
+            </a>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
@@ -85,11 +105,11 @@
   <!-- Pagination Section -->
   <div class="flex flex-col sm:flex-row items-center justify-between mt-6 gap-3">
     <!-- Items per page selector -->
-    <div class="flex items-center gap-2 relative w-full sm:w-auto">
+    <div class="flex items-center gap-2">
       <span class="text-sm text-gray-600">Items per page:</span>
       <div class="relative">
         <select id="items-per-page"
-          class="border border-gray-300 rounded-lg px-2 py-1 md:px-3 md:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 appearance-none">
+          class="border border-gray-300 w-24 rounded-lg px-2 py-1 md:px-3 md:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 appearance-none">
           {% for amount in [10, 20, 50, 100] %}
           <option value="{{ amount }}" {% if pagination.per_page==amount %}selected{% endif %}>
             {{ amount }}
@@ -97,7 +117,7 @@
           {% endfor %}
         </select>
         <span
-          class="material-symbols-outlined pointer-events-none absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+          class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 text-center">
           expand_more
         </span>
       </div>
@@ -160,14 +180,20 @@
         userTableBody.innerHTML = '';
         data.users.forEach(user => {
           const row = `
-          <tr class="border-t">
-            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.index}</td>
-            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.first_name}</td>
-            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.last_name}</td>
-            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.email}</td>
-            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.role}</td>
-            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.phone_number}</td>
-          </tr>`;
+<tr class="border-t">
+  <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.index}</td>
+  <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.first_name}</td>
+  <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.last_name}</td>
+  <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.email}</td>
+  <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.role}</td>
+  <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${user.phone_number}</td>
+  <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">
+    <a href="/users/edit/${user.id}" 
+       class="text-indigo-600 hover:text-indigo-900 inline-flex items-center">
+      <span class="material-symbols-outlined text-base mr-1">edit</span>
+    </a>
+  </td>
+</tr>`;
           userTableBody.innerHTML += row;
         });
 

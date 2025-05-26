@@ -44,6 +44,7 @@ RESET_PASSWORD_WEB_URL = f'/reset-password'
 DASHBOARD_WEB_URL = f'/dashboard'
 
 ALL_USER_LIST_WEB_URL = f'/all-users-list'
+ADD_NEW_USER_LIST_WEB_URL = f'/add-new-user'
 
 ADD_SELLER_WEB_URL = f'/add-new-seller'
 GET_SELLER_LIST_WEB_URL = f'/seller/list'
