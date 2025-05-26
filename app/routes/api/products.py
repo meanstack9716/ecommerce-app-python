@@ -480,7 +480,6 @@ def edit_product():
         # Validate IDs
         try:
             user_object_id = ObjectId(user_id)
-            print(user_object_id, ">>>>>>>>>>>>>>")
             product_id = ObjectId(request.form.get('product_id'))
         except Exception:
             return create_error_response({'id': 'Invalid ID format'}, 400)

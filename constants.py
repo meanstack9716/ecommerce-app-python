@@ -116,6 +116,8 @@ PRODUCT_LISTS_API= f'/api/products/list'
 PRODUCT_LISTS__BY_ID_API = f'/api/products/<string:product_id>'
 EDIT_PRODUCT_API = f'/api/products/edit'
 PRODUCT_LISTS_BY_ID_API = f'/api/products/<string:product_id>'
+PRODUCT_REVIEW_API = f'/api/products/review'
+GET_PRODUCT_REVIEW_BY_ID_API = f'/api/products/review/<string:product_id>'
 #Product API Endpoint Constants End
 
 # Brand Endpoint API Start
@@ -161,6 +163,7 @@ SEARCH_PRODUCT_BY_KEYWORD_API = '/api/search-products'
 # Orders Endpoint Start
 ORDER_PLACE_API = f'/api/orders/new'
 ORDER_LIST_API = f'/api/orders/list'
+GET_ORDER_STATUS_TYPES = f'/api/orders/status-types'
 # Orders Endpoint End
 
 # Sales OverView Endpoint Start

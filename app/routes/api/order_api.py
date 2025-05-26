@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import Address, Seller, User, ProductCart, Products, ProductVariant, ProductVariantImage, Order, OrderItem
 from datetime import datetime, timedelta
 import random
@@ -7,7 +7,7 @@ import string
 from bson import ObjectId
 import decimal
 from app.utils.utils import create_error_response
-from constants import ORDER_PLACE_API, ORDER_LIST_API
+from constants import ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, ORDER_STATUS
 from app.utils.jwt_handlers import jwt_error_handler
 from mongoengine.queryset.visitor import Q
 
@@ -21,15 +21,16 @@ def place_order():
     user = User.objects(id=user_id).first()
     
     if not user:
-        return jsonify({'error': 'User not found'}), 404
+        return create_error_response({'error': 'User not found'}, 404)
 
     data = request.get_json()
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return create_error_response({'error': 'No data provided'}, 400)
 
     required_fields = ['cart_items_ids', 'shipping_address_id', 'payment_method']
-    if not all(field in data for field in required_fields):
-        return jsonify({'error': 'Missing required fields'}), 400
+    is_valid, validation_errors = validate_fields(data, required_fields)
+    if not is_valid:
+        return create_error_response(validation_errors, 400)
 
     try:
         shipping_address = Address.objects(
@@ -38,23 +39,23 @@ def place_order():
         ).first()
 
         if not shipping_address:
-            return jsonify({
+            return create_error_response({
                 'error': 'Shipping address not found',
                 'message': 'The specified shipping address doesn\'t exist or doesn\'t belong to you'
-            }), 404
+            }, 404)
 
         address_fields = ['line1', 'city', 'state', 'postal_code', 'country']
         if not all(getattr(shipping_address, field) for field in address_fields):
-            return jsonify({
+            return create_error_response({
                 'error': 'Incomplete shipping address',
                 'message': 'The shipping address is missing required fields'
-            }), 400
+            }, 400)
 
     except Exception as e:
-        return jsonify({
+        return create_error_response({
             'error': 'Invalid shipping address',
             'message': str(e)
-        }), 400
+        }, 400)
 
     cart_items_query = ProductCart.objects(user_id=user_id)
     
@@ -63,12 +64,12 @@ def place_order():
             cart_items_ids = [ObjectId(id) for id in data['cart_items_ids']]
             cart_items = cart_items_query.filter(id__in=cart_items_ids)
         except:
-            return jsonify({'error': 'Invalid cart item IDs format'}), 400
+            return create_error_response({'error': 'Invalid cart item IDs format'}, 400)
     else:
         cart_items = cart_items_query
     
     if not cart_items:
-        return jsonify({'error': 'No cart items found'}), 400
+        return create_error_response({'error': 'No cart items found'}, 400)
 
     seller_items = {}
     for cart_item in cart_items:
@@ -151,10 +152,10 @@ def place_order():
         except Exception as e:
             for created_order in Order.objects(id__in=[o['order_id'] for o in orders]):
                 created_order.delete()
-            return jsonify({
+            return create_error_response({
                 'error': 'Failed to place order',
                 'message': str(e)
-            }), 500
+            }, 500)
 
     cart_items.delete()
 
@@ -172,7 +173,7 @@ def get_order_lists():
     user = User.objects(id=user_id).first()
 
     if not user:
-        return jsonify({'status': 'error', 'message': 'User not found', 'data': None}), 404
+        return create_error_response({'status': 'error', 'message': 'User not found', 'data': None}, 404)
     
     search = request.args.get('search', '').strip()
     from_date = request.args.get('from_date')
@@ -253,3 +254,14 @@ def get_order_lists():
         'message': 'Orders fetched successfully',
         'data': order_list
     })
+
+
+@order_bp.route(GET_ORDER_STATUS_TYPES, methods=['GET'])
+@jwt_error_handler
+@jwt_required()
+def get_order_statuses():
+    return jsonify({
+        'status': 'success',
+        'message': 'Order statuses fetched successfully',
+        'data': ORDER_STATUS
+    }), 200
