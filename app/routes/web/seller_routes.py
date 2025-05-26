@@ -2,7 +2,7 @@ from flask import render_template, redirect, session, url_for, request, jsonify
 from . import admin_api
 from app.models import Seller, Identification
 from mongoengine.queryset.visitor import Q
-from constants import ADD_SELLER_WEB_URL, GET_SELLER_LIST_WEB_URL, GET_SELLERS_API_URL
+from constants import ADD_SELLER_WEB_URL, GET_SELLER_LIST_WEB_URL, GET_SELLERS_API_URL, INDIAN_STATES
 from app.models import User
 from app.models import Address
 
@@ -10,7 +10,7 @@ from app.models import Address
 def add_new_seller():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
-    return render_template("admin/seller/add_new_seller.html")
+    return render_template("admin/seller/add_new_seller.html", INDIAN_STATES=INDIAN_STATES)
 
 def fetch_sellers_data(search_query='', approval_status='', page=1, per_page=10):
     query = Seller.objects

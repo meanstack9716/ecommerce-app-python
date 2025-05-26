@@ -22,6 +22,16 @@ ORDER_STATUS = ['pending', 'confirmed', 'processing', 'shipped', 'outOfDelivery'
 
 ADDRESS_TYPES = ['Home', 'Office', 'Work', 'Store', 'Business', 'Other']
 
+INDIAN_STATES = [
+        "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar",
+        "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
+        "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand",
+        "Karnataka", "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh", "Maharashtra",
+        "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab",
+        "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
+        "Uttarakhand", "West Bengal"
+    ];
+
 PROMO_CODE_TYPES = ['percentage', 'fixed_amount']
 PROMO_CODE_APPLICABLE_TO = ['all', 'specific']
 
@@ -45,7 +55,7 @@ DASHBOARD_WEB_URL = f'/dashboard'
 
 ALL_USER_LIST_WEB_URL = f'/all-users-list'
 ADD_NEW_USER_LIST_WEB_URL = f'/add-new-user'
-
+EDIT_USER_WEB_URL = f'/users/edit/<string:user_id>'
 ADD_SELLER_WEB_URL = f'/add-new-seller'
 GET_SELLER_LIST_WEB_URL = f'/seller/list'
 GET_SELLERS_API_URL = '/api/sellers'

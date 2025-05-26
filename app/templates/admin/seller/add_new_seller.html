@@ -218,6 +218,26 @@
 
     // Rest of your code (submitForm, handleErrors, etc.) remains the same
     initForm();
+
+        const indianStates = {{ INDIAN_STATES | tojson }};
+
+    const stateDropdown = document.getElementById('state');
+      const businessStateDropdown = document.getElementById('business_state');
+
+    indianStates.forEach(state => {
+        const option = document.createElement('option');
+        option.value = state;
+        option.textContent = state;
+        stateDropdown.appendChild(option);
+    });
+
+    // Populate the dropdown with states
+    indianStates.forEach(state => {
+        const option = document.createElement('option');
+        option.value = state;
+        option.textContent = state;
+        businessStateDropdown.appendChild(option);
+    });
   });
 </script>
 {% endblock %}

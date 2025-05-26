@@ -2,7 +2,7 @@ from flask import render_template, request, redirect, session, url_for, jsonify
 from app.models import User
 from app.models.role import Role
 from . import admin_api
-from constants import ALL_USER_LIST_WEB_URL, ADD_NEW_USER_LIST_WEB_URL, GENDER_CHOICES
+from constants import ALL_USER_LIST_WEB_URL, ADD_NEW_USER_LIST_WEB_URL, GENDER_CHOICES, EDIT_USER_WEB_URL
 from app.utils.validation import validate_email, validate_required_fields
 from app.utils.utils import create_error_response
 
@@ -162,7 +162,7 @@ def add_new_user():
     return render_template("admin/users/addNewUser.html")
 
 
-@admin_api.route('/users/edit/<string:user_id>', methods=['GET', 'POST'])
+@admin_api.route(EDIT_USER_WEB_URL, methods=['GET', 'POST'])
 def edit_user(user_id):
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
@@ -236,3 +236,38 @@ def get_users():
         'pagination': data['pagination'],
         'roles': data['roles']
     })
+
+# Function to update user status
+def update_user_status(user_id, status):
+    try:
+        user = User.objects(id=user_id).first()
+        if not user:
+            return False
+        user.is_deactivate = (status == 'deactivate')
+        user.save()
+        return True
+    except Exception as e:
+        print(f"Error updating user status: {e}")
+        return False
+
+@admin_api.route('/api/users/<string:user_id>/status', methods=['PATCH'])
+def update_user_status_endpoint(user_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    if not data or 'status' not in data:
+        return jsonify({'error': 'Status is required'}), 400
+
+    status = data['status']
+    if status not in ['activate', 'deactivate']:
+        return jsonify({'error': 'Invalid status value'}), 400
+
+    try:
+        success = update_user_status(user_id, status)
+        if success:
+            return jsonify({'message': 'User status updated successfully'}), 200
+        else:
+            return jsonify({'error': 'User not found or update failed'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500sss

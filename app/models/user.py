@@ -23,7 +23,7 @@ class User(db.Document):
     cloudinary_id = db.StringField()
     is_admin = db.BooleanField(default=False)
     is_email_verified = db.BooleanField(default=False)
-
+    is_deactivate = db.BooleanField(default=False)
     def hash_password(self):
         self.password = generate_password_hash(self.password).decode('utf8')
 
