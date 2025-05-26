@@ -53,13 +53,18 @@
             theme: 'snow',
             modules: {
                 toolbar: [
-                    [{ 'header': [1, 2, 3, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'color': [] }, { 'background': [] }],
-                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                    ['link', 'image'],
-                    ['clean']
-                ]
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
+                        [{ 'indent': '-1' }, { 'indent': '+1' }],
+                        [{ 'direction': 'rtl' }],
+                        [{ 'script': 'sub' }, { 'script': 'super' }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'font': [] }],
+                        [{ 'align': [] }],
+                        ['clean'],
+                        ['link', 'image']
+                    ]
             },
             placeholder: 'Enter product details...',
         });
@@ -85,7 +90,7 @@
         const hiddenSubSubCategoryId = document.getElementById('hidden-sub_sub_categories_id');
         const variantImagesContainer = document.getElementById('variant-images-container');
 
-        let currentStep = 1;
+        let currentStep = 3;
 
         function updateUI() {
             [step1, step2, step3, step4].forEach(step => step.classList.add('hidden'));

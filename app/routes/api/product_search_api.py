@@ -5,32 +5,17 @@ from app.models.category_modal import Category, SubCategory, SubSubCategory
 from app.models.brands import ProductBrands
 from mongoengine.queryset.visitor import Q
 from datetime import datetime
-import logging
-
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+from constants import SEARCH_PRODUCT_BY_KEYWORD_API
 
 search_bp = Blueprint('search', __name__)
 
-@search_bp.route('/api/search', methods=['GET'])
+@search_bp.route(SEARCH_PRODUCT_BY_KEYWORD_API, methods=['GET'])
 def search_products():
-    """
-    Search products by keyword across multiple fields including brand.
-    Query parameters:
-        - keyword: String to search for (required)
-        - page: Page number (default: 1)
-        - per_page: Items per page (default: 10, max: 50)
-    Returns:
-        - JSON response with matching products and pagination info
-    """
     try:
-        # Get query parameters
         keyword = request.args.get('keyword', '').strip()
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 10))
 
-        # Validate inputs
         if not keyword:
             return jsonify({
                 'status': 'error',
@@ -42,22 +27,15 @@ def search_products():
         if per_page < 1 or per_page > 50:
             per_page = 10
 
-        # Build base search query for product fields
         search_query = Q(name__icontains=keyword) | \
                       Q(description__icontains=keyword) | \
                       Q(details__icontains=keyword) | \
                       Q(material__icontains=keyword)
 
-        # Get IDs for category and brand matches as lists
         category_ids = [str(cat.id) for cat in Category.objects(name__icontains=keyword).only('id')]
         subcategory_ids = [str(subcat.id) for subcat in SubCategory.objects(name__icontains=keyword).only('id')]
         subsubcategory_ids = [str(subsubcat.id) for subsubcat in SubSubCategory.objects(name__icontains=keyword).only('id')]
         brand_ids = [str(brand.id) for brand in ProductBrands.objects(name__icontains=keyword).only('id')]
-
-        logger.debug(f"Category IDs: {category_ids}")
-        logger.debug(f"SubCategory IDs: {subcategory_ids}")
-        logger.debug(f"SubSubCategory IDs: {subsubcategory_ids}")
-        logger.debug(f"Brand IDs: {brand_ids}")
 
         if category_ids:
             search_query |= Q(category_id__in=category_ids)

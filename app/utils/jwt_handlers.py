@@ -27,7 +27,7 @@ def unauthorized_response(message=None):
 def invalid_token_response(message=None):
     return jsonify({
         'error': 'Invalid token',
-        'message': message or 'Invalid JWT token'
+        'message': 'Invalid JWT token'
     }), 401
 
 def expired_token_response(message=None):

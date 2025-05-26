@@ -14,3 +14,4 @@ from .order_routes import *
 from .settings_routes import *
 from .brands_routes import *
 from .seller_routes import *
+from .promo_code_routes import *

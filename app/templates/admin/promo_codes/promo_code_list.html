@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Promo Code List{% endblock %}
+
+{% block admin_content %}
+<div class="bg-white rounded-lg shadow-lg p-8">
+    <h1 class="text-3xl font-semibold text-gray-800 mb-6">Promo Code List</h1>
+    <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+
+    <!-- Enhanced Search and Filter Form -->
+    <form id="search-form" class="flex flex-col sm:flex-row items-end justify-between w-full mb-10 gap-4">
+        <div class="flex flex-col sm:flex-row gap-4 w-full">
+            <div class="flex flex-col w-full sm:w-1/3">
+                <label class="block text-sm font-medium text-black">Search Promo Code</label>
+                <input type="text" name="promoSearch" value="{{ search }}" placeholder="Search by code or description"
+                    class="mt-1 block w-full px-4 py-3 border border-gray-300 outline-none rounded-lg shadow-sm sm:text-sm">
+            </div>
+            <div class="flex flex-col w-full sm:w-1/3">
+                <label class="block text-sm font-medium text-black">Status</label>
+                <select name="status" class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm sm:text-sm">
+                    <option value="">All</option>
+                    <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            <div class="flex flex-col w-full sm:w-1/3">
+                <label class="block text-sm font-medium text-black">Discount Type</label>
+                <select name="discount_type" class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm sm:text-sm">
+                    <option value="">All</option>
+                    <option value="percentage" {% if discount_type == 'percentage' %}selected{% endif %}>Percentage</option>
+                    <option value="fixed" {% if discount_type == 'fixed' %}selected{% endif %}>Fixed</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex gap-4 w-full sm:w-auto">
+            <button type="submit" class="w-full sm:w-36 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                Search
+            </button>
+            <a href="#" id="clear-search" class="w-full sm:w-36 text-center py-3 px-4 border border-red-500 rounded-lg text-red-500 text-sm font-medium">
+                Clear Filters
+            </a>
+        </div>
+    </form>
+
+    <!-- Promo Code Table -->
+    {% set promo_headers = ['S.No', 'Code', 'Description', 'Discount', 'Valid From', 'Valid To', 'Uses', 'Status', 'Actions'] %}
+    <table class="min-w-full divide-y divide-gray-200 text-gray-800" id="promo-table">
+        <thead class="bg-gray-50">
+            <tr>
+                {% for header in promo_headers %}
+                <th class="border border-gray-200 px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                    {{ header }}
+                </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody id="promo-table-body">
+            {% for promo in promos %}
+            <tr class="text-center">
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">{{ loop.index + (pagination.page - 1) * limit }}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 font-mono">{{ promo.code }}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    {{ promo.description | safe }}
+                </td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    {% if promo.discount_type == 'percentage' %}
+                    {{ promo.discount_value }}%
+                    {% if promo.max_discount_amount %}
+                    (max {{ promo.max_discount_amount }})
+                    {% endif %}
+                    {% else %}
+                    {{ promo.discount_value }} fixed
+                    {% endif %}
+                </td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    {{ promo.start_date.strftime('%Y-%m-%d') if promo.start_date else 'N/A' }}
+                </td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    {{ promo.expiry_date.strftime('%Y-%m-%d') if promo.expiry_date else 'N/A' }}
+                </td>
+                
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    {{ promo.current_uses }}{% if promo.max_uses %}/{{ promo.max_uses }}{% endif %}
+                </td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    {% if promo.is_active %}
+                    <span class="badge bg-success">Active</span>
+                    {% else %}
+                    <span class="badge bg-danger">Inactive</span>
+                    {% endif %}
+                </td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    <div class="flex space-x-6 justify-center">
+                        <a href="{{ url_for('admin_api.edit_promo_code', promo_code_id=promo.id) }}"
+                            class="text-blue-600 hover:text-blue-800"><span class="material-symbols-outlined">edit_square</span></a>
+                        <form action="/admin/promo-codes/delete/{{ promo.id }}" method="POST" class="inline">
+                            <input type="hidden" name="page" value="{{ pagination.page }}">
+                            <input type="hidden" name="search" value="{{ search }}">
+                            <input type="hidden" name="limit" value="{{ limit }}">
+                            <button type="submit" class="text-red-600 hover:text-red-800"><span class="material-symbols-outlined">delete</span></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" class="text-center py-4 text-gray-500">No promo codes found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Enhanced Pagination -->
+    <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
+        <div class="flex items-center gap-2">
+            <span class="text-sm text-gray-600">Items per page:</span>
+            <select id="items-per-page" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                {% for amount in [10, 20, 50, 100] %}
+                <option value="{{ amount }}" {% if limit==amount %}selected{% endif %}>{{ amount }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="flex items-center gap-2" id="pagination">
+            {% if pagination.pages > 1 %}
+            <a href="#" data-page="{{ pagination.prev_num if pagination.has_prev else 1 }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link {% if not pagination.has_prev %}text-gray-400 cursor-not-allowed{% endif %}">
+                Previous
+            </a>
+
+            {% set max_pages = 5 %}
+            {% set start_page = (pagination.page - max_pages // 2) | max(1) %}
+            {% set end_page = (start_page + max_pages - 1) | min(pagination.pages) %}
+            {% if start_page > 1 %}
+            <a href="#" data-page="1" class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">1</a>
+            {% if start_page > 2 %}
+            <span class="px-4 py-2 text-sm">...</span>
+            {% endif %}
+            {% endif %}
+
+            {% for p in range(start_page, end_page + 1) %}
+            <a href="#" data-page="{{ p }}"
+                class="px-4 py-2 border text-sm rounded-lg transition page-link {% if p == pagination.page %}bg-indigo-600 text-white{% else %}hover:bg-gray-100{% endif %}">
+                {{ p }}
+            </a>
+            {% endfor %}
+
+            {% if end_page < pagination.pages %}
+            {% if end_page < pagination.pages - 1 %}
+            <span class="px-4 py-2 text-sm">...</span>
+            {% endif %}
+            <a href="#" data-page="{{ pagination.pages }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">{{ pagination.pages }}</a>
+            {% endif %}
+
+            <a href="#" data-page="{{ pagination.next_num if pagination.has_next else pagination.pages }}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link {% if not pagination.has_next %}text-gray-400 cursor-not-allowed{% endif %}">
+                Next
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchForm = document.getElementById('search-form');
+        const searchInput = searchForm.querySelector('input[name="promoSearch"]');
+        const statusSelect = searchForm.querySelector('select[name="status"]');
+        const discountTypeSelect = searchForm.querySelector('select[name="discount_type"]');
+        const clearSearch = document.getElementById('clear-search');
+        const promoTableBody = document.getElementById('promo-table-body');
+        const paginationDiv = document.getElementById('pagination');
+        const itemsPerPageSelect = document.getElementById('items-per-page');
+        const loader = document.getElementById('loader');
+
+        async function fetchPromos(page = 1, search = '', status = '', discount_type = '', limit = 10) {
+            loader.classList.remove('hidden');
+            const url = `/api/promo-code-list?page=${page}&search=${encodeURIComponent(search)}&status=${status}&discount_type=${discount_type}&limit=${limit}`;
+
+            try {
+                const data = await fetchJsonData(url);
+                promoTableBody.innerHTML = '';
+                if (data.data.length === 0) {
+                    promoTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-gray-500">No promo codes found.</td>
+                        </tr>`;
+                } else {
+                    data.data.forEach((promo, index) => {
+                        const row = `
+                            <tr class="text-center">
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${(data.pagination.page - 1) * data.limit + index + 1}</td>
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 font-mono">${promo.code}</td>
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${promo.description}</td>
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                                    ${promo.discount_type === 'percentage' ?
+                                `${promo.discount_value}%${promo.max_discount_amount ? ` (max ${promo.max_discount_amount})` : ''}` :
+                                `${promo.discount_value} fixed`}
+                                </td>
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${promo.start_date ? new Date(promo.start_date).toLocaleDateString() : 'N/A'}</td>
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${promo.expiry_date ? new Date(promo.expiry_date).toLocaleDateString() : 'N/A'}</td>
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                                    ${promo.current_uses}${promo.max_uses ? `/${promo.max_uses}` : ''}
+                                </td>
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                                    ${promo.is_active ?
+                                '<span class="badge bg-success">Active</span>' :
+                                '<span class="badge bg-danger">Inactive</span>'}
+                                </td>
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                                    <div class="flex space-x-6 justify-center">
+                                        <a href="/admin/promo-codes/edit/${promo.id}" class="text-blue-600 hover:text-blue-800">
+                                            <span class="material-symbols-outlined">edit_square</span>
+                                        </a>
+                                        <form action="/admin/promo-codes/delete/${promo.id}" method="POST" class="inline">
+                                            <input type="hidden" name="page" value="${data.pagination.page}">
+                                            <input type="hidden" name="search" value="${search}">
+                                            <input type="hidden" name="status" value="${status}">
+                                            <input type="hidden" name="discount_type" value="${discount_type}">
+                                            <input type="hidden" name="limit" value="${data.limit}">
+                                            <button type="submit" class="text-red-600 hover:text-red-800">
+                                                <span class="material-symbols-outlined">delete</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>`;
+                        promoTableBody.innerHTML += row;
+                    });
+                }
+
+                // Update pagination
+                const maxPages = 5;
+                let startPage = Math.max(1, data.pagination.page - Math.floor(maxPages / 2));
+                let endPage = Math.min(data.pagination.pages, startPage + maxPages - 1);
+                if (endPage - startPage < maxPages - 1) {
+                    startPage = Math.max(1, endPage - maxPages + 1);
+                }
+
+                let paginationHTML = `
+                    <a href="#" data-page="${data.pagination.has_prev ? data.pagination.prev_num : 1}"
+                        class="px-4 py-2 border text-sm rounded-lg transition page-link ${!data.pagination.has_prev ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gray-100'}">
+                        Previous
+                    </a>`;
+
+                if (startPage > 1) {
+                    paginationHTML += `
+                        <a href="#" data-page="1" class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">1</a>
+                        ${startPage > 2 ? '<span class="px-4 py-2 text-sm">...</span>' : ''}`;
+                }
+
+                for (let p = startPage; p <= endPage; p++) {
+                    paginationHTML += `
+                        <a href="#" data-page="${p}"
+                            class="px-4 py-2 border text-sm rounded-lg transition page-link ${p === data.pagination.page ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100'}">
+                            ${p}
+                        </a>`;
+                }
+
+                if (endPage < data.pagination.pages) {
+                    paginationHTML += `
+                        ${endPage < data.pagination.pages - 1 ? '<span class="px-4 py-2 text-sm">...</span>' : ''}
+                        <a href="#" data-page="${data.pagination.pages}" class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">${data.pagination.pages}</a>`;
+                }
+
+                paginationHTML += `
+                    <a href="#" data-page="${data.pagination.has_next ? data.pagination.next_num : data.pagination.pages}"
+                        class="px-4 py-2 border text-sm rounded-lg transition page-link ${!data.pagination.has_next ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gray-100'}">
+                        Next
+                    </a>`;
+
+                paginationDiv.innerHTML = paginationHTML;
+                attachPaginationListeners();
+
+            } catch (error) {
+                console.error('Failed to fetch promo codes:', error);
+                promoTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center py-4 text-red-500">Error loading promo codes. Please try again.</td>
+                    </tr>`;
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        function attachPaginationListeners() {
+            const pageLinks = document.querySelectorAll('.page-link');
+            pageLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = link.getAttribute('data-page');
+                    const search = searchInput.value.trim();
+                    const status = statusSelect.value;
+                    const discount_type = discountTypeSelect.value;
+                    const limit = itemsPerPageSelect.value;
+                    fetchPromos(page, search, status, discount_type, limit);
+                });
+            });
+        }
+
+        searchForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const search = searchInput.value.trim();
+            const status = statusSelect.value;
+            const discount_type = discountTypeSelect.value;
+            const limit = itemsPerPageSelect.value;
+            fetchPromos(1, search, status, discount_type, limit);
+        });
+
+        clearSearch.addEventListener('click', (e) => {
+            e.preventDefault();
+            searchInput.value = '';
+            statusSelect.value = '';
+            discountTypeSelect.value = '';
+            const limit = itemsPerPageSelect.value;
+            fetchPromos(1, '', '', '', limit);
+        });
+
+        itemsPerPageSelect.addEventListener('change', () => {
+            const search = searchInput.value.trim();
+            const status = statusSelect.value;
+            const discount_type = discountTypeSelect.value;
+            const limit = itemsPerPageSelect.value;
+            fetchPromos(1, search, status, discount_type, limit);
+        });
+
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const search = searchInput.value.trim();
+                const status = statusSelect.value;
+                const discount_type = discountTypeSelect.value;
+                const limit = itemsPerPageSelect.value;
+                fetchPromos(1, search, status, discount_type, limit);
+            }
+        });
+
+        attachPaginationListeners();
+    });
+</script>
+{% endblock %}

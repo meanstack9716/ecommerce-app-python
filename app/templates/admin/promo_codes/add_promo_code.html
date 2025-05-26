@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+
+{% block title %}Add Promo Code{% endblock %}
+
+{% block admin_content %}
+<div class="bg-white rounded-lg mx-auto p-6">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Add Promo Code</h1>
+        <p class="mt-2 text-sm text-gray-600">Fill in the details below to add a new promo code</p>
+    </div>
+
+    <form id="addPromoForm" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Code Field -->
+            <div>
+                <label for="code" class="block text-sm font-bold text-gray-700 mb-1">Promo Code</label>
+                <input type="text" id="code" name="code"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g. SUMMER20">
+                <p class="mt-1 text-xs text-gray-500">Unique code customers will enter</p>
+            </div>
+
+            <!-- Discount Type -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Discount Type</label>
+                <div class="flex space-x-4">
+                    <div class="flex items-center">
+                        <input id="percentage" name="discount_type" type="radio" value="percentage" checked
+                            class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
+                        <label for="percentage" class="ml-2 block text-sm text-gray-700">Percentage</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input id="fixed" name="discount_type" type="radio" value="fixed_amount"
+                            class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
+                        <label for="fixed" class="ml-2 block text-sm text-gray-700">Fixed Amount</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Discount Value -->
+            <div>
+                <label for="discount_value" class="block text-sm font-bold text-gray-700 mb-1">Discount Value</label>
+                <input type="number" id="discount_value" name="discount_value" min="0" step="0.01"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g. 20">
+                <p class="mt-1 text-xs text-gray-500" id="discountHint">Percentage discount (e.g. 20 for 20%)</p>
+            </div>
+
+            <!-- Max Discount -->
+            <div id="maxDiscountContainer" class="hidden">
+                <label for="max_discount" class="block text-sm font-bold text-gray-700 mb-1">Maximum Discount</label>
+                <input type="number" id="max_discount" name="max_discount" min="0" step="0.01"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Optional">
+                <p class="mt-1 text-xs text-gray-500">Maximum discount amount for percentage discounts</p>
+            </div>
+
+            <!-- Minimum Order Amount -->
+            <div>
+                <label for="min_order_amount" class="block text-sm font-bold text-gray-700 mb-1">Minimum Order
+                    Amount</label>
+                <input type="number" id="min_order_amount" name="min_order_amount" min="0" step="0.01"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Optional">
+                <p class="mt-1 text-xs text-gray-500">Minimum order total to apply this promo</p>
+            </div>
+        </div>
+
+        <!-- Description Field with Quill Editor -->
+        <div>
+            <label for="description" class="block text-sm font-bold text-gray-700 mb-1">Description</label>
+            <div id="editor-container" class="h-40 border border-gray-300 rounded-md">
+                <!-- Quill editor will be inserted here -->
+            </div>
+            <input type="hidden" id="description" name="description">
+            <p class="mt-1 text-xs text-gray-500">Description that will be shown to customers about this promo</p>
+        </div>
+
+        <!-- Validity Period -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label for="start_date" class="block text-sm font-bold text-gray-700 mb-1">Start Date</label>
+                <input type="datetime-local" id="start_date" name="start_date"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+                <label for="end_date" class="block text-sm font-bold text-gray-700 mb-1">End Date</label>
+                <input type="datetime-local" id="end_date" name="end_date"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                <p class="mt-1 text-xs text-gray-500">Leave empty for no expiration</p>
+            </div>
+        </div>
+
+        <!-- Usage Limits -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label for="max_uses" class="block text-sm font-bold text-gray-700 mb-1">Total Usage Limit</label>
+                <input type="number" id="max_uses" name="max_uses" min="0"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Optional">
+                <p class="mt-1 text-xs text-gray-500">Leave empty for unlimited uses</p>
+            </div>
+            <div>
+                <label for="user_max_uses" class="block text-sm font-bold text-gray-700 mb-1">Uses Per
+                    Customer</label>
+                <input type="number" id="user_max_uses" name="user_max_uses" min="1" value="1"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            </div>
+        </div>
+
+        <!-- Product Restrictions -->
+        <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">Product Applicability</label>
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="flex items-center">
+                    <input id="all_products" name="applicable_to" type="radio" value="all" checked
+                        class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
+                    <label for="all_products" class="ml-2 font-medium block text-sm text-gray-700">All Products</label>
+                </div>
+                <div class="flex items-center">
+                    <input id="specific_products" name="applicable_to" type="radio" value="specific"
+                        class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
+                    <label for="specific_products" class="ml-2 block font-medium text-sm text-gray-700">Specific
+                        Products</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Selection Container -->
+        <div id="productSelectionContainer" class="hidden space-y-4">
+            <div class="relative">
+                <label for="product_search" class="block text-sm font-bold text-gray-700 mb-1">Select Products</label>
+                <input type="text" id="product_search" name="product_search"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Type to search and select products...">
+                <div id="product_dropdown" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden">
+                    <ul id="product_list" class="divide-y divide-gray-200">
+                        <!-- Products will be populated dynamically -->
+                    </ul>
+                </div>
+                <div id="selected_products" class="mt-2 flex flex-wrap gap-2">
+                    <!-- Selected products will appear here as tags -->
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Type to filter and select multiple products</p>
+            </div>
+        </div>
+
+        <!-- Other Options -->
+        <div class="space-y-3">
+            <div class="flex items-center">
+                <input id="is_active" name="is_active" type="checkbox" checked
+                    class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                <label for="is_active" class="ml-2 block text-sm text-gray-700">Active</label>
+            </div>
+            <div class="flex items-center">
+                <input id="only_first_order" name="only_first_order" type="checkbox"
+                    class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                <label for="only_first_order" class="ml-2 block text-sm text-gray-700">First Order Only</label>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="pt-4 flex justify-end">
+            <button type="submit"
+                class="w-48 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                <span class="btn-text">Create Promo Code</span>
+                <div id="loading-spinner" class="hidden">
+                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                </div>
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    // Store products globally for filtering
+    let allProducts = [];
+
+    async function loadSelectionOptions() {
+        try {
+            // Fetch products
+            const productResponse = await fetch('/api/products/list?all_data=true', {
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            if (!productResponse.ok) {
+                throw new Error('Failed to fetch products');
+            }
+            const productData = await productResponse.json();
+            allProducts = (productData.data || []).map(product => ({
+                id: product.id,
+                name: product.name,
+                selected: false
+            }));
+            // Initial render of product list
+            renderProductList(allProducts);
+        } catch (error) {
+            console.error('Error loading products:', error);
+            showToast('Failed to load products', 'error');
+        }
+    }
+
+    // Function to render product list in dropdown
+    function renderProductList(products) {
+        const productList = document.getElementById('product_list');
+        productList.innerHTML = ''; // Clear existing list
+
+        if (products.length === 0) {
+            const li = document.createElement('li');
+            li.className = 'px-4 py-2 text-gray-500';
+            li.textContent = 'No products found';
+            productList.appendChild(li);
+            return;
+        }
+
+        products.forEach(product => {
+            const li = document.createElement('li');
+            li.className = 'px-4 py-2 cursor-pointer hover:bg-gray-100';
+            li.dataset.productId = product.id;
+            li.textContent = product.name;
+            productList.appendChild(li);
+
+            // Select product on click
+            li.addEventListener('click', function () {
+                if (!product.selected) {
+                    product.selected = true;
+                    renderSelectedProducts();
+                    renderProductList(allProducts.filter(p => !p.selected)); // Hide selected products
+                    document.getElementById('product_search').value = ''; // Clear input
+                    document.getElementById('product_dropdown').classList.add('hidden');
+                }
+            });
+        });
+    }
+
+    // Function to render selected products as tags
+    function renderSelectedProducts() {
+        const selectedProductsContainer = document.getElementById('selected_products');
+        selectedProductsContainer.innerHTML = ''; // Clear existing tags
+
+        const selectedProducts = allProducts.filter(product => product.selected);
+        selectedProducts.forEach(product => {
+            const tag = document.createElement('span');
+            tag.className = 'inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800';
+            tag.innerHTML = `
+                ${product.name}
+                <button type="button" class="ml-1 text-blue-600 hover:text-blue-800" data-product-id="${product.id}">
+                    &times;
+                </button>
+            `;
+            selectedProductsContainer.appendChild(tag);
+
+            // Remove product on click
+            tag.querySelector('button').addEventListener('click', function () {
+                product.selected = false;
+                renderSelectedProducts();
+                renderProductList(allProducts.filter(p => p.name.toLowerCase().includes(
+                    document.getElementById('product_search').value.toLowerCase()
+                )));
+            });
+        });
+    }
+
+    // Function to filter products based on search input
+    function filterProducts(searchTerm) {
+        const filteredProducts = allProducts.filter(product =>
+            !product.selected && product.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        renderProductList(filteredProducts);
+        document.getElementById('product_dropdown').classList.remove('hidden');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize Quill editor
+        let quill;
+        try {
+            quill = new Quill('#editor-container', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
+                        [{ 'indent': '-1' }, { 'indent': '+1' }],
+                        [{ 'direction': 'rtl' }],
+                        [{ 'script': 'sub' }, { 'script': 'super' }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'font': [] }],
+                        [{ 'align': [] }],
+                        ['clean'],
+                        ['link', 'image']
+                    ]
+                },
+                placeholder: 'Enter promo code description...'
+            });
+
+            const descriptionInput = document.getElementById('description');
+            quill.on('text-change', function () {
+                descriptionInput.value = quill.root.innerHTML;
+            });
+        } catch (error) {
+            showToast('Failed to initialize text editor', 'error');
+        }
+
+        // Set up date fields
+        const now = new Date();
+        const nowString = now.toISOString().slice(0, 16);
+        const startDateField = document.getElementById('start_date');
+        const endDateField = document.getElementById('end_date');
+
+        startDateField.min = nowString;
+        endDateField.min = nowString;
+
+        startDateField.addEventListener('change', function () {
+            if (this.value) {
+                endDateField.min = this.value;
+            }
+        });
+
+        // Discount type toggle
+        function toggleDiscountFields() {
+            const discountType = document.querySelector('input[name="discount_type"]:checked').value;
+            const maxDiscountContainer = document.getElementById('maxDiscountContainer');
+            const discountHint = document.getElementById('discountHint');
+
+            if (discountType === 'percentage') {
+                maxDiscountContainer.classList.remove('hidden');
+                discountHint.textContent = 'Percentage discount (e.g. 20 for 20%)';
+            } else {
+                maxDiscountContainer.classList.add('hidden');
+                discountHint.textContent = 'Fixed amount discount (e.g. 20 for $20 off)';
+            }
+        }
+
+        // Product applicability toggle
+        function toggleProductRestriction() {
+            const applicableTo = document.querySelector('input[name="applicable_to"]:checked').value;
+            const productSelectionContainer = document.getElementById('productSelectionContainer');
+
+            if (applicableTo === 'specific' && productSelectionContainer) {
+                productSelectionContainer.classList.remove('hidden');
+                if (!window.productsLoaded) {
+                    loadSelectionOptions();
+                    window.productsLoaded = true;
+                }
+            } else if (productSelectionContainer) {
+                productSelectionContainer.classList.add('hidden');
+                document.getElementById('product_dropdown').classList.add('hidden');
+            }
+        }
+
+        // Search input handler
+        const productSearchInput = document.getElementById('product_search');
+        productSearchInput.addEventListener('input', function () {
+            filterProducts(this.value);
+        });
+
+        // Show/hide dropdown on focus/blur
+        productSearchInput.addEventListener('focus', function () {
+            filterProducts(this.value);
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            const dropdown = document.getElementById('product_dropdown');
+            const input = document.getElementById('product_search');
+            if (!dropdown.contains(e.target) && e.target !== input) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Form validation
+        function validatePromoForm() {
+            let isValid = true;
+            const form = document.getElementById('addPromoForm');
+            const codeField = form.code;
+            const discountValueField = form.discount_value;
+            const startDateField = form.start_date;
+            const minimum_order_amount = form.min_order_amount;
+            const endDateField = form.end_date;
+
+            isValid &= validators.required(codeField, 'Promo code') && validators.minLength(codeField, 3, 'Promo code');
+            isValid &= validators.required(discountValueField, 'Discount value');
+            isValid &= validators.required(startDateField, 'Start date');
+
+            isValid &= validators.minValue(discountValueField, 0.01, 'Discount value');
+            isValid &= validators.minValue(minimum_order_amount, 1, 'Minimum Order Value');
+
+            const now = new Date();
+            const startDate = new Date(startDateField.value);
+            if (startDateField.value && startDate < now.setHours(0, 0, 0, 0)) {
+                showErrorMessage(startDateField, 'Start date cannot be in the past');
+                isValid = false;
+            } else {
+                removeErrorMessage(startDateField);
+            }
+
+            if (endDateField.value) {
+                const endDate = new Date(endDateField.value);
+                if (endDate <= startDate) {
+                    showErrorMessage(endDateField, 'End date must be after start date');
+                    isValid = false;
+                } else {
+                    removeErrorMessage(endDateField);
+                }
+            }
+
+            return Boolean(isValid);
+        }
+
+        // Form submission
+        const form = document.getElementById('addPromoForm');
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            // Sync Quill content
+            document.getElementById('description').value = quill.root.innerHTML;
+
+            if (!validatePromoForm()) {
+                return;
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const spinner = submitBtn.querySelector('#loading-spinner');
+
+            // Update button state
+            btnText.textContent = 'Creating...';
+            spinner.classList.remove('hidden');
+            submitBtn.disabled = true;
+
+            try {
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('code', form.code.value.trim().toUpperCase());
+                formData.append('description', form.description.value);
+                formData.append('discount_type', form.discount_type.value);
+                formData.append('discount_value', parseFloat(form.discount_value.value));
+                formData.append('min_order_amount', parseFloat(form.min_order_amount.value) || 0);
+                formData.append('max_discount_amount', parseFloat(form.max_discount.value) || 0);
+                formData.append('start_date', form.start_date.value);
+                if (form.end_date.value) formData.append('expiry_date', form.end_date.value);
+                if (parseInt(form.max_uses.value)) formData.append('max_uses', parseInt(form.max_uses.value));
+                formData.append('uses_per_user', parseInt(form.user_max_uses.value) || 1);
+                formData.append('only_first_order', form.only_first_order.checked);
+                formData.append('is_active', form.is_active.checked);
+                formData.append('applicable_to', form.applicable_to.value);
+
+                // Handle applicable products
+                if (form.applicable_to.value === 'specific') {
+                    const applicableProducts = allProducts
+                        .filter(product => product.selected)
+                        .map(product => ({ product_id: product.id }));
+                    formData.append('applicable_products', JSON.stringify(applicableProducts));
+                }
+
+                // Send request
+                const result = await sendPostRequest('/api/promo-codes', formData);
+
+                if (result.success) {
+                    showToast('Promo code created successfully!', 'success');
+                    form.reset();
+                    quill.setContents([]);
+                    // Clear product selections
+                    allProducts.forEach(product => product.selected = false);
+                    renderSelectedProducts();
+                    renderProductList(allProducts);
+                    document.getElementById('product_search').value = '';
+                    document.getElementById('product_dropdown').classList.add('hidden');
+                    // window.location.href = '/admin/promo-codes';
+                } else {
+                    showToast(result.errors || result.message || 'Failed to create promo code', 'error');
+                }
+            } catch (error) {
+                console.error('Submission error:', error);
+                showToast('An error occurred while creating the promo code', 'error');
+            } finally {
+                // Reset button state
+                btnText.textContent = 'Create Promo Code';
+                spinner.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Initialize event listeners
+        document.querySelectorAll('input[name="discount_type"]').forEach(radio => {
+            radio.addEventListener('change', toggleDiscountFields);
+        });
+
+        document.querySelectorAll('input[name="applicable_to"]').forEach(radio => {
+            radio.addEventListener('change', toggleProductRestriction);
+        });
+
+        // Initial setup
+        toggleDiscountFields();
+        toggleProductRestriction();
+    });
+</script>
+{% endblock %}

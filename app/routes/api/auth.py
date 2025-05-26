@@ -96,19 +96,15 @@ def login():
     if not user or not user.check_password(password):
         return create_error_response({"email": "Email or password is wrong."}, 401)
 
-    otp = str(random.randint(100000, 999999))
-    otp_expiry = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
-
-    user.reset_otp = otp
-    user.otp_expiry = otp_expiry
-    user.save()
-
-    msg = Message("Login OTP Verification", recipients=[email])
-    msg.body = f"Your login OTP is {otp}. It will expire in 10 minutes."
-    mail.send(msg)
+    access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(days=1))
 
     return jsonify({
-        'message': 'OTP sent to email. Please verify to complete login.'
+        'message': 'Login successful.',
+        'token': f'Bearer {access_token}',
+        'user': {
+            'id': str(user.id),
+            'email': user.email,
+        }
     }), 200
 
 

@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 import os
 
 
-user_bp = Blueprint('user', __name__, url_prefix='/user')
+user_bp = Blueprint('user', __name__, url_prefix='/api/user')
 
 # Get user profile
 @user_bp.route(GET_USER_PROFILE, methods=['GET'])
@@ -58,7 +58,6 @@ def update_profile():
 
     return jsonify({'message': 'Profile updated successfully'}), 200
 
-# Update profile picture
 @user_bp.route(UPDATE_PROFILE_PIC, methods=['POST'])
 @jwt_required()
 def update_profile_picture():

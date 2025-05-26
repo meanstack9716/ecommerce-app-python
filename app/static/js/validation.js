@@ -34,6 +34,15 @@ const validators = {
     removeErrorMessage(field)
     return true
   },
+  minValue: (field, minValue, fieldName) => {
+    const value = parseFloat(field.value);
+    if (isNaN(value) || value < minValue) {
+      showErrorMessage(field, `${fieldName} must be at least ${minValue}`);
+      return false;
+    }
+    removeErrorMessage(field);
+    return true;
+  },
   email: (field) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(field.value)) {
@@ -164,27 +173,27 @@ function validatePersonalInfo() {
 
   const isValid = [
     validators.required(fields.firstName, "First name") &&
-      validators.minLength(fields.firstName, 3, "First name"),
+    validators.minLength(fields.firstName, 3, "First name"),
 
     validators.required(fields.lastName, "Last name") &&
-      validators.minLength(fields.lastName, 3, "Last name"),
+    validators.minLength(fields.lastName, 3, "Last name"),
 
     validators.email(fields.email),
     validators.phone(fields.phoneNumber),
 
     validators.required(fields.line1, "Street address") &&
-      validators.minLength(fields.line1, 8, "Street address"),
+    validators.minLength(fields.line1, 8, "Street address"),
 
     validators.required(fields.city, "City") &&
-      validators.minLength(fields.city, 3, "City"),
+    validators.minLength(fields.city, 3, "City"),
 
     validators.required(fields.state, "State") &&
-      validators.minLength(fields.state, 3, "State"),
+    validators.minLength(fields.state, 3, "State"),
 
     validators.required(fields.postal_code, "postal_code"),
 
     validators.required(fields.country, "Country") &&
-      validators.minLength(fields.country, 3, "Country"),
+    validators.minLength(fields.country, 3, "Country"),
   ].every((result) => result === true)
 
   if (!isValid) return false
@@ -225,7 +234,7 @@ function validateBusinessInfo() {
 
   const isValid = [
     validators.required(fields.businessName, "Business name") &&
-      validators.minLength(fields.businessName, 3, "Business name"),
+    validators.minLength(fields.businessName, 3, "Business name"),
 
     validators.required(fields.businessType, "Business type"),
 
@@ -239,19 +248,19 @@ function validateBusinessInfo() {
     ),
 
     validators.required(fields.line1, "Street address") &&
-      validators.minLength(fields.line1, 8, "Street address"),
+    validators.minLength(fields.line1, 8, "Street address"),
 
     validators.required(fields.gstNumber, "GST number"),
 
     validators.required(fields.city, "City") &&
-      validators.minLength(fields.city, 3, "City"),
+    validators.minLength(fields.city, 3, "City"),
 
     validators.required(fields.state, "State"),
 
     validators.required(fields.postal_code, "Postal Code"),
 
     validators.required(fields.country, "Country") &&
-      validators.minLength(fields.country, 3, "Country"),
+    validators.minLength(fields.country, 3, "Country"),
 
     // GST number validation (if needed)
     validateGSTNumber(fields.gstNumber),

@@ -2,6 +2,7 @@ from app.extensions import db
 from datetime import datetime
 from mongoengine import EmbeddedDocument, EmbeddedDocumentField
 from constants import ORDER_STATUS
+from app.models.promo_codes import PromoCode
 class OrderItem(EmbeddedDocument):
     product_id = db.ReferenceField('Products', required=True)
     selected_size = db.StringField()
@@ -26,6 +27,8 @@ class Order(db.Document):
         choices=['pending', 'paid', 'failed', 'refunded'],
         default='pending'
     )
+    applied_promo_code = db.ReferenceField(PromoCode)
+    promo_code_discount = db.DecimalField(precision=2, default=0)
     created_at = db.DateTimeField(default=datetime.utcnow)
     updated_at = db.DateTimeField(default=datetime.utcnow)
 
