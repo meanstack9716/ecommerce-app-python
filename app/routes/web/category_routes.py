@@ -1,5 +1,5 @@
 from flask import render_template, redirect, url_for, session, request, jsonify, flash
-from constants import CATEGORY_LIST_WEB_URL, ADD_CATEGORY_WEB_URL, GET_CATEGORIES_FILTER_API_URL, DELETE_CATEGORIES_API_WEB_URL, EDIT_CATEGORY_WEB_URL
+from constants import CATEGORY_LIST_WEB_URL, ADD_CATEGORY_WEB_URL, GET_CATEGORIES_FILTER_API_URL, DELETE_CATEGORIES_API_WEB_URL, EDIT_CATEGORY_WEB_URL, SEARCH_CATEGORY_WEB_URL
 from . import admin_api
 from app.models import Category, SubCategory, SubSubCategory 
 from app.utils.image_upload import get_local_ip, upload_image, validate_fields
@@ -238,3 +238,13 @@ def delete_category(category_id):
 
     except Exception as e:
         return create_error_response({'error': str(e)}, 500)
+
+
+@admin_api.route(SEARCH_CATEGORY_WEB_URL, methods=['GET'])
+def search_categories():
+    query = request.args.get('q', '').strip()
+    if not query:
+        return jsonify([])
+
+    categories = Category.objects(name__icontains=query).limit(10)
+    return jsonify([{'id': str(cat.id), 'name': cat.name} for cat in categories])

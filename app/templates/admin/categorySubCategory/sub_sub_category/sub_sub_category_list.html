@@ -17,29 +17,27 @@
         </a>
     </div>
 
-    <!-- Filters -->
-    <div class="flex flex-col">
-        <label class="block text-sm lg:text-base font-medium text-black">Search by Category</label>
-        <div class="relative mt-2 flex flex-col gap-2">
-
-            <select id="categorySelect" name="category"
-                class="border w-full border-gray-300 cursor-pointer rounded-lg px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
-                <option value="">Select Category</option>
-                {% for cat in categories %}
-                <option value="{{ cat.id }}">{{ cat.name }}</option>
-                {% endfor %}
-            </select>
-            <span
-                class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                expand_more
+    <!-- Searchable Category Dropdown -->
+    <div class="relative mb-6">
+        <label for="categorySearch" class="block text-sm lg:text-base font-medium text-black mb-2">Search
+            Category</label>
+        <div class="relative">
+            <input type="text" id="categorySearch" placeholder="Type to search categories..."
+                class="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <span class="material-symbols-outlined absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                search
             </span>
+            <div id="categoryDropdown"
+                class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg rounded-lg max-h-60 overflow-auto">
+                <!-- Options will be inserted here dynamically -->
+            </div>
         </div>
+        <input type="hidden" id="selectedCategoryId" value="">
     </div>
-
 
     <div id="subCategoryTabs" class="mb-6 flex flex-wrap gap-3 items-center my-5"></div>
 
-    <!-- Product Type Cards -->
+    <!-- Sub-Sub Category Cards -->
     <div id="subSubCategoryCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <div class="col-span-full text-center text-gray-500">Please select a category.</div>
     </div>
@@ -49,6 +47,14 @@
 {% block js %}
 <script>
     const loader = document.getElementById('loader');
+    const categorySearch = document.getElementById('categorySearch');
+    const categoryDropdown = document.getElementById('categoryDropdown');
+    const selectedCategoryId = document.getElementById('selectedCategoryId');
+    const categories = [
+        {% for cat in categories %}
+    { id: '{{ cat.id }}', name: '{{ cat.name }}' },
+    {% endfor %}
+    ];
 
     function showLoader() {
         loader.classList.remove('hidden');
@@ -58,10 +64,56 @@
         loader.classList.add('hidden');
     }
 
-    document.getElementById('categorySelect').addEventListener('change', handleCategoryChange);
+    // Debounce function to limit how often the search executes
+    function debounce(func, timeout = 300) {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => { func.apply(this, args); }, timeout);
+        };
+    }
 
-    async function handleCategoryChange() {
-        const categoryId = document.getElementById('categorySelect').value;
+    // Filter categories based on search input
+    const filterCategories = debounce((searchTerm) => {
+        if (searchTerm.length < 1) {
+            categoryDropdown.classList.add('hidden');
+            return;
+        }
+
+        const filtered = categories.filter(cat =>
+            cat.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        if (filtered.length > 0) {
+            renderCategoryOptions(filtered);
+            categoryDropdown.classList.remove('hidden');
+        } else {
+            categoryDropdown.innerHTML = '<div class="px-4 py-2 text-gray-500">No categories found</div>';
+            categoryDropdown.classList.remove('hidden');
+        }
+    });
+
+    // Render category options in dropdown
+    function renderCategoryOptions(filteredCategories) {
+        categoryDropdown.innerHTML = filteredCategories.map(cat => `
+            <div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" 
+                 data-id="${cat.id}" 
+                 onclick="selectCategory('${cat.id}', '${cat.name.replace(/'/g, "\\'")}')">
+                ${cat.name}
+            </div>
+        `).join('');
+    }
+
+    // Handle category selection
+    function selectCategory(id, name) {
+        selectedCategoryId.value = id;
+        categorySearch.value = name;
+        categoryDropdown.classList.add('hidden');
+        handleCategoryChange(id);
+    }
+
+    // Handle category change
+    async function handleCategoryChange(categoryId) {
         const subCategoryTabs = document.getElementById('subCategoryTabs');
         const cardsContainer = document.getElementById('subSubCategoryCards');
 
@@ -105,7 +157,6 @@
         return button;
     }
 
-
     function setActiveTab(activeBtn) {
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('bg-indigo-600', 'text-white', 'shadow');
@@ -114,7 +165,6 @@
         activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow');
         activeBtn.classList.remove('bg-gray-100', 'text-gray-700');
     }
-
 
     async function loadSubSubCategoryByCategory(subCategoryId) {
         const cardsContainer = document.getElementById('subSubCategoryCards');
@@ -154,5 +204,17 @@
             cardsContainer.insertAdjacentHTML('beforeend', cardHTML);
         });
     }
+
+    // Event listeners
+    categorySearch.addEventListener('input', (e) => {
+        filterCategories(e.target.value);
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!categorySearch.contains(e.target) && !categoryDropdown.contains(e.target)) {
+            categoryDropdown.classList.add('hidden');
+        }
+    });
 </script>
 {% endblock %}

@@ -13,17 +13,17 @@
         enctype="multipart/form-data">
         <!-- Brand Name Field -->
         <div class="mb-4">
-            <label for="name" class="block text-base font-medium text-black">Brand Name <span
+            <label for="name" class="block text-base font-medium text-black mb-1 tracking-wide">Brand Name <span
                     class="text-red-500">*</span></label>
             <input type="text" name="name" id="name"
-                class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
+                class="block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
         </div>
 
         <!-- Description Field -->
         <div class="mb-4">
-            <label for="description" class="block text-base font-medium text-black">Description</label>
+            <label for="description" class="block text-base font-medium text-black mb-1 tracking-wide">Description</label>
             <textarea name="description" id="description"
-                class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out"
+                class="block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out"
                 rows="4"></textarea>
         </div>
 
@@ -36,7 +36,7 @@
             {% set multiple = false %}
             {% set accept = '.png,.jpeg,.jpg,.webp,.avif' %}
             {% set help_text = 'PNG, JPG, JPEG up to 2MB' %}
-            {% set label_classes = 'block text-base font-medium text-black' %}
+            {% set label_classes = 'block text-base font-medium text-black mb-1 tracking-wide' %}
             {% include 'components/image_upload.html' %}
         </div>
 

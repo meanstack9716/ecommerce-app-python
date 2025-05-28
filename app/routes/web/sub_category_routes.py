@@ -1,5 +1,5 @@
 from flask import render_template, redirect, url_for, session, request, jsonify
-from constants import SUBCATEGORY_LIST_WEB_URL, Add_SUBCATEGORY_LIST_WEB_URL, GET_SUBCATEGORIES_FILTER_API_URL, EDIT_SUB_CATEGORY_WEB_URL, UPDATE_SUB_CATEGORY_WEB_URL, DELETE_SUB_CATEGORY_WEB_URL, SEARCH_CATEGORY_WEB_URL
+from constants import SUBCATEGORY_LIST_WEB_URL, Add_SUBCATEGORY_LIST_WEB_URL, GET_SUBCATEGORIES_FILTER_API_URL, EDIT_SUB_CATEGORY_WEB_URL, UPDATE_SUB_CATEGORY_WEB_URL, DELETE_SUB_CATEGORY_WEB_URL, SEARCH_SUB_CATEGORY_WEB_URL
 from app.utils.image_upload import get_local_ip, upload_image
 from app.utils.validation import validate_required_fields
 from . import admin_api
@@ -70,15 +70,6 @@ def get_subcategory_list_page():
         limit=per_page,
         subcategories_api_url=GET_SUBCATEGORIES_FILTER_API_URL
     )
-
-@admin_api.route(SEARCH_CATEGORY_WEB_URL, methods=['GET'])
-def search_categories():
-    query = request.args.get('q', '').strip()
-    if not query:
-        return jsonify([])
-
-    categories = Category.objects(name__icontains=query).limit(10)
-    return jsonify([{'id': str(cat.id), 'name': cat.name} for cat in categories])
     
 @admin_api.route(GET_SUBCATEGORIES_FILTER_API_URL, methods=['GET'])
 def get_subcategories():
@@ -217,3 +208,21 @@ def delete_sub_category(sub_category_id):
 
     except Exception as e:
         return create_error_response({'error': str(e)}, 500)
+
+@admin_api.route(SEARCH_SUB_CATEGORY_WEB_URL, methods=["GET"])
+def search_subcategories():
+    category_id = request.args.get('category_id')
+    query = request.args.get('q', '').strip()
+
+    if not category_id:
+        return jsonify({'success': False, 'message': 'Category ID is required'}), 400
+
+    subcategories = SubCategory.objects(
+        category=category_id,
+        name__icontains=query
+    ).limit(10)
+
+    return jsonify({
+        'success': True,
+        'data': [{'id': str(sub.id), 'name': sub.name} for sub in subcategories]
+    })
