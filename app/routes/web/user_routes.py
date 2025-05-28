@@ -70,6 +70,7 @@ def fetch_users_data(search='', role_filter='', page=1, per_page=10):
             "last_name": u.get("last_name", "---") or "---",
             "email": u.get("email", "---") or "---",
             "phone_number": u.get("phone_number", "---") or "---",
+            "is_deactivate": u.get("is_deactivate", False) or False,
             "role": u.get("role_info", {}).get("name", "---") if u.get("role_info") else "---"
         })
 
@@ -270,4 +271,4 @@ def update_user_status_endpoint(user_id):
         else:
             return jsonify({'error': 'User not found or update failed'}), 404
     except Exception as e:
-        return jsonify({'error': str(e)}), 500sss
+        return jsonify({'error': str(e)}), 500

@@ -207,8 +207,9 @@ def create_ad():
 @products_bp.route(PRODUCT_LISTS_API, methods=['GET'])
 def list_products():
     try:
-        page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('per_page', 10))
+        all_data = request.args.get('all_data', 'false').lower() == 'true'
+        page = int(request.args.get('page', 1)) if not all_data else 1
+        per_page = int(request.args.get('per_page', 10)) if not all_data else 0
         category_id = request.args.get('category_id')
         subcategory_id = request.args.get('subcategory_id')
         subsubcategory_id = request.args.get('subsubcategory_id')
@@ -237,10 +238,15 @@ def list_products():
         else:
             query = query.order_by(f'+{sort_by}')
 
-        paginated_products = query.paginate(page=page, per_page=per_page)
-        products_data = []
+        if all_data:
+            products = query.all()
+            products_data = []
+        else:
+            paginated_products = query.paginate(page=page, per_page=per_page)
+            products = paginated_products.items
+            products_data = []
 
-        for product in paginated_products.items:
+        for product in products:
             sizes_data = {}
             gallery_data = {}
 
@@ -272,7 +278,7 @@ def list_products():
             thumbnail_url = None
             if product.variants and product.variants[0].images:
                 image_url = product.variants[0].images[0].image_url
-                thumbnail_url =  f"http://{local_ip}:{port}/static/uploads/{image_url}"
+                thumbnail_url = f"http://{local_ip}:{port}/static/uploads/{image_url}"
 
             seller_data = None
             if product.seller_id:
@@ -337,15 +343,20 @@ def list_products():
             }
             products_data.append(product_dict)
 
-        response = {
-            'data': products_data,
-            'pagination': {
-                'page': page,
-                'per_page': per_page,
-                'total_pages': paginated_products.pages,
-                'total_items': paginated_products.total
+        if all_data:
+            response = {
+                'data': products_data
             }
-        }
+        else:
+            response = {
+                'data': products_data,
+                'pagination': {
+                    'page': page,
+                    'per_page': per_page,
+                    'total_pages': paginated_products.pages,
+                    'total_items': paginated_products.total
+                }
+            }
 
         return jsonify(response), 200
 

@@ -24,14 +24,14 @@
     <div class="flex flex-row items-end justify-between gap-4">
       <div class="flex flex-col sm:flex-row gap-3">
         <!-- Search Input -->
-        <div class="">
+        <div>
           <label class="block text-sm lg:text-base font-medium text-black mb-1 md:mb-2">Search Users</label>
           <input type="text" id="search-input" value="{{ filters.search }}" placeholder="Search by name, email, phone"
             class="block w-52 lg:w-72 px-3 py-2 lg:px-4 md:py-3 border border-gray-300 outline-none rounded-lg shadow-sm text-sm">
         </div>
 
         <!-- Role Select -->
-        <div class="">
+        <div>
           <label class="block text-sm lg:text-base font-medium text-black mb-1 md:mb-2">Search Role</label>
           <div class="relative">
             <select id="role-select"
@@ -51,11 +51,6 @@
       </div>
 
       <div class="flex flex-row items-center gap-6">
-        <button id="search-button"
-          class="w-auto lg:w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-          Search
-        </button>
-
         <div class="w-fit sm:w-auto text-center sm:text-left">
           <a href="#" id="clear-search"
             class="text-sm font-medium px-4 py-3 border border-red-500 rounded-lg text-red-500">Clear Search</a>
@@ -66,7 +61,7 @@
 
   <!-- Table Section -->
   <div class="overflow-x-auto">
-    {% set user_table_heading_data = ['S.No', 'First Name', 'Last Name', 'Email', 'Role', 'Phone number', 'Status' ,
+    {% set user_table_heading_data = ['S.No', 'First Name', 'Last Name', 'Email', 'Role', 'Phone number', 'Status',
     'Action'] %}
     <table class="min-w-full divide-y divide-gray-200" id="user-table">
       <thead class="bg-gray-50">
@@ -93,11 +88,11 @@
             }}</td>
           <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">
             <div class="relative">
-              <select id="statusFilter" name="statusFilter"
-                class="w-full px-4 appearance-none py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150"
-                aria-label="Filter orders by status">
-                <option value="activate">Activate</option>
-                <option value="deactivate">Deactivate</option>
+              <select
+                class="statusFilter w-full px-4 appearance-none py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150"
+                data-user-id="{{ userData.id }}" aria-label="Filter user status">
+                <option value="activate" {% if not userData.is_deactivate %}selected{% endif %}>Activate</option>
+                <option value="deactivate" {% if userData.is_deactivate %}selected{% endif %}>Deactivate</option>
               </select>
               <span
                 class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500">
@@ -108,10 +103,9 @@
           <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">
             <div class="inline-flex items-center justify-center gap-x-3">
               <a href="{{ url_for('admin_api.edit_user', user_id=userData.id) }}"
-                class="text-indigo-600 hover:text-indigo-900">
+                class="text-indigo-600 hover:text-indigo-900 inline-flex items-center">
                 <span class="material-symbols-outlined text-xl">edit_square</span>
               </a>
-              <span class="material-symbols-outlined text-red-600 text-xl cursor-pointer">delete</span>
             </div>
           </td>
         </tr>
@@ -172,16 +166,24 @@
   document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('search-input');
     const roleSelect = document.getElementById('role-select');
-    const searchButton = document.getElementById('search-button');
     const clearSearch = document.getElementById('clear-search');
     const itemsPerPageSelect = document.getElementById('items-per-page');
     const userTableBody = document.getElementById('user-table-body');
     const paginationDiv = document.getElementById('pagination');
     const pageInfo = document.getElementById('page-info');
     const loader = document.getElementById('loader');
-    let currentPage = "{{ pagination.page|tojson }}";
+    let currentPage = "{{ pagination.page | tojson | safe }}";
 
-    // Function to fetch users via AJAX
+    // Debounce function to limit API calls
+    function debounce(func, wait) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    // Fetch users
     async function fetchUsers(page = 1) {
       loader.classList.remove('hidden');
       const search = searchInput.value.trim();
@@ -190,133 +192,127 @@
       const url = `/api/users?page=${encodeURIComponent(page)}&search=${encodeURIComponent(search)}&role=${encodeURIComponent(role)}&limit=${encodeURIComponent(limit)}`;
 
       try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
+        const data = await fetchJsonData(url);
 
         // Update table body
         userTableBody.innerHTML = '';
         data.users.forEach(user => {
           const row = `
-          <tr class="border-t">
-            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${user.index}</td>
-            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${user.first_name}</td>
-            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${user.last_name}</td>
-            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${user.email}</td>
-            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${user.role}</td>
-            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${user.phone_number}</td>
-            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">
-              <div class="relative">
-                <select class="statusFilter w-full px-4 appearance-none py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150"
-                  data-user-id="${user.id}"
-                  aria-label="Filter user status">
-                  <option value="activate" ${user.status === 'active' ? 'selected' : ''}>Activate</option>
-                  <option value="deactivate" ${user.status === 'inactive' ? 'selected' : ''}>Deactivate</option>
-                </select>
-                <span class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500">
-                  expand_more
-                </span>
-              </div>
-            </td>
-            <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">
-              <div class="inline-flex items-center justify-center gap-x-3">
-                <a href="/users/edit/${user.id}" 
-                  class="text-indigo-600 hover:text-indigo-900 inline-flex items-center">
-                  <span class="material-symbols-outlined text-xl">edit_square</span>
-                </a>
-                <span class="material-symbols-outlined text-red-600 text-xl cursor-pointer">delete</span>
-              </div>
-            </td>
-          </tr>`;
+            <tr class="border-t">
+              <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${user.index}</td>
+              <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${user.first_name}</td>
+              <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${user.last_name}</td>
+              <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${user.email}</td>
+              <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${user.role}</td>
+              <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${user.phone_number}</td>
+              <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">
+                <div class="relative">
+                  <select class="statusFilter w-full px-4 appearance-none py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150"
+                    data-user-id="${user.id}"
+                    aria-label="Filter user status">
+                    <option value="activate" ${user.is_deactivate === false ? 'selected' : ''}>Activate</option>
+                    <option value="deactivate" ${user.is_deactivate === true ? 'selected' : ''}>Deactivate</option>
+                  </select>
+                  <span class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500">
+                    expand_more
+                  </span>
+                </div>
+              </td>
+              <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">
+                <div class="inline-flex items-center justify-center gap-x-3">
+                  <a href="/users/edit/${user.id}" 
+                    class="text-indigo-600 hover:text-indigo-900 inline-flex items-center">
+                    <span class="material-symbols-outlined text-xl">edit_square</span>
+                  </a>
+                </div>
+              </td>
+            </tr>`;
           userTableBody.innerHTML += row;
         });
 
         // Update pagination
-        paginationDiv.innerHTML = '';
-        if (data.pagination.has_prev) {
-          paginationDiv.innerHTML += `
-        <a href="#" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition user-pagination-link" data-page="${data.pagination.prev_num}">Previous</a>`;
-        } else {
-          paginationDiv.innerHTML += `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Previous</span>`;
-        }
-
-        paginationDiv.innerHTML += `
-      <span class="px-3 py-1 md:px-4 md:py-2 text-sm" id="page-info">
-        Page ${data.pagination.page} of ${data.pagination.pages}
-      </span>`;
-
-        if (data.pagination.has_next) {
-          paginationDiv.innerHTML += `
-        <a href="#" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition user-pagination-link" data-page="${data.pagination.next_num}">Next</a>`;
-        } else {
-          paginationDiv.innerHTML += `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Next</span>`;
-        }
-
-        attachPaginationListeners();
-        attachStatusChangeListeners();
-
+        updatePagination(data.pagination);
         currentPage = data.pagination.page;
-
+        attachStatusChangeListeners();
       } catch (error) {
         console.error('Error fetching users:', error);
-        alert('Failed to fetch users: ' + error.message);
+        showToast('Failed to fetch users: ' + error.message, 'error');
+        // If page is invalid, try fetching the first page
+        if (error.message.includes('404') && page !== 1) {
+          fetchUsers(1);
+        }
       } finally {
         loader.classList.add('hidden');
       }
     }
 
-    // Function to attach pagination link listeners
-    function attachPaginationListeners() {
-      document.querySelectorAll('.user-pagination-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          const page = link.getAttribute('data-page');
-          fetchUsers(page);
+    // Update user status
+    async function updateUserStatus(userId, newStatus) {
+      loader.classList.remove('hidden');
+      try {
+        const response = await fetchJsonData(`/api/users/${userId}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: newStatus }),
         });
-      });
+        showToast('User status updated successfully', 'success');
+        fetchUsers(currentPage);
+        return true;
+      } catch (error) {
+        console.error('Error updating user status:', error);
+        showToast('Failed to update user status: ' + error.message, 'error');
+        return false;
+      } finally {
+        loader.classList.add('hidden');
+      }
     }
 
-    // Function to attach status change listeners
+    // Update pagination
+    function updatePagination(pagination) {
+      paginationDiv.innerHTML = '';
+
+      // Previous button
+      if (pagination.has_prev) {
+        paginationDiv.innerHTML += `
+            <a href="#" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition user-pagination-link" 
+               data-page="${pagination.prev_num}">Previous</a>`;
+      } else {
+        paginationDiv.innerHTML += `
+            <span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Previous</span>`;
+      }
+
+      // Page info - fixed this part
+      pageInfo.textContent  = `Page ${pagination.page} of ${pagination.pages}`;
+
+      // Next button
+      if (pagination.has_next) {
+        paginationDiv.innerHTML += `
+            <a href="#" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition user-pagination-link" 
+               data-page="${pagination.next_num}">Next</a>`;
+      } else {
+        paginationDiv.innerHTML += `
+            <span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Next</span>`;
+      }
+
+      attachPaginationListeners('.user-pagination-link', fetchUsers);
+    }
+
+    // Attach status change listeners
     function attachStatusChangeListeners() {
       document.querySelectorAll('.statusFilter').forEach(select => {
         select.addEventListener('change', async (e) => {
           const userId = e.target.getAttribute('data-user-id');
           const newStatus = e.target.value;
           const previousValue = newStatus === 'activate' ? 'deactivate' : 'activate';
-          loader.classList.remove('hidden');
 
-          try {
-            const response = await fetch(`/api/users/${userId}/status`, {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ status: newStatus }),
-            });
-
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.error || 'Failed to update status');
-            }
-
-            alert('User status updated successfully');
-            fetchUsers(currentPage); // Refresh the table to reflect the updated status
-          } catch (error) {
-            console.error('Error updating user status:', error);
-            alert('Failed to update user status: ' + error.message);
-            e.target.value = previousValue; // Revert to previous value on error
-          } finally {
-            loader.classList.add('hidden');
+          if (!await updateUserStatus(userId, newStatus)) {
+            e.target.value = previousValue;
           }
         });
       });
     }
 
-    // Event listeners
-    searchButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      fetchUsers(1);
-    });
+    // Debounced fetchUsers for search input
+    const debouncedFetchUsers = debounce(() => fetchUsers(1), 300);
 
     clearSearch.addEventListener('click', (e) => {
       e.preventDefault();
@@ -325,15 +321,11 @@
       fetchUsers(1);
     });
 
-    itemsPerPageSelect.addEventListener('change', () => fetchUsers(1));
+    searchInput.addEventListener('input', debouncedFetchUsers);
 
-    // Optional: Trigger search on Enter key in search input
-    searchInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        fetchUsers(1);
-      }
-    });
+    roleSelect.addEventListener('change', () => fetchUsers(1));
+
+    itemsPerPageSelect.addEventListener('change', () => fetchUsers(1));
 
     // Initial fetch
     fetchUsers(currentPage);

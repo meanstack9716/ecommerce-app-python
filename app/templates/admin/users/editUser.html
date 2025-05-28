@@ -12,6 +12,18 @@
     <p class="mt-2 text-sm text-gray-600">Update the details below for this user.</p>
   </div>
 
+  
+    <div class="mb-4">
+        <a href="{{ url_for('admin_api.all_users') }}"
+            class="inline-flex items-center space-x-3 text-indigo-600 hover:text-indigo-800">
+            <span class="material-symbols-outlined">
+                keyboard_backspace
+            </span>
+            <span> Back to All User List
+            </span>
+        </a>
+    </div>
+
   <form id="editUserForm" action="{{ url_for('admin_api.edit_user', user_id=user.id) }}" method="POST">
     <input type="hidden" name="user_id" value="{{ user.id }}">
 

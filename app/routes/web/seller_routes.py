@@ -12,6 +12,9 @@ def add_new_seller():
         return redirect(url_for('admin_api.login_page'))
     return render_template("admin/seller/add_new_seller.html", INDIAN_STATES=INDIAN_STATES)
 
+def get_value(value):
+    return value if value else '---'
+
 def fetch_sellers_data(search_query='', approval_status='', page=1, per_page=10):
     query = Seller.objects
 
@@ -19,17 +22,14 @@ def fetch_sellers_data(search_query='', approval_status='', page=1, per_page=10)
         query = query.filter(is_approved=approval_status)
 
     if search_query:
-        # Search in User fields
         user_query = Q(email__icontains=search_query) | Q(phone_number__icontains=search_query)
         matching_users = User.objects(user_query)
         matching_user_ids = [user.id for user in matching_users]
 
-        # Search in Address fields (direct fields now)
         address_query = Q(city__icontains=search_query) | Q(line1__icontains=search_query)
         matching_addresses = Address.objects(address_query)
         matching_address_ids = [address.id for address in matching_addresses]
 
-        # Build the main search query
         search_regex = Q(businessName__icontains=search_query)
         if matching_user_ids:
             search_regex |= Q(user_id__in=matching_user_ids)
@@ -50,37 +50,36 @@ def fetch_sellers_data(search_query='', approval_status='', page=1, per_page=10)
         address = seller.address
         identification = Identification.objects(user_id=user).first()
 
-        # Simplified address data access (direct fields)
         address_data = {
-            "line1": address.line1 if address else "",
-            "city": address.city if address else "",
-            "state": address.state if address else "",
-            "postal_code": address.postal_code if address else "",
-            "country": address.country if address else ""
+            "line1": get_value(address.line1 if address else None),
+            "city": get_value(address.city if address else None),
+            "state": get_value(address.state if address else None),
+            "postal_code": get_value(address.postal_code if address else None),
+            "country": get_value(address.country if address else None)
         }
 
         enriched_sellers.append({
             "index": idx,
             "seller": {
                 "id": str(seller.id),
-                "businessName": seller.businessName,
-                "businessType": seller.businessType,
-                "businessEmail": seller.businessEmail,
-                "gst_number": seller.gst_number,
-                "is_approved": seller.is_approved,
-                "created_at": seller.created_at.isoformat() if seller.created_at else None
+                "businessName": get_value(seller.businessName),
+                "businessType": get_value(seller.businessType),
+                "businessEmail": get_value(seller.businessEmail),
+                "gst_number": get_value(seller.gst_number),
+                "is_approved": get_value(seller.is_approved),
+                "created_at": seller.created_at.isoformat() if seller.created_at else '---'
             },
             "user": {
-                "id": str(user.id) if user else "",
-                "email": user.email if user else "",
-                "first_name": user.first_name if user else "",
-                "last_name": user.last_name if user else "",
-                "phone_number": user.phone_number if user else ""
+                "id": str(user.id) if user else '---',
+                "email": get_value(user.email if user else None),
+                "first_name": get_value(user.first_name if user else None),
+                "last_name": get_value(user.last_name if user else None),
+                "phone_number": get_value(user.phone_number if user else None)
             },
             "address": address_data,
             "identification": {
-                "pan_number": identification.pan_number if identification else None,
-                "address_proof_id_type": identification.address_proof_id_type if identification else None
+                "pan_number": get_value(identification.pan_number if identification else None),
+                "address_proof_id_type": get_value(identification.address_proof_id_type if identification else None)
             }
         })
 

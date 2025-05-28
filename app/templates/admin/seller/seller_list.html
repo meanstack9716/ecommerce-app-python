@@ -48,10 +48,6 @@
             </div>
 
             <div class="flex flex-col sm:flex-row items-center gap-6">
-                <button id="search-button"
-                    class="w-fit lg:w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-                    Search
-                </button>
 
                 <a href="#" id="clear-search"
                     class="text-sm font-medium px-4 py-3 border border-red-500 rounded-lg text-red-500">
@@ -79,16 +75,23 @@
             <tbody class="divide-y divide-gray-200" id="seller-table-body">
                 {% for item in sellers %}
                 <tr>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.index }}</td>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.seller.businessName }}</td>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.seller.businessType }}</td>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.user.email }}</td>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.user.phone_number }}</td>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.seller.is_approved }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.index }}
+                    </td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{
+                        item.seller.businessName }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{
+                        item.seller.businessType }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.user.email
+                        }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{
+                        item.user.phone_number }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{
+                        item.seller.is_approved }}</td>
                     <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm whitespace-nowrap border border-gray-200">
                         {{ item.address.line1 }}, {{ item.address.city }}
                     </td>
-                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{ item.identification.pan_number }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">{{
+                        item.identification.pan_number }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -120,24 +123,23 @@
         <div class="flex items-center gap-2" id="pagination">
             {% if pagination.has_prev %}
             <a href="#" data-page="{{ pagination.prev_num }}"
-                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition seller-pagination-link">
+                class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition seller-pagination-link">
                 Previous
             </a>
             {% else %}
-            <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>
+            <span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Previous</span>
             {% endif %}
-
             <span class="px-4 py-2 text-sm" id="page-info">
-                Page {{ pagination.page }} of {{ pagination.pages }}
+                Page {{ pagination.page }} of {{ pagination.total_pages }}
             </span>
 
             {% if pagination.has_next %}
             <a href="#" data-page="{{ pagination.next_num }}"
-                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition seller-pagination-link">
+                class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition seller-pagination-link">
                 Next
             </a>
             {% else %}
-            <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>
+            <span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Next</span>
             {% endif %}
         </div>
     </div>
@@ -147,118 +149,118 @@
 {% block js %}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const searchInput = document.getElementById('search-input');
-        const approvalStatusSelect = document.getElementById('approval-status-select');
-        const searchButton = document.getElementById('search-button');
-        const clearSearch = document.getElementById('clear-search');
-        const sellerTableBody = document.getElementById('seller-table-body');
-        const itemsPerPageSelect = document.getElementById('items-per-page');
-        const paginationDiv = document.getElementById('pagination');
-        const pageInfo = document.getElementById('page-info');
-        const loader = document.getElementById('loader');
+    const searchInput = document.getElementById('search-input');
+    const approvalStatusSelect = document.getElementById('approval-status-select');
+    const sellerTableBody = document.getElementById('seller-table-body');
+    const itemsPerPageSelect = document.getElementById('items-per-page');
+    const paginationDiv = document.getElementById('pagination');
+    const loader = document.getElementById('loader');
+    const clearSearch = document.getElementById('clear-search');
 
-        let currentPage = "{{ pagination.page|tojson }}";
+    let currentPage = {{ pagination.page }};
+    let debounceTimer;
 
-        async function fetchSellers(page = currentPage) {
-            loader.classList.remove('hidden');
+    function debounce(func, delay) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(func, delay);
+    }
 
-            const search = searchInput.value.trim();
-            const approval_status = approvalStatusSelect.value;
-            const limit = itemsPerPageSelect.value;
+    // Fetch sellers with debouncing for search input
+    async function fetchSellers(page = currentPage) {
+        loader.classList.remove('hidden');
 
-            const url = `{{ sellers_api_url }}?search=${encodeURIComponent(search)}&approval_status=${encodeURIComponent(approval_status)}&page=${page}&limit=${limit}`;
+        const search = searchInput.value.trim();
+        const approval_status = approvalStatusSelect.value;
+        const limit = itemsPerPageSelect.value;
 
-            try {
-                const data = await fetchJsonData(url);
+        const url = `{{ sellers_api_url }}?search=${encodeURIComponent(search)}&approval_status=${encodeURIComponent(approval_status)}&page=${page}&limit=${limit}`;
 
-                const sellers = Array.isArray(data) ? data : data.data || [];
+        try {
+            const data = await fetchJsonData(url);
+            updateSellerTable(data.data || []);
+            updatePagination(data.meta.pagination);
+            
+            currentPage = data.meta.pagination.page;
 
-                if (!sellers.length) {
-                    sellerTableBody.innerHTML = '<tr><td colspan="8" class="px-3 py-3 md:px-6 md:py-4 text-center text-sm text-gray-500">No sellers found</td></tr>';
-                    paginationDiv.innerHTML = '<span class="px-4 py-2 text-sm">Page 1 of 1</span>';
-                    return;
-                }
+        } catch (error) {
+            console.error('Error fetching sellers:', error);
+            sellerTableBody.innerHTML = '<tr><td colspan="8" class="px-3 py-3 md:px-6 md:py-4 text-center text-sm text-gray-500">Error loading sellers</td></tr>';
+        } finally {
+            loader.classList.add('hidden');
+        }
+    }
 
-                sellerTableBody.innerHTML = '';
-                sellers.forEach(item => {
-                    const row = `
-            <tr>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.index}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.seller.businessName}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.seller.businessType}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.user.email}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.user.phone_number}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.seller.is_approved}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm whitespace-nowrap">
-                    ${item.address.line1}, ${item.address.city}
-                </td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm">${item.identification.pan_number}</td>
-            </tr>`;
-                    sellerTableBody.innerHTML += row;
-                });
-
-                paginationDiv.innerHTML = '';
-                if (data.pagination.has_prev) {
-                    paginationDiv.innerHTML += `
-            <a href="#" data-page="${data.pagination.prev_num}"
-                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition seller-pagination-link">
-                Previous
-            </a>`;
-                } else {
-                    paginationDiv.innerHTML += `
-            <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>`;
-                }
-
-                paginationDiv.innerHTML += `
-        <span class="px-4 py-2 text-sm" id="page-info">
-            Page ${data.pagination.page} of ${data.pagination.pages}
-        </span>`;
-
-                if (data.pagination.has_next) {
-                    paginationDiv.innerHTML += `
-            <a href="#" data-page="${data.pagination.next_num}"
-                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition seller-pagination-link">
-                Next
-            </a>`;
-                } else {
-                    paginationDiv.innerHTML += `
-            <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>`;
-                }
-
-                attachPaginationListeners();
-
-                currentPage = data.pagination.page;
-
-            } catch (error) {
-                console.error('Error fetching sellers:', error);
-            } finally {
-                loader.classList.add('hidden');
-            }
+    // Update table with seller data
+    function updateSellerTable(sellers) {
+        if (!sellers || !sellers.length) {
+            sellerTableBody.innerHTML = '<tr><td colspan="8" class="px-3 py-3 md:px-6 md:py-4 text-center text-sm text-gray-500">No sellers found</td></tr>';
+            return;
         }
 
-        // Helper function to attach pagination listeners
-        attachPaginationListeners('.seller-pagination-link', fetchSellers);
+        sellerTableBody.innerHTML = sellers.map(item => `
+            <tr>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${item.index}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${item.seller.businessName}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${item.seller.businessType}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${item.user.email}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${item.user.phone_number}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${item.seller.is_approved}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm whitespace-nowrap border border-gray-200">
+                    ${item.address.line1}, ${item.address.city}
+                </td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${item.identification.pan_number}</td>
+            </tr>
+        `).join('');
+    }
 
-        // Event listeners
-        searchButton.addEventListener('click', () => fetchSellers(1));
-        clearSearch.addEventListener('click', (e) => {
-            e.preventDefault();
-            searchInput.value = '';
-            approvalStatusSelect.value = '';
-            fetchSellers(1);
-        });
-
-        itemsPerPageSelect.addEventListener('change', () => fetchSellers(1));
-
-        // Trigger search on Enter key in search input
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                fetchSellers(1);
+    // Update pagination controls
+    function updatePagination(pagination) {
+        paginationDiv.innerHTML = `
+            ${pagination.has_prev ? 
+                `<a href="#" data-page="${pagination.prev_page}" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link">
+                    Previous
+                </a>` : 
+                `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Previous</span>`
             }
-        });
+            <span class="px-4 py-2 text-sm">
+                Page ${pagination.page} of ${pagination.total_pages}
+            </span>
+            ${pagination.has_next ? 
+                `<a href="#" data-page="${pagination.next_page}" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link">
+                    Next
+                </a>` : 
+                `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Next</span>`
+            }
+        `;
+        
+        // Attach event listeners to new pagination links
+        attachPaginationListeners('.pagination-link', fetchSellers);
+    }
 
-        // Initial pagination listeners
-        attachPaginationListeners();
+    // Event listeners for autocomplete functionality
+    searchInput.addEventListener('input', () => {
+        debounce(() => fetchSellers(1), 500);
     });
+
+    approvalStatusSelect.addEventListener('change', () => {
+        fetchSellers(1);
+    });
+
+    itemsPerPageSelect.addEventListener('change', () => {
+        fetchSellers(1);
+    });
+
+    // Clear search functionality
+    clearSearch.addEventListener('click', (e) => {
+        e.preventDefault();
+        searchInput.value = '';
+        approvalStatusSelect.value = '';
+        fetchSellers(1);
+    });
+
+    // Initial load
+    fetchSellers(currentPage);
+});
+
 </script>
 {% endblock %}

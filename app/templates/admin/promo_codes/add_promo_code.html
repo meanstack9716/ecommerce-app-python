@@ -3,7 +3,7 @@
 {% block title %}Add Promo Code{% endblock %}
 
 {% block admin_content %}
-<div class="bg-white rounded-lg mx-auto p-6">
+<div class="bg-white rounded-lg mx-auto p-6 max-w-4xl">
     <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-800">Add Promo Code</h1>
         <p class="mt-2 text-sm text-gray-600">Fill in the details below to add a new promo code</p>
@@ -11,7 +11,6 @@
 
     <form id="addPromoForm" class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Code Field -->
             <div>
                 <label for="code" class="block text-sm font-bold text-gray-700 mb-1">Promo Code</label>
                 <input type="text" id="code" name="code"
@@ -20,7 +19,6 @@
                 <p class="mt-1 text-xs text-gray-500">Unique code customers will enter</p>
             </div>
 
-            <!-- Discount Type -->
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1">Discount Type</label>
                 <div class="flex space-x-4">
@@ -37,7 +35,6 @@
                 </div>
             </div>
 
-            <!-- Discount Value -->
             <div>
                 <label for="discount_value" class="block text-sm font-bold text-gray-700 mb-1">Discount Value</label>
                 <input type="number" id="discount_value" name="discount_value" min="0" step="0.01"
@@ -46,7 +43,6 @@
                 <p class="mt-1 text-xs text-gray-500" id="discountHint">Percentage discount (e.g. 20 for 20%)</p>
             </div>
 
-            <!-- Max Discount -->
             <div id="maxDiscountContainer" class="hidden">
                 <label for="max_discount" class="block text-sm font-bold text-gray-700 mb-1">Maximum Discount</label>
                 <input type="number" id="max_discount" name="max_discount" min="0" step="0.01"
@@ -55,10 +51,8 @@
                 <p class="mt-1 text-xs text-gray-500">Maximum discount amount for percentage discounts</p>
             </div>
 
-            <!-- Minimum Order Amount -->
             <div>
-                <label for="min_order_amount" class="block text-sm font-bold text-gray-700 mb-1">Minimum Order
-                    Amount</label>
+                <label for="min_order_amount" class="block text-sm font-bold text-gray-700 mb-1">Minimum Order Amount</label>
                 <input type="number" id="min_order_amount" name="min_order_amount" min="0" step="0.01"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Optional">
@@ -66,17 +60,13 @@
             </div>
         </div>
 
-        <!-- Description Field with Quill Editor -->
         <div>
             <label for="description" class="block text-sm font-bold text-gray-700 mb-1">Description</label>
-            <div id="editor-container" class="h-40 border border-gray-300 rounded-md">
-                <!-- Quill editor will be inserted here -->
-            </div>
+            <div id="editor-container" class="h-40 border border-gray-300 rounded-md"></div>
             <input type="hidden" id="description" name="description">
             <p class="mt-1 text-xs text-gray-500">Description that will be shown to customers about this promo</p>
         </div>
 
-        <!-- Validity Period -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label for="start_date" class="block text-sm font-bold text-gray-700 mb-1">Start Date</label>
@@ -91,7 +81,6 @@
             </div>
         </div>
 
-        <!-- Usage Limits -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label for="max_uses" class="block text-sm font-bold text-gray-700 mb-1">Total Usage Limit</label>
@@ -101,14 +90,12 @@
                 <p class="mt-1 text-xs text-gray-500">Leave empty for unlimited uses</p>
             </div>
             <div>
-                <label for="user_max_uses" class="block text-sm font-bold text-gray-700 mb-1">Uses Per
-                    Customer</label>
+                <label for="user_max_uses" class="block text-sm font-bold text-gray-700 mb-1">Uses Per Customer</label>
                 <input type="number" id="user_max_uses" name="user_max_uses" min="1" value="1"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
             </div>
         </div>
 
-        <!-- Product Restrictions -->
         <div>
             <label class="block text-sm font-bold text-gray-700 mb-2">Product Applicability</label>
             <div class="flex items-center space-x-4 mb-4">
@@ -120,32 +107,31 @@
                 <div class="flex items-center">
                     <input id="specific_products" name="applicable_to" type="radio" value="specific"
                         class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
-                    <label for="specific_products" class="ml-2 block font-medium text-sm text-gray-700">Specific
-                        Products</label>
+                    <label for="specific_products" class="ml-2 block font-medium text-sm text-gray-700">Specific Products</label>
                 </div>
             </div>
         </div>
 
-        <!-- Product Selection Container -->
         <div id="productSelectionContainer" class="hidden space-y-4">
             <div class="relative">
                 <label for="product_search" class="block text-sm font-bold text-gray-700 mb-1">Select Products</label>
-                <input type="text" id="product_search" name="product_search"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Type to search and select products...">
-                <div id="product_dropdown" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden">
-                    <ul id="product_list" class="divide-y divide-gray-200">
-                        <!-- Products will be populated dynamically -->
-                    </ul>
+                <div class="relative">
+                    <input type="text" id="product_search" name="product_search"
+                        class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        placeholder="Search products...">
+                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
                 </div>
-                <div id="selected_products" class="mt-2 flex flex-wrap gap-2">
-                    <!-- Selected products will appear here as tags -->
+                <div id="product_dropdown"
+                    class="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-2 max-h-80 overflow-y-auto hidden">
+                    <ul id="product_list" class="divide-y divide-gray-100"></ul>
                 </div>
-                <p class="mt-1 text-xs text-gray-500">Type to filter and select multiple products</p>
+                <div id="selected_products" class="mt-3 flex flex-wrap gap-2"></div>
+                <p class="mt-2 text-xs text-gray-500">Type to filter and select multiple products</p>
             </div>
         </div>
 
-        <!-- Other Options -->
         <div class="space-y-3">
             <div class="flex items-center">
                 <input id="is_active" name="is_active" type="checkbox" checked
@@ -159,7 +145,6 @@
             </div>
         </div>
 
-        <!-- Submit Button -->
         <div class="pt-4 flex justify-end">
             <button type="submit"
                 class="w-48 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
@@ -167,11 +152,9 @@
                 <div id="loading-spinner" class="hidden">
                     <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                        </circle>
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                        </path>
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                 </div>
             </button>
@@ -182,12 +165,10 @@
 
 {% block js %}
 <script>
-    // Store products globally for filtering
     let allProducts = [];
 
     async function loadSelectionOptions() {
         try {
-            // Fetch products
             const productResponse = await fetch('/api/products/list?all_data=true', {
                 headers: {
                     'Content-Type': 'application/json',
@@ -199,10 +180,9 @@
             const productData = await productResponse.json();
             allProducts = (productData.data || []).map(product => ({
                 id: product.id,
-                name: product.name,
+                name: product.title,
                 selected: false
             }));
-            // Initial render of product list
             renderProductList(allProducts);
         } catch (error) {
             console.error('Error loading products:', error);
@@ -210,14 +190,13 @@
         }
     }
 
-    // Function to render product list in dropdown
     function renderProductList(products) {
         const productList = document.getElementById('product_list');
-        productList.innerHTML = ''; // Clear existing list
+        productList.innerHTML = '';
 
         if (products.length === 0) {
             const li = document.createElement('li');
-            li.className = 'px-4 py-2 text-gray-500';
+            li.className = 'px-4 py-3 text-gray-500 text-sm';
             li.textContent = 'No products found';
             productList.appendChild(li);
             return;
@@ -225,63 +204,66 @@
 
         products.forEach(product => {
             const li = document.createElement('li');
-            li.className = 'px-4 py-2 cursor-pointer hover:bg-gray-100';
-            li.dataset.productId = product.id;
-            li.textContent = product.name;
+            li.className = 'flex items-center px-4 py-3 hover:bg-gray-50 transition';
+            li.innerHTML = `
+                <input type="checkbox" class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" 
+                       data-product-id="${product.id}" ${product.selected ? 'checked' : ''}>
+                <span class="ml-3 text-sm text-gray-700">${product.name}</span>
+            `;
             productList.appendChild(li);
 
-            // Select product on click
-            li.addEventListener('click', function () {
-                if (!product.selected) {
-                    product.selected = true;
-                    renderSelectedProducts();
-                    renderProductList(allProducts.filter(p => !p.selected)); // Hide selected products
-                    document.getElementById('product_search').value = ''; // Clear input
-                    document.getElementById('product_dropdown').classList.add('hidden');
-                }
+            const checkbox = li.querySelector('input[type="checkbox"]');
+            checkbox.addEventListener('change', function () {
+                product.selected = this.checked;
+                renderSelectedProducts();
+                renderProductList(allProducts.filter(p =>
+                    p.name.toLowerCase().includes(
+                        document.getElementById('product_search').value.toLowerCase()
+                    )
+                ));
             });
         });
     }
 
-    // Function to render selected products as tags
     function renderSelectedProducts() {
         const selectedProductsContainer = document.getElementById('selected_products');
-        selectedProductsContainer.innerHTML = ''; // Clear existing tags
+        selectedProductsContainer.innerHTML = '';
 
         const selectedProducts = allProducts.filter(product => product.selected);
         selectedProducts.forEach(product => {
             const tag = document.createElement('span');
-            tag.className = 'inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800';
+            tag.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 mr-2 mb-2';
             tag.innerHTML = `
                 ${product.name}
-                <button type="button" class="ml-1 text-blue-600 hover:text-blue-800" data-product-id="${product.id}">
-                    &times;
+                <button type="button" class="ml-2 text-blue-600 hover:text-blue-900 focus:outline-none" data-product-id="${product.id}">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
                 </button>
             `;
             selectedProductsContainer.appendChild(tag);
 
-            // Remove product on click
             tag.querySelector('button').addEventListener('click', function () {
                 product.selected = false;
                 renderSelectedProducts();
-                renderProductList(allProducts.filter(p => p.name.toLowerCase().includes(
-                    document.getElementById('product_search').value.toLowerCase()
-                )));
+                renderProductList(allProducts.filter(p =>
+                    p.name.toLowerCase().includes(
+                        document.getElementById('product_search').value.toLowerCase()
+                    )
+                ));
             });
         });
     }
 
-    // Function to filter products based on search input
     function filterProducts(searchTerm) {
         const filteredProducts = allProducts.filter(product =>
-            !product.selected && product.name.toLowerCase().includes(searchTerm.toLowerCase())
+            product.name.toLowerCase().includes(searchTerm.toLowerCase())
         );
         renderProductList(filteredProducts);
         document.getElementById('product_dropdown').classList.remove('hidden');
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        // Initialize Quill editor
         let quill;
         try {
             quill = new Quill('#editor-container', {
@@ -312,7 +294,6 @@
             showToast('Failed to initialize text editor', 'error');
         }
 
-        // Set up date fields
         const now = new Date();
         const nowString = now.toISOString().slice(0, 16);
         const startDateField = document.getElementById('start_date');
@@ -327,7 +308,6 @@
             }
         });
 
-        // Discount type toggle
         function toggleDiscountFields() {
             const discountType = document.querySelector('input[name="discount_type"]:checked').value;
             const maxDiscountContainer = document.getElementById('maxDiscountContainer');
@@ -342,7 +322,6 @@
             }
         }
 
-        // Product applicability toggle
         function toggleProductRestriction() {
             const applicableTo = document.querySelector('input[name="applicable_to"]:checked').value;
             const productSelectionContainer = document.getElementById('productSelectionContainer');
@@ -359,18 +338,15 @@
             }
         }
 
-        // Search input handler
         const productSearchInput = document.getElementById('product_search');
         productSearchInput.addEventListener('input', function () {
             filterProducts(this.value);
         });
 
-        // Show/hide dropdown on focus/blur
-        productSearchInput.addEventListener('focus', function () {
+        productSearchInput.addEventListener('click', function () {
             filterProducts(this.value);
         });
 
-        // Hide dropdown when clicking outside
         document.addEventListener('click', function (e) {
             const dropdown = document.getElementById('product_dropdown');
             const input = document.getElementById('product_search');
@@ -379,7 +355,6 @@
             }
         });
 
-        // Form validation
         function validatePromoForm() {
             let isValid = true;
             const form = document.getElementById('addPromoForm');
@@ -418,12 +393,10 @@
             return Boolean(isValid);
         }
 
-        // Form submission
         const form = document.getElementById('addPromoForm');
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            // Sync Quill content
             document.getElementById('description').value = quill.root.innerHTML;
 
             if (!validatePromoForm()) {
@@ -434,13 +407,11 @@
             const btnText = submitBtn.querySelector('.btn-text');
             const spinner = submitBtn.querySelector('#loading-spinner');
 
-            // Update button state
             btnText.textContent = 'Creating...';
             spinner.classList.remove('hidden');
             submitBtn.disabled = true;
 
             try {
-                // Prepare form data
                 const formData = new FormData();
                 formData.append('code', form.code.value.trim().toUpperCase());
                 formData.append('description', form.description.value);
@@ -456,7 +427,6 @@
                 formData.append('is_active', form.is_active.checked);
                 formData.append('applicable_to', form.applicable_to.value);
 
-                // Handle applicable products
                 if (form.applicable_to.value === 'specific') {
                     const applicableProducts = allProducts
                         .filter(product => product.selected)
@@ -464,20 +434,17 @@
                     formData.append('applicable_products', JSON.stringify(applicableProducts));
                 }
 
-                // Send request
                 const result = await sendPostRequest('/api/promo-codes', formData);
 
                 if (result.success) {
                     showToast('Promo code created successfully!', 'success');
                     form.reset();
                     quill.setContents([]);
-                    // Clear product selections
                     allProducts.forEach(product => product.selected = false);
                     renderSelectedProducts();
                     renderProductList(allProducts);
                     document.getElementById('product_search').value = '';
                     document.getElementById('product_dropdown').classList.add('hidden');
-                    // window.location.href = '/admin/promo-codes';
                 } else {
                     showToast(result.errors || result.message || 'Failed to create promo code', 'error');
                 }
@@ -485,14 +452,12 @@
                 console.error('Submission error:', error);
                 showToast('An error occurred while creating the promo code', 'error');
             } finally {
-                // Reset button state
                 btnText.textContent = 'Create Promo Code';
                 spinner.classList.add('hidden');
                 submitBtn.disabled = false;
             }
         });
 
-        // Initialize event listeners
         document.querySelectorAll('input[name="discount_type"]').forEach(radio => {
             radio.addEventListener('change', toggleDiscountFields);
         });
@@ -501,7 +466,6 @@
             radio.addEventListener('change', toggleProductRestriction);
         });
 
-        // Initial setup
         toggleDiscountFields();
         toggleProductRestriction();
     });
