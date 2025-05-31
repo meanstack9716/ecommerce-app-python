@@ -1,4 +1,4 @@
-from flask import render_template, session, redirect, url_for, request
+from flask import render_template, session, redirect, url_for, request, jsonify
 from . import admin_api
 from app.models import ProductBrands
 from constants import GET_BRANDS_WEB_URL, ADD_BRAND_WEB_URL, UPDATE_BRAND_WEB_URL, DELETE_BRAND_API
@@ -14,21 +14,27 @@ def get_brand_list_page():
     
     search_query = request.args.get('search', '')
     limit = int(request.args.get('limit', 10))
+    page = int(request.args.get('page', 1))
 
     if search_query:
-        brands = ProductBrands.objects(name__icontains=search_query)
+        brands_query = ProductBrands.objects(name__icontains=search_query)
     else:
-        brands = ProductBrands.objects.all()
+        brands_query = ProductBrands.objects.all()
 
-    page = int(request.args.get('page', 1))
-    brands_paginated = brands.paginate(page=page, per_page=limit)
+    total_count = brands_query.count()
+    
+    total_pages = max(1, (total_count + limit - 1) // limit)
+    
+    page = max(1, min(page, total_pages))
+    
+    brands_paginated = brands_query.paginate(page=page, per_page=limit)
 
     return render_template('admin/productBrands/brands_list.html', 
-                           brands=brands_paginated.items, 
-                           pagination=brands_paginated, 
-                           search=search_query, 
-                           limit=limit,
-                           local_ip=local_ip)
+                         brands=brands_paginated.items, 
+                         pagination=brands_paginated, 
+                         search=search_query, 
+                         limit=limit,
+                         local_ip=local_ip)
 
 
 @admin_api.route(ADD_BRAND_WEB_URL)
@@ -67,12 +73,18 @@ def delete_brand(brand_id):
     brand = ProductBrands.objects(id=brand_id).first()
     if brand:
         brand.delete()
-
-    brands = ProductBrands.objects(name__icontains=search_query) if search_query else ProductBrands.objects.all()
-    total_brands = brands.count()
-    max_pages = max(1, (total_brands + limit - 1) // limit)
-
-    if page > max_pages:
-        page = max_pages
-
-    return redirect(url_for('admin_api.get_brand_list_page', page=page, search=search_query, limit=limit))
+        
+        remaining_count = ProductBrands.objects(name__icontains=search_query).count()
+        total_pages = max(1, (remaining_count + limit - 1) // limit)
+        
+        if page > total_pages:
+            page = total_pages
+        
+        return jsonify({
+            'success': True,
+            'page': page,
+            'search': search_query,
+            'limit': limit
+        })
+    else:
+        return jsonify({'success': False, 'message': 'Brand not found'}), 404

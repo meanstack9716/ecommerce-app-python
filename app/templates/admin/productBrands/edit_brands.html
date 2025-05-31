@@ -2,6 +2,10 @@
 
 {% block title %}Edit Brand{% endblock %}
 
+{% block css %}
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+{% endblock %}
+
 {% block admin_content %}
 <div class="bg-white rounded-lg shadow-lg p-8">
     <div class="text-center mb-8">
@@ -31,8 +35,8 @@
         <div class="mb-4">
             <label for="description" class="block text-base font-medium text-black">Description <span
                     class="text-red-500">*</span></label>
-            <textarea id="description" name="description" rows="6"
-                class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">{{ brand.description }}</textarea>
+            <input type="hidden" id="description" name="description">
+            <div id="editor-container" class="h-48">{{ brand.description | safe }}</div>
         </div>
 
         <div class="mb-4">
@@ -70,6 +74,11 @@
     </form>
 </div>
 
+{% endblock %}
+
+{% block js %}
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
 <script>
     let initialValues = {
         name: "{{ brand.name }}",
@@ -80,13 +89,33 @@
     const saveButton = document.querySelector("button[type='submit']");
     saveButton.disabled = true;
 
-    // Form fields
     const nameField = document.getElementById('name');
     const descriptionField = document.getElementById('description');
     const logoField = document.getElementById('brand-logo');
     const loader = document.getElementById('loading-spinner');
     const btnText = document.getElementById('btn-text');
     const responseMessage = document.createElement('p');
+
+    let quill = new Quill('#editor-container', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                [{ 'indent': '-1' }, { 'indent': '+1' }],
+                [{ 'color': [] }, { 'background': [] }],
+                [{ 'align': [] }],
+                ['clean'],
+                ['link']
+            ]
+        }
+    });
+
+    quill.on('text-change', function() {
+        descriptionField.value = quill.root.innerHTML;
+        checkIfChanged();
+    });
 
     const checkIfChanged = () => {
         const isChanged = (
@@ -112,19 +141,6 @@
 
         if (!isMinLengthValid) return;
 
-        const isChanged = (
-            nameField.value !== initialValues.name ||
-            descriptionField.value !== initialValues.description ||
-            (logoField.files.length > 0 && logoField.files[0].name !== initialValues.logo)
-        );
-
-        if (!isChanged) {
-            saveButton.disabled = true;
-            return;
-        } else {
-            saveButton.disabled = false;
-        }
-
         if (logoField.files.length > 0) {
             const isImageValid = validateImage(logoField);
             if (!isImageValid) return;
@@ -143,9 +159,6 @@
             const result = await sendPostRequest(`/api/update-brand?brandId={{ brand.id | string }}`, formData);
 
             if (result.success) {
-                nameField.value = '';
-                descriptionField.value = '';
-                logoField.value = '';
                 setTimeout(() => {
                     window.location.href = "{{ url_for('admin_api.get_brand_list_page') }}";
                 }, 100);
@@ -162,8 +175,7 @@
         }
     });
 
-    // Input event listeners to track changes
-    [nameField, descriptionField, logoField].forEach(field => {
+    [nameField, logoField].forEach(field => {
         field.addEventListener('input', checkIfChanged);
     });
 </script>

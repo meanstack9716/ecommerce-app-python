@@ -8,6 +8,10 @@
     <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
         <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
+
+    <!-- Include Generic Modal -->
+    {% include '/components/deleteModal.html' %}
+
     <!-- Search and Filter Form -->
     <form id="search-form" class="flex items-end justify-between w-full mb-10">
         <div class="w-full sm:w-1/2 lg:w-full">
@@ -62,15 +66,10 @@
                             class="text-blue-600 hover:text-blue-800"><span class="material-symbols-outlined">
                                 edit_square
                             </span></a>
-                        <form action="{{ url_for('admin_api.delete_brand', brand_id=brand.id) }}" method="POST">
-                            <input type="hidden" name="page" value="{{ pagination.page }}">
-                            <input type="hidden" name="search" value="{{ search }}">
-                            <input type="hidden" name="limit" value="{{ limit }}">
-                            <button type="submit" class="text-red-600 hover:text-red-800"><span
-                                    class="material-symbols-outlined">
-                                    delete
-                                </span></button>
-                        </form>
+                        <button type="submit" class="text-red-600 hover:text-red-800" data-brand-id="{{ brand.id }}"
+                            onclick="showDeleteModal(this)"><span class="material-symbols-outlined">
+                                delete
+                            </span></button>
                     </div>
                 </td>
             </tr>
@@ -192,14 +191,9 @@
                                         <a href="/brands/edit/${brand.id}" class="text-blue-600 hover:text-blue-800">
                                             <span class="material-symbols-outlined">edit_square</span>
                                         </a>
-                                        <form action="/brands/delete/${brand.id}" method="POST">
-                                            <input type="hidden" name="page" value="${data.pagination.page}">
-                                            <input type="hidden" name="search" value="${search}">
-                                            <input type="hidden" name="limit" value="${limit}">
-                                            <button type="submit" class="text-red-600 hover:text-red-800">
-                                                <span class="material-symbols-outlined">delete</span>
-                                            </button>
-                                        </form>
+                                        <button type="button" class="text-red-600 hover:text-red-800" data-brand-id="${brand.id}" onclick="showDeleteModal(this)">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>`;
@@ -272,6 +266,59 @@
 
         // Initial load
         fetchBrands(1, searchInput.value.trim(), itemsPerPageSelect.value);
+
+        // Delete modal function
+        // Delete modal function
+        window.showDeleteModal = function (button) {
+            const brandId = button.getAttribute('data-brand-id');
+            const search = searchInput.value.trim();
+            const limit = itemsPerPageSelect.value;
+
+            // Get current page from the pagination display
+            let currentPage = 1;
+            const pageInfoElement = document.querySelector('#pagination .px-4.py-2.text-sm');
+            if (pageInfoElement) {
+                const pageMatch = pageInfoElement.textContent.match(/Page (\d+) of/);
+                if (pageMatch && pageMatch[1]) {
+                    currentPage = parseInt(pageMatch[1]);
+                }
+            }
+
+            modal.show({
+                title: 'Confirm Deletion',
+                message: 'Are you sure you want to delete this brand? This action cannot be undone.',
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                onConfirm: async () => {
+                    const formData = new FormData();
+                    formData.append('brand_id', brandId);
+                    formData.append('page', currentPage);
+                    formData.append('search', search);
+                    formData.append('limit', limit);
+
+                    const url = `/brands/delete/${brandId}`;
+
+                    try {
+                        const result = await sendPostRequest(url, formData);
+                        if (result.success) {
+                            showToast('Brand deleted successfully', 'success');
+
+                            if (document.querySelectorAll('#brand-table-body tr').length === 1 &&
+                                currentPage > 1) {
+                                fetchBrands(currentPage - 1, search, limit);
+                            } else {
+                                fetchBrands(result.page, search, limit);
+                            }
+                        } else {
+                            showToast(result.errors || result.message || 'Something went wrong', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error deleting brand:', error);
+                        showToast('Failed to delete brand', 'error');
+                    }
+                }
+            });
+        };
     });
 </script>
 {% endblock %}
