@@ -296,7 +296,6 @@ function validateBusinessDetails() {
     idNumber: document.getElementById("id_number"),
     addressProofFront: document.getElementById("address_proof_front"),
   }
-
   // Validate required fields
   const isRequiredValid = [
     validators.required(fields.panNumber, "PAN number"),

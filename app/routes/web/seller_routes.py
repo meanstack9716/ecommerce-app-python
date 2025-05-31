@@ -2,9 +2,11 @@ from flask import render_template, redirect, session, url_for, request, jsonify
 from . import admin_api
 from app.models import Seller, Identification
 from mongoengine.queryset.visitor import Q
-from constants import ADD_SELLER_WEB_URL, GET_SELLER_LIST_WEB_URL, GET_SELLERS_API_URL, INDIAN_STATES
+from constants import ADD_SELLER_WEB_URL, GET_SELLER_LIST_WEB_URL, GET_SELLERS_API_URL, INDIAN_STATES, EDIT_SELLERS_PAGE_WEB_URL
 from app.models import User
 from app.models import Address
+from app.utils.image_upload import get_local_ip
+from flask import current_app
 
 @admin_api.route(ADD_SELLER_WEB_URL)
 def add_new_seller():
@@ -140,3 +142,94 @@ def get_sellers():
         'data': data['data'],
         'meta': data['meta']
     })
+
+@admin_api.route(EDIT_SELLERS_PAGE_WEB_URL, methods=['GET'])
+def edit_seller_page(seller_id):
+    if 'user_id' not in session:
+        return redirect(url_for('admin_api.login_page'))
+
+    try:
+        local_ip = get_local_ip()
+        port = current_app.config.get('SERVER_PORT', 8080)
+        seller = Seller.objects.get(id=seller_id)
+        user = seller.user_id
+        
+        # Get all addresses for this user
+        all_addresses = Address.objects(user_id=user.id)
+        
+        # Find personal address (is_primary=True)
+        personal_address = all_addresses.filter(is_primary=True).first()
+        
+        # Find business address (could be any of the business types)
+        business_address_types = ['Office', 'Work', 'Store', 'Business']
+        business_address = (all_addresses.filter(type__in=business_address_types).first() or 
+                          seller.businessAddress)
+        
+        # Fallback to seller's linked addresses if not found by type
+        if not personal_address:
+            personal_address = seller.address
+        
+        identification = Identification.objects(user_id=user.id).first()
+
+        # Helper function to format address data
+        def format_address(address):
+            if not address:
+                return None
+            return {
+                "id": str(address.id),
+                "line1": address.line1,
+                "line2": address.line2,
+                "city": address.city,
+                "state": address.state,
+                "postal_code": address.postal_code,
+                "country": address.country,
+                "contact_name": address.contact_name,
+                "contact_number": address.contact_number,
+                "type": address.type,
+                "is_primary": address.is_primary
+            }
+
+        # Create response data structure
+        response_data = {
+            "seller": {
+                "id": str(seller.id),
+                "businessName": seller.businessName,
+                "businessType": seller.businessType,
+                "businessEmail": seller.businessEmail,
+                "businessMobile": seller.businessMobile,
+                "gst_number": seller.gst_number,
+                "is_approved": seller.is_approved,
+                "created_at": seller.created_at.isoformat() if seller.created_at else None,
+                "approved_by": str(seller.approved_by.id) if seller.approved_by else None
+            },
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "phone_number": user.phone_number,
+                "gender": user.gender,
+                "profile_pic": user.profile_pic,
+                "is_email_verified": user.is_email_verified
+            },
+            "address": format_address(personal_address),
+            "business_address": format_address(business_address),
+            "identification": {
+                "id": str(identification.id),
+                "address_proof_id_type": identification.address_proof_id_type,
+                'address_proof_front': f"http://{local_ip}:{port}/static/uploads/{identification.address_proof_front}" or '',
+                "address_proof_back": identification.address_proof_back,
+                "pan_number": identification.pan_number,
+                'pan_card_front': f"http://{local_ip}:{port}/static/uploads/{identification.pan_card_front}" or '',
+                "id_number": identification.id_number
+            } if identification else None
+        }
+
+        return render_template("admin/seller/edit_seller.html", 
+                            seller_data=response_data, INDIAN_STATES=INDIAN_STATES, local_ip=local_ip)
+    
+    except Seller.DoesNotExist:
+        return redirect(url_for('admin_api.get_seller_list'))
+    except Exception as e:
+        print(f"Error fetching seller data: {str(e)}")
+        return redirect(url_for('admin_api.get_seller_list'))

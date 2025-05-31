@@ -56,9 +56,11 @@ DASHBOARD_WEB_URL = f'/dashboard'
 ALL_USER_LIST_WEB_URL = f'/all-users-list'
 ADD_NEW_USER_LIST_WEB_URL = f'/add-new-user'
 EDIT_USER_WEB_URL = f'/users/edit/<string:user_id>'
+
 ADD_SELLER_WEB_URL = f'/add-new-seller'
 GET_SELLER_LIST_WEB_URL = f'/seller/list'
 GET_SELLERS_API_URL = '/api/sellers'
+EDIT_SELLERS_PAGE_WEB_URL = '/seller/edit/<seller_id>'
 
 CATEGORY_LIST_WEB_URL = '/category-list'
 ADD_CATEGORY_WEB_URL = '/add-new-category'

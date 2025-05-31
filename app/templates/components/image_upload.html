@@ -34,7 +34,7 @@
             <div class="relative group inline-block">
                 <div class="aspect-square overflow-hidden rounded-lg bg-gray-100 w-32 h-32">
                     <img src="{{ existing_image }}" alt="Current Brand Logo"
-                        class="w-full h-full object-cover transition-opacity group-hover:opacity-75">
+                        class="w-full h-full object-cover transition-opacity group-hover:opacity-75" id="{{id}}">
                 </div>
                 <button type="button"
                     class="material-symbols-outlined text-md leading-none absolute -top-1 -right-1 text-white w-8 h-8 flex items-center justify-center transition-colors cursor-pointer bg-red-500 rounded-full"
@@ -151,7 +151,7 @@
                     previewDiv.innerHTML = `
                         <div class="aspect-square overflow-hidden rounded-lg bg-gray-100">
                             <img src="${e.target.result}" 
-                                alt="${file.name}" 
+                                alt="${file.name}" id={{id}}
                                 class="w-full h-full object-cover transition-opacity group-hover:opacity-75">
                         </div>
                         <div class="mt-1 flex justify-between text-xs text-gray-500 truncate">
@@ -176,22 +176,24 @@
 
     function removeExistingImage(inputId) {
         const existingPreview = document.getElementById(inputId + '-existing-preview');
-        const fileInput = document.getElementById(inputId);
+        const existingImageInput = document.getElementById(inputId + '-existing-image');
 
         const removeField = document.createElement('input');
         removeField.type = 'hidden';
-        removeField.name = 'remove_existing_image';
+        removeField.name = inputId + '-remove';
         removeField.value = 'true';
-        document.getElementById('editBrandForm').appendChild(removeField);
+
+        existingPreview.parentNode.insertBefore(removeField, existingPreview.nextSibling);
 
         existingPreview.innerHTML = '';
-
-        if (fileInput) {
-            fileInput.value = '';
+        if (existingImageInput) {
+            existingImageInput.remove();
         }
 
-        const saveButton = document.querySelector("button[type='submit']");
-        saveButton.disabled = false;
+        const fileInput = document.getElementById(inputId);
+        if (fileInput) {
+            fileInput.disabled = false;
+        }
     }
 
     function removeImage(button, inputId, index) {
