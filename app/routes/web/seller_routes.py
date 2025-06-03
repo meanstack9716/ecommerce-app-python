@@ -161,7 +161,7 @@ def edit_seller_page(seller_id):
         personal_address = all_addresses.filter(is_primary=True).first()
         
         # Find business address (could be any of the business types)
-        business_address_types = ['Office', 'Work', 'Store', 'Business']
+        business_address_types = ['Office', 'Work', 'Store', 'Business', 'Home', 'Other']
         business_address = (all_addresses.filter(type__in=business_address_types).first() or 
                           seller.businessAddress)
         

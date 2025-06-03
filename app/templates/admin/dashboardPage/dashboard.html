@@ -43,17 +43,14 @@
   <!-- Seller Filter (Admin Only) -->
   {% if users.is_admin %}
   <div class="mb-8">
-    <label for="seller-filter" class="block text-base font-medium text-black mb-1 tracking-wide">Filter by Seller</label>
+    <label for="seller-filter" class="block text-base font-medium text-black mb-1 tracking-wide">Filter by
+      Seller</label>
     <div class="relative max-w-xs">
-      <select id="seller-filter"
-        class="w-full pl-3 pr-10 py-2 appearance-none text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 rounded-md transition duration-150">
-        <option value="">All Sellers</option>
-      </select>
-      <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-        <span
-          class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500">
-          expand_more
-        </span>
+      <input type="text" id="seller-filter" autocomplete="off"
+        class="w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 rounded-md transition duration-150"
+        placeholder="Search sellers...">
+      <div id="seller-suggestions"
+        class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg hidden max-h-60 overflow-auto">
       </div>
     </div>
   </div>
@@ -122,9 +119,12 @@
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-gray-900">Sales Performance</h2>
         <div class="flex space-x-2">
-          <button id="chart-monthly" class="px-3 py-1 text-xs font-medium rounded-md bg-primary-100 text-primary-800">Monthly</button>
-          <button id="chart-weekly" class="px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-50">Weekly</button>
-          <button id="chart-daily" class="px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-50">Daily</button>
+          <button id="chart-monthly"
+            class="px-3 py-1 text-xs font-medium rounded-md bg-primary-100 text-primary-800">Monthly</button>
+          <button id="chart-weekly"
+            class="px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-50">Weekly</button>
+          <button id="chart-daily"
+            class="px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:bg-gray-50">Daily</button>
         </div>
       </div>
       <div class="relative w-full h-80">
@@ -277,13 +277,32 @@
   async function loadSellers() {
     try {
       const { data } = await fetchJsonData('/api/sales/sellers');
-      const select = document.getElementById('seller-filter');
-      if (select) {
-        data.forEach(seller => {
-          const option = document.createElement('option');
-          option.value = seller.id;
-          option.textContent = seller.name;
-          select.appendChild(option);
+      const sellerFilter = document.getElementById('seller-filter');
+      const suggestionsContainer = document.getElementById('seller-suggestions');
+
+      if (sellerFilter) {
+        // Store sellers for filtering
+        sellerFilter.sellers = data;
+
+        // Show all sellers when input is focused
+        sellerFilter.addEventListener('focus', () => {
+          showSuggestions(sellerFilter, sellerFilter.sellers);
+        });
+
+        // Filter sellers on input
+        sellerFilter.addEventListener('input', () => {
+          const searchTerm = sellerFilter.value.toLowerCase();
+          const filteredSellers = sellerFilter.sellers.filter(seller =>
+            seller.name.toLowerCase().includes(searchTerm)
+          );
+          showSuggestions(sellerFilter, filteredSellers);
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+          if (e.target !== sellerFilter) {
+            suggestionsContainer.classList.add('hidden');
+          }
         });
       }
     } catch (error) {
@@ -291,11 +310,42 @@
     }
   }
 
+  function showSuggestions(inputElement, sellers) {
+    const suggestionsContainer = document.getElementById('seller-suggestions');
+    suggestionsContainer.innerHTML = '';
+
+    if (sellers.length === 0) {
+      const noResults = document.createElement('div');
+      noResults.className = 'px-4 py-2 text-gray-500';
+      noResults.textContent = 'No sellers found';
+      suggestionsContainer.appendChild(noResults);
+    } else {
+      sellers.forEach(seller => {
+        const suggestion = document.createElement('div');
+        suggestion.className = 'px-4 py-2 hover:bg-gray-100 cursor-pointer';
+        suggestion.textContent = seller.name;
+        suggestion.dataset.id = seller.id;
+
+        suggestion.addEventListener('click', () => {
+          inputElement.value = seller.name;
+          inputElement.dataset.selectedId = seller.id;
+          suggestionsContainer.classList.add('hidden');
+          // Trigger any filter logic you need here
+          // For example: filterSalesBySeller(seller.id);
+        });
+
+        suggestionsContainer.appendChild(suggestion);
+      });
+    }
+
+    suggestionsContainer.classList.remove('hidden');
+  }
+
   async function loadSalesChart(params = '') {
     try {
       const { data } = await fetchJsonData(`/api/sales/over-time${params}`);
       const salesCtx = document.getElementById('salesChart').getContext('2d');
-      
+
       if (window.salesChartInstance) {
         window.salesChartInstance.destroy();
       }
