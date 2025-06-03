@@ -70,7 +70,7 @@ def fetch_users_data(search='', role_filter='', page=1, per_page=10):
             "last_name": u.get("last_name", "---") or "---",
             "email": u.get("email", "---") or "---",
             "phone_number": u.get("phone_number", "---") or "---",
-            "is_deactivate": u.get("is_deactivate", False) or False,
+            "status": u.get("status", False) or False,
             "role": u.get("role_info", {}).get("name", "---") if u.get("role_info") else "---"
         })
 
@@ -121,29 +121,29 @@ def add_new_user():
         try:
             data = request.form
             
-            required_fields = ['email', 'first_name']
+            required_fields = ['email', 'first_name', 'status']
             is_valid, validation_errors = validate_required_fields(data, required_fields)
             if not is_valid:
                 return create_error_response(validation_errors, 400)
            
-            
             is_valid_email, email_error = validate_email(data['email'])
             if not is_valid_email:
                 return create_error_response({"email": email_error}, 400)
            
-            
             if User.objects(email=data['email']).first():
                 return create_error_response({'error': 'Email already exists'}, 409)
 
             user_role = Role.objects(name='user').first()
             if not user_role:
                 return create_error_response({'error': 'Default user role not found'}, 400)
+
             new_user = User(
                 email=data['email'],
                 first_name=data['first_name'],
-                last_name=data['last_name'],
+                last_name=data.get('last_name', ''),
                 phone_number=data.get('phone_number'),
-                role=user_role
+                role=user_role,
+                status=data['status']
             )
             
             password = data.get('password', 'defaultPassword123')
@@ -175,39 +175,35 @@ def edit_user(user_id):
 
     if request.method == 'POST':
         try:
-            # Get form data
             data = {
                 'first_name': request.form.get('first_name'),
                 'last_name': request.form.get('last_name'),
                 'email': request.form.get('email'),
-                'phone_number': request.form.get('phone_number')
+                'phone_number': request.form.get('phone_number'),
+                'status': request.form.get('status')
             }
 
-            # Validate required fields
-            required_fields = ['email', 'first_name']
+            required_fields = ['email', 'first_name', 'status']
             is_valid, validation_errors = validate_required_fields(data, required_fields)
             if not is_valid:
                 return create_error_response(validation_errors, 400)
             
-            # Validate email format
             is_valid_email, email_error = validate_email(data['email'])
             if not is_valid_email:
                 return create_error_response({"email": email_error}, 400)
 
-            # Check if email is already taken by another user
             existing_user = User.objects(email=data['email']).first()
             if existing_user and str(existing_user.id) != user_id:
                 return create_error_response({"email": "This email is already registered"}, 400)
 
-            # Update user
             user.update(
                 first_name=data['first_name'],
                 last_name=data['last_name'],
-                email=data['email'].lower(),  # Normalize email
-                phone_number=data['phone_number'] if data['phone_number'] else None
+                email=data['email'].lower(),
+                phone_number=data['phone_number'] if data['phone_number'] else None,
+                status=data['status']
             )
 
-            # Return success response
             return jsonify({
                 'success': True,
                 'message': 'User updated successfully',
@@ -217,7 +213,6 @@ def edit_user(user_id):
         except Exception as e:
             return create_error_response({'error': str(e)}, 500)
 
-    # For GET requests, just render the template
     return render_template("admin/users/editUser.html", user=user)
 
 @admin_api.route('/api/users', methods=['GET'])
@@ -237,38 +232,3 @@ def get_users():
         'pagination': data['pagination'],
         'roles': data['roles']
     })
-
-# Function to update user status
-def update_user_status(user_id, status):
-    try:
-        user = User.objects(id=user_id).first()
-        if not user:
-            return False
-        user.is_deactivate = (status == 'deactivate')
-        user.save()
-        return True
-    except Exception as e:
-        print(f"Error updating user status: {e}")
-        return False
-
-@admin_api.route('/api/users/<string:user_id>/status', methods=['PATCH'])
-def update_user_status_endpoint(user_id):
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    data = request.get_json()
-    if not data or 'status' not in data:
-        return jsonify({'error': 'Status is required'}), 400
-
-    status = data['status']
-    if status not in ['activate', 'deactivate']:
-        return jsonify({'error': 'Invalid status value'}), 400
-
-    try:
-        success = update_user_status(user_id, status)
-        if success:
-            return jsonify({'message': 'User status updated successfully'}), 200
-        else:
-            return jsonify({'error': 'User not found or update failed'}), 404
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500

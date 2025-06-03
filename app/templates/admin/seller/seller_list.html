@@ -158,7 +158,7 @@
             }
 
             sellerTableBody.innerHTML = sellers.map(item => `
-            <tr class="even:bg-gray-50 odd:bg-white hover:bg-gray-100">
+            <tr class="even:bg-gray-50 odd:bg-white">
                 <td class="px-4 py-3 text-center text-sm border border-gray-200 text-gray-800">${item.index}</td>
                 <td class="px-4 py-3 text-center text-sm border border-gray-200 text-gray-800">${item.user.first_name} ${item.user.last_name}</td>
                 <td class="px-4 py-3 text-center text-sm border border-gray-200 text-gray-800">${item.user.email}</td>
@@ -170,15 +170,15 @@
                 <td class="px-4 py-3 text-center text-sm border border-gray-200 text-gray-800">
                     <div class="flex items-center gap-2">
                         ${item.seller.is_approved === 'approved' ?
-                        '<span class="material-symbols-outlined text-green-600" title="Approved">check_circle</span>' :
+                        '<span class="material-symbols-outlined text-green-600 text-lg" title="Approved">check_circle</span>' :
                             item.seller.is_approved === 'pending' ?
-                        '<span class="material-symbols-outlined text-yellow-600" title="Pending">pending</span>' :
-                        '<span class="material-symbols-outlined text-red-700" title="On Hold">pause_circle</span>'}
+                        '<span class="material-symbols-outlined text-yellow-600 text-lg" title="Pending">pending</span>' :
+                        '<span class="material-symbols-outlined text-red-700 text-lg" title="On Hold">pause_circle</span>'}
                         <span>${item.seller.is_approved.charAt(0).toUpperCase() + item.seller.is_approved.slice(1)}</span>
                     </div>
                 </td>
                 <td class="px-4 py-3 text-center text-sm border border-gray-200 text-gray-800">
-                    <span class="material-symbols-outlined text-yellow-600 cursor-pointer edit-seller" data-seller-id="${item.seller.id}">edit_square</span>
+                    <span class="material-symbols-outlined text-yellow-600 cursor-pointer edit-seller text-lg" data-seller-id="${item.seller.id}">edit_square</span>
                 </td>
             </tr>
         `).join('');

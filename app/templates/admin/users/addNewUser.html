@@ -14,8 +14,8 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <!-- First Name Field -->
             <div>
-                <label for="first_name" class="block text-base font-medium text-black mb-1 tracking-wide">First Name <span
-                        class="text-red-500">*</span></label>
+                <label for="first_name" class="block text-base font-medium text-black mb-1 tracking-wide">First Name
+                    <span class="text-red-500">*</span></label>
                 <input type="text" name="first_name" id="first_name"
                     class="block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out"
                     minlength="2">
@@ -46,10 +46,32 @@
 
             <!-- Phone Number Field -->
             <div>
-                <label for="phone_number" class="block text-base font-medium text-black mb-1 tracking-wide">Phone Number</label>
+                <label for="phone_number" class="block text-base font-medium text-black mb-1 tracking-wide">Phone
+                    Number</label>
                 <input type="tel" name="phone_number" id="phone_number"
                     class="block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
                 <div class="error-message text-red-500 text-sm mt-1"></div>
+            </div>
+        </div>
+
+        <!-- Additional Fields Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <!-- Status Field -->
+            <div>
+                <label for="status" class="block text-base font-medium text-black mb-1 tracking-wide">Status <span
+                        class="text-red-500">*</span></label>
+                <div class="relative">
+                    <select name="status" id="status"
+                        class="block w-full border appearance-none rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
+                        <option value="activated" selected>Activate</option>
+                        <option value="deactivated">Deactivate</option>
+                        <option value="hold">Hold</option>
+                    </select>
+                    <span
+                        class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500">
+                        expand_more
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -85,6 +107,7 @@
         const firstName = document.getElementById('first_name');
         const lastName = document.getElementById('last_name');
         const email = document.getElementById('email');
+        const status = document.getElementById('status');
 
         const isValid =
             validators.required(firstName, 'First Name') &&
@@ -92,7 +115,7 @@
             validators.required(lastName, 'Last Name') &&
             validators.minLength(lastName, 2, 'Last Name') &&
             validators.required(email, 'Email') &&
-            validators.email(email, 'Email');
+            validators.email(email, 'Email')
 
         if (!isValid) return;
 
@@ -127,7 +150,5 @@
             submitButton.disabled = false;
         }
     });
-
-
 </script>
 {% endblock %}

@@ -23,7 +23,8 @@ class User(db.Document):
     cloudinary_id = db.StringField()
     is_admin = db.BooleanField(default=False)
     is_email_verified = db.BooleanField(default=False)
-    is_deactivate = db.BooleanField(default=False)
+    status = db.StringField(choices=["activated", "deactivated", "hold"], default="activated")
+    
     def hash_password(self):
         self.password = generate_password_hash(self.password).decode('utf8')
 
@@ -83,7 +84,8 @@ class User(db.Document):
                 phone_number=os.getenv("DEFAULT_ADMIN_PHONE"),
                 role=role,
                 is_admin=True,
-                is_email_verified=True
+                is_email_verified=True,
+                status="activated"
             )
             admin.hash_password()
             admin.save()

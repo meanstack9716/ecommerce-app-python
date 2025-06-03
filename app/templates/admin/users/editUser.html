@@ -12,17 +12,15 @@
     <p class="mt-2 text-sm text-gray-600">Update the details below for this user.</p>
   </div>
 
-  
-    <div class="mb-4">
-        <a href="{{ url_for('admin_api.all_users') }}"
-            class="inline-flex items-center space-x-3 text-indigo-600 hover:text-indigo-800">
-            <span class="material-symbols-outlined">
-                keyboard_backspace
-            </span>
-            <span> Back to All User List
-            </span>
-        </a>
-    </div>
+  <div class="mb-4">
+    <a href="{{ url_for('admin_api.all_users') }}"
+      class="inline-flex items-center space-x-3 text-indigo-600 hover:text-indigo-800">
+      <span class="material-symbols-outlined">
+        keyboard_backspace
+      </span>
+      <span>Back to All User List</span>
+    </a>
+  </div>
 
   <form id="editUserForm" action="{{ url_for('admin_api.edit_user', user_id=user.id) }}" method="POST">
     <input type="hidden" name="user_id" value="{{ user.id }}">
@@ -48,7 +46,7 @@
     </div>
 
     <!-- Contact Fields Row -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
       <!-- Email Field -->
       <div>
         <label for="email" class="block text-base font-medium text-gray-700">Email <span
@@ -66,6 +64,24 @@
           class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out border-gray-300"
           pattern="[0-9]{10,15}" placeholder="1234567890">
         <div class="error-message text-red-500 text-sm mt-1" id="phone_number-error"></div>
+      </div>
+    </div>
+
+    <!-- Status Field -->
+    <div class="mb-6">
+      <label for="status" class="block text-base font-medium text-gray-700">Status <span
+          class="text-red-500">*</span></label>
+      <div class="relative">
+        <select name="status" id="status"
+          class="mt-2 block appearance-none w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out border-gray-300">
+          <option value="activated" {% if user.status=='activated' %}selected{% endif %}>Activated</option>
+          <option value="deactivated" {% if user.status=='deactivated' %}selected{% endif %}>Deactivated</option>
+          <option value="hold" {% if user.status=='hold' %}selected{% endif %}>Hold</option>
+        </select>
+        <span
+          class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500">
+          expand_more
+        </span>
       </div>
     </div>
 
@@ -92,7 +108,8 @@
     first_name: document.getElementById('first_name').value,
     last_name: document.getElementById('last_name').value,
     email: document.getElementById('email').value,
-    phone_number: document.getElementById('phone_number').value
+    phone_number: document.getElementById('phone_number').value,
+    status: document.getElementById('status').value
   };
 
   function hasFormChanged() {
@@ -100,7 +117,8 @@
       first_name: document.getElementById('first_name').value,
       last_name: document.getElementById('last_name').value,
       email: document.getElementById('email').value,
-      phone_number: document.getElementById('phone_number').value
+      phone_number: document.getElementById('phone_number').value,
+      status: document.getElementById('status').value
     };
 
     return Object.keys(initialValues).some(key => initialValues[key] !== currentValues[key]);
@@ -119,9 +137,10 @@
     }
   }
 
-  const inputs = document.querySelectorAll('#editUserForm input');
+  const inputs = document.querySelectorAll('#editUserForm input, #editUserForm select');
   inputs.forEach(input => {
     input.addEventListener('input', updateButtonState);
+    input.addEventListener('change', updateButtonState);
   });
 
   document.getElementById('editUserForm').addEventListener('submit', async function (e) {
@@ -129,12 +148,14 @@
 
     const firstName = document.querySelector('#first_name');
     const email = document.querySelector('#email');
+    const status = document.querySelector('#status');
 
     const isValid =
       validators.required(firstName, 'First Name') &&
       validators.minLength(firstName, 2, 'First Name') &&
       validators.required(email, 'Email') &&
-      validators.email(email, 'Email');
+      validators.email(email, 'Email') &&
+      validators.required(status, 'Status');
 
     if (!isValid) return;
 
