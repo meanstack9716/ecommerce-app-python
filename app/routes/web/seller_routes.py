@@ -17,8 +17,8 @@ def add_new_seller():
 def get_value(value):
     return value if value else '---'
 
-def fetch_sellers_data(search_query='', approval_status='', page=1, per_page=10):
-    query = Seller.objects
+def fetch_sellers_data(search_query='', approval_status='', page=1, per_page=10, sort_by='', sort_order='asc'):
+    query = Seller.objects()
 
     if approval_status:
         query = query.filter(is_approved=approval_status)
@@ -40,6 +40,68 @@ def fetch_sellers_data(search_query='', approval_status='', page=1, per_page=10)
 
         query = query.filter(search_regex)
 
+    # Handle sorting
+    if sort_by:
+        sort_field = sort_by
+        sort_prefix = '-' if sort_order == 'desc' else ''
+        
+        # Handle nested fields
+        if sort_by.startswith('user.'):
+            field_name = sort_by.split('.')[1]
+            # For related fields, we need to use a different approach
+            if field_name in ['first_name', 'last_name', 'email', 'phone_number']:
+                # This requires aggregation pipeline for proper sorting
+                # Here's a simplified approach (might not be efficient for large datasets)
+                sellers = list(query)
+                
+                # Sort in memory
+                reverse_sort = sort_order == 'desc'
+                
+                if field_name == 'first_name':
+                    sellers.sort(key=lambda x: x.user_id.first_name if x.user_id else '', reverse=reverse_sort)
+                elif field_name == 'last_name':
+                    sellers.sort(key=lambda x: x.user_id.last_name if x.user_id else '', reverse=reverse_sort)
+                elif field_name == 'email':
+                    sellers.sort(key=lambda x: x.user_id.email if x.user_id else '', reverse=reverse_sort)
+                elif field_name == 'phone_number':
+                    sellers.sort(key=lambda x: x.user_id.phone_number if x.user_id else '', reverse=reverse_sort)
+                
+                total_count = len(sellers)
+                total_pages = (total_count + per_page - 1) // per_page
+                start_idx = (page - 1) * per_page
+                paginated_sellers = sellers[start_idx:start_idx + per_page]
+                
+                # Convert to the enriched format
+                enriched_sellers = []
+                for idx, seller in enumerate(paginated_sellers, start=start_idx + 1):
+                    enriched_sellers.append(enrich_seller_data(seller, idx))
+                
+                return {
+                    'data': enriched_sellers,
+                    'meta': {
+                        'pagination': {
+                            'page': page,
+                            'per_page': per_page,
+                            'total_count': total_count,
+                            'total_pages': total_pages,
+                            'has_prev': page > 1,
+                            'has_next': page < total_pages,
+                            'prev_page': page - 1 if page > 1 else None,
+                            'next_page': page + 1 if page < total_pages else None
+                        },
+                        'filters': {
+                            'search_query': search_query,
+                            'approval_status': approval_status,
+                            'sort_by': sort_by,
+                            'sort_order': sort_order
+                        }
+                    }
+                }
+        else:
+            # Handle direct fields
+            if sort_by in ['businessName', 'businessType', 'businessEmail', 'is_approved', 'created_at']:
+                query = query.order_by(f'{sort_prefix}{sort_by}')
+
     total_count = query.count()
     total_pages = (total_count + per_page - 1) // per_page
 
@@ -48,42 +110,7 @@ def fetch_sellers_data(search_query='', approval_status='', page=1, per_page=10)
 
     enriched_sellers = []
     for idx, seller in enumerate(paginated_sellers, start=start_idx + 1):
-        user = seller.user_id
-        address = seller.address
-        identification = Identification.objects(user_id=user).first()
-
-        address_data = {
-            "line1": get_value(address.line1 if address else None),
-            "city": get_value(address.city if address else None),
-            "state": get_value(address.state if address else None),
-            "postal_code": get_value(address.postal_code if address else None),
-            "country": get_value(address.country if address else None)
-        }
-
-        enriched_sellers.append({
-            "index": idx,
-            "seller": {
-                "id": str(seller.id),
-                "businessName": get_value(seller.businessName),
-                "businessType": get_value(seller.businessType),
-                "businessEmail": get_value(seller.businessEmail),
-                "gst_number": get_value(seller.gst_number),
-                "is_approved": get_value(seller.is_approved),
-                "created_at": seller.created_at.isoformat() if seller.created_at else '---'
-            },
-            "user": {
-                "id": str(user.id) if user else '---',
-                "email": get_value(user.email if user else None),
-                "first_name": get_value(user.first_name if user else None),
-                "last_name": get_value(user.last_name if user else None),
-                "phone_number": get_value(user.phone_number if user else None)
-            },
-            "address": address_data,
-            "identification": {
-                "pan_number": get_value(identification.pan_number if identification else None),
-                "address_proof_id_type": get_value(identification.address_proof_id_type if identification else None)
-            }
-        })
+        enriched_sellers.append(enrich_seller_data(seller, idx))
 
     return {
         'data': enriched_sellers,
@@ -100,8 +127,50 @@ def fetch_sellers_data(search_query='', approval_status='', page=1, per_page=10)
             },
             'filters': {
                 'search_query': search_query,
-                'approval_status': approval_status
+                'approval_status': approval_status,
+                'sort_by': sort_by,
+                'sort_order': sort_order
             }
+        }
+    }
+
+
+def enrich_seller_data(seller, index):
+    user = seller.user_id
+    address = seller.address
+    identification = Identification.objects(user_id=user).first()
+
+    address_data = {
+        "line1": get_value(address.line1 if address else None),
+        "city": get_value(address.city if address else None),
+        "state": get_value(address.state if address else None),
+        "postal_code": get_value(address.postal_code if address else None),
+        "country": get_value(address.country if address else None)
+    }
+
+    return {
+        "index": index,
+        "seller": {
+            "id": str(seller.id),
+            "businessName": get_value(seller.businessName),
+            "businessType": get_value(seller.businessType),
+            "businessEmail": get_value(seller.businessEmail),
+            "businessMobile": get_value(seller.businessMobile),
+            "gst_number": get_value(seller.gst_number),
+            "is_approved": get_value(seller.is_approved),
+            "created_at": seller.created_at.isoformat() if seller.created_at else '---'
+        },
+        "user": {
+            "id": str(user.id) if user else '---',
+            "email": get_value(user.email if user else None),
+            "first_name": get_value(user.first_name if user else None),
+            "last_name": get_value(user.last_name if user else None),
+            "phone_number": get_value(user.phone_number if user else None)
+        },
+        "address": address_data,
+        "identification": {
+            "pan_number": get_value(identification.pan_number if identification else None),
+            "address_proof_id_type": get_value(identification.address_proof_id_type if identification else None)
         }
     }
 
@@ -114,8 +183,17 @@ def get_seller_list():
     approval_status = request.args.get('approval_status', '').strip()
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('limit', 10))
+    sort_by = request.args.get('sort_by', '')
+    sort_order = request.args.get('sort_order', 'asc')
 
-    data = fetch_sellers_data(search_query, approval_status, page, per_page)
+    data = fetch_sellers_data(
+        search_query=search_query,
+        approval_status=approval_status,
+        page=page,
+        per_page=per_page,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
 
     return render_template(
         "admin/seller/seller_list.html",

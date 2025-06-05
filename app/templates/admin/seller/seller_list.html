@@ -54,12 +54,36 @@
         <table class="min-w-full divide-y divide-gray-200 shadow-md rounded-lg overflow-hidden" id="seller-table">
             <thead class="bg-gray-100">
                 <tr>
-                    {% set seller_list_header = ['S.No', 'Name', 'Email', 'Phone Number', 'Business Name', 'Business
-                    Type', 'Business Email', 'Business Mobile', 'Status', 'Actions'] %}
-                    {% for header in seller_list_header %}
+                    {% set seller_list_header = [
+                        ('S.No', 'index'),
+                        ('Name', 'user.first_name'),
+                        ('Email', 'user.email'),
+                        ('Phone Number', 'user.phone_number'),
+                        ('Business Name', 'seller.businessName'),
+                        ('Business Type', 'seller.businessType'),
+                        ('Business Email', 'seller.businessEmail'),
+                        ('Business Mobile', 'businessMobile'),
+                        ('Status', 'seller.is_approved'),
+                        ('Actions', None)
+                    ] %}
+                    {% for header, sort_key in seller_list_header %}
                     <th
-                        class="px-4 py-4 text-xs font-semibold text-gray-500 text-center uppercase tracking-wide border border-gray-200">
-                        {{ header }}
+                        class="px-4 py-4 text-xs font-semibold text-gray-500 text-center uppercase tracking-wide border border-gray-200
+                        {% if sort_key %}cursor-pointer hover:bg-gray-100{% endif %}"
+                        {% if sort_key %}data-sort-key="{{ sort_key }}"{% endif %}>
+                        <div class="flex items-center justify-center">
+                            {{ header }}
+                            {% if sort_key %}
+                            <span class="ml-1 sort-icon
+                                {% if filters.sort_by == sort_key %}
+                                    {% if filters.sort_order == 'asc' %}sort-asc{% else %}sort-desc{% endif %}
+                                {% endif %}">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7l4-4m0 0l4 4m-4-4v18"/>
+                                </svg>
+                            </span>
+                            {% endif %}
+                        </div>
                     </th>
                     {% endfor %}
                 </tr>
@@ -87,26 +111,16 @@
         </div>
 
         <!-- Page Navigation -->
-        <div class="flex items-center gap-2" id="pagination">
-            {% if pagination.has_prev %}
-            <a href="#" data-page="{{ pagination.prev_num }}"
-                class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition seller-pagination-link">Previous</a>
-            {% else %}
-            <span
-                class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Previous</span>
-            {% endif %}
-            <span class="px-4 py-2 text-sm" id="page-info">Page {{ pagination.page }} of {{ pagination.total_pages
-                }}</span>
-            {% if pagination.has_next %}
-            <a href="#" data-page="{{ pagination.next_num }}"
-                class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition seller-pagination-link">Next</a>
-            {% else %}
-            <span
-                class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Next</span>
-            {% endif %}
-        </div>
+        <div class="flex items-center gap-2" id="pagination"></div>
     </div>
 </div>
+
+<style>
+.sort-icon { opacity: 0.3; }
+.sort-icon.sort-asc { opacity: 1; transform: rotate(0deg); }
+.sort-icon.sort-desc { opacity: 1; transform: rotate(180deg); }
+th:hover .sort-icon { opacity: 0.6; }
+</style>
 {% endblock %}
 
 {% block js %}
@@ -121,6 +135,8 @@
         const clearSearch = document.getElementById('clear-search');
 
         let currentPage = "{{ pagination.page }}";
+        let sortBy = '{{ filters.sort_by | default('') }}';
+        let sortOrder = '{{ filters.sort_order | default('asc') }}';
         let debounceTimer;
 
         function debounce(func, delay) {
@@ -135,14 +151,23 @@
             const approval_status = approvalStatusSelect.value;
             const limit = itemsPerPageSelect.value;
 
-            const url = `{{ sellers_api_url }}?search=${encodeURIComponent(search)}&approval_status=${encodeURIComponent(approval_status)}&page=${page}&limit=${limit}`;
+            const params = new URLSearchParams({
+                search,
+                approval_status,
+                page,
+                limit,
+                sort_by: sortBy,
+                sort_order: sortOrder
+            });
+
+            const url = `{{ sellers_api_url }}?${params.toString()}`;
 
             try {
                 const data = await fetchJsonData(url);
                 updateSellerTable(data.data || []);
                 updatePagination(data.meta.pagination);
-
                 currentPage = data.meta.pagination.page;
+                updateSortIcons();
             } catch (error) {
                 console.error('Error fetching sellers:', error);
                 sellerTableBody.innerHTML = '<tr><td colspan="10" class="px-3 py-3 md:px-6 md:py-4 text-center text-sm text-gray-500">Error loading sellers</td></tr>';
@@ -170,10 +195,10 @@
                 <td class="px-4 py-3 text-center text-sm border border-gray-200 text-gray-800">
                     <div class="flex items-center gap-2">
                         ${item.seller.is_approved === 'approved' ?
-                        '<span class="material-symbols-outlined text-green-600 text-lg" title="Approved">check_circle</span>' :
+                            '<span class="material-symbols-outlined text-green-600 text-lg" title="Approved">check_circle</span>' :
                             item.seller.is_approved === 'pending' ?
-                        '<span class="material-symbols-outlined text-yellow-600 text-lg" title="Pending">pending</span>' :
-                        '<span class="material-symbols-outlined text-red-700 text-lg" title="On Hold">pause_circle</span>'}
+                            '<span class="material-symbols-outlined text-yellow-600 text-lg" title="Pending">pending</span>' :
+                            '<span class="material-symbols-outlined text-red-700 text-lg" title="On Hold">pause_circle</span>'}
                         <span>${item.seller.is_approved.charAt(0).toUpperCase() + item.seller.is_approved.slice(1)}</span>
                     </div>
                 </td>
@@ -195,14 +220,14 @@
         function updatePagination(pagination) {
             paginationDiv.innerHTML = `
             ${pagination.has_prev ?
-                    `<a href="#" data-page="${pagination.prev_page}" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link">Previous</a>` :
-                    `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Previous</span>`
-                }
+                `<a href="#" data-page="${pagination.prev_page}" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link">Previous</a>` :
+                `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Previous</span>`
+            }
             <span class="px-4 py-2 text-sm">Page ${pagination.page} of ${pagination.total_pages}</span>
             ${pagination.has_next ?
-                    `<a href="#" data-page="${pagination.next_page}" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link">Next</a>` :
-                    `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Next</span>`
-                }
+                `<a href="#" data-page="${pagination.next_page}" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link">Next</a>` :
+                `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Next</span>`
+            }
         `;
 
             document.querySelectorAll('.pagination-link').forEach(link => {
@@ -213,6 +238,35 @@
                 });
             });
         }
+
+        function updateSortIcons() {
+            document.querySelectorAll('th[data-sort-key]').forEach(th => {
+                const icon = th.querySelector('.sort-icon');
+                if (th.dataset.sortKey === sortBy) {
+                    icon.classList.add(sortOrder === 'asc' ? 'sort-asc' : 'sort-desc');
+                    icon.classList.remove(sortOrder === 'asc' ? 'sort-desc' : 'sort-asc');
+                } else {
+                    icon.classList.remove('sort-asc', 'sort-desc');
+                }
+            });
+        }
+
+        function handleSort(sortKey) {
+            if (sortBy === sortKey) {
+                sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortBy = sortKey;
+                sortOrder = 'asc';
+            }
+            fetchSellers(1);
+        }
+
+        // Add sort event listeners
+        document.querySelectorAll('th[data-sort-key]').forEach(th => {
+            th.addEventListener('click', () => {
+                handleSort(th.dataset.sortKey);
+            });
+        });
 
         searchInput.addEventListener('input', () => {
             debounce(() => fetchSellers(1), 500);
@@ -230,6 +284,8 @@
             e.preventDefault();
             searchInput.value = '';
             approvalStatusSelect.value = '';
+            sortBy = '';
+            sortOrder = 'asc';
             fetchSellers(1);
         });
 

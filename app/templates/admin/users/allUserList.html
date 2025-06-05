@@ -53,10 +53,32 @@
     <table class="min-w-full divide-y divide-gray-200 shadow-md rounded-lg overflow-hidden" id="user-table">
       <thead class="bg-gray-50">
         <tr>
-          {% for header in ['S.No', 'First Name', 'Last Name', 'Email', 'Role', 'Phone Number', 'Status', 'Action'] %}
-          <th
-            class="px-4 py-4 text-xs font-semibold text-gray-500 text-center uppercase tracking-wide border border-gray-200">
-            {{ header }}
+          {% for header, sort_key in [
+          ('S.No', 'index'),
+          ('First Name', 'first_name'),
+          ('Last Name', 'last_name'),
+          ('Email', 'email'),
+          ('Role', 'role'),
+          ('Phone Number', 'phone_number'),
+          ('Status', 'status'),
+          ('Action', None)
+          ] %}
+          <th class="px-4 py-4 text-xs font-semibold text-gray-500 text-center uppercase tracking-wide border border-gray-200
+            {% if sort_key %}cursor-pointer hover:bg-gray-100{% endif %}" {% if sort_key
+            %}data-sort-key="{{ sort_key }}" {% endif %}>
+            <div class="flex items-center justify-center">
+              {{ header }}
+              {% if sort_key %}
+              <span class="ml-1 sort-icon
+                {% if filters.sort_by == sort_key %}
+                  {% if filters.sort_order == 'asc' %}sort-asc{% else %}sort-desc{% endif %}
+                {% endif %}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7l4-4m0 0l4 4m-4-4v18" />
+                </svg>
+              </span>
+              {% endif %}
+            </div>
           </th>
           {% endfor %}
         </tr>
@@ -85,6 +107,26 @@
     <div class="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start" id="pagination"></div>
   </div>
 </div>
+
+<style>
+  .sort-icon {
+    opacity: 0.3;
+  }
+
+  .sort-icon.sort-asc {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+
+  .sort-icon.sort-desc {
+    opacity: 1;
+    transform: rotate(180deg);
+  }
+
+  th:hover .sort-icon {
+    opacity: 0.6;
+  }
+</style>
 {% endblock %}
 
 {% block js %}
@@ -100,20 +142,18 @@
       pageInfo: document.getElementById('page-info'),
       loader: document.getElementById('loader')
     };
-    let currentPage = {{ pagination.page | tojson | safe
-  }};
+    let currentPage = {{ pagination.page | tojson | safe}};
+    let sortBy = '{{ filters.sort_by | default('') }}';
+    let sortOrder = '{{ filters.sort_order | default('asc') }}';
 
-  // Status styling
   const statusStyles = {
     activated: 'bg-green-100 text-green-800',
     deactivated: 'bg-red-100 text-red-800',
     hold: 'bg-yellow-100 text-yellow-800'
   };
 
-  // Capitalize first letter
   const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 
-  // Debounce function
   const debounce = (func, wait) => {
     let timeout;
     return (...args) => {
@@ -122,14 +162,6 @@
     };
   };
 
-  // Fetch JSON data
-  const fetchJsonData = async (url) => {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-    return response.json();
-  };
-
-  // Render table row
   const renderTableRow = (user) => `
       <tr class="border-t even:bg-gray-50 odd:bg-white hover:bg-gray-100">
         <td class="px-3 py-3 md:px-6 md:py-4 text-center text-sm border border-gray-200">${user.index}</td>
@@ -150,7 +182,6 @@
         </td>
       </tr>`;
 
-  // Update pagination
   const updatePagination = (pagination) => {
     elements.pagination.innerHTML = `
         ${pagination.has_prev
@@ -173,14 +204,15 @@
     });
   };
 
-  // Fetch users
   const fetchUsers = async (page = 1) => {
     elements.loader.classList.remove('hidden');
     const params = new URLSearchParams({
       page,
       search: elements.searchInput.value.trim(),
       role: elements.roleSelect.value,
-      limit: elements.itemsPerPage.value
+      limit: elements.itemsPerPage.value,
+      sort_by: sortBy,
+      sort_order: sortOrder
     });
 
     try {
@@ -188,6 +220,7 @@
       elements.userTableBody.innerHTML = data.users.map(renderTableRow).join('');
       updatePagination(data.pagination);
       currentPage = data.pagination.page;
+      updateSortIcons();
     } catch (error) {
       console.error('Error fetching users:', error);
       showToast(`Failed to fetch users: ${error.message}`, 'error');
@@ -199,7 +232,34 @@
     }
   };
 
-  // Event listeners
+  const updateSortIcons = () => {
+    document.querySelectorAll('th[data-sort-key]').forEach(th => {
+      const icon = th.querySelector('.sort-icon');
+      if (th.dataset.sortKey === sortBy) {
+        icon.classList.add(sortOrder === 'asc' ? 'sort-asc' : 'sort-desc');
+        icon.classList.remove(sortOrder === 'asc' ? 'sort-desc' : 'sort-asc');
+      } else {
+        icon.classList.remove('sort-asc', 'sort-desc');
+      }
+    });
+  };
+
+  const handleSort = (sortKey) => {
+    if (sortBy === sortKey) {
+      sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortBy = sortKey;
+      sortOrder = 'asc';
+    }
+    fetchUsers(1);
+  };
+
+  document.querySelectorAll('th[data-sort-key]').forEach(th => {
+    th.addEventListener('click', () => {
+      handleSort(th.dataset.sortKey);
+    });
+  });
+
   const debouncedFetchUsers = debounce(() => fetchUsers(1), 300);
   elements.searchInput.addEventListener('input', debouncedFetchUsers);
   elements.roleSelect.addEventListener('change', () => fetchUsers(1));
@@ -208,10 +268,11 @@
     e.preventDefault();
     elements.searchInput.value = '';
     elements.roleSelect.value = '';
+    sortBy = '';
+    sortOrder = 'asc';
     fetchUsers(1);
   });
 
-  // Initial fetch
   fetchUsers(currentPage);
   });
 </script>
