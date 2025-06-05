@@ -216,51 +216,31 @@
               <label class="block text-base font-medium text-gray-700 mb-2">
                 Business Address Type <span class="text-red-500">*</span>
               </label>
-              <div class="flex flex-wrap gap-3 justify-start">
-                <label class="cursor-pointer">
-                  <input type="radio" name="business_address_type" value="Office" class="sr-only peer">
-                  <div
-                    class="px-6 py-2 rounded-full border border-gray-300 peer-checked:bg-indigo-500 peer-checked:text-white transition">
-                    Office
-                  </div>
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="business_address_type" value="Home" class="sr-only peer">
-                  <div
-                    class="px-6 py-2 rounded-full border border-gray-300 peer-checked:bg-indigo-500 peer-checked:text-white transition">
-                    Home
-                  </div>
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="business_address_type" value="Work" class="sr-only peer">
-                  <div
-                    class="px-6 py-2 rounded-full border border-gray-300 peer-checked:bg-indigo-500 peer-checked:text-white transition">
-                    Work
-                  </div>
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="business_address_type" value="Store" class="sr-only peer">
-                  <div
-                    class="px-6 py-2 rounded-full border border-gray-300 peer-checked:bg-indigo-500 peer-checked:text-white transition">
-                    Store
-                  </div>
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="business_address_type" value="Business" class="sr-only peer">
-                  <div
-                    class="px-6 py-2 rounded-full border border-gray-300 peer-checked:bg-indigo-500 peer-checked:text-white transition">
-                    Business
-                  </div>
-                </label>
-                <label class="cursor-pointer">
-                  <input type="radio" name="business_address_type" value="Other" class="sr-only peer">
-                  <div
-                    class="px-6 py-2 rounded-full border border-gray-300 peer-checked:bg-indigo-500 peer-checked:text-white transition">
-                    Other
-                  </div>
-                </label>
+              <div class="flex flex-wrap gap-3 justify-start" id="business-type-options">
+                <div
+                  class="option px-6 py-2 rounded-full border border-gray-300 text-gray-700 cursor-pointer transition"
+                  data-value="Office">Office</div>
+                <div
+                  class="option px-6 py-2 rounded-full border border-gray-300 text-gray-700 cursor-pointer transition"
+                  data-value="Home">Home</div>
+                <div
+                  class="option px-6 py-2 rounded-full border border-gray-300 text-gray-700 cursor-pointer transition"
+                  data-value="Work">Work</div>
+                <div
+                  class="option px-6 py-2 rounded-full border border-gray-300 text-gray-700 cursor-pointer transition"
+                  data-value="Store">Store</div>
+                <div
+                  class="option px-6 py-2 rounded-full border border-gray-300 text-gray-700 cursor-pointer transition"
+                  data-value="Business">Business</div>
+                <div
+                  class="option px-6 py-2 rounded-full border border-gray-300 text-gray-700 cursor-pointer transition"
+                  data-value="Other">Other</div>
               </div>
+
+              <!-- Hidden actual radio input to store selected value -->
+              <input type="hidden" name="business_address_type" id="business_address_type_input">
             </div>
+
             <!-- Business Address Type -->
 
             <!-- Grid Layout for Address Fields -->
@@ -450,7 +430,6 @@
 {% endblock %}
 
 {% block js %}
-
 <script>
   const indianStates = {{ INDIAN_STATES | tojson }};
   const stateDropdown = document.getElementById('state');
@@ -464,8 +443,24 @@
   const updateBtn = document.querySelector('button[type="submit"]');
   const selectedBusinessType = "{{ seller_data.business_address.type | default('') }}";
 
-  document.querySelectorAll('input[name="business_address_type"]').forEach((input) => {
-    if (input.value === selectedBusinessType) input.checked = true;
+  const businessOptions = document.querySelectorAll('#business-type-options .option');
+  const hiddenInput = document.getElementById('business_address_type_input');
+
+  const options = document.querySelectorAll('#business-type-options .option');
+
+  options.forEach(option => {
+    option.addEventListener('click', () => {
+      options.forEach(o => o.classList.remove('bg-indigo-500', 'text-white', 'border-indigo-500'));
+      option.classList.add('bg-indigo-500', 'text-white', 'border-indigo-500');
+      hiddenInput.value = option.dataset.value;
+    });
+  });
+
+  businessOptions.forEach(option => {
+    if (option.dataset.value === selectedBusinessType) {
+      option.classList.add('bg-indigo-500', 'text-white', 'border-indigo-500');
+      hiddenInput.value = selectedBusinessType;
+    }
   });
 
   if (selectAddressProofElement) selectAddressProofElement.value = address_proof_type;
@@ -533,7 +528,7 @@
     // Add businessInfo fields
     const businessInfo = formData.businessInfo;
     apiFormData.append('businessName', businessInfo.businessName);
-    apiFormData.append('businessType', businessInfo.businessType);
+    // apiFormData.append('businessType', businessInfo.businessType);
     apiFormData.append('businessEmail', businessInfo.businessEmail);
     apiFormData.append('businessMobile', businessInfo.businessMobile);
     apiFormData.append('gstNumber', businessInfo.gstNumber);
@@ -571,6 +566,7 @@
 
     if (result.success) {
       showToast('Seller updated successfully!', 'success');
+      window.load()
     } else {
       if (result.errors) {
         showToast(`Error: ${result.errors}`, 'error');
