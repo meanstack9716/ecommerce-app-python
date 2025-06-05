@@ -81,10 +81,12 @@ DELETE_SUB_CATEGORY_WEB_URL = '/delete_sub_category/<sub_category_id>'
 SUB_SUB_CATEGORY_LIST_WEB_URL = f'/sub-sub-category-list'
 SUB_SUB_CATEGORY_WEB_URL = f'sub-sub-category/add'
 
-ADD_NEW_PRODUCT_WEB_URL = f'/products/add'
+ADD_NEW_PRODUCT_WEB_URL = f'/api/products/add'
+ADD_PRODUCT_PAGE_WEB_URL = f'/products/add'
 GET_PRODUCT_LIST_WEB_URL = f'/products/list'
 GET_PRODUCT_DETAILS_WEB_URL = f'/products/<product_id>'
 GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL = f'/products/edit/<product_id>'
+EDIT_PRODUCT_WEB_URL = f'/api/products/edit'
 
 GET_BRANDS_WEB_URL = f'/brands/list'
 ADD_BRAND_WEB_URL = f'/brands/add'
@@ -129,10 +131,8 @@ GET_SUBSUBCATEGORIES_BY_CATEGORY_ID_API = '/api/sub-sub-categories/list';
 # Sub Sub Category API Endpoint Constants End
 
 #Product API Endpoint Constants Start
-ADD_NEW_PRODUCT_API = f'/api/products/add'
 PRODUCT_LISTS_API= f'/api/products/list'
 PRODUCT_LISTS__BY_ID_API = f'/api/products/<string:product_id>'
-EDIT_PRODUCT_API = f'/api/products/edit'
 PRODUCT_LISTS_BY_ID_API = f'/api/products/<string:product_id>'
 PRODUCT_REVIEW_API = f'/api/products/review'
 GET_PRODUCT_REVIEW_BY_ID_API = f'/api/products/review/<string:product_id>'

@@ -12,7 +12,6 @@ function validateStep2(quill) {
     isValid = validators.required(document.getElementById('price'), 'Price', 'price-error') && isValid;
     isValid = validators.required(document.getElementById('stock'), 'Stock', 'stock-error') && isValid;
     isValid = validators.required(document.getElementById('discount_price'), 'Discount Price', 'discount-error') && isValid;
-    isValid = validators.required(document.getElementById('sku'), 'SKU', 'sku-error') && isValid;
     isValid = validators.required(document.getElementById('brand'), 'Brand', 'brand-error') && isValid;
 
     return isValid;

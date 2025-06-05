@@ -76,7 +76,7 @@ admin_content %}
         <div>
           <label for="sku" class="block text-base font-medium text-black">SKU <span
               class="text-red-500">*</span></label>
-          <input type="text" name="sku" id="sku" placeholder="Product identifier" value="{{ product.sku }}"
+          <input type="text" name="sku" id="sku" placeholder="Product identifier" value="{{ product.sku }}" readonly
             class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out" />
         </div>
       </div>
@@ -905,7 +905,6 @@ admin_content %}
         price: document.getElementById("price").value,
         discount_price: document.getElementById("discount_price").value,
         stock_quantity: document.getElementById("stock").value,
-        sku_number: document.getElementById("sku").value,
         category_id: productData.category.id,
         subcategory_id: productData.sub_category.id,
         subsubcategory_id: productData.sub_sub_category.id,
@@ -1040,7 +1039,6 @@ admin_content %}
         price: document.getElementById("price").value,
         discount_price: document.getElementById("discount_price").value,
         stock: document.getElementById("stock").value,
-        sku: document.getElementById("sku").value,
         brand:
           DOM.brandSelect.value === "other"
             ? DOM.otherBrandInput.value
@@ -1099,7 +1097,6 @@ admin_content %}
         .getElementById("discount_price")
         .addEventListener("input", updateSaveButtonState);
       document.getElementById("stock").addEventListener("input", updateSaveButtonState);
-      document.getElementById("sku").addEventListener("input", updateSaveButtonState);
       DOM.brandSelect.addEventListener("change", updateSaveButtonState);
       DOM.otherBrandInput.addEventListener("input", updateSaveButtonState);
 
