@@ -5,10 +5,9 @@ from app.utils.utils import generate_random_password, create_error_response
 from app import db
 from mongoengine import ValidationError
 from app.utils.image_upload import upload_image, validate_fields
-from constants import ADD_SELLER, ADDRESS_TYPES
+from constants import ADD_SELLER, ADDRESS_TYPES, UPDATE_SELLER
 
 seller_bp = Blueprint('seller', __name__, url_prefix='/user')
-
 
 @seller_bp.route(ADD_SELLER, methods=['POST'])
 def add_seller():
@@ -134,6 +133,157 @@ def add_seller():
                 "user_id": str(user.id),
                 "seller_id": str(seller.id),
                 "address_id": str(personal_address.id),
+                "business_address_id": str(business_address.id) if business_address else None
+            }), 200
+
+        except ValidationError as e:
+            session.abort_transaction()
+            return create_error_response({"message": f"Validation error: {str(e)}"}, 400)
+        except Exception as e:
+            session.abort_transaction()
+            import traceback
+            traceback.print_exc()
+            return create_error_response({"message": f"Internal server error: {str(e)}"}, 500)
+
+
+
+@seller_bp.route(UPDATE_SELLER, methods=['PUT'])
+def update_seller():
+    data = request.form
+    files = request.files
+    seller_id = data.get('seller_id')
+    
+    if not seller_id:
+        return create_error_response({"seller_id": "Seller ID is required"}, 400)
+
+    seller = Seller.objects(id=seller_id).first()
+    if not seller:
+        return create_error_response({"seller_id": "Seller not found"}, 404)
+
+    user = User.objects(id=seller.user_id.id).first()
+    if not user:
+        return create_error_response({"user": "Associated user not found"}, 404)
+
+    updatable_user_fields = ['email', 'first_name', 'last_name', 'phoneNumber']
+    updatable_seller_fields = ['businessName', 'businessType', 'businessEmail', 'businessMobile', 'gstNumber']
+    updatable_address_fields = ['address[line1]', 'address[line2]', 'address[city]', 'address[state]', 
+                              'address[postal_code]', 'address[country]', 'address[type]']
+    updatable_business_address_fields = ['businessAddress[line1]', 'businessAddress[line2]', 
+                                       'businessAddress[city]', 'businessAddress[state]', 
+                                       'businessAddress[postal_code]', 'businessAddress[country]', 
+                                       'businessAddress[type]']
+    updatable_identification_fields = ['addressProofIdType', 'idNumber', 'panNumber']
+
+    with db.connection.start_session() as session:
+        session.start_transaction()
+        try:
+            if 'email' in data:
+                is_valid, email_error = validate_email(data.get('email'))
+                if not is_valid:
+                    return create_error_response({"email": email_error}, 400)
+                existing_user = User.objects(email=data.get('email')).first()
+                if existing_user and str(existing_user.id) != str(user.id):
+                    return create_error_response({"email": "Email already in use"}, 409)
+
+            for field in updatable_user_fields:
+                if field in data:
+                    if field == 'phoneNumber':
+                        setattr(user, 'phone_number', data.get(field))
+                    else:
+                        setattr(user, field, data.get(field))
+            user.save(session=session)
+
+            personal_address = Address.objects(user_id=user.id, is_primary=True).first()
+            if any(field in data for field in updatable_address_fields):
+                if not personal_address:
+                    personal_address = Address(user_id=user.id, is_primary=True)
+                
+                address_data = {}
+                for key in updatable_address_fields:
+                    if key in data:
+                        field_name = key.split('[')[1][:-1] 
+                        address_data[field_name] = data.get(key)
+                
+                if 'type' in address_data and address_data['type'] not in ADDRESS_TYPES:
+                    raise ValidationError(f"Invalid personal address type: {address_data['type']}")
+                
+                for key, value in address_data.items():
+                    if value is not None:
+                        setattr(personal_address, key, value)
+                personal_address.save(session=session)
+
+            business_address = Address.objects(user_id=user.id, is_primary=False).first()
+            if any(field in data for field in updatable_business_address_fields):
+                business_address_data = {}
+                for key in updatable_business_address_fields:
+                    if key in data:
+                        field_name = key.split('[')[1][:-1]
+                        business_address_data[field_name] = data.get(key)
+                
+                if business_address_data:
+                    if 'type' in business_address_data and business_address_data['type'] not in ADDRESS_TYPES:
+                        raise ValidationError(f"Invalid business address type: {business_address_data['type']}")
+                    
+                    if not business_address:
+                        business_address = Address(user_id=user.id, is_primary=False)
+                    
+                    for key, value in business_address_data.items():
+                        if value is not None:
+                            setattr(business_address, key, value)
+                    business_address.save(session=session)
+
+            for field in updatable_seller_fields:
+                if field in data:
+                    # Map form field names to model field names
+                    model_field = {
+                        'businessName': 'business_name',
+                        'businessType': 'business_type',
+                        'businessEmail': 'business_email',
+                        'businessMobile': 'business_mobile',
+                        'gstNumber': 'gst_number'
+                    }.get(field, field)
+                    setattr(seller, model_field, data.get(field))
+            
+            if personal_address:
+                seller.address = personal_address
+            seller.save(session=session)
+
+            identification = Identification.objects(user_id=user.id).first()
+            if any(field in data for field in updatable_identification_fields) or 'panCardFront' in files or 'addressProofFront' in files:
+                if not identification:
+                    identification = Identification(user_id=user.id)
+                
+                for field in updatable_identification_fields:
+                    if field in data:
+                        # Map form field names to model field names
+                        model_field = {
+                            'addressProofIdType': 'address_proof_id_type',
+                            'panNumber': 'pan_number',
+                            'idNumber': 'id_number'
+                        }.get(field, field)
+                        setattr(identification, model_field, data.get(field))
+                
+                if 'panCardFront' in files and files['panCardFront'].filename:
+                    pan_card_front_url, err = upload_image(files['panCardFront'])
+                    if err:
+                        raise Exception(err)
+                    identification.pan_card_front = pan_card_front_url
+                
+                if 'addressProofFront' in files and files['addressProofFront'].filename:
+                    address_proof_front_url, err = upload_image(files['addressProofFront'])
+                    if err:
+                        raise Exception(err)
+                    identification.address_proof_front = address_proof_front_url
+                
+                identification.save(session=session)
+
+            session.commit_transaction()
+
+            return jsonify({
+                "message": "Seller updated successfully",
+                "user_id": str(user.id),
+                "seller_id": str(seller.id),
+                "address_id": str(personal_address.id) if personal_address else None,
                 "business_address_id": str(business_address.id) if business_address else None
             }), 200
 

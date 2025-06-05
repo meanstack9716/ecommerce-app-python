@@ -292,43 +292,50 @@ function validateBusinessDetails() {
   const fields = {
     panNumber: document.getElementById("pan_card_number"),
     panCardFront: document.getElementById("pan_card_front"),
+    panCardFrontExisting: document.getElementById("pan_card_front-existing-image"),
     addressProofIdType: document.getElementById("address_proof_id_type"),
     idNumber: document.getElementById("id_number"),
     addressProofFront: document.getElementById("address_proof_front"),
-  }
+    addressProofFrontExisting: document.getElementById("address_proof_front-existing-image"),
+  };
+
+  // Check if images are present (either newly uploaded or already exist)
+  const hasPanCardFront =
+    (fields.panCardFront && fields.panCardFront.files.length > 0) ||
+    (fields.panCardFrontExisting && fields.panCardFrontExisting.value.trim() !== "");
+
+  const hasAddressProofFront =
+    (fields.addressProofFront && fields.addressProofFront.files.length > 0) ||
+    (fields.addressProofFrontExisting && fields.addressProofFrontExisting.value.trim() !== "");
+
   // Validate required fields
   const isRequiredValid = [
     validators.required(fields.panNumber, "PAN number"),
-    validators.required(fields.panCardFront, "PAN Card Front Photo"),
+    hasPanCardFront || validators.required(fields.panCardFront, "PAN Card Front Photo"),
     validators.required(fields.addressProofIdType, "Address Proof ID Type"),
     validators.required(fields.idNumber, "ID Number"),
-    validators.required(fields.addressProofFront, "Address Proof Front Photo"),
-    // validators.required(fields.addressProofBack, "Address Proof Back Photo"),
+    hasAddressProofFront || validators.required(fields.addressProofFront, "Address Proof Front Photo"),
     validatePANNumber(fields.panNumber),
-  ].every((result) => result === true)
+  ].every((result) => result === true);
 
-  if (!isRequiredValid) return false
+  if (!isRequiredValid) return false;
 
   const areImagesValid = [
-    validateImage(fields.panCardFront),
-    validateImage(fields.addressProofFront),
-    // validateImage(fields.addressProofBack),
-  ].every((result) => result === true)
+    fields.panCardFront.files.length > 0 ? validateImage(fields.panCardFront) : true,
+    fields.addressProofFront.files.length > 0 ? validateImage(fields.addressProofFront) : true,
+  ].every((result) => result === true);
 
-  if (!areImagesValid) return false
+  if (!areImagesValid) return false;
 
-  // Return validated data
   return {
     panNumber: fields.panNumber.value.trim(),
-    panCardFront: fields.panCardFront.files[0] || null,
-    idNumber: fields.idNumber.value,
+    panCardFront: fields.panCardFront.files[0] || fields.panCardFrontExisting.value || null,
     addressProofIdType: fields.addressProofIdType.value,
-    addressProofFront: fields.addressProofFront.files[0] || null,
-    // addressProofBack: fields.addressProofBack.files[0] || null,
-  }
+    idNumber: fields.idNumber.value,
+    addressProofFront: fields.addressProofFront.files[0] || fields.addressProofFrontExisting.value || null,
+  };
 }
 
-// Add event listeners to clear errors when user starts typing
 function setupFieldValidation(field) {
   field.addEventListener("input", () => {
     if (field.value.trim()) {

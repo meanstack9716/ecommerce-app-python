@@ -78,7 +78,7 @@
                 <thead class="bg-gray-50">
                     <tr>
                         {% for header in product_headers %}
-                        <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap
+                        <th scope="col" class="px-4 py-3 border border-gray-200 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap
                                 {% if header.responsive == 'sm' %} hidden sm:table-cell
                                 {% elif header.responsive == 'md' %} hidden md:table-cell
                                 {% elif header.responsive == 'lg' %} hidden lg:table-cell
@@ -92,7 +92,7 @@
                 <tbody id="product-table-body" class="bg-white divide-y divide-gray-200 text-center">
                     {% for product in products.items %}
                     <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3 text-center whitespace-nowrap">
+                        <td class="px-4 py-3 border border-gray-200 text-center whitespace-nowrap">
                             <div class="w-12 h-12 mx-auto flex items-center justify-center">
                                 {% if product.variants %}
                                 {% set first_variant = product.variants[0] %}
@@ -107,13 +107,13 @@
                                 {% endif %}
                             </div>
                         </td>
-                        <td class="px-4 py-3 text-center whitespace-normal max-w-xs">
+                        <td class="px-4 py-3 border border-gray-200 text-center whitespace-normal max-w-xs">
                             <div class="text-sm font-medium text-gray-900 line-clamp-2">{{ product.name }}</div>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap">
+                        <td class="px-4 py-3 border border-gray-200 whitespace-nowrap">
                             <div class="text-sm font-bold text-gray-900">₹{{ product.price|int }}</div>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-center hidden sm:table-cell">
+                        <td class="px-4 py-3 border border-gray-200 whitespace-nowrap text-center hidden sm:table-cell">
                             <div class="text-sm text-gray-500">
                                 {% if product.discount_price > 0 %}
                                 {{ product.discount_price }}%
@@ -122,13 +122,13 @@
                                 {% endif %}
                             </div>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-center hidden md:table-cell">
+                        <td class="px-4 py-3 border border-gray-200 whitespace-nowrap text-center hidden md:table-cell">
                             <div class="text-sm font-bold text-gray-900">₹{{ product.final_price|int }}</div>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-center hidden lg:table-cell">
+                        <td class="px-4 py-3 border border-gray-200 whitespace-nowrap text-center hidden lg:table-cell">
                             <div class="text-sm text-gray-500">{{ product.sku_number or '-' }}</div>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-center text-right">
+                        <td class="px-4 py-3 border border-gray-200 whitespace-nowrap text-center text-right">
                             <div class="flex justify-center space-x-2">
                                 <a href="{{ url_for('admin_api.edit_product_page', product_id=product.id) }}"
                                     class="text-blue-600 hover:text-blue-800" title="Edit">
@@ -254,13 +254,13 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Image</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Name</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Price</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Discount</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Final Price</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">SKU</th>
-                            <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                            <th scope="col" class="px-4 py-3 border border-gray-200 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Image</th>
+                            <th scope="col" class="px-4 py-3 border border-gray-200 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Name</th>
+                            <th scope="col" class="px-4 py-3 border border-gray-200 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Price</th>
+                            <th scope="col" class="px-4 py-3 border border-gray-200 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Discount</th>
+                            <th scope="col" class="px-4 py-3 border border-gray-200 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Final Price</th>
+                            <th scope="col" class="px-4 py-3 border border-gray-200 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">SKU</th>
+                            <th scope="col" class="px-4 py-3 border border-gray-200 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="product-table-body" class="bg-white divide-y divide-gray-200"></tbody>

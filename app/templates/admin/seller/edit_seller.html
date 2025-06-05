@@ -472,21 +472,6 @@
 
   if (selectBusinessTypeElement) selectBusinessTypeElement.value = business_type;
 
-  indianStates.forEach(state => {
-    const option = document.createElement('option');
-    option.value = state;
-    option.textContent = state;
-    stateDropdown.appendChild(option);
-  });
-
-  indianStates.forEach(state => {
-    const option = document.createElement('option');
-    option.value = state;
-    option.textContent = state;
-    businessStateDropdown.appendChild(option);
-  });
-
-
   function populateStateDropdown(dropdown, selectedValue) {
     dropdown.innerHTML = '<option value="">Select a state</option>';
     indianStates.forEach(state => {
@@ -519,16 +504,89 @@
     return false;
   }
 
-
   updateBtn.addEventListener('click', async function (e) {
     e.preventDefault();
     if (!validateCurrentStep()) {
       return;
     }
-    console.log(formData, ">>>>>>>>>>>>>>")
+
+    // Create FormData object for API request
+    const apiFormData = new FormData();
+
+    // Add seller_id (assuming it's available in seller_data)
+    apiFormData.append('seller_id', "{{ seller_data.seller.id }}");
+
+    // Add personalInfo fields
+    const personalInfo = formData.personalInfo;
+    apiFormData.append('email', personalInfo.email);
+    apiFormData.append('first_name', personalInfo.first_name);
+    apiFormData.append('last_name', personalInfo.last_name);
+    apiFormData.append('phoneNumber', personalInfo.phoneNumber);
+    apiFormData.append('address[line1]', personalInfo.address.line1);
+    apiFormData.append('address[streetLine2]', personalInfo.address.streetLine2 || '');
+    apiFormData.append('address[city]', personalInfo.address.city);
+    apiFormData.append('address[state]', personalInfo.address.state);
+    apiFormData.append('address[postal_code]', personalInfo.address.postal_code);
+    apiFormData.append('address[country]', personalInfo.address.country);
+    apiFormData.append('address[type]', personalInfo.address.type || 'Home');
+
+    // Add businessInfo fields
+    const businessInfo = formData.businessInfo;
+    apiFormData.append('businessName', businessInfo.businessName);
+    apiFormData.append('businessType', businessInfo.businessType);
+    apiFormData.append('businessEmail', businessInfo.businessEmail);
+    apiFormData.append('businessMobile', businessInfo.businessMobile);
+    apiFormData.append('gstNumber', businessInfo.gstNumber);
+    
+    // Add business address if provided
+    if (businessInfo.businessAddress && businessInfo.businessAddress.line1) {
+      apiFormData.append('businessAddress[line1]', businessInfo.businessAddress.line1);
+      apiFormData.append('businessAddress[streetLine2]', businessInfo.businessAddress.streetLine2 || '');
+      apiFormData.append('businessAddress[city]', businessInfo.businessAddress.city);
+      apiFormData.append('businessAddress[state]', businessInfo.businessAddress.state);
+      apiFormData.append('businessAddress[postal_code]', businessInfo.businessAddress.postal_code);
+      apiFormData.append('businessAddress[country]', businessInfo.businessAddress.country);
+      apiFormData.append('businessAddress[type]', businessInfo.businessAddress.type || 'Business');
+    }
+
+    // Add identification fields
+    const businessDetails = formData.businessDetails;
+    apiFormData.append('addressProofIdType', businessDetails.addressProofIdType);
+    apiFormData.append('idNumber', businessDetails.idNumber);
+    apiFormData.append('panNumber', businessDetails.panNumber);
+
+    // Handle file inputs for panCardFront and addressProofFront
+    const panCardFrontInput = document.getElementById('panCardFront');
+    const addressProofFrontInput = document.getElementById('addressProofFront');
+    
+    if (panCardFrontInput && panCardFrontInput.files.length > 0) {
+      apiFormData.append('panCardFront', panCardFrontInput.files[0]);
+    }
+    
+    if (addressProofFrontInput && addressProofFrontInput.files.length > 0) {
+      apiFormData.append('addressProofFront', addressProofFrontInput.files[0]);
+    }
+
+    try {
+      const response = await fetch('/user/seller/update', {
+        method: 'PUT',
+        body: apiFormData
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert('Seller updated successfully!');
+        console.log(result);
+        // Optionally redirect or update UI
+      } else {
+        alert(`Error: ${result.message || 'Failed to update seller'}`);
+        console.error(result);
+      }
+    } catch (error) {
+      console.error('Error updating seller:', error);
+      alert('An error occurred while updating the seller.');
+    }
   });
-
-
 </script>
-
 {% endblock %}
