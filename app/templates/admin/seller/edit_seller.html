@@ -263,7 +263,7 @@
             </div>
             <!-- Business Address Type -->
 
-            <!-- Grid Layout for Address Fields -->             
+            <!-- Grid Layout for Address Fields -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
               <!-- Street Line 1 -->
               <div>
@@ -537,7 +537,7 @@
     apiFormData.append('businessEmail', businessInfo.businessEmail);
     apiFormData.append('businessMobile', businessInfo.businessMobile);
     apiFormData.append('gstNumber', businessInfo.gstNumber);
-    
+
     // Add business address if provided
     if (businessInfo.businessAddress && businessInfo.businessAddress.line1) {
       apiFormData.append('businessAddress[line1]', businessInfo.businessAddress.line1);
@@ -558,35 +558,27 @@
     // Handle file inputs for panCardFront and addressProofFront
     const panCardFrontInput = document.getElementById('panCardFront');
     const addressProofFrontInput = document.getElementById('addressProofFront');
-    
+
     if (panCardFrontInput && panCardFrontInput.files.length > 0) {
       apiFormData.append('panCardFront', panCardFrontInput.files[0]);
     }
-    
+
     if (addressProofFrontInput && addressProofFrontInput.files.length > 0) {
       apiFormData.append('addressProofFront', addressProofFrontInput.files[0]);
     }
 
-    try {
-      const response = await fetch('/user/seller/update', {
-        method: 'PUT',
-        body: apiFormData
-      });
+    const result = await sendPostRequest('/user/seller/update', apiFormData, 'PUT');
 
-      const result = await response.json();
-      
-      if (response.ok) {
-        alert('Seller updated successfully!');
-        console.log(result);
-        // Optionally redirect or update UI
+    if (result.success) {
+      showToast('Seller updated successfully!', 'success');
+    } else {
+      if (result.errors) {
+        showToast(`Error: ${result.errors}`, 'error');
       } else {
-        alert(`Error: ${result.message || 'Failed to update seller'}`);
-        console.error(result);
+        showToast(`Error: ${result.message}`, 'error');
       }
-    } catch (error) {
-      console.error('Error updating seller:', error);
-      alert('An error occurred while updating the seller.');
     }
+
   });
 </script>
 {% endblock %}

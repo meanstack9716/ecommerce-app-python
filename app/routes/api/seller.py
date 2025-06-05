@@ -164,8 +164,9 @@ def update_seller():
     if not user:
         return create_error_response({"user": "Associated user not found"}, 404)
 
+    # Define updatable fields
     updatable_user_fields = ['email', 'first_name', 'last_name', 'phoneNumber']
-    updatable_seller_fields = ['businessName', 'businessType', 'businessEmail', 'businessMobile', 'gstNumber']
+    updatable_seller_fields = ['businessName', 'businessType', 'businessEmail', 'businessMobile', 'gst_number']
     updatable_address_fields = ['address[line1]', 'address[line2]', 'address[city]', 'address[state]', 
                               'address[postal_code]', 'address[country]', 'address[type]']
     updatable_business_address_fields = ['businessAddress[line1]', 'businessAddress[line2]', 
@@ -177,6 +178,7 @@ def update_seller():
     with db.connection.start_session() as session:
         session.start_transaction()
         try:
+            # Validate and update user fields
             if 'email' in data:
                 is_valid, email_error = validate_email(data.get('email'))
                 if not is_valid:
@@ -193,6 +195,7 @@ def update_seller():
                         setattr(user, field, data.get(field))
             user.save(session=session)
 
+            # Update personal address
             personal_address = Address.objects(user_id=user.id, is_primary=True).first()
             if any(field in data for field in updatable_address_fields):
                 if not personal_address:
@@ -212,7 +215,8 @@ def update_seller():
                         setattr(personal_address, key, value)
                 personal_address.save(session=session)
 
-            business_address = Address.objects(user_id=user.id, is_primary=False).first()
+            # Update business address
+            business_address = seller.businessAddress or Address.objects(user_id=user.id, type='business').first()
             if any(field in data for field in updatable_business_address_fields):
                 business_address_data = {}
                 for key in updatable_business_address_fields:
@@ -225,29 +229,24 @@ def update_seller():
                         raise ValidationError(f"Invalid business address type: {business_address_data['type']}")
                     
                     if not business_address:
-                        business_address = Address(user_id=user.id, is_primary=False)
+                        business_address = Address(user_id=user.id, type='business', is_primary=False)
                     
                     for key, value in business_address_data.items():
                         if value is not None:
                             setattr(business_address, key, value)
                     business_address.save(session=session)
+                    seller.businessAddress = business_address
 
+            # Update seller fields - FIXED THIS SECTION
             for field in updatable_seller_fields:
                 if field in data:
-                    # Map form field names to model field names
-                    model_field = {
-                        'businessName': 'business_name',
-                        'businessType': 'business_type',
-                        'businessEmail': 'business_email',
-                        'businessMobile': 'business_mobile',
-                        'gstNumber': 'gst_number'
-                    }.get(field, field)
-                    setattr(seller, model_field, data.get(field))
+                    setattr(seller, field, data.get(field))
             
             if personal_address:
                 seller.address = personal_address
             seller.save(session=session)
 
+            # Update identification documents
             identification = Identification.objects(user_id=user.id).first()
             if any(field in data for field in updatable_identification_fields) or 'panCardFront' in files or 'addressProofFront' in files:
                 if not identification:
@@ -255,13 +254,7 @@ def update_seller():
                 
                 for field in updatable_identification_fields:
                     if field in data:
-                        # Map form field names to model field names
-                        model_field = {
-                            'addressProofIdType': 'address_proof_id_type',
-                            'panNumber': 'pan_number',
-                            'idNumber': 'id_number'
-                        }.get(field, field)
-                        setattr(identification, model_field, data.get(field))
+                        setattr(identification, field, data.get(field))
                 
                 if 'panCardFront' in files and files['panCardFront'].filename:
                     pan_card_front_url, err = upload_image(files['panCardFront'])
@@ -288,10 +281,6 @@ def update_seller():
             }), 200
 
         except ValidationError as e:
-            session.abort_transaction()
             return create_error_response({"message": f"Validation error: {str(e)}"}, 400)
         except Exception as e:
-            session.abort_transaction()
-            import traceback
-            traceback.print_exc()
             return create_error_response({"message": f"Internal server error: {str(e)}"}, 500)

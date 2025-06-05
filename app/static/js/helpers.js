@@ -1,7 +1,7 @@
-async function sendPostRequest(url, formData) {
+async function sendPostRequest(url, formData, method = 'POST') {
   try {
     const response = await fetch(url, {
-      method: 'POST',
+      method: method,
       body: formData,
       credentials: 'include' 
     });
