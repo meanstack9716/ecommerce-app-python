@@ -46,7 +46,7 @@ async function sendGetRequest(url) {
   try {
     const response = await fetch(url, {
       method: 'GET',
-      credentials: 'include', // includes cookies/session if needed
+      credentials: 'include',
     });
 
     const responseData = await response.json();

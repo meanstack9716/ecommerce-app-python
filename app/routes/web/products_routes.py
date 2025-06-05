@@ -54,11 +54,102 @@ def get_filtered_products(seller_id=None):
 def get_product_lists():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
-    try:
-        categories = Category.objects().all()
-        return render_template('admin/products/product_list.html', categories=categories)
-    except Exception as e:
-        return render_template('admin/products/product_list.html', categories=[], error=str(e))
+
+    current_user = User.objects(id=session['user_id']).first()
+    if not current_user:
+        return redirect(url_for('admin_api.login_page'))
+
+    if current_user.is_admin:
+        products, categories, error = get_filtered_products()
+    else:
+        seller = Seller.objects(user_id=current_user).first()
+        if not seller:
+            error_message = 'Seller profile not found. Please contact administrator.'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return create_error_response({'error': error_message}, 400)
+            return render_template(
+                'admin/products/product_list.html',
+                products=None,
+                categories=Category.objects.all(),
+                local_ip=local_ip,
+                error=error_message,
+                is_admin=False
+            )
+        products, categories, error = get_filtered_products(seller_id=seller.id)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        if error:
+            return create_error_response({'error': error}, 400)
+        if not products or products.total == 0:
+            return jsonify({'message': 'No products found'}), 200
+
+        product_data = []
+        for product in products.items:
+            image_url = None
+            if product.variants and product.variants[0].images:
+                image_url = f"http://{local_ip}:8080/static/uploads/{product.variants[0].images[0].image_url}"
+
+            product_data.append({
+                'name': product.name,
+                'price': float(product.price) if product.price else 0,
+                'discount_price': float(product.discount_price) if product.discount_price else 0,
+                'final_price': float(product.final_price) if product.final_price else 0,
+                'sku_number': product.sku_number or '-',
+                'image_url': image_url,
+                'edit_url': url_for('admin_api.edit_product', product_id=str(product.id)),
+                'details_url': url_for('admin_api.product_details', product_id=str(product.id))
+            })
+
+        return jsonify({
+            'products': product_data,
+            'page': products.page,
+            'pages': products.pages,
+            'has_prev': products.has_prev,
+            'has_next': products.has_next,
+            'prev_num': products.prev_num,
+            'next_num': products.next_num
+        })
+
+    # Handle AJAX request
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        if error:
+            return jsonify({'error': error}), 400
+
+        product_data = []
+        for product in products.items:
+            image_url = None
+            if product.variants and product.variants[0].images:
+                image_url = f"http://{local_ip}:8080/static/uploads/{product.variants[0].images[0].image_url}"
+
+            product_data.append({
+                'name': product.name,
+                'price': product.price,
+                'discount_price': product.discount_price,
+                'final_price': product.final_price,
+                'sku_number': product.sku_number or '-',
+                'image_url': image_url,
+                'edit_url': url_for('admin_api.edit_product', product_id=product.id),
+                'details_url': url_for('admin_api.product_details', product_id=product.id)
+            })
+
+        return jsonify({
+            'products': product_data,
+            'page': products.page,
+            'pages': products.pages,
+            'has_prev': products.has_prev,
+            'has_next': products.has_next,
+            'prev_num': products.prev_num,
+            'next_num': products.next_num
+        })
+
+    return render_template(
+        'admin/products/product_list.html',
+        products=products,
+        categories=categories,
+        local_ip=local_ip,
+        error=error,
+        is_admin=current_user.is_admin
+    )
 
 
 @admin_api.route(GET_PRODUCT_DETAILS_WEB_URL, methods=['GET'])

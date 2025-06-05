@@ -23,7 +23,8 @@ class User(db.Document):
     cloudinary_id = db.StringField()
     is_admin = db.BooleanField(default=False)
     is_email_verified = db.BooleanField(default=False)
-
+    status = db.StringField(choices=["activated", "deactivated", "hold"], default="activated")
+    
     def hash_password(self):
         self.password = generate_password_hash(self.password).decode('utf8')
 
@@ -40,12 +41,12 @@ class User(db.Document):
         if not Seller.objects(user_id=self).first():
             address = Address(
                 user_id=self,
-                line1=os.getenv("DEFAULT_ADMIN_ADDRESS_LINE1", "Corporate Office"),
-                line2=os.getenv("DEFAULT_ADMIN_ADDRESS_LINE2", "Administration Department"),
-                city=os.getenv("DEFAULT_ADMIN_ADDRESS_CITY", "Headquarters"),
-                state=os.getenv("DEFAULT_ADMIN_ADDRESS_STATE", "Main State"),
-                postal_code=os.getenv("DEFAULT_ADMIN_ADDRESS_POSTAL_CODE", "100001"),
-                country=os.getenv("DEFAULT_ADMIN_ADDRESS_COUNTRY", "Business Country"),
+                line1=os.getenv("DEFAULT_ADMIN_ADDRESS_LINE1"),
+                line2=os.getenv("DEFAULT_ADMIN_ADDRESS_LINE2"),
+                city=os.getenv("DEFAULT_ADMIN_ADDRESS_CITY"),
+                state=os.getenv("DEFAULT_ADMIN_ADDRESS_STATE"),
+                postal_code=os.getenv("DEFAULT_ADMIN_ADDRESS_POSTAL_CODE"),
+                country=os.getenv("DEFAULT_ADMIN_ADDRESS_COUNTRY"),
                 contact_name=f"{self.first_name} {self.last_name}",
                 contact_number=int(self.phone_number) if self.phone_number and self.phone_number.isdigit() else 9999999999,
                 type="Business",
@@ -56,12 +57,12 @@ class User(db.Document):
             seller = Seller(
                 user_id=self,
                 businessName=os.getenv("DEFAULT_ADMIN_BUSINESS_NAME", f"{self.first_name} {self.last_name} Administration"),
-                businessType=os.getenv("DEFAULT_ADMIN_BUSINESS_TYPE", "Corporate"),
+                businessType=os.getenv("DEFAULT_ADMIN_BUSINESS_TYPE"),
                 businessEmail=self.email,
                 businessMobile=self.phone_number or "9999999999",
                 address=address,
                 businessAddress=address,
-                gst_number=os.getenv("DEFAULT_ADMIN_GST_NUMBER", "ADMIN0000000"),
+                gst_number=os.getenv("DEFAULT_ADMIN_GST_NUMBER"),
                 is_approved='approved',
                 approved_by=self
             )
@@ -76,14 +77,15 @@ class User(db.Document):
 
         if not User.objects(email=os.getenv("DEFAULT_ADMIN_EMAIL")).first():
             admin = User(
-                first_name=os.getenv("DEFAULT_ADMIN_FIRST_NAME", "Admin"),
-                last_name=os.getenv("DEFAULT_ADMIN_LAST_NAME", "User"),
-                email=os.getenv("DEFAULT_ADMIN_EMAIL", "admin@example.com"),
-                password=os.getenv("DEFAULT_ADMIN_PASSWORD", "securepassword"),
-                phone_number=os.getenv("DEFAULT_ADMIN_PHONE", "9999999999"),
+                first_name=os.getenv("DEFAULT_ADMIN_FIRST_NAME"),
+                last_name=os.getenv("DEFAULT_ADMIN_LAST_NAME"),
+                email=os.getenv("DEFAULT_ADMIN_EMAIL"),
+                password=os.getenv("DEFAULT_ADMIN_PASSWORD"),
+                phone_number=os.getenv("DEFAULT_ADMIN_PHONE"),
                 role=role,
                 is_admin=True,
-                is_email_verified=True
+                is_email_verified=True,
+                status="activated"
             )
             admin.hash_password()
             admin.save()

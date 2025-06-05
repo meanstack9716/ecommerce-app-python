@@ -22,6 +22,16 @@ ORDER_STATUS = ['pending', 'confirmed', 'processing', 'shipped', 'outOfDelivery'
 
 ADDRESS_TYPES = ['Home', 'Office', 'Work', 'Store', 'Business', 'Other']
 
+INDIAN_STATES = [
+        "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar",
+        "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
+        "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand",
+        "Karnataka", "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh", "Maharashtra",
+        "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab",
+        "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
+        "Uttarakhand", "West Bengal"
+    ];
+
 PROMO_CODE_TYPES = ['percentage', 'fixed_amount']
 PROMO_CODE_APPLICABLE_TO = ['all', 'specific']
 
@@ -44,14 +54,18 @@ RESET_PASSWORD_WEB_URL = f'/reset-password'
 DASHBOARD_WEB_URL = f'/dashboard'
 
 ALL_USER_LIST_WEB_URL = f'/all-users-list'
+ADD_NEW_USER_LIST_WEB_URL = f'/add-new-user'
+EDIT_USER_WEB_URL = f'/users/edit/<string:user_id>'
 
 ADD_SELLER_WEB_URL = f'/add-new-seller'
 GET_SELLER_LIST_WEB_URL = f'/seller/list'
 GET_SELLERS_API_URL = '/api/sellers'
+EDIT_SELLERS_PAGE_WEB_URL = '/seller/edit/<seller_id>'
 
 CATEGORY_LIST_WEB_URL = '/category-list'
 ADD_CATEGORY_WEB_URL = '/add-new-category'
 CATEGORY_LIST_WEB_URL = '/category/list'
+SEARCH_CATEGORY_WEB_URL = f'/api/categories/search'
 GET_CATEGORIES_FILTER_API_URL = '/categories-list'
 DELETE_CATEGORIES_API_WEB_URL = '/delete_category/<category_id>'
 EDIT_CATEGORY_WEB_URL = '/category/edit/<category_id>'
@@ -59,6 +73,10 @@ EDIT_CATEGORY_WEB_URL = '/category/edit/<category_id>'
 SUBCATEGORY_LIST_WEB_URL = f'/sub-categories/list'
 Add_SUBCATEGORY_LIST_WEB_URL = f'/subcategories/add'
 GET_SUBCATEGORIES_FILTER_API_URL = '/api/subcategories'
+SEARCH_SUB_CATEGORY_WEB_URL = f'/api/sub-categories/search'
+EDIT_SUB_CATEGORY_WEB_URL = '/sub-category/edit/<sub_category_id>'
+UPDATE_SUB_CATEGORY_WEB_URL = '/update_sub_category/<sub_category_id>'
+DELETE_SUB_CATEGORY_WEB_URL = '/delete_sub_category/<sub_category_id>'
 
 SUB_SUB_CATEGORY_LIST_WEB_URL = f'/sub-sub-category-list'
 SUB_SUB_CATEGORY_WEB_URL = f'sub-sub-category/add'
@@ -116,6 +134,8 @@ PRODUCT_LISTS_API= f'/api/products/list'
 PRODUCT_LISTS__BY_ID_API = f'/api/products/<string:product_id>'
 EDIT_PRODUCT_API = f'/api/products/edit'
 PRODUCT_LISTS_BY_ID_API = f'/api/products/<string:product_id>'
+PRODUCT_REVIEW_API = f'/api/products/review'
+GET_PRODUCT_REVIEW_BY_ID_API = f'/api/products/review/<string:product_id>'
 #Product API Endpoint Constants End
 
 # Brand Endpoint API Start
@@ -161,6 +181,7 @@ SEARCH_PRODUCT_BY_KEYWORD_API = '/api/search-products'
 # Orders Endpoint Start
 ORDER_PLACE_API = f'/api/orders/new'
 ORDER_LIST_API = f'/api/orders/list'
+GET_ORDER_STATUS_TYPES = f'/api/orders/status-types'
 # Orders Endpoint End
 
 # Sales OverView Endpoint Start

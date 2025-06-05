@@ -13,18 +13,18 @@
         enctype="multipart/form-data">
         <!-- Brand Name Field -->
         <div class="mb-4">
-            <label for="name" class="block text-base font-medium text-black">Brand Name <span
+            <label for="name" class="block text-base font-medium text-black mb-1 tracking-wide">Brand Name <span
                     class="text-red-500">*</span></label>
             <input type="text" name="name" id="name"
-                class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
+                class="block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
         </div>
 
         <!-- Description Field -->
         <div class="mb-4">
-            <label for="description" class="block text-base font-medium text-black">Description</label>
-            <textarea name="description" id="description"
-                class="mt-2 block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out"
-                rows="4"></textarea>
+            <label for="description"
+                class="block text-base font-medium text-black mb-1 tracking-wide">Description</label>
+            <input type="hidden" name="description" id="description">
+            <div id="editor-container" class="h-48"></div>
         </div>
 
         <!-- Brand Logo Field -->
@@ -36,7 +36,7 @@
             {% set multiple = false %}
             {% set accept = '.png,.jpeg,.jpg,.webp,.avif' %}
             {% set help_text = 'PNG, JPG, JPEG up to 2MB' %}
-            {% set label_classes = 'block text-base font-medium text-black' %}
+            {% set label_classes = 'block text-base font-medium text-black mb-1 tracking-widea' %}
             {% include 'components/image_upload.html' %}
         </div>
 
@@ -65,8 +65,41 @@
 
 {% block js %}
 <script>
+    let quill;
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            quill = new Quill('#editor-container', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        [{ 'indent': '-1' }, { 'indent': '+1' }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'align': [] }],
+                        ['clean'],
+                        ['link']
+                    ]
+                },
+                placeholder: 'Enter brand description...'
+            });
+
+            const descriptionInput = document.getElementById('description');
+            quill.on('text-change', function() {
+                descriptionInput.value = quill.root.innerHTML;
+            });
+        } catch (error) {
+            console.error('Failed to initialize text editor:', error);
+            showToast('Failed to initialize text editor', 'error');
+        }
+    });
+
     document.getElementById('addBrandForm').addEventListener('submit', async function (e) {
         e.preventDefault();
+
+        // Update the hidden input with the latest Quill content
+        document.getElementById('description').value = quill.root.innerHTML;
 
         const loader = document.getElementById('loading-spinner');
         const btnText = document.getElementById('brand-add-button-text');
@@ -87,7 +120,6 @@
             validators.minLength(descriptionField, 10, 'Description');
 
         if (!isValid) return;
-
 
         const isImageValid = validateImage(logoField);
 
@@ -110,7 +142,7 @@
             const result = await sendPostRequest("{{ url_for('brand_bp.add_new_brand') }}", formData);
             if (result.success) {
                 nameField.value = '';
-                descriptionField.value = '';
+                quill.root.innerHTML = '';
                 logoField.value = '';
                 showToast(result.message, 'success');
                 setTimeout(() => {

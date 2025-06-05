@@ -4,10 +4,14 @@
 
 {% block admin_content %}
 <div class="bg-white rounded-lg shadow-lg p-8">
-    <h1 class="text-3xl font-semibold text-gray-800 mb-6">Brand List</h1>
+    <h1 class="text-3xl text-center font-semibold text-gray-800 mb-6">Brand List</h1>
     <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
         <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
+
+    <!-- Include Generic Modal -->
+    {% include '/components/deleteModal.html' %}
+
     <!-- Search and Filter Form -->
     <form id="search-form" class="flex items-end justify-between w-full mb-10">
         <div class="w-full sm:w-1/2 lg:w-full">
@@ -21,10 +25,6 @@
         </div>
 
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end sm:space-x-4 w-full sm:w-1/2 lg:w-full">
-            <button type="submit"
-                class="w-full sm:w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-                Search
-            </button>
             <div class="w-full sm:w-auto mt-2 sm:mt-0 ">
                 <a href="#" id="clear-search"
                     class="text-sm font-medium px-4 py-3 border border-red-500 rounded-lg text-red-500">
@@ -66,15 +66,10 @@
                             class="text-blue-600 hover:text-blue-800"><span class="material-symbols-outlined">
                                 edit_square
                             </span></a>
-                        <form action="{{ url_for('admin_api.delete_brand', brand_id=brand.id) }}" method="POST">
-                            <input type="hidden" name="page" value="{{ pagination.page }}">
-                            <input type="hidden" name="search" value="{{ search }}">
-                            <input type="hidden" name="limit" value="{{ limit }}">
-                            <button type="submit" class="text-red-600 hover:text-red-800"><span
-                                    class="material-symbols-outlined">
-                                    delete
-                                </span></button>
-                        </form>
+                        <button type="submit" class="text-red-600 hover:text-red-800" data-brand-id="{{ brand.id }}"
+                            onclick="showDeleteModal(this)"><span class="material-symbols-outlined">
+                                delete
+                            </span></button>
                     </div>
                 </td>
             </tr>
@@ -139,6 +134,7 @@
 {% block js %}
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // DOM Elements
         const searchForm = document.getElementById('search-form');
         const searchInput = searchForm.querySelector('input[name="brandSearch"]');
         const clearSearch = document.getElementById('clear-search');
@@ -147,13 +143,33 @@
         const itemsPerPageSelect = document.getElementById('items-per-page');
         const loader = document.getElementById('loader');
 
+        // Debounce function to limit API calls during typing
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Fetch brands with pagination, search, and limit
         async function fetchBrands(page = 1, search = '', limit = 10) {
             loader.classList.remove('hidden');
 
             const url = `/api/brand/lists?page=${page}&search=${encodeURIComponent(search)}&limit=${limit}`;
 
             try {
-                const data = await fetchJsonData(url);
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+
+                // Update table body
                 brandTableBody.innerHTML = '';
                 if (data.data.length === 0) {
                     brandTableBody.innerHTML = `
@@ -163,18 +179,22 @@
                 } else {
                     data.data.forEach((brand, index) => {
                         const row = `
-                            <tr class="border-t text-center">
-                                <td class="px-6 py-4">${(data.pagination.page - 1) * data.limit + index + 1}</td>
-                                <td class="px-6 py-4">${brand.name}</td>
-                                <td class="px-6 py-4">${brand.description}</td>
-                                <td class="px-6 py-4 w-14">
-                                    ${brand.logo_path ? `<img src="http://{{ local_ip }}:8080/static/uploads/${brand.logo_path}" alt="${brand.name} logo" class="w-full object-contain w-14 h-14">` : ''}
+                            <tr class="text-center">
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${(data.pagination.page - 1) * data.limit + index + 1}</td>
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${brand.name}</td>
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${brand.description}</td>
+                                <td class="px-3 py-3 md:px-6 md:py-4 w-24 text-sm border border-gray-200">
+                                    ${brand.logo_path ? `<img src="http://{{ local_ip }}:8080/static/uploads/${brand.logo_path}" alt="${brand.name} logo" class="w-full object-contain">` : ''}
                                 </td>
-                                <td class=" px-6 py-4 space-x-6">
-                                    <a href="/brands/edit/${brand.id}" class="text-blue-600 hover:text-blue-800">Edit</a>
-                                    <form action="/brands/delete/${brand.id}" method="POST" class="inline">
-                                        <button type="submit" class="text-red-600 hover:text-red-800">Delete</button>
-                                    </form>
+                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                                    <div class="flex space-x-6 justify-center">
+                                        <a href="/brands/edit/${brand.id}" class="text-blue-600 hover:text-blue-800">
+                                            <span class="material-symbols-outlined">edit_square</span>
+                                        </a>
+                                        <button type="button" class="text-red-600 hover:text-red-800" data-brand-id="${brand.id}" onclick="showDeleteModal(this)">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>`;
                         brandTableBody.innerHTML += row;
@@ -203,11 +223,11 @@
                         <td colspan="5" class="text-center py-4 text-red-500">Error loading brands. Please try again.</td>
                     </tr>`;
             } finally {
-                // Hide loader
                 loader.classList.add('hidden');
             }
         }
 
+        // Attach click handlers to pagination links
         function attachPaginationListeners() {
             const pageLinks = document.querySelectorAll('.page-link');
             pageLinks.forEach(link => {
@@ -221,14 +241,15 @@
             });
         }
 
-        searchForm.addEventListener('submit', (e) => {
-            e.preventDefault();
+        // Debounced search function (300ms delay)
+        const debouncedSearch = debounce(() => {
             const search = searchInput.value.trim();
             const limit = itemsPerPageSelect.value;
-            if (search !== '') {
-                fetchBrands(1, search, limit);
-            }
-        });
+            fetchBrands(1, search, limit);
+        }, 300);
+
+        // Event listeners
+        searchInput.addEventListener('input', debouncedSearch);
 
         clearSearch.addEventListener('click', (e) => {
             e.preventDefault();
@@ -243,18 +264,61 @@
             fetchBrands(1, search, limit);
         });
 
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const search = searchInput.value.trim();
-                const limit = itemsPerPageSelect.value;
-                if (search !== '') {
-                    fetchBrands(1, search, limit);
+        // Initial load
+        fetchBrands(1, searchInput.value.trim(), itemsPerPageSelect.value);
+
+        // Delete modal function
+        // Delete modal function
+        window.showDeleteModal = function (button) {
+            const brandId = button.getAttribute('data-brand-id');
+            const search = searchInput.value.trim();
+            const limit = itemsPerPageSelect.value;
+
+            // Get current page from the pagination display
+            let currentPage = 1;
+            const pageInfoElement = document.querySelector('#pagination .px-4.py-2.text-sm');
+            if (pageInfoElement) {
+                const pageMatch = pageInfoElement.textContent.match(/Page (\d+) of/);
+                if (pageMatch && pageMatch[1]) {
+                    currentPage = parseInt(pageMatch[1]);
                 }
             }
-        });
 
-        attachPaginationListeners();
+            modal.show({
+                title: 'Confirm Deletion',
+                message: 'Are you sure you want to delete this brand? This action cannot be undone.',
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                onConfirm: async () => {
+                    const formData = new FormData();
+                    formData.append('brand_id', brandId);
+                    formData.append('page', currentPage);
+                    formData.append('search', search);
+                    formData.append('limit', limit);
+
+                    const url = `/brands/delete/${brandId}`;
+
+                    try {
+                        const result = await sendPostRequest(url, formData);
+                        if (result.success) {
+                            showToast('Brand deleted successfully', 'success');
+
+                            if (document.querySelectorAll('#brand-table-body tr').length === 1 &&
+                                currentPage > 1) {
+                                fetchBrands(currentPage - 1, search, limit);
+                            } else {
+                                fetchBrands(result.page, search, limit);
+                            }
+                        } else {
+                            showToast(result.errors || result.message || 'Something went wrong', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error deleting brand:', error);
+                        showToast('Failed to delete brand', 'error');
+                    }
+                }
+            });
+        };
     });
 </script>
 {% endblock %}

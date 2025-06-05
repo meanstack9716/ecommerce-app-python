@@ -3,7 +3,7 @@
 {% block title %}Category List{% endblock %}
 
 {% block admin_content %}
-<div class="bg-white p-6 max-w-7xl mx-auto">
+<div class="bg-white p-6 mx-auto">
     <h1 class="text-3xl font-bold mb-8 text-center text-black">Category List</h1>
 
     <!-- Loader -->
@@ -15,10 +15,10 @@
     {% include '/components/deleteModal.html' %}
 
     <!-- Filter Section -->
-    <div class="flex flex-col sm:flex-row justify-between sm:items-end gap-3 mb-6">
+    <div class="flex flex-col sm:flex-row justify-between gap-3 mb-6">
         <div class="flex xl:items-center flex-col xl:flex-row gap-y-3 gap-x-8">
             <!-- Search by Name -->
-            <div class="flex flex-col items-start gap-2 w-full xl:w-auto">
+            <div class="flex flex-col items-start gap-2 w-full xl:w-auto relative">
                 <label class="block text-sm lg:text-base font-medium text-black">Search Category</label>
                 <div class="relative w-full sm:min-w-72">
                     <input type="text" id="search-input" value="{{ request.args.get('search', '') }}"
@@ -31,12 +31,14 @@
             </div>
         </div>
 
-        <!-- Buttons -->
-        <div class="flex items-center gap-5">
-            <button id="apply-filters"
-                class="w-36 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-                Apply Filters
-            </button>
+        <!-- Clear Filter Button -->
+        <div class="flex items-end gap-5">
+            <div class="flex justify-end">
+                <a href="{{ url_for('admin_api.add_new_category_page') }}"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:text-gray-700 text-sm">
+                    Add New Category
+                </a>
+            </div>
             <a href="#" id="clear-filter"
                 class="text-sm font-medium px-4 py-3 border border-red-500 rounded-lg text-red-500">
                 Clear Filter
@@ -45,13 +47,14 @@
     </div>
 
     <!-- Category Grid -->
+    {% if categories|length > 0 %}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" id="category-grid">
         {% for category in categories %}
         <div class="bg-gray-50 rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105">
             <img src="http://{{ local_ip }}:8080/static/uploads/{{ category.img_url }}" alt="Category Image"
                 class="w-full h-48 object-contain bg-white p-4">
             <div class="p-4">
-                <h2 class="text-xl font-semibold text-gray-800 mb-2">{{ category.name }}</h2>
+                <h2 class="text-md font-semibold text-gray-800 mb-2">{{ category.name }}</h2>
                 <p class="text-gray-600 text-sm leading-relaxed line-clamp-3">{{ category.description }}</p>
             </div>
             <div class="px-4 pb-4 flex justify-between items-center text-sm">
@@ -64,8 +67,21 @@
         </div>
         {% endfor %}
     </div>
+    {% else %}
+    <div class="text-center py-12">
+        <p class="text-gray-500 text-lg">No categories found.</p>
+        <div class="mt-4">
+            <a href="{{ url_for('admin_api.add_new_category_page') }}"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg inline-block">
+                Add New Category
+            </a>
+        </div>
+    </div>
+    {% endif %}
+    <p class="text-center text-gray-500 mt-10 hidden" id="no-categories">No categories found.</p>
 
     <!-- Pagination Section -->
+    {% if categories|length > 0 %}
     <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
         <!-- Items per page selector -->
         <div class="flex items-center gap-2 relative w-fit">
@@ -86,6 +102,7 @@
             </div>
         </div>
 
+        <!-- Hidden no categories message for dynamic updates -->
         <!-- Page Navigation -->
         <div class="flex items-center gap-2" id="pagination">
             {% if pagination.has_prev %}
@@ -111,12 +128,8 @@
             {% endif %}
         </div>
     </div>
-
-    {% if categories|length == 0 %}
-    <p class="text-center text-gray-500 mt-10" id="no-categories">No categories found.</p>
-    {% else %}
-    <p class="text-center text-gray-500 mt-10 hidden" id="no-categories">No categories found.</p>
     {% endif %}
+
 </div>
 {% endblock %}
 
@@ -124,7 +137,6 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('search-input');
-        const applyFiltersButton = document.getElementById('apply-filters');
         const clearFilterButton = document.getElementById('clear-filter');
         const categoryGrid = document.getElementById('category-grid');
         const itemsPerPageSelect = document.getElementById('items-per-page');
@@ -132,7 +144,16 @@
         const noCategoriesMessage = document.getElementById('no-categories');
         const loader = document.getElementById('loader');
 
-        let currentPage = "{{ pagination.page | tojson }}";
+        let currentPage = "{{ pagination.page | tojson | safe }}";
+
+        // Debounce function to limit API calls
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
 
         async function fetchCategories(page = currentPage) {
             loader.classList.remove('hidden');
@@ -143,86 +164,94 @@
             try {
                 const data = await fetchJsonData(url);
 
-                // Check if current page is empty and not the first page
                 if (data.categories.length === 0 && page > 1) {
-                    // Automatically fetch the previous page
                     fetchCategories(page - 1);
                     return;
                 }
 
-                // Update category grid
-                categoryGrid.innerHTML = '';
                 if (data.categories.length === 0) {
+                    // Show no categories message and hide grid and pagination
                     noCategoriesMessage.classList.remove('hidden');
+                    if (categoryGrid) categoryGrid.style.display = 'none';
+                    if (paginationDiv) paginationDiv.style.display = 'none';
                 } else {
+                    // Show grid and pagination, hide no categories message
                     noCategoriesMessage.classList.add('hidden');
+                    if (categoryGrid) categoryGrid.style.display = 'grid';
+                    if (paginationDiv) paginationDiv.style.display = 'flex';
+
+                    // Update category grid content
+                    categoryGrid.innerHTML = '';
                     data.categories.forEach(category => {
                         const card = `
-                <div class="bg-gray-50 rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105">
-                    <img src="/static/uploads/${category.img_url}" alt="Category Image"
-                        class="w-full h-48 object-contain bg-white p-4">
-                    <div class="p-4">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-2">${category.name}</h2>
-                        <p class="text-gray-600 text-sm leading-relaxed line-clamp-3">${category.description}</p>
-                    </div>
-                    <div class="px-4 pb-4 flex justify-end items-center text-sm">
-                        <button type="button" class="text-red-600 hover:text-red-800 font-medium"
-                            data-category-id="${category.id}" onclick="showDeleteModal(this)">
-                            Delete
-                        </button>
-                    </div>
-                </div>`;
+                        <div class="bg-gray-50 rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105">
+                            <img src="/static/uploads/${category.img_url}" alt="Category Image"
+                                class="w-full h-48 object-contain bg-white p-4">
+                            <div class="p-4">
+                                <h2 class="text-md font-semibold text-gray-800 mb-2">${category.name}</h2>
+                                <p class="text-gray-600 text-sm leading-relaxed line-clamp-3">${category.description}</p>
+                            </div>
+                            <div class="px-4 pb-4 flex justify-between items-center text-sm">
+                                <a href="/category/edit/${category.id}" class="text-blue-600 hover:text-blue-800">Edit</a>
+                                <button type="button" class="text-red-600 hover:text-red-800 font-medium"
+                                    data-category-id="${category.id}" onclick="showDeleteModal(this)">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>`;
                         categoryGrid.innerHTML += card;
                     });
                 }
 
-                // Update current page
                 currentPage = data.pagination.page;
-
-                // Update pagination
                 updatePagination(data.pagination);
-
                 clearFilterButton.classList.toggle('hidden', !search);
             } catch (error) {
                 console.error('Error fetching categories:', error);
-                showToast('Failed to load categories', 'error');
+                showToast('Failed to load categories: ' + error.message, 'error');
+                if (error.message.includes('404') && page !== 1) {
+                    fetchCategories(1);
+                }
             } finally {
                 loader.classList.add('hidden');
             }
         }
 
         function updatePagination(pagination) {
+            if (!paginationDiv) return;
+
             paginationDiv.innerHTML = '';
 
             if (pagination.has_prev) {
                 paginationDiv.innerHTML += `
-        <a href="#" data-page="${pagination.prev_num}"
-            class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition categories-pagination-link">
-            Previous
-        </a>`;
+                <a href="#" data-page="${pagination.prev_num}"
+                    class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition categories-pagination-link">
+                    Previous
+                </a>`;
             } else {
                 paginationDiv.innerHTML += `
-        <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>`;
+                <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>`;
             }
 
             paginationDiv.innerHTML += `
-        <span class="px-4 py-2 text-sm" id="page-info">
-            Page ${pagination.page} of ${pagination.pages}
-        </span>`;
+            <span class="px-4 py-2 text-sm" id="page-info">
+                Page ${pagination.page} of ${pagination.pages}
+            </span>`;
 
             if (pagination.has_next) {
                 paginationDiv.innerHTML += `
-        <a href="#" data-page="${pagination.next_num}"
-            class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition categories-pagination-link">
-            Next
-        </a>`;
+                <a href="#" data-page="${pagination.next_num}"
+                    class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition categories-pagination-link">
+                    Next
+                </a>`;
             } else {
                 paginationDiv.innerHTML += `
-        <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>`;
+                <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>`;
             }
 
             attachPaginationListeners('.categories-pagination-link', fetchCategories);
         }
+
         window.showDeleteModal = function (button) {
             const categoryId = button.getAttribute('data-category-id');
             modal.show({
@@ -251,10 +280,11 @@
             });
         };
 
-        applyFiltersButton.addEventListener('click', () => {
-            if (searchInput.value === '') return;
-            fetchCategories(1);
-        });
+        // Debounced fetchCategories for search input
+        const debouncedFetchCategories = debounce(() => fetchCategories(1), 300);
+
+        // Input event for search
+        searchInput.addEventListener('input', debouncedFetchCategories);
 
         clearFilterButton.addEventListener('click', (e) => {
             e.preventDefault();
@@ -262,14 +292,9 @@
             fetchCategories(1);
         });
 
-        itemsPerPageSelect.addEventListener('change', () => fetchCategories(1));
-
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                if (searchInput.value === '') return;
-                fetchCategories(1);
-            }
-        });
+        if (itemsPerPageSelect) {
+            itemsPerPageSelect.addEventListener('change', () => fetchCategories(1));
+        }
 
         attachPaginationListeners('.categories-pagination-link', fetchCategories);
 

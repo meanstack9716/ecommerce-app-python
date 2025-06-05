@@ -194,6 +194,7 @@ function validatePersonalInfo() {
 
     validators.required(fields.country, "Country") &&
     validators.minLength(fields.country, 3, "Country"),
+    validatePincode(fields.postal_code)
   ].every((result) => result === true)
 
   if (!isValid) return false
@@ -295,7 +296,6 @@ function validateBusinessDetails() {
     idNumber: document.getElementById("id_number"),
     addressProofFront: document.getElementById("address_proof_front"),
   }
-
   // Validate required fields
   const isRequiredValid = [
     validators.required(fields.panNumber, "PAN number"),
@@ -371,6 +371,23 @@ function validatePANNumber(field) {
   //   removeErrorMessage(field)
   return true
 }
+
+function validatePincode(field) {
+  if (!field.value.trim()) {
+    return true;
+  }
+
+  const pincodeRegex = /^[1-9][0-9]{5}$/;
+
+  if (!pincodeRegex.test(field.value.trim())) {
+    showErrorMessage(field, "Please enter a valid 6-digit Indian Pincode");
+    return false;
+  }
+
+  removeErrorMessage(field);
+  return true;
+}
+
 
 function validateImage(imageField) {
   const file = imageField.files[0]
