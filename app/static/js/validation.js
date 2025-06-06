@@ -222,15 +222,23 @@ function validateBusinessInfo() {
     businessEmail: document.getElementById("business_email"),
     businessMobile: document.getElementById("business_mobile_number"),
     gstNumber: document.getElementById("gst_number"),
-    businessAddressType: document.querySelector(
-      'input[name="business_address_type"]:checked'
-    ),
+    businessAddressType: document.getElementById("business_address_type_input"),
     line1: document.getElementById("business_street_line1"),
     streetLine2: document.getElementById("business_street_line2"),
     city: document.getElementById("business_city"),
     state: document.getElementById("business_state"),
     postal_code: document.getElementById("business_pincode"),
     country: document.getElementById("business_country"),
+  };
+
+  const addressTypeValid = fields.businessAddressType.value.trim() !== "";
+  if (!addressTypeValid) {
+    const container = document.getElementById("business_address_type_container");
+    container.classList.add("border", "border-red-500", "p-2", "rounded-lg");
+    setTimeout(() => {
+      container.classList.remove("border", "border-red-500", "p-2", "rounded-lg");
+    }, 3000);
+    return false;
   }
 
   const isValid = [
@@ -243,10 +251,7 @@ function validateBusinessInfo() {
 
     validators.phone(fields.businessMobile, "Business mobile number"),
 
-    validators.requiredRadioGroup(
-      "business_address_type",
-      "#business_address_type_container"
-    ),
+    addressTypeValid, // Use our custom validation result
 
     validators.required(fields.line1, "Street address") &&
     validators.minLength(fields.line1, 8, "Street address"),
@@ -263,13 +268,11 @@ function validateBusinessInfo() {
     validators.required(fields.country, "Country") &&
     validators.minLength(fields.country, 3, "Country"),
 
-    // GST number validation (if needed)
     validateGSTNumber(fields.gstNumber),
-  ].every((result) => result === true)
+  ].every((result) => result === true);
 
-  if (!isValid) return false
+  if (!isValid) return false;
 
-  // Return the validated data
   return {
     businessName: fields.businessName.value.trim(),
     businessType: fields.businessType.value,
@@ -283,9 +286,9 @@ function validateBusinessInfo() {
       state: fields.state.value.trim(),
       postal_code: fields.postal_code.value.trim(),
       country: fields.country.value.trim(),
-      type: fields.businessAddressType.value.trim(),
+      type: fields.businessAddressType.value.trim(), // Get value from hidden input
     },
-  }
+  };
 }
 
 function validateBusinessDetails() {
