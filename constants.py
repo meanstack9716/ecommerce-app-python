@@ -191,3 +191,6 @@ SALES_TOP_PRODUCTS_API = f'/api/sales/top-products'
 RECENT_SALES_API = f'/api/sales/recent'
 TOP_PRODUCT_SALES_API = f'/api/sales/top-products'
 GET_SALES_SELLER = f'/api/sales/sellers'
+
+
+RAZORPAY_BASE_URL = 'https://api.razorpay.com/v1/'
