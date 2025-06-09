@@ -161,7 +161,6 @@ def update_seller():
     if not user:
         return create_error_response({"user": "Associated user not found"}, 404)
 
-    # Define updatable fields
     updatable_user_fields = ['email', 'first_name', 'last_name', 'phoneNumber']
     updatable_seller_fields = ['businessName', 'businessType', 'businessEmail', 'businessMobile', 'gst_number']
     updatable_address_fields = ['address[line1]', 'address[line2]', 'address[city]', 'address[state]', 
@@ -175,7 +174,6 @@ def update_seller():
     with db.connection.start_session() as session:
         session.start_transaction()
         try:
-            # Validate and update user email if changed
             if 'email' in data:
                 is_valid, email_error = validate_email(data.get('email'))
                 if not is_valid:
@@ -193,7 +191,6 @@ def update_seller():
                         setattr(user, field, data.get(field))
             user.save(session=session)
 
-            # Handle personal address (primary address)
             personal_address = Address.objects(user_id=user.id, is_primary=True).first()
             if any(field in data for field in updatable_address_fields):
                 if not personal_address:
@@ -205,11 +202,10 @@ def update_seller():
                         field_name = key.split('[')[1][:-1] 
                         address_data[field_name] = data.get(key)
                 
-                # Ensure personal address remains primary and has appropriate type
                 address_data['is_primary'] = True
                 if 'type' in address_data:
                     if address_data['type'] == 'business':
-                        address_data['type'] = 'personal'  # Prevent business type for personal address
+                        address_data['type'] = 'personal'
                     elif address_data['type'] not in ADDRESS_TYPES:
                         raise ValidationError(f"Invalid personal address type: {address_data['type']}")
                 
@@ -217,8 +213,7 @@ def update_seller():
                     if value is not None:
                         setattr(personal_address, key, value)
                 personal_address.save(session=session)
-
-            # Handle business address (explicitly type='business')
+            
             business_address = Address.objects(user_id=user.id, type='business').first()
             if any(field in data for field in updatable_business_address_fields):
                 business_address_data = {}
@@ -228,17 +223,14 @@ def update_seller():
                         business_address_data[field_name] = data.get(key)
                 
                 if business_address_data:
-                    # Validate business address type
                     if 'type' in business_address_data:
                         if business_address_data['type'] not in ADDRESS_TYPES:
                             raise ValidationError(f"Invalid business address type: {business_address_data['type']}")
-                        if business_address_data['type'] == 'business':
-                            business_address_data['type'] = 'business'  # Ensure it stays as business
                     
                     if not business_address:
                         business_address = Address(
                             user_id=user.id, 
-                            type='business', 
+                            type=business_address_data.get('type', 'business'),
                             is_primary=False
                         )
                     
@@ -250,7 +242,6 @@ def update_seller():
                     business_address.save(session=session)
                     seller.businessAddress = business_address
 
-            # Update seller fields
             for field in updatable_seller_fields:
                 if field in data:
                     setattr(seller, field, data.get(field))
@@ -260,13 +251,11 @@ def update_seller():
                 seller.address = personal_address
             seller.save(session=session)
 
-            # Handle identification documents
             identification = Identification.objects(user_id=user.id).first()
             if any(field in data for field in updatable_identification_fields) or 'panCardFront' in files or 'addressProofFront' in files:
                 if not identification:
                     identification = Identification(user_id=user.id)
                 
-                # Update identification fields
                 if 'addressProofIdType' in data:
                     identification.address_proof_id_type = data.get('addressProofIdType')
                 if 'idNumber' in data:
