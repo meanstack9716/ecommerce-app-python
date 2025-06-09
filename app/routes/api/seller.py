@@ -182,6 +182,7 @@ def update_seller():
                 if existing_user and str(existing_user.id) != str(user.id):
                     return create_error_response({"email": "Email already in use"}, 409)
 
+            # Update user fields
             for field in updatable_user_fields:
                 if field in data:
                     if field == 'phoneNumber':
@@ -233,6 +234,7 @@ def update_seller():
                             is_primary=False
                         )
                     
+                    # Set business address fields
                     for key, value in business_address_data.items():
                         if value is not None:
                             setattr(business_address, key, value)
@@ -244,6 +246,7 @@ def update_seller():
                 if field in data:
                     setattr(seller, field, data.get(field))
             
+            # Link addresses to seller
             if personal_address:
                 seller.address = personal_address
             seller.save(session=session)
@@ -260,6 +263,7 @@ def update_seller():
                 if 'panNumber' in data:
                     identification.pan_number = data.get('panNumber')
                 
+                # Handle file uploads
                 if 'panCardFront' in files and files['panCardFront'].filename:
                     pan_card_front_url, err = upload_image(files['panCardFront'])
                     if err:
