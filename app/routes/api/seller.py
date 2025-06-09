@@ -174,6 +174,10 @@ def update_seller():
     with db.connection.start_session() as session:
         session.start_transaction()
         try:
+<<<<<<< HEAD
+=======
+            # Validate and update user email if changed
+>>>>>>> f361210dc970f4ed00ee6cd0d26898e5e708faac
             if 'email' in data:
                 is_valid, email_error = validate_email(data.get('email'))
                 if not is_valid:
@@ -182,6 +186,7 @@ def update_seller():
                 if existing_user and str(existing_user.id) != str(user.id):
                     return create_error_response({"email": "Email already in use"}, 409)
 
+            # Update user fields
             for field in updatable_user_fields:
                 if field in data:
                     if field == 'phoneNumber':
@@ -212,7 +217,12 @@ def update_seller():
                     if value is not None:
                         setattr(personal_address, key, value)
                 personal_address.save(session=session)
+<<<<<<< HEAD
             
+=======
+
+            # Handle business address (explicitly type='business')
+>>>>>>> f361210dc970f4ed00ee6cd0d26898e5e708faac
             business_address = Address.objects(user_id=user.id, type='business').first()
             if any(field in data for field in updatable_business_address_fields):
                 business_address_data = {}
@@ -222,17 +232,31 @@ def update_seller():
                         business_address_data[field_name] = data.get(key)
                 
                 if business_address_data:
+<<<<<<< HEAD
                     if 'type' in business_address_data:
                         if business_address_data['type'] not in ADDRESS_TYPES:
                             raise ValidationError(f"Invalid business address type: {business_address_data['type']}")
+=======
+                    # Validate business address type
+                    if 'type' in business_address_data:
+                        if business_address_data['type'] not in ADDRESS_TYPES:
+                            raise ValidationError(f"Invalid business address type: {business_address_data['type']}")
+                        if business_address_data['type'] == 'business':
+                            business_address_data['type'] = 'business'  # Ensure it stays as business
+>>>>>>> f361210dc970f4ed00ee6cd0d26898e5e708faac
                     
                     if not business_address:
                         business_address = Address(
                             user_id=user.id, 
+<<<<<<< HEAD
                             type=business_address_data.get('type', 'business'),
+=======
+                            type='business', 
+>>>>>>> f361210dc970f4ed00ee6cd0d26898e5e708faac
                             is_primary=False
                         )
                     
+                    # Set business address fields
                     for key, value in business_address_data.items():
                         if value is not None:
                             setattr(business_address, key, value)
@@ -240,19 +264,32 @@ def update_seller():
                     business_address.save(session=session)
                     seller.businessAddress = business_address
 
+<<<<<<< HEAD
+=======
+            # Update seller fields
+>>>>>>> f361210dc970f4ed00ee6cd0d26898e5e708faac
             for field in updatable_seller_fields:
                 if field in data:
                     setattr(seller, field, data.get(field))
             
+            # Link addresses to seller
             if personal_address:
                 seller.address = personal_address
             seller.save(session=session)
 
+<<<<<<< HEAD
+=======
+            # Handle identification documents
+>>>>>>> f361210dc970f4ed00ee6cd0d26898e5e708faac
             identification = Identification.objects(user_id=user.id).first()
             if any(field in data for field in updatable_identification_fields) or 'panCardFront' in files or 'addressProofFront' in files:
                 if not identification:
                     identification = Identification(user_id=user.id)
                 
+<<<<<<< HEAD
+=======
+                # Update identification fields
+>>>>>>> f361210dc970f4ed00ee6cd0d26898e5e708faac
                 if 'addressProofIdType' in data:
                     identification.address_proof_id_type = data.get('addressProofIdType')
                 if 'idNumber' in data:
@@ -260,6 +297,7 @@ def update_seller():
                 if 'panNumber' in data:
                     identification.pan_number = data.get('panNumber')
                 
+                # Handle file uploads
                 if 'panCardFront' in files and files['panCardFront'].filename:
                     pan_card_front_url, err = upload_image(files['panCardFront'])
                     if err:
