@@ -194,3 +194,4 @@ GET_SALES_SELLER = f'/api/sales/sellers'
 
 
 RAZORPAY_BASE_URL = 'https://api.razorpay.com/v1/'
+CREATE_RAZORPAY_PAYMENT_LINK = 'https://api.razorpay.com/v1/payment_links'
