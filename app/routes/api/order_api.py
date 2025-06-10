@@ -22,7 +22,10 @@ order_bp = Blueprint('order', __name__)
 @jwt_required()
 def place_order():
     user_id = get_jwt_identity()
-    user = User.objects(id=user_id).first()
+    try:
+        user = User.objects(id=user_id).first()
+    except DoesNotExist:
+        return create_error_response({'error': 'User not found'}, 404)
     
     if not user:
         return create_error_response({'error': 'User not found'}, 404)
@@ -33,7 +36,7 @@ def place_order():
 
     required_fields = ['cart_items_ids', 'shipping_address_id', 'payment_method']
     is_valid, validation_errors = validate_required_fields(data, required_fields)
-    if not is_valid:                       
+    if not is_valid:
         return create_error_response(validation_errors, 400)
 
     # Validate payment method
@@ -72,7 +75,7 @@ def place_order():
         try:
             cart_items_ids = [ObjectId(id) for id in data['cart_items_ids']]
             cart_items = cart_items_query.filter(id__in=cart_items_ids)
-        except:
+        except Exception:
             return create_error_response({'error': 'Invalid cart item IDs format'}, 400)
     else:
         cart_items = cart_items_query
@@ -80,12 +83,12 @@ def place_order():
     if not cart_items:
         return create_error_response({'error': 'No cart items found'}, 400)
 
+    # Group cart items by seller
     seller_items = {}
     for cart_item in cart_items:
         product = cart_item.product_id
         if not product:
             continue
-            
         seller_id = str(product.seller_id.id) if product.seller_id else None
         if seller_id not in seller_items:
             seller_items[seller_id] = {
@@ -94,6 +97,7 @@ def place_order():
             }
         seller_items[seller_id]['items'].append(cart_item)
 
+    # Generate unique order numbers
     order_numbers = set()
     while len(order_numbers) < len(seller_items):
         order_number = 'ORD-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
@@ -102,40 +106,63 @@ def place_order():
 
     orders = []
     payment_links = []
-    
+
     try:
-        # For card payment, create Payment Links and Orders
-        if data['payment_method'] == 'card':
-            for i, (seller_id, seller_data) in enumerate(seller_items.items()):
-                total_amount = decimal.Decimal('0.00')
-                order_items = []
-                
-                for cart_item in seller_data['items']:
-                    product = cart_item.product_id
-                    price = decimal.Decimal(str(product.price))
-                    discount_percent = decimal.Decimal(str(product.discount_percent)) if hasattr(product, 'discount_percent') else decimal.Decimal('0')
-                    final_price = price * (1 - discount_percent / 100)
-                    total_amount += final_price * cart_item.quantity
+        for i, (seller_id, seller_data) in enumerate(seller_items.items()):
+            total_amount = decimal.Decimal('0.00')
+            order_items = []
+            
+            for cart_item in seller_data['items']:
+                product = cart_item.product_id
+                price = decimal.Decimal(str(product.price))
+                discount_percent = decimal.Decimal(str(product.discount_percent)) if hasattr(product, 'discount_percent') else decimal.Decimal('0')
+                final_price = price * (1 - discount_percent / 100)
+                total_amount += final_price * cart_item.quantity
 
-                    order_item = OrderItem(
-                        product_id=product,
-                        selected_size=cart_item.selected_size,
-                        selected_color=cart_item.selected_color,
-                        selected_color_name=cart_item.selected_color_name,
-                        quantity=cart_item.quantity,
-                        price=price,
-                        discount_percent=discount_percent,
-                        final_price=int(final_price * 100)  # Convert to paise for consistency
-                    )
-                    order_items.append(order_item)
+                order_item = OrderItem(
+                    product_id=product,
+                    selected_size=cart_item.selected_size,
+                    selected_color=cart_item.selected_color,
+                    selected_color_name=cart_item.selected_color_name,
+                    quantity=cart_item.quantity,
+                    price=price,
+                    discount_percent=discount_percent,
+                    final_price=int(final_price * 100)  # Convert to paise
+                )
+                order_items.append(order_item)
 
-                # Validate amount
-                if total_amount < decimal.Decimal('1.00'):
-                    return create_error_response({
-                        'error': 'Invalid amount',
-                        'message': 'Total amount must be at least 1 INR'
-                    }, 400)
+            if total_amount < decimal.Decimal('1.00'):
+                return create_error_response({
+                    'error': 'Invalid amount',
+                    'message': 'Total amount must be at least 1 INR'
+                }, 400)
 
+            # Create Order
+            order = Order(
+                user_id=user,
+                seller_id=seller_data['seller'] if seller_data['seller'] else None,
+                order_number=order_numbers[i],
+                items=order_items,
+                total_amount=total_amount,
+                status='pending',
+                shipping_address={
+                    'id': str(shipping_address.id),
+                    'address_line1': shipping_address.line1,
+                    'address_line2': shipping_address.line2 if shipping_address.line2 else '',
+                    'city': shipping_address.city,
+                    'state': shipping_address.state,
+                    'postal_code': shipping_address.postal_code,
+                    'country': shipping_address.country,
+                    'type': shipping_address.type if shipping_address.type else 'home'
+                },
+                payment_method=data['payment_method'],
+                payment_status='pending',
+                order_note=data.get('order_note', ''),
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+
+            if data['payment_method'] == 'card':
                 # Create Razorpay payment link
                 customer_name = f"{user.first_name or ''} {user.last_name or ''}".strip() or "Customer"
                 payment_link = generate_razorpay_payment_link(
@@ -153,42 +180,18 @@ def place_order():
                     'payment_link_url': payment_link['short_url'],
                     'amount': total_amount
                 })
+                order.payment_link_id = payment_link['id']
 
-                # Create Order in the database
-                order = Order(
-                    user_id=user,
-                    seller_id=seller_data['seller'] if seller_data['seller'] else None,
-                    order_number=order_numbers[i],
-                    items=order_items,
-                    total_amount=total_amount,
-                    status='pending',
-                    shipping_address={
-                        'id': str(shipping_address.id),
-                        'address_line1': shipping_address.line1,
-                        'address_line2': shipping_address.line2 if shipping_address.line2 else '',
-                        'city': shipping_address.city,
-                        'state': shipping_address.state,
-                        'postal_code': shipping_address.postal_code,
-                        'country': shipping_address.country,
-                        'type': shipping_address.type if shipping_address.type else 'home'
-                    },
-                    payment_method=data['payment_method'],
-                    payment_status='pending',
-                    payment_link_id=payment_link['id'],
-                    order_note=data.get('order_note', ''),
-                    created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow()
-                )
-                order.save()
-                orders.append({
-                    'order_id': str(order.id),
-                    'order_number': order.order_number,
-                    'amount': float(total_amount),
-                    'items_count': len(order_items)
-                })
+            order.save()
+            orders.append({
+                'order_id': str(order.id),
+                'order_number': order.order_number, 
+                'amount': float(total_amount),
+                'items_count': len(order_items)
+            })
 
         response_data = {
-            'message': 'Payment links and orders created successfully' if data['payment_method'] == 'card' else 'Order processing stopped for COD',
+            'message': f"{'Payment links and orders' if data['payment_method'] == 'card' else 'Orders'} created successfully",
             'orders': orders,
             'payment_links': [{
                 'payment_link_id': pl['payment_link_id'],
@@ -205,14 +208,13 @@ def place_order():
         for order in Order.objects(order_number__in=[o['order_number'] for o in orders]):
             order.delete()
         return create_error_response({
-            'error': 'Failed to create payment link or order',
+            'error': 'Failed to create order',
             'message': str(e)
         }, 500)
 
 @order_bp.route('/payment-callback', methods=['GET'])
 def payment_callback():
     try:
-        # Extract query parameters from Razorpay callback
         payment_id = request.args.get('razorpay_payment_id')
         payment_link_id = request.args.get('razorpay_payment_link_id')
         payment_link_reference_id = request.args.get('razorpay_payment_link_reference_id')
@@ -244,10 +246,11 @@ def payment_callback():
             }, 404)
 
         order.payment_id = payment_id
-        order.update_payment_status('paid')
+        order.payment_status = 'paid'
+        order.status = 'confirmed'
+        order.updated_at = datetime.utcnow()
         order.save()
 
-        # Redirect to a success page or return success response
         return jsonify({
             'message': 'Payment verified successfully',
             'order_number': order.order_number,
@@ -263,39 +266,40 @@ def payment_callback():
 
 def generate_razorpay_payment_link(amount, reference_id, customer_name, customer_email, customer_phone='', description=None, callback_url=None):
     url = "https://api.razorpay.com/v1/payment_links"
-    amount_in_paise = int(amount * 100)  # Razorpay expects amount in paise
+    amount_in_paise = int(amount * 100)
     
-    # Ensure amount is at least 100 paise (1 INR)
     if amount_in_paise < 100:
         raise ValueError("Amount must be at least 1 INR")
 
+    # Ensure expire_by is at least 15 minutes in the future
+    expire_by = int((datetime.utcnow() + timedelta(days=7)).timestamp())
+    
     payload = {
         'amount': amount_in_paise,
         'currency': 'INR',
-        'description': description or '',
+        'description': description or f"Order {reference_id}",
         'customer': {
             'name': customer_name,
             'email': customer_email,
-            'contact': customer_phone
+            'contact': customer_phone or ''
         },
         'reference_id': reference_id,
         'notify': {
             'sms': bool(customer_phone),
-            'email': True
+            'email': bool(customer_email)
         },
         'reminder_enable': True,
-        'expire_by': int((datetime.utcnow() + timedelta(days=7)).timestamp()),
+        'expire_by': expire_by,
         'notes': {
             'order_number': reference_id
         }
     }
 
-    if callback_url:
+    # Only include callback_url if provided and valid
+    if callback_url and callback_url.startswith('https://'):
         payload['callback_url'] = callback_url
         payload['callback_method'] = 'get'
 
-    print(payload, ">>>>>")
-    
     auth = (os.getenv('RAZORPAY_KEY_ID'), os.getenv('RAZORPAY_KEY_SECRET'))
     headers = {'Content-Type': 'application/json'}
     
