@@ -12,3 +12,4 @@ from .wishlist import Wishlist, WishlistItem
 from .saveforlater import SaveForLater, SaveForLaterItem
 from .promo_codes import PromoCode, PromoCodeApplicableProducts
 from .product_review import ProductReview
+from .search_keyword_analytics import SearchKeywordAnalytics

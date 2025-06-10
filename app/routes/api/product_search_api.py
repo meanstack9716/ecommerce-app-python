@@ -1,18 +1,16 @@
 from flask import Blueprint, request, jsonify
 from app.extensions import db
-from app.models.products import Products
-from app.models.category_modal import Category, SubCategory, SubSubCategory
-from app.models.brands import ProductBrands
+from app.models import Products, Category, SubCategory, SubSubCategory, ProductBrands, SearchKeywordAnalytics
 from mongoengine.queryset.visitor import Q
 from datetime import datetime
-from constants import SEARCH_PRODUCT_BY_KEYWORD_API
+from constants import SEARCH_PRODUCT_BY_KEYWORD_API, SEARCH_RECOMMENDATION_API, SEARCH_AUTOCOMPLETE_API
 
 search_bp = Blueprint('search', __name__)
 
 @search_bp.route(SEARCH_PRODUCT_BY_KEYWORD_API, methods=['GET'])
 def search_products():
     try:
-        keyword = request.args.get('keyword', '').strip()
+        keyword = request.args.get('keyword', '').strip().lower()
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 10))
 
@@ -21,6 +19,12 @@ def search_products():
                 'status': 'error',
                 'message': 'Keyword is required'
             }), 400
+
+        SearchKeywordAnalytics.objects(keyword=keyword).update_one(
+            inc__count=1,
+            set__last_searched=datetime.utcnow(),
+            upsert=True
+        )
 
         if page < 1:
             page = 1
@@ -47,7 +51,6 @@ def search_products():
             search_query |= Q(brand_id__in=brand_ids)
 
         product_queryset = Products.objects(search_query & Q(status='active'))
-        logger.debug(f"QuerySet type: {type(product_queryset)}")
 
         total_results = product_queryset.count()
         products = product_queryset.skip((page - 1) * per_page).limit(per_page)
@@ -117,7 +120,60 @@ def search_products():
             'message': 'Invalid page or per_page parameters'
         }), 400
     except Exception as e:
-        logger.error(f"Error in search_products: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': f'An error occurred: {str(e)}'
+        }), 500
+
+@search_bp.route(SEARCH_RECOMMENDATION_API, methods=['GET'])
+def get_search_recommendations():
+    try:
+        limit = int(request.args.get('limit', 10))
+        if limit < 1 or limit > 50:
+            limit = 10
+
+        keywords = SearchKeywordAnalytics.objects.order_by('-count', '-last_searched').limit(limit)
+        
+        return jsonify({
+            'status': 'success',
+            'data': [{
+                'keyword': kw.keyword,
+                'count': kw.count,
+                'last_searched': kw.last_searched.isoformat()
+            } for kw in keywords]
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'An error occurred: {str(e)}'
+        }), 500
+
+@search_bp.route(SEARCH_AUTOCOMPLETE_API, methods=['GET'])
+def get_autocomplete_suggestions():
+    try:
+        partial_keyword = request.args.get('keyword', '').strip().lower()
+        limit = int(request.args.get('limit', 5))
+        
+        if not partial_keyword:
+            return jsonify({
+                'status': 'success',
+                'data': []
+            }), 200
+
+        if limit < 1 or limit > 20:
+            limit = 5
+
+        suggestions = SearchKeywordAnalytics.objects(
+            keyword__istartswith=partial_keyword
+        ).order_by('-count', '-last_searched').limit(limit)
+        
+        return jsonify({
+            'status': 'success',
+            'data': [kw.keyword for kw in suggestions]
+        }), 200
+
+    except Exception as e:
         return jsonify({
             'status': 'error',
             'message': f'An error occurred: {str(e)}'

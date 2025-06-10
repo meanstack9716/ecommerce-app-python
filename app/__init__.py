@@ -28,7 +28,7 @@ def create_app(config_class=Config):
     from app.models.identification import Identification
     from app.models.category_modal import Category, SubCategory, SubSubCategory
     from app.models.products import Products, ProductVariant
-
+    from app.models.search_keyword_analytics import SearchKeywordAnalytics
     from app.seed_data import seed_data
 
     from app.models.brands import ProductBrands
