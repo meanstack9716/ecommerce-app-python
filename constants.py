@@ -176,6 +176,8 @@ SAVEFORLATER_TO_CART = '/api/saveforlater/to-cart'
 
 # Search Product Endpoint Start
 SEARCH_PRODUCT_BY_KEYWORD_API = '/api/search-products'
+SEARCH_RECOMMENDATION_API = '/api/search/recommendations'
+SEARCH_AUTOCOMPLETE_API = '/api/search/autocomplete'
 # Search Product Endpoint End
 
 # Orders Endpoint Start
