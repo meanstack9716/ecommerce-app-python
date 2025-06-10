@@ -10,3 +10,4 @@ Flask-Inputs==0.3.0
 flask-jwt-extended==4.4.4
 flask-cors==3.0.10
 pytz==2022.1
+razorpay

@@ -4,12 +4,16 @@ from app.models import Address, Seller, User, ProductCart, Products, ProductVari
 from datetime import datetime, timedelta
 import random
 import string
+import requests
+import os
+import json
 from bson import ObjectId
 import decimal
 from app.utils.utils import create_error_response
-from constants import ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, ORDER_STATUS
+from constants import ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, ORDER_STATUS, CREATE_RAZORPAY_PAYMENT_LINK
 from app.utils.jwt_handlers import jwt_error_handler
 from mongoengine.queryset.visitor import Q
+from app.utils.validation import validate_required_fields
 
 order_bp = Blueprint('order', __name__)
 
@@ -18,7 +22,10 @@ order_bp = Blueprint('order', __name__)
 @jwt_required()
 def place_order():
     user_id = get_jwt_identity()
-    user = User.objects(id=user_id).first()
+    try:
+        user = User.objects(id=user_id).first()
+    except DoesNotExist:
+        return create_error_response({'error': 'User not found'}, 404)
     
     if not user:
         return create_error_response({'error': 'User not found'}, 404)
@@ -28,9 +35,14 @@ def place_order():
         return create_error_response({'error': 'No data provided'}, 400)
 
     required_fields = ['cart_items_ids', 'shipping_address_id', 'payment_method']
-    is_valid, validation_errors = validate_fields(data, required_fields)
+    is_valid, validation_errors = validate_required_fields(data, required_fields)
     if not is_valid:
         return create_error_response(validation_errors, 400)
+
+    # Validate payment method
+    valid_payment_methods = ['cod', 'card']
+    if data['payment_method'] not in valid_payment_methods:
+        return create_error_response({'error': 'Invalid payment method'}, 400)
 
     try:
         shipping_address = Address.objects(
@@ -63,7 +75,7 @@ def place_order():
         try:
             cart_items_ids = [ObjectId(id) for id in data['cart_items_ids']]
             cart_items = cart_items_query.filter(id__in=cart_items_ids)
-        except:
+        except Exception:
             return create_error_response({'error': 'Invalid cart item IDs format'}, 400)
     else:
         cart_items = cart_items_query
@@ -71,12 +83,12 @@ def place_order():
     if not cart_items:
         return create_error_response({'error': 'No cart items found'}, 400)
 
+    # Group cart items by seller
     seller_items = {}
     for cart_item in cart_items:
         product = cart_item.product_id
         if not product:
             continue
-            
         seller_id = str(product.seller_id.id) if product.seller_id else None
         if seller_id not in seller_items:
             seller_items[seller_id] = {
@@ -85,44 +97,53 @@ def place_order():
             }
         seller_items[seller_id]['items'].append(cart_item)
 
-    orders = []
+    # Generate unique order numbers
     order_numbers = set()
     while len(order_numbers) < len(seller_items):
         order_number = 'ORD-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
         order_numbers.add(order_number)
     order_numbers = list(order_numbers)
 
-    for i, (seller_id, seller_data) in enumerate(seller_items.items()):
-        order_items = []
-        total_amount = decimal.Decimal('0.00')
+    orders = []
+    payment_links = []
 
-        for cart_item in seller_data['items']:
-            product = cart_item.product_id
-            price = decimal.Decimal(str(product.price))
-            discount_percent = decimal.Decimal(str(product.discount_percent)) if hasattr(product, 'discount_percent') else decimal.Decimal('0')
-            final_price = price * (1 - discount_percent / 100)
-            item_total = final_price * cart_item.quantity
+    try:
+        for i, (seller_id, seller_data) in enumerate(seller_items.items()):
+            total_amount = decimal.Decimal('0.00')
+            order_items = []
+            
+            for cart_item in seller_data['items']:
+                product = cart_item.product_id
+                price = decimal.Decimal(str(product.price))
+                discount_percent = decimal.Decimal(str(product.discount_percent)) if hasattr(product, 'discount_percent') else decimal.Decimal('0')
+                final_price = price * (1 - discount_percent / 100)
+                total_amount += final_price * cart_item.quantity
 
-            order_item = OrderItem(
-                product_id=product.id,
-                selected_size=cart_item.selected_size,
-                selected_color=cart_item.selected_color,
-                selected_color_name=cart_item.selected_color_name,
-                quantity=cart_item.quantity,
-                price=float(price),
-                discount_percent=float(discount_percent),
-                final_price=float(final_price),
-            )
-            order_items.append(order_item)
-            total_amount += item_total
+                order_item = OrderItem(
+                    product_id=product,
+                    selected_size=cart_item.selected_size,
+                    selected_color=cart_item.selected_color,
+                    selected_color_name=cart_item.selected_color_name,
+                    quantity=cart_item.quantity,
+                    price=price,
+                    discount_percent=discount_percent,
+                    final_price=int(final_price * 100)  # Convert to paise
+                )
+                order_items.append(order_item)
 
-        try:
+            if total_amount < decimal.Decimal('1.00'):
+                return create_error_response({
+                    'error': 'Invalid amount',
+                    'message': 'Total amount must be at least 1 INR'
+                }, 400)
+
+            # Create Order
             order = Order(
-                user_id=user_id,
-                seller_id=ObjectId(seller_id) if seller_id else None,
+                user_id=user,
+                seller_id=seller_data['seller'] if seller_data['seller'] else None,
                 order_number=order_numbers[i],
                 items=order_items,
-                total_amount=float(total_amount),
+                total_amount=total_amount,
                 status='pending',
                 shipping_address={
                     'id': str(shipping_address.id),
@@ -140,30 +161,179 @@ def place_order():
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow()
             )
-            
+
+            if data['payment_method'] == 'card':
+                # Create Razorpay payment link
+                customer_name = f"{user.first_name or ''} {user.last_name or ''}".strip() or "Customer"
+                payment_link = generate_razorpay_payment_link(
+                    amount=float(total_amount),
+                    reference_id=order_numbers[i],
+                    customer_name=customer_name,
+                    customer_email=user.email,
+                    customer_phone=user.phone_number if hasattr(user, 'phone_number') and user.phone_number else '',
+                    description=f"Order {order_numbers[i]}",
+                    callback_url=f"{os.getenv('APP_BASE_URL')}/api/payment-callback"
+                )
+                payment_links.append({
+                    'order_number': order_numbers[i],
+                    'payment_link_id': payment_link['id'],
+                    'payment_link_url': payment_link['short_url'],
+                    'amount': total_amount
+                })
+                order.payment_link_id = payment_link['id']
+
             order.save()
             orders.append({
                 'order_id': str(order.id),
-                'order_number': order.order_number,
-                'total_amount': float(total_amount),
+                'order_number': order.order_number, 
+                'amount': float(total_amount),
                 'items_count': len(order_items)
             })
 
-        except Exception as e:
-            for created_order in Order.objects(id__in=[o['order_id'] for o in orders]):
-                created_order.delete()
+        response_data = {
+            'message': f"{'Payment links and orders' if data['payment_method'] == 'card' else 'Orders'} created successfully",
+            'orders': orders,
+            'payment_links': [{
+                'payment_link_id': pl['payment_link_id'],
+                'payment_link_url': pl['payment_link_url'],
+                'amount': float(pl['amount']),
+                'order_number': pl['order_number']
+            } for pl in payment_links] if data['payment_method'] == 'card' else []
+        }
+
+        return jsonify(response_data), 201
+
+    except Exception as e:
+        # Clean up any created orders if payment link creation fails
+        for order in Order.objects(order_number__in=[o['order_number'] for o in orders]):
+            order.delete()
+        return create_error_response({
+            'error': 'Failed to create order',
+            'message': str(e)
+        }, 500)
+
+@order_bp.route('/payment-callback', methods=['GET'])
+def payment_callback():
+    try:
+        payment_id = request.args.get('razorpay_payment_id')
+        payment_link_id = request.args.get('razorpay_payment_link_id')
+        payment_link_reference_id = request.args.get('razorpay_payment_link_reference_id')
+
+        if not all([payment_id, payment_link_id, payment_link_reference_id]):
             return create_error_response({
-                'error': 'Failed to place order',
-                'message': str(e)
-            }, 500)
+                'error': 'Invalid callback parameters',
+                'message': 'Missing required callback parameters'
+            }, 400)
 
-    cart_items.delete()
+        # Verify payment link status
+        payment_link = get_razorpay_payment_link(payment_link_id)
+        if payment_link['status'] != 'paid':
+            return create_error_response({
+                'error': 'Payment not completed',
+                'message': 'Payment link status is not paid'
+            }, 400)
 
-    return jsonify({
-        'message': 'Orders placed successfully',
-        'orders': orders,
-        'total_orders': len(orders)
-    }), 201
+        # Find and update Order
+        order = Order.objects(
+            order_number=payment_link_reference_id,
+            payment_link_id=payment_link_id
+        ).first()
+
+        if not order:
+            return create_error_response({
+                'error': 'Order not found',
+                'message': 'No matching order found'
+            }, 404)
+
+        order.payment_id = payment_id
+        order.payment_status = 'paid'
+        order.status = 'confirmed'
+        order.updated_at = datetime.utcnow()
+        order.save()
+
+        return jsonify({
+            'message': 'Payment verified successfully',
+            'order_number': order.order_number,
+            'payment_id': payment_id,
+            'payment_status': 'paid'
+        }), 200
+
+    except Exception as e:
+        return create_error_response({
+            'error': 'Payment verification failed',
+            'message': str(e)
+        }, 500)
+
+def generate_razorpay_payment_link(amount, reference_id, customer_name, customer_email, customer_phone='', description=None, callback_url=None):
+    url = "https://api.razorpay.com/v1/payment_links"
+    amount_in_paise = int(amount * 100)
+    
+    if amount_in_paise < 100:
+        raise ValueError("Amount must be at least 1 INR")
+
+    # Ensure expire_by is at least 15 minutes in the future
+    expire_by = int((datetime.utcnow() + timedelta(days=7)).timestamp())
+    
+    payload = {
+        'amount': amount_in_paise,
+        'currency': 'INR',
+        'description': description or f"Order {reference_id}",
+        'customer': {
+            'name': customer_name,
+            'email': customer_email,
+            'contact': customer_phone or ''
+        },
+        'reference_id': reference_id,
+        'notify': {
+            'sms': bool(customer_phone),
+            'email': bool(customer_email)
+        },
+        'reminder_enable': True,
+        'expire_by': expire_by,
+        'notes': {
+            'order_number': reference_id
+        }
+    }
+
+    # Only include callback_url if provided and valid
+    if callback_url and callback_url.startswith('https://'):
+        payload['callback_url'] = callback_url
+        payload['callback_method'] = 'get'
+
+    auth = (os.getenv('RAZORPAY_KEY_ID'), os.getenv('RAZORPAY_KEY_SECRET'))
+    headers = {'Content-Type': 'application/json'}
+    
+    try:
+        response = requests.post(url, data=json.dumps(payload), auth=auth, headers=headers)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        try:
+            error_details = response.json()
+            error_message = error_details.get('error', {}).get('description', str(e))
+        except ValueError:
+            error_message = str(e)
+        raise Exception(f"Razorpay payment link creation failed: {error_message}")
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Razorpay payment link creation failed: {str(e)}")
+
+def get_razorpay_payment_link(payment_link_id):
+    url = f"https://api.razorpay.com/v1/payment_links/{payment_link_id}"
+    auth = (os.getenv('RAZORPAY_KEY_ID'), os.getenv('RAZORPAY_KEY_SECRET'))
+    
+    try:
+        response = requests.get(url, auth=auth)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        try:
+            error_details = response.json()
+            error_message = error_details.get('error', {}).get('description', str(e))
+        except ValueError:
+            error_message = str(e)
+        raise Exception(f"Razorpay payment link fetch failed: {error_message}")
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Razorpay payment link fetch failed: {str(e)}")
 
 @order_bp.route(ORDER_LIST_API, methods=['GET'])
 @jwt_error_handler
