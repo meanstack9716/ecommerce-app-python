@@ -215,17 +215,17 @@
             submitButton.disabled = true;
 
             try {
-                // const result = await sendPostRequest('/api/products/add', formData);
+                const result = await sendPostRequest('/api/products/add', formData);
 
-                // if (result.success) {
-                //     showToast(result.message, 'success');
-                //     this.reset();
-                //     setTimeout(() => {
-                //         window.location.href = '/products/list';
-                //     }, 100);
-                // } else {
-                //     handleErrors(result.errors)
-                // }
+                if (result.success) {
+                    showToast(result.message, 'success');
+                    this.reset();
+                    setTimeout(() => {
+                        window.location.href = '/products/list';
+                    }, 100);
+                } else {
+                    handleErrors(result.errors)
+                }
             } catch (error) {
                 console.error('Error:', error);
                 showToast('An error occurred, please try again later.', 'error');
