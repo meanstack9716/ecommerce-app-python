@@ -424,7 +424,7 @@
         </div>
       </div>
       <div class="pt-6 flex justify-end">
-        <button type="submit"
+        <button type="submit" id="update-seller-btn"
           class="w-48 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
           <span id="btn-text" class="">Update Seller</span>
           <div id="loading-spinner" class="hidden">
@@ -456,7 +456,7 @@
   const business_type = "{{ seller_data.seller.businessType | default('') }}";
   const selectAddressProofElement = document.getElementById("address_proof_id_type");
   const selectBusinessTypeElement = document.getElementById("business_type");
-  const updateBtn = document.querySelector('button[type="submit"]');
+  const updateBtn = document.getElementById('update-seller-btn');
   const selectedBusinessType = "{{ seller_data.business_address.type | default('') }}";
 
   const businessOptions = document.querySelectorAll('#business-type-options .option');
@@ -464,12 +464,57 @@
 
   const options = document.querySelectorAll('#business-type-options .option');
 
+  // Initialize form change tracking
+  let formChanged = false;
+  console.log('Initial formChanged:', formChanged);
+  console.log('Initial button disabled state:', updateBtn.disabled);
+  console.log('Initial button classes:', updateBtn.className);
 
-  options.forEach(option => {
+  // Function to toggle button state
+  function toggleUpdateButton() {
+    console.log('toggleUpdateButton called, formChanged:', formChanged);
+    if (formChanged) {
+      updateBtn.disabled = false;
+      updateBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+      updateBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+      console.log('Button enabled, disabled:', updateBtn.disabled, 'classes:', updateBtn.className);
+    } else {
+      updateBtn.disabled = true;
+      updateBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+      updateBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+      console.log('Button disabled, disabled:', updateBtn.disabled, 'classes:', updateBtn.className);
+    }
+  }
+
+  // Call toggleUpdateButton initially to set correct state
+  toggleUpdateButton();
+
+  // Track changes in all form inputs
+  const formInputs = document.querySelectorAll('input, select, textarea');
+  console.log('Number of form inputs tracked:', formInputs.length);
+  formInputs.forEach((input, index) => {
+    input.addEventListener('change', () => {
+      console.log(`Change event on input ${index}:`, input.name, 'value:', input.value);
+      formChanged = true;
+      toggleUpdateButton();
+    });
+    input.addEventListener('input', () => {
+      console.log(`Input event on input ${index}:`, input.name, 'value:', input.value);
+      formChanged = true;
+      toggleUpdateButton();
+    });
+  });
+
+  // Track changes in business address type options
+  options.forEach((option, index) => {
     option.addEventListener('click', () => {
+      console.log(`Business address type option ${index} clicked:`, option.dataset.value);
+      formChanged = true;
+      toggleUpdateButton();
       options.forEach(o => o.classList.remove('bg-indigo-500', 'text-white', 'border-indigo-500'));
       option.classList.add('bg-indigo-500', 'text-white', 'border-indigo-500');
       hiddenInput.value = option.dataset.value;
+      console.log('Hidden input value:', hiddenInput.value);
     });
   });
 
@@ -477,12 +522,18 @@
     if (option.dataset.value === selectedBusinessType) {
       option.classList.add('bg-indigo-500', 'text-white', 'border-indigo-500');
       hiddenInput.value = selectedBusinessType;
+      console.log('Selected business type set:', selectedBusinessType);
     }
   });
 
-  if (selectAddressProofElement) selectAddressProofElement.value = address_proof_type;
-
-  if (selectBusinessTypeElement) selectBusinessTypeElement.value = business_type;
+  if (selectAddressProofElement) {
+    selectAddressProofElement.value = address_proof_type;
+    console.log('Address proof type set:', address_proof_type);
+  }
+  if (selectBusinessTypeElement) {
+    selectBusinessTypeElement.value = business_type;
+    console.log('Business type set:', business_type);
+  }
 
   function populateStateDropdown(dropdown, selectedValue) {
     dropdown.innerHTML = '<option value="">Select a state</option>';
@@ -495,6 +546,7 @@
       }
       dropdown.appendChild(option);
     });
+    console.log('Populated dropdown:', dropdown.id, 'selected:', selectedValue);
   }
 
   function populateSellerStatus(dropdown, selectedValue) {
@@ -502,15 +554,15 @@
     seller_status_data.forEach(state => {
       const option = document.createElement('option');
       option.value = state;
-      option.textContent = state.charAt(0).toUpperCase() + state.slice(1).toLowerCase(); // Capitalize first letter
+      option.textContent = state.charAt(0).toUpperCase() + state.slice(1).toLowerCase();
       if (state === selectedValue) {
         option.selected = true;
       }
       dropdown.appendChild(option);
     });
+    console.log('Populated seller status:', selectedValue);
   }
 
-  // Populate both dropdowns
   populateStateDropdown(stateDropdown, currentState);
   populateStateDropdown(businessStateDropdown, currentBusinessState);
   populateSellerStatus(sellerStatus, currentSellerStatus);
@@ -525,26 +577,28 @@
       formData.personalInfo = personalInfo;
       formData.businessInfo = businessInfo;
       formData.businessDetails = businessDetails;
+      console.log('Form validated successfully:', formData);
       return true;
     }
+    console.log('Form validation failed');
     return false;
   }
 
   updateBtn.addEventListener('click', async function (e) {
     e.preventDefault();
+    console.log('Update button clicked, formChanged:', formChanged);
     document.getElementById('loading-spinner').classList.remove('hidden');
     document.getElementById('btn-text').classList.add('hidden');
     if (!validateCurrentStep()) {
+      document.getElementById('loading-spinner').classList.add('hidden');
+      document.getElementById('btn-text').classList.remove('hidden');
+      console.log('Validation failed, stopping submission');
       return;
     }
 
-    // Create FormData object for API request
     const apiFormData = new FormData();
-
-    // Add seller_id (assuming it's available in seller_data)
     apiFormData.append('seller_id', "{{ seller_data.seller.id }}");
 
-    // Add personalInfo fields
     const personalInfo = formData.personalInfo;
     apiFormData.append('email', personalInfo.email);
     apiFormData.append('first_name', personalInfo.first_name);
@@ -558,15 +612,12 @@
     apiFormData.append('address[country]', personalInfo.address.country);
     apiFormData.append('address[type]', personalInfo.address.type || 'Home');
 
-    // Add businessInfo fields
     const businessInfo = formData.businessInfo;
     apiFormData.append('businessName', businessInfo.businessName);
-    // apiFormData.append('businessType', businessInfo.businessType);
     apiFormData.append('businessEmail', businessInfo.businessEmail);
     apiFormData.append('businessMobile', businessInfo.businessMobile);
     apiFormData.append('gstNumber', businessInfo.gstNumber);
 
-    // Add business address if provided
     if (businessInfo.businessAddress && businessInfo.businessAddress.line1) {
       apiFormData.append('businessAddress[line1]', businessInfo.businessAddress.line1);
       apiFormData.append('businessAddress[streetLine2]', businessInfo.businessAddress.streetLine2 || '');
@@ -577,17 +628,16 @@
       apiFormData.append('businessAddress[type]', businessInfo.businessAddress.type || 'Business');
     }
 
-    // Add identification fields
     const businessDetails = formData.businessDetails;
     apiFormData.append('addressProofIdType', businessDetails.addressProofIdType);
     apiFormData.append('idNumber', businessDetails.idNumber);
     apiFormData.append('panNumber', businessDetails.panNumber);
     apiFormData.append('is_approved', sellerStatus.value);
 
-    const addressProofFrontInput = document.getElementById('addressProofFront');
-
     apiFormData.append('panCardFront', formData.businessDetails.panCardFront);
     apiFormData.append('addressProofFront', formData.businessDetails.addressProofFront);
+
+    console.log('Submitting form data:', [...apiFormData.entries()]);
 
     const result = await sendPostRequest('/user/seller/update', apiFormData, 'PUT');
 
@@ -596,18 +646,23 @@
       setTimeout(() => {
         window.location.href = "{{ url_for('admin_api.get_seller_list') }}";
       }, 100);
-        document.getElementById('loading-spinner').classList.add('hidden');
+      document.getElementById('loading-spinner').classList.add('hidden');
       document.getElementById('btn-text').classList.remove('hidden');
+      console.log('Update successful');
     } else {
       document.getElementById('loading-spinner').classList.add('hidden');
       document.getElementById('btn-text').classList.remove('hidden');
       if (result.errors) {
-        showToast(`Error: ${result.errors}`, 'error');
+        const errorMessages = Object.entries(result.errors)
+          .map(([field, message]) => `${field.charAt(0).toUpperCase() + field.slice(1)}: ${message}`)
+          .join('\n');
+        showToast(`${errorMessages}`, 'error');
+        console.log('Update failed with errors:', result.errors);
       } else {
-        showToast(`Error: ${result.message}`, 'error');
+        showToast(`${result.message}`, 'error');
+        console.log('Update failed with message:', result.message);
       }
     }
-
   });
 </script>
 {% endblock %}
