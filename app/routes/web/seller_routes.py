@@ -2,7 +2,7 @@ from flask import render_template, redirect, session, url_for, request, jsonify
 from . import admin_api
 from app.models import Seller, Identification
 from mongoengine.queryset.visitor import Q
-from constants import ADD_SELLER_WEB_URL, GET_SELLER_LIST_WEB_URL, GET_SELLERS_API_URL, INDIAN_STATES, EDIT_SELLERS_PAGE_WEB_URL
+from constants import ADD_SELLER_WEB_URL, GET_SELLER_LIST_WEB_URL, GET_SELLERS_API_URL, INDIAN_STATES, EDIT_SELLERS_PAGE_WEB_URL, APPROVAL_STATUSES
 from app.models import User
 from app.models import Address
 from app.utils.image_upload import get_local_ip
@@ -302,9 +302,9 @@ def edit_seller_page(seller_id):
                 "id_number": identification.id_number
             } if identification else None
         }
-
+        
         return render_template("admin/seller/edit_seller.html", 
-                            seller_data=response_data, INDIAN_STATES=INDIAN_STATES, local_ip=local_ip)
+                            seller_data=response_data, INDIAN_STATES=INDIAN_STATES, local_ip=local_ip, APPROVAL_STATUSES=APPROVAL_STATUSES)
     
     except Seller.DoesNotExist:
         return redirect(url_for('admin_api.get_seller_list'))
