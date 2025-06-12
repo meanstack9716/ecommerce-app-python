@@ -78,6 +78,7 @@ def add_seller():
             business_address = None
             if data.get('businessAddress[line1]'):
                 business_address_type = data.get('businessAddress[type]', 'Business')
+                print(business_address_type, ">>>>>>>")
                 if business_address_type not in ADDRESS_TYPES:
                     raise ValidationError(f"Invalid business address type: {business_address_type}")
 
@@ -90,7 +91,8 @@ def add_seller():
                     postal_code=data.get('businessAddress[postal_code]'),
                     country=data.get('businessAddress[country]'),
                     type=business_address_type,
-                    is_primary=False
+                    is_primary=False,
+                    is_business_address=True
                 )
                 business_address.save(session=session)
 
@@ -200,30 +202,47 @@ def update_seller():
                         setattr(user, field, data.get(field))
             user.save(session=session)
 
-            personal_address = Address.objects(user_id=user.id, is_primary=True).first()
+            # Update personal address (should be is_primary=True)
+            personal_address = seller.address or Address.objects(
+                user_id=user.id, 
+                is_primary=True
+            ).first()
+
             if any(field in data for field in updatable_address_fields):
                 if not personal_address:
-                    personal_address = Address(user_id=user.id, is_primary=True)
+                    personal_address = Address(
+                        user_id=user.id, 
+                        is_primary=True,
+                        is_business_address=False
+                    )
                 
                 address_data = {}
                 for key in updatable_address_fields:
                     if key in data:
-                        field_name = key.split('[')[1][:-1] 
+                        field_name = key.split('[')[1][:-1]
                         address_data[field_name] = data.get(key)
                 
-                address_data['is_primary'] = True
-                if 'type' in address_data:
-                    if address_data['type'] == 'business':
-                        address_data['type'] = 'personal'
-                    elif address_data['type'] not in ADDRESS_TYPES:
-                        raise ValidationError(f"Invalid personal address type: {address_data['type']}")
+                # Ensure critical fields are set
+                address_data.update({
+                    'is_primary': True,
+                    'is_business_address': False,
+                    'type': address_data.get('type', 'personal')
+                })
+                
+                if address_data['type'] not in ADDRESS_TYPES:
+                    raise ValidationError(f"Invalid personal address type: {address_data['type']}")
                 
                 for key, value in address_data.items():
-                    if value is not None:
-                        setattr(personal_address, key, value)
+                    setattr(personal_address, key, value)
+                
                 personal_address.save(session=session)
-            
-            business_address = Address.objects(user_id=user.id, type='business').first()
+
+            # Update business address (should be is_business_address=True)
+            business_address = seller.businessAddress or Address.objects(
+                user_id=user.id, 
+                is_business_address=True
+            ).first()
+
             if any(field in data for field in updatable_business_address_fields):
                 business_address_data = {}
                 for key in updatable_business_address_fields:
@@ -231,25 +250,29 @@ def update_seller():
                         field_name = key.split('[')[1][:-1]
                         business_address_data[field_name] = data.get(key)
                 
-                if business_address_data:
-                    if 'type' in business_address_data:
-                        if business_address_data['type'] not in ADDRESS_TYPES:
-                            raise ValidationError(f"Invalid business address type: {business_address_data['type']}")
-                    
-                    if not business_address:
-                        business_address = Address(
-                            user_id=user.id, 
-                            type=business_address_data.get('type', 'business'),
-                            is_primary=False
-                        )
-                    
-                    # Set business address fields
-                    for key, value in business_address_data.items():
-                        if value is not None:
-                            setattr(business_address, key, value)
-                    
-                    business_address.save(session=session)
-                    seller.businessAddress = business_address
+                if not business_address:
+                    business_address = Address(
+                        user_id=user.id,
+                        is_primary=False,
+                        is_business_address=True,
+                        type=business_address_data.get('type', 'business')
+                    )
+                
+                # Ensure critical fields are set
+                business_address_data.update({
+                    'is_primary': False,
+                    'is_business_address': True,
+                    'type': business_address_data.get('type', 'business')
+                })
+                
+                if business_address_data['type'] not in ADDRESS_TYPES:
+                    raise ValidationError(f"Invalid business address type: {business_address_data['type']}")
+                
+                for key, value in business_address_data.items():
+                    setattr(business_address, key, value)
+                
+                business_address.save(session=session)
+                seller.businessAddress = business_address
 
             # Update seller fields
             for field in updatable_seller_fields:
@@ -268,7 +291,7 @@ def update_seller():
             seller.save(session=session)
 
             identification = Identification.objects(user_id=user.id).first()
-            if any(field in data for field in updatable_identification_fields) or 'panCardFront' in files or 'panCardFront' in data or 'addressProofFront' in files or 'addressProofFront' in data:
+            if any(field in data for field in updatable_identification_fields) or 'panCardFront' in files or 'addressProofFront' in files:
                 if not identification:
                     identification = Identification(user_id=user.id)
                 
@@ -280,29 +303,28 @@ def update_seller():
                     identification.pan_number = data.get('panNumber')
                 
                 # Process PAN card file
-                pan_card_value = data.get('panCardFront')
                 if 'panCardFront' in files and files['panCardFront'].filename:
                     pan_card_front_url, err = upload_image(files['panCardFront'])
                     if err:
                         raise Exception(err)
                     identification.pan_card_front = pan_card_front_url.split('/')[-1]
-                elif pan_card_value:
-                    if pan_card_value.startswith('http'):
-                        identification.pan_card_front = pan_card_value.split('/')[-1]
+                elif data.get('panCardFront'):
+                    if data['panCardFront'].startswith('http'):
+                        identification.pan_card_front = data['panCardFront'].split('/')[-1]
                     else:
-                        identification.pan_card_front = pan_card_value
+                        identification.pan_card_front = data['panCardFront']
                 
-                address_proof_value = data.get('addressProofFront')
+                # Process address proof file
                 if 'addressProofFront' in files and files['addressProofFront'].filename:
                     address_proof_front_url, err = upload_image(files['addressProofFront'])
                     if err:
                         raise Exception(err)
                     identification.address_proof_front = address_proof_front_url.split('/')[-1]
-                elif address_proof_value:
-                    if address_proof_value.startswith('http'):
-                        identification.address_proof_front = address_proof_value.split('/')[-1]
+                elif data.get('addressProofFront'):
+                    if data['addressProofFront'].startswith('http'):
+                        identification.address_proof_front = data['addressProofFront'].split('/')[-1]
                     else:
-                        identification.address_proof_front = address_proof_value
+                        identification.address_proof_front = data['addressProofFront']
                 
                 identification.save(session=session)
 
@@ -324,4 +346,6 @@ def update_seller():
             return create_error_response({"message": f"Validation error: {str(e)}"}, 400)
         except Exception as e:
             session.abort_transaction()
+            import traceback
+            traceback.print_exc()
             return create_error_response({"message": f"Internal server error: {str(e)}"}, 500)

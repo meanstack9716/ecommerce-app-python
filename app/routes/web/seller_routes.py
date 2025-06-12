@@ -232,24 +232,18 @@ def edit_seller_page(seller_id):
         seller = Seller.objects.get(id=seller_id)
         user = seller.user_id
         
-        # Get all addresses for this user
         all_addresses = Address.objects(user_id=user.id)
         
-        # Find personal address (is_primary=True)
         personal_address = all_addresses.filter(is_primary=True).first()
         
-        # Find business address (could be any of the business types)
-        business_address_types = ['Office', 'Work', 'Store', 'Business', 'Home', 'Other']
-        business_address = (all_addresses.filter(type__in=business_address_types).first() or 
+        business_address = (all_addresses.filter(is_business_address=True).first() or 
                           seller.businessAddress)
         
-        # Fallback to seller's linked addresses if not found by type
         if not personal_address:
             personal_address = seller.address
         
         identification = Identification.objects(user_id=user.id).first()
 
-        # Helper function to format address data
         def format_address(address):
             if not address:
                 return None
@@ -264,10 +258,10 @@ def edit_seller_page(seller_id):
                 "contact_name": address.contact_name,
                 "contact_number": address.contact_number,
                 "type": address.type,
-                "is_primary": address.is_primary
+                "is_primary": address.is_primary,
+                "is_business_address": address.is_business_address
             }
 
-        # Create response data structure
         response_data = {
             "seller": {
                 "id": str(seller.id),
@@ -278,7 +272,8 @@ def edit_seller_page(seller_id):
                 "gst_number": seller.gst_number,
                 "is_approved": seller.is_approved,
                 "created_at": seller.created_at.isoformat() if seller.created_at else None,
-                "approved_by": str(seller.approved_by.id) if seller.approved_by else None
+                "approved_by": str(seller.approved_by.id) if seller.approved_by else None,
+                "has_business_address": bool(business_address)
             },
             "user": {
                 "id": str(user.id),
@@ -295,16 +290,19 @@ def edit_seller_page(seller_id):
             "identification": {
                 "id": str(identification.id),
                 "address_proof_id_type": identification.address_proof_id_type,
-                'address_proof_front': f"http://{local_ip}:{port}/static/uploads/{identification.address_proof_front}" or '',
+                'address_proof_front': f"http://{local_ip}:{port}/static/uploads/{identification.address_proof_front}" if identification.address_proof_front else '',
                 "address_proof_back": identification.address_proof_back,
                 "pan_number": identification.pan_number,
-                'pan_card_front': f"http://{local_ip}:{port}/static/uploads/{identification.pan_card_front}" or '',
+                'pan_card_front': f"http://{local_ip}:{port}/static/uploads/{identification.pan_card_front}" if identification.pan_card_front else '',
                 "id_number": identification.id_number
             } if identification else None
         }
         
         return render_template("admin/seller/edit_seller.html", 
-                            seller_data=response_data, INDIAN_STATES=INDIAN_STATES, local_ip=local_ip, APPROVAL_STATUSES=APPROVAL_STATUSES)
+                            seller_data=response_data, 
+                            INDIAN_STATES=INDIAN_STATES, 
+                            local_ip=local_ip, 
+                            APPROVAL_STATUSES=APPROVAL_STATUSES)
     
     except Seller.DoesNotExist:
         return redirect(url_for('admin_api.get_seller_list'))
