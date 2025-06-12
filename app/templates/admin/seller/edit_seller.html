@@ -426,7 +426,7 @@
       <div class="pt-6 flex justify-end">
         <button type="submit"
           class="w-48 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-          <span id="update-seller" class="btn-text">Update Seller</span>
+          <span id="btn-text" class="">Update Seller</span>
           <div id="loading-spinner" class="hidden">
             <span class="material-symbols-outlined animate-spin text-white text-xl">
               progress_activity
@@ -463,6 +463,7 @@
   const hiddenInput = document.getElementById('business_address_type_input');
 
   const options = document.querySelectorAll('#business-type-options .option');
+
 
   options.forEach(option => {
     option.addEventListener('click', () => {
@@ -531,6 +532,8 @@
 
   updateBtn.addEventListener('click', async function (e) {
     e.preventDefault();
+    document.getElementById('loading-spinner').classList.remove('hidden');
+    document.getElementById('btn-text').classList.add('hidden');
     if (!validateCurrentStep()) {
       return;
     }
@@ -601,6 +604,8 @@
         window.location.href = "{{ url_for('admin_api.get_seller_list') }}";
       }, 100);
     } else {
+      document.getElementById('loading-spinner').classList.add('hidden');
+      document.getElementById('btn-text').classList.remove('hidden');
       if (result.errors) {
         showToast(`Error: ${result.errors}`, 'error');
       } else {
