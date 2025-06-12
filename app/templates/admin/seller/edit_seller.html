@@ -466,9 +466,6 @@
 
   // Initialize form change tracking
   let formChanged = false;
-  console.log('Initial formChanged:', formChanged);
-  console.log('Initial button disabled state:', updateBtn.disabled);
-  console.log('Initial button classes:', updateBtn.className);
 
   // Function to toggle button state
   function toggleUpdateButton() {
@@ -491,7 +488,6 @@
 
   // Track changes in all form inputs
   const formInputs = document.querySelectorAll('input, select, textarea');
-  console.log('Number of form inputs tracked:', formInputs.length);
   formInputs.forEach((input, index) => {
     input.addEventListener('change', () => {
       console.log(`Change event on input ${index}:`, input.name, 'value:', input.value);
@@ -522,7 +518,6 @@
     if (option.dataset.value === selectedBusinessType) {
       option.classList.add('bg-indigo-500', 'text-white', 'border-indigo-500');
       hiddenInput.value = selectedBusinessType;
-      console.log('Selected business type set:', selectedBusinessType);
     }
   });
 
@@ -532,7 +527,6 @@
   }
   if (selectBusinessTypeElement) {
     selectBusinessTypeElement.value = business_type;
-    console.log('Business type set:', business_type);
   }
 
   function populateStateDropdown(dropdown, selectedValue) {
@@ -546,7 +540,6 @@
       }
       dropdown.appendChild(option);
     });
-    console.log('Populated dropdown:', dropdown.id, 'selected:', selectedValue);
   }
 
   function populateSellerStatus(dropdown, selectedValue) {
@@ -560,7 +553,6 @@
       }
       dropdown.appendChild(option);
     });
-    console.log('Populated seller status:', selectedValue);
   }
 
   populateStateDropdown(stateDropdown, currentState);
@@ -580,7 +572,6 @@
       console.log('Form validated successfully:', formData);
       return true;
     }
-    console.log('Form validation failed');
     return false;
   }
 
@@ -592,7 +583,6 @@
     if (!validateCurrentStep()) {
       document.getElementById('loading-spinner').classList.add('hidden');
       document.getElementById('btn-text').classList.remove('hidden');
-      console.log('Validation failed, stopping submission');
       return;
     }
 
@@ -636,8 +626,6 @@
 
     apiFormData.append('panCardFront', formData.businessDetails.panCardFront);
     apiFormData.append('addressProofFront', formData.businessDetails.addressProofFront);
-
-    console.log('Submitting form data:', [...apiFormData.entries()]);
 
     const result = await sendPostRequest('/user/seller/update', apiFormData, 'PUT');
 
