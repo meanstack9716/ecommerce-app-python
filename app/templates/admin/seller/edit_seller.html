@@ -584,17 +584,10 @@
     apiFormData.append('panNumber', businessDetails.panNumber);
     apiFormData.append('is_approved', sellerStatus.value);
 
-    // Handle file inputs for panCardFront and addressProofFront
-    const panCardFrontInput = document.getElementById('panCardFront');
     const addressProofFrontInput = document.getElementById('addressProofFront');
 
-    if (panCardFrontInput && panCardFrontInput.files.length > 0) {
-      apiFormData.append('panCardFront', panCardFrontInput.files[0]);
-    }
-
-    if (addressProofFrontInput && addressProofFrontInput.files.length > 0) {
-      apiFormData.append('addressProofFront', addressProofFrontInput.files[0]);
-    }
+    apiFormData.append('panCardFront', formData.businessDetails.panCardFront);
+    apiFormData.append('addressProofFront', formData.businessDetails.addressProofFront);
 
     const result = await sendPostRequest('/user/seller/update', apiFormData, 'PUT');
 
@@ -603,6 +596,8 @@
       setTimeout(() => {
         window.location.href = "{{ url_for('admin_api.get_seller_list') }}";
       }, 100);
+        document.getElementById('loading-spinner').classList.add('hidden');
+      document.getElementById('btn-text').classList.remove('hidden');
     } else {
       document.getElementById('loading-spinner').classList.add('hidden');
       document.getElementById('btn-text').classList.remove('hidden');

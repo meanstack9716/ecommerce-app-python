@@ -172,6 +172,14 @@ def update_seller():
     updatable_identification_fields = ['addressProofIdType', 'idNumber', 'panNumber']
     update_seller_status = ['is_approved']
 
+    missing_files = {}
+    if 'panCardFront' not in files and 'panCardFront' not in data:
+        missing_files['panCardFront'] = "PAN card front image is required"
+    if 'addressProofFront' not in files and 'addressProofFront' not in data:
+        missing_files['addressProofFront'] = "Address proof front image is required"
+    if missing_files:
+        return create_error_response(missing_files, 400)
+
     with db.connection.start_session() as session:
         session.start_transaction()
         try:
@@ -260,7 +268,7 @@ def update_seller():
             seller.save(session=session)
 
             identification = Identification.objects(user_id=user.id).first()
-            if any(field in data for field in updatable_identification_fields) or 'panCardFront' in files or 'addressProofFront' in files:
+            if any(field in data for field in updatable_identification_fields) or 'panCardFront' in files or 'panCardFront' in data or 'addressProofFront' in files or 'addressProofFront' in data:
                 if not identification:
                     identification = Identification(user_id=user.id)
                 
@@ -271,18 +279,30 @@ def update_seller():
                 if 'panNumber' in data:
                     identification.pan_number = data.get('panNumber')
                 
-                # Handle file uploads
+                # Process PAN card file
+                pan_card_value = data.get('panCardFront')
                 if 'panCardFront' in files and files['panCardFront'].filename:
                     pan_card_front_url, err = upload_image(files['panCardFront'])
                     if err:
                         raise Exception(err)
-                    identification.pan_card_front = pan_card_front_url
+                    identification.pan_card_front = pan_card_front_url.split('/')[-1]
+                elif pan_card_value:
+                    if pan_card_value.startswith('http'):
+                        identification.pan_card_front = pan_card_value.split('/')[-1]
+                    else:
+                        identification.pan_card_front = pan_card_value
                 
+                address_proof_value = data.get('addressProofFront')
                 if 'addressProofFront' in files and files['addressProofFront'].filename:
                     address_proof_front_url, err = upload_image(files['addressProofFront'])
                     if err:
                         raise Exception(err)
-                    identification.address_proof_front = address_proof_front_url
+                    identification.address_proof_front = address_proof_front_url.split('/')[-1]
+                elif address_proof_value:
+                    if address_proof_value.startswith('http'):
+                        identification.address_proof_front = address_proof_value.split('/')[-1]
+                    else:
+                        identification.address_proof_front = address_proof_value
                 
                 identification.save(session=session)
 
