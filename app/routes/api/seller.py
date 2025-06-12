@@ -5,7 +5,7 @@ from app.utils.utils import generate_random_password, create_error_response
 from app import db
 from mongoengine import ValidationError
 from app.utils.image_upload import upload_image, validate_fields
-from constants import ADD_SELLER, ADDRESS_TYPES, UPDATE_SELLER
+from constants import ADD_SELLER, ADDRESS_TYPES, UPDATE_SELLER, APPROVAL_STATUSES
 
 seller_bp = Blueprint('seller', __name__, url_prefix='/user')
 
@@ -170,6 +170,7 @@ def update_seller():
                                        'businessAddress[postal_code]', 'businessAddress[country]', 
                                        'businessAddress[type]']
     updatable_identification_fields = ['addressProofIdType', 'idNumber', 'panNumber']
+    update_seller_status = ['is_approved']
 
     with db.connection.start_session() as session:
         session.start_transaction()
@@ -242,11 +243,18 @@ def update_seller():
                     business_address.save(session=session)
                     seller.businessAddress = business_address
 
+            # Update seller fields
             for field in updatable_seller_fields:
                 if field in data:
                     setattr(seller, field, data.get(field))
             
-            # Link addresses to seller
+            for field in update_seller_status:
+                if field in data:
+                    if field == 'is_approved':
+                        if data.get(field) not in APPROVAL_STATUSES:
+                            return create_error_response({"is_approved": f"Invalid status. Must be one of: {APPROVAL_STATUSES}"}, 400)
+                    setattr(seller, field, data.get(field))
+            
             if personal_address:
                 seller.address = personal_address
             seller.save(session=session)
@@ -286,7 +294,9 @@ def update_seller():
                 "seller_id": str(seller.id),
                 "address_id": str(personal_address.id) if personal_address else None,
                 "business_address_id": str(business_address.id) if business_address else None,
-                "identification_id": str(identification.id) if identification else None
+                "identification_id": str(identification.id) if identification else None,
+                "is_approved": seller.is_approved,
+                "approved_by": str(seller.approved_by.id) if seller.approved_by else None
             }), 200
 
         except ValidationError as e:

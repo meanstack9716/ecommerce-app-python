@@ -579,6 +579,7 @@
     apiFormData.append('addressProofIdType', businessDetails.addressProofIdType);
     apiFormData.append('idNumber', businessDetails.idNumber);
     apiFormData.append('panNumber', businessDetails.panNumber);
+    apiFormData.append('is_approved', sellerStatus.value);
 
     // Handle file inputs for panCardFront and addressProofFront
     const panCardFrontInput = document.getElementById('panCardFront');
@@ -596,7 +597,9 @@
 
     if (result.success) {
       showToast('Seller updated successfully!', 'success');
-      window.load()
+      setTimeout(() => {
+        window.location.href = "{{ url_for('admin_api.get_seller_list') }}";
+      }, 100);
     } else {
       if (result.errors) {
         showToast(`Error: ${result.errors}`, 'error');
