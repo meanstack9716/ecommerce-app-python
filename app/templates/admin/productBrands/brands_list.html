@@ -292,7 +292,7 @@
 
             modal.show({
                 title: 'Confirm Deletion',
-                message: 'Are you sure you want to delete this brand? This action cannot be undone.',
+                message: 'If you delete this brand, all products related to it will also be deleted. This action cannot be undone. Are you sure you want to proceed?',
                 confirmText: 'Delete',
                 cancelText: 'Cancel',
                 onConfirm: async () => {
@@ -307,7 +307,7 @@
                     try {
                         const result = await sendPostRequest(url, formData);
                         if (result.success) {
-                            showToast('Brand deleted successfully', 'success');
+                            showToast('Brand and all related products deleted successfully', 'success');
 
                             if (document.querySelectorAll('#brand-table-body tr').length === 1 &&
                                 currentPage > 1) {
