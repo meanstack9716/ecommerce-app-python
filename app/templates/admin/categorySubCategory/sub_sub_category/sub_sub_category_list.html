@@ -229,10 +229,12 @@
                 const url = `/delete-sub-sub-category/${subSubCategoryId}`;
 
                 try {
-                    const result = await sendPostRequest(url, formData);
+                    const result = await sendPostRequest(url, formData, 'DELETE');
                     if (result.success) {
                         showToast('Sub-Sub Category deleted successfully', 'success');
-                        fetchCategories(currentPage);
+                        setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
                     } else {
                         showToast(result.errors || result.message || 'Something went wrong', 'error');
                     }
