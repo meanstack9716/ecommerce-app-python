@@ -11,14 +11,12 @@ class PromoCodeApplicableProducts(EmbeddedDocument):
     brand_id = db.ReferenceField('ProductBrands')
 
 class PromoCode(db.Document):
-    # Required fields
     code = db.StringField(required=True, unique=True)
     discount_type = db.StringField(required=True, choices=['percentage', 'fixed_amount'])
     discount_value = db.DecimalField(required=True, precision=2)
     start_date = db.DateTimeField(required=True)
     created_by = db.ReferenceField('User', required=True)
     
-    # Optional fields
     description = db.StringField()
     min_order_amount = db.DecimalField(precision=2, default=0.0)
     max_discount_amount = db.DecimalField(precision=2)
@@ -31,7 +29,6 @@ class PromoCode(db.Document):
     applicable_to = db.StringField(default='all', choices=['all', 'specific'])
     applicable_products = db.ListField(EmbeddedDocumentField(PromoCodeApplicableProducts), default=[])
     
-    # Automatic fields
     created_at = db.DateTimeField(default=datetime.utcnow)
     
     meta = {
@@ -49,7 +46,6 @@ class PromoCode(db.Document):
     def is_valid(self, user_id, order_amount, products):
         now = datetime.utcnow()
         
-        # Basic validation checks
         if not self.is_active:
             return False, "Promo code is not active"
         if now < self.start_date:
@@ -61,7 +57,6 @@ class PromoCode(db.Document):
         if order_amount < float(self.min_order_amount):
             return False, f"Minimum order amount of {self.min_order_amount} required"
         
-        # Product applicability check
         if self.applicable_to == 'specific' and products:
             valid = False
             for product in products:

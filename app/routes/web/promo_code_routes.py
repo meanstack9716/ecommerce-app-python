@@ -1,7 +1,7 @@
 from flask import render_template, session, redirect, url_for, request, jsonify
 from . import admin_api
 from app.models import User, PromoCode, PromoCodeApplicableProducts
-from constants import ADD_PROMO_CODE_WEB_URL, PROMO_CODE_LIST
+from constants import ADD_PROMO_CODE_WEB_URL, PROMO_CODE_LIST, DELETE_PROMO_CODE
 from datetime import datetime
 from bson import ObjectId
 from app.utils.utils import create_error_response
@@ -79,75 +79,87 @@ def handle_promo_code_submission():
     except Exception as e:
         return create_error_response(f'Server error: {str(e)}', 500)
 
-
 @admin_api.route(PROMO_CODE_LIST, methods=['GET'])
 def promo_code_list():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
-    
-    # Get query parameters
+
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('limit', 10, type=int)
-    search = request.args.get('search', '', type=str)
-    status = request.args.get('status', '', type=str)
-    discount_type = request.args.get('discount_type', '', type=str)
-    
-    # Build query
-    query = {}
+    limit = request.args.get('limit', 10, type=int)
+    search = request.args.get('promoSearch', '')
+    status = request.args.get('status', '')
+    discount_type = request.args.get('discount_type', '')
+
+    query = PromoCode.objects
+
     if search:
-        query['$or'] = [
-            {'code__icontains': search},
-            {'description__icontains': search}
-        ]
-    if status:
-        query['is_active'] = (status == 'active')
+        query = query.filter(
+            Q(code__icontains=search) | 
+            Q(description__icontains=search)
+        )
+
+    if status == 'active':
+        query = query.filter(is_active=True)
+    elif status == 'inactive':
+        query = query.filter(is_active=False)
+
     if discount_type:
-        query['discount_type'] = discount_type
-    
-    # Fetch promo codes with pagination
-    promo_codes = PromoCode.objects(**query).order_by('-created_at').paginate(page=page, per_page=per_page)
-    
-    # Prepare data for JSON response
+        query = query.filter(discount_type=discount_type)
+
+    promo_codes = query.order_by('-created_at').paginate(page=page, per_page=limit)
+
+    # Check if the request is expecting JSON (AJAX)
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        promo_list = []
+        for promo in promo_codes.items:
+            promo_list.append({
+                'id': str(promo.id),
+                'code': promo.code,
+                'description': promo.description,
+                'discount_type': promo.discount_type,
+                'discount_value': promo.discount_value,
+                'max_discount_amount': promo.max_discount_amount,
+                'start_date': promo.start_date.strftime('%Y-%m-%d') if promo.start_date else 'N/A',
+                'expiry_date': promo.expiry_date.strftime('%Y-%m-%d') if promo.expiry_date else 'N/A',
+                'current_uses': promo.current_uses,
+                'max_uses': promo.max_uses,
+                'is_active': promo.is_active
+            })
+
         return jsonify({
-            'data': [
-                {
-                    'id': str(promo.id),
-                    'code': promo.code,
-                    'description': promo.description,
-                    'discount_type': promo.discount_type,
-                    'discount_value': promo.discount_value,
-                    'max_discount_amount': promo.max_discount_amount,
-                    'start_date': promo.start_date.isoformat() if promo.start_date else None,
-                    'expiry_date': promo.expiry_date.isoformat() if promo.expiry_date else None,
-                    'current_uses': promo.current_uses,
-                    'max_uses': promo.max_uses,
-                    'is_active': promo.is_active
-                } for promo in promo_codes.items
-            ],
+            'promos': promo_list,
             'pagination': {
                 'page': promo_codes.page,
+                'per_page': promo_codes.per_page,
+                'total': promo_codes.total,
                 'pages': promo_codes.pages,
                 'has_prev': promo_codes.has_prev,
                 'has_next': promo_codes.has_next,
                 'prev_num': promo_codes.prev_num,
-                'next_num': promo_codes.next_num
+                'next_num': promo_codes.next_num,
+                'first_item': (promo_codes.page - 1) * promo_codes.per_page + 1,
+                'last_item': min(promo_codes.page * promo_codes.per_page, promo_codes.total),
+                'iter_pages': list(promo_codes.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2))
             },
-            'limit': per_page
+            'search': search,
+            'status': status,
+            'discount_type': discount_type,
+            'limit': limit
         })
-    
-    return render_template('admin/promo_codes/promo_code_list.html', 
-                         promos=promo_codes.items,
-                         pagination=promo_codes,
-                         search=search,
-                         status=status,
-                         discount_type=discount_type,
-                         limit=per_page)
 
-@admin_api.route('/api/promo-codes/<string:promo_code_id>', methods=['GET', 'PUT', 'DELETE'])
+    return render_template(
+        'admin/promo_codes/promo_code_list.html',
+        promos=promo_codes,
+        search=search,
+        status=status,
+        discount_type=discount_type,
+        limit=limit
+    )
+
+@admin_api.route('/api/promo-codes/<string:promo_code_id>', methods=['GET', 'PUT'])
 def edit_promo_code(promo_code_id):
     if 'user_id' not in session:
-        return create_error_response('Unauthorized', 401)
+        return redirect(url_for('admin_api.login_page'))
     
     try:
         promo_code = PromoCode.objects.get(id=promo_code_id)
@@ -155,7 +167,6 @@ def edit_promo_code(promo_code_id):
         return create_error_response('Promo code not found', 404)
     
     if request.method == 'GET':
-        # For displaying the edit form
         return jsonify({
             'code': promo_code.code,
             'description': promo_code.description,
@@ -164,7 +175,6 @@ def edit_promo_code(promo_code_id):
             'start_date': promo_code.start_date.isoformat(),
             'expiry_date': promo_code.expiry_date.isoformat() if promo_code.expiry_date else None,
             'is_active': promo_code.is_active,
-            # 'is_single_use': promo_code.is_single_use,
             'max_uses': promo_code.max_uses,
             'min_order_amount': float(promo_code.min_order_amount) if promo_code.min_order_amount else None,
             'max_discount_amount': float(promo_code.max_discount_amount) if promo_code.max_discount_amount else None,
@@ -184,7 +194,6 @@ def edit_promo_code(promo_code_id):
             promo_code.start_date = datetime.fromisoformat(data.get('start_date')) if data.get('start_date') else promo_code.start_date
             promo_code.expiry_date = datetime.fromisoformat(data.get('expiry_date')) if data.get('expiry_date') else promo_code.expiry_date
             promo_code.is_active = data.get('is_active', str(promo_code.is_active)).lower() == 'true'
-            # promo_code.is_single_use = data.get('is_single_use', str(promo_code.is_single_use)).lower() == 'true'
             promo_code.max_uses = int(data['max_uses']) if data.get('max_uses') else promo_code.max_uses
             promo_code.min_order_amount = float(data['min_order_amount']) if data.get('min_order_amount') else promo_code.min_order_amount
             promo_code.max_discount_amount = float(data['max_discount']) if data.get('max_discount') else promo_code.max_discount_amount
@@ -210,13 +219,22 @@ def edit_promo_code(promo_code_id):
             return create_error_response(str(e), 400)
         except Exception as e:
             return create_error_response(str(e), 500)
+
+@admin_api.route(DELETE_PROMO_CODE, methods=['DELETE'])
+def delete_promo_code(promo_code_id):
+    if 'user_id' not in session:
+        return redirect(url_for('admin_api.login_page'))
     
-    elif request.method == 'DELETE':
-        try:
-            promo_code.delete()
-            return jsonify({
-                'success': True,
-                'message': 'Promo code deleted successfully'
-            })
-        except Exception as e:
-            return create_error_response(str(e), 500)
+    try:
+        promo_code = PromoCode.objects.get(id=promo_code_id)
+    except PromoCode.DoesNotExist:
+        return create_error_response('Promo code not found', 404)
+    
+    try:
+        promo_code.delete()
+        return jsonify({
+            'success': True,
+            'message': 'Promo code deleted successfully'
+        })
+    except Exception as e:
+        return create_error_response(str(e), 500)
