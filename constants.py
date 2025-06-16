@@ -32,6 +32,8 @@ INDIAN_STATES = [
         "Uttarakhand", "West Bengal"
     ];
 
+RAZOR_PAY_PAYMENT_LINK = f'https://api.razorpay.com/v1/payment_links'
+
 PROMO_CODE_TYPES = ['percentage', 'fixed_amount']
 PROMO_CODE_APPLICABLE_TO = ['all', 'specific']
 
@@ -187,6 +189,7 @@ SEARCH_AUTOCOMPLETE_API = '/api/search/autocomplete'
 ORDER_PLACE_API = f'/api/orders/new'
 ORDER_LIST_API = f'/api/orders/list'
 GET_ORDER_STATUS_TYPES = f'/api/orders/status-types'
+PAYMENT_CALLBACK_API = f'/api/payment-callback'
 # Orders Endpoint End
 
 # Sales OverView Endpoint Start

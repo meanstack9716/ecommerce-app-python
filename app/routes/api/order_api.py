@@ -10,7 +10,7 @@ import json
 from bson import ObjectId
 import decimal
 from app.utils.utils import create_error_response
-from constants import ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, ORDER_STATUS, CREATE_RAZORPAY_PAYMENT_LINK
+from constants import ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, ORDER_STATUS, CREATE_RAZORPAY_PAYMENT_LINK, PAYMENT_CALLBACK_API, RAZOR_PAY_PAYMENT_LINK
 from app.utils.jwt_handlers import jwt_error_handler
 from mongoengine.queryset.visitor import Q
 from app.utils.validation import validate_required_fields
@@ -39,7 +39,6 @@ def place_order():
     if not is_valid:
         return create_error_response(validation_errors, 400)
 
-    # Validate payment method
     valid_payment_methods = ['cod', 'card']
     if data['payment_method'] not in valid_payment_methods:
         return create_error_response({'error': 'Invalid payment method'}, 400)
@@ -83,7 +82,6 @@ def place_order():
     if not cart_items:
         return create_error_response({'error': 'No cart items found'}, 400)
 
-    # Group cart items by seller
     seller_items = {}
     for cart_item in cart_items:
         product = cart_item.product_id
@@ -97,7 +95,6 @@ def place_order():
             }
         seller_items[seller_id]['items'].append(cart_item)
 
-    # Generate unique order numbers
     order_numbers = set()
     while len(order_numbers) < len(seller_items):
         order_number = 'ORD-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
@@ -204,7 +201,6 @@ def place_order():
         return jsonify(response_data), 201
 
     except Exception as e:
-        # Clean up any created orders if payment link creation fails
         for order in Order.objects(order_number__in=[o['order_number'] for o in orders]):
             order.delete()
         return create_error_response({
@@ -212,7 +208,7 @@ def place_order():
             'message': str(e)
         }, 500)
 
-@order_bp.route('/payment-callback', methods=['GET'])
+@order_bp.route(PAYMENT_CALLBACK_API, methods=['GET'])
 def payment_callback():
     try:
         payment_id = request.args.get('razorpay_payment_id')
@@ -265,7 +261,7 @@ def payment_callback():
         }, 500)
 
 def generate_razorpay_payment_link(amount, reference_id, customer_name, customer_email, customer_phone='', description=None, callback_url=None):
-    url = "https://api.razorpay.com/v1/payment_links"
+    url = RAZOR_PAY_PAYMENT_LINK
     amount_in_paise = int(amount * 100)
     
     if amount_in_paise < 100:
@@ -295,7 +291,6 @@ def generate_razorpay_payment_link(amount, reference_id, customer_name, customer
         }
     }
 
-    # Only include callback_url if provided and valid
     if callback_url and callback_url.startswith('https://'):
         payload['callback_url'] = callback_url
         payload['callback_method'] = 'get'
