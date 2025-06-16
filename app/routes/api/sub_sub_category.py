@@ -28,19 +28,19 @@ def add_sub_sub_category():
     }, required_fields)
 
     if not is_valid:
-        return create_error_response(errors, 400)
+        return create_error_response({"error" : errors}, 400)
 
     category = Category.objects(id=ObjectId(category_id_str)).first()
     if not category:
-        return create_error_response({'category': 'Invalid category ID'}, 400)
+        return create_error_response({'error': 'Invalid category ID'}, 400)
 
     subcategory = SubCategory.objects(id=ObjectId(subcategory_id_str)).first()
     if not subcategory:
-        return create_error_response({'subcategory': 'Invalid subcategory ID'}, 400)
+        return create_error_response({'error': 'Invalid subcategory ID'}, 400)
 
     image_filename, image_error = upload_image(image)
     if image_error:
-        return create_error_response({'image': image_error}, 400)
+        return create_error_response({'error': image_error}, 400)
 
     new_ptype = SubSubCategory(
         name=name,

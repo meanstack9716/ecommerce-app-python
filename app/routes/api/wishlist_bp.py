@@ -26,7 +26,7 @@ def add_to_wishlist():
     required_fields = ['product_id', 'selected_size', 'selected_color']
     is_valid, validation_errors = validate_required_fields(data, required_fields)
     if not is_valid:
-        return create_error_response(validation_errors, 400)
+        return create_error_response({"error": validation_errors}, 400)
 
     product_id = data['product_id']
     selected_size = data['selected_size']

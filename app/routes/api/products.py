@@ -214,7 +214,7 @@ def get_all_products():
         return jsonify(response), 200
 
     except Exception as e:
-        return create_error_response({"exception": str(e)}, status_code=500)
+        return create_error_response({"error": str(e)}, status_code=500)
         
 @products_bp.route(PRODUCT_LISTS_BY_ID_API, methods=['GET'])
 def get_product_by_id(product_id):
@@ -222,7 +222,7 @@ def get_product_by_id(product_id):
         product = Products.objects(id=product_id).first()
 
         if not product:
-            return create_error_response({"message": "Product not found"}, status_code=404)
+            return create_error_response({"error": "Product not found"}, status_code=404)
         
         local_ip = get_local_ip()
         port = current_app.config.get('SERVER_PORT', 8080)
@@ -310,4 +310,4 @@ def get_product_by_id(product_id):
         return jsonify(response), 200
 
     except Exception as e:
-        return create_error_response({"exception": str(e)}, status_code=500)
+        return create_error_response({"error": str(e)}, status_code=500)

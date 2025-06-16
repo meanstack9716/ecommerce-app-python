@@ -24,7 +24,7 @@ def create_review():
     required_fields = ['product_id', 'rating', 'review']
     is_valid, validation_errors = validate_fields(data, required_fields)
     if not is_valid:
-        return create_error_response(validation_errors, 400)
+        return create_error_response({"error": validation_errors}, 400)
 
     try:
         try:

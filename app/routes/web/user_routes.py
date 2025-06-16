@@ -128,7 +128,7 @@ def add_new_user():
            
             is_valid_email, email_error = validate_email(data['email'])
             if not is_valid_email:
-                return create_error_response({"email": email_error}, 400)
+                return create_error_response({"error": email_error}, 400)
            
             if User.objects(email=data['email']).first():
                 return create_error_response({'error': 'Email already exists'}, 409)
@@ -190,7 +190,7 @@ def edit_user(user_id):
             
             is_valid_email, email_error = validate_email(data['email'])
             if not is_valid_email:
-                return create_error_response({"email": email_error}, 400)
+                return create_error_response({"error": email_error}, 400)
 
             existing_user = User.objects(email=data['email']).first()
             if existing_user and str(existing_user.id) != user_id:

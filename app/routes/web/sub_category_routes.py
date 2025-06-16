@@ -157,7 +157,7 @@ def update_sub_category(sub_category_id):
         if image and image.filename != '':
             image_filename, image_error = upload_image(image)
             if image_error:
-                return create_error_response({'image': image_error}, 400)
+                return create_error_response({'error': image_error}, 400)
 
         sub_category.update(
             name=name,
