@@ -1,7 +1,7 @@
 from flask import render_template, session, redirect, url_for, request, jsonify
 from . import admin_api
-from app.models import User, PromoCode, PromoCodeApplicableProducts
-from constants import ADD_PROMO_CODE_WEB_URL, PROMO_CODE_LIST
+from app.models import User, PromoCode
+from constants import ADD_PROMO_CODE_WEB_URL, PROMO_CODE_LIST, DELETE_PROMO_CODE
 from datetime import datetime
 from bson import ObjectId
 from app.utils.utils import create_error_response
@@ -17,8 +17,6 @@ def add_promo_code():
     
     return render_template('admin/promo_codes/add_promo_code.html')
 
-
-@admin_api.route('/api/promo-codes', methods=['POST'])
 def handle_promo_code_submission():
     if 'user_id' not in session:
         return create_error_response('Unauthorized', 401)
@@ -28,39 +26,50 @@ def handle_promo_code_submission():
         required_fields = ['code', 'discount_type', 'discount_value', 'start_date']
         
         is_valid, validation_errors = validate_fields(data, required_fields)
-
         if not is_valid:
             return create_error_response(validation_errors, 400)
 
+        promo_code_value = data['code'].upper().strip()
+        if PromoCode.objects(code=promo_code_value).first():
+            return create_error_response(f"Promo code '{promo_code_value}' already exists.", 400)
+
+        start_date_str = data['start_date']
+        expiry_date_str = data.get('expiry_date')
+        
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').replace(hour=0, minute=0, second=0)
+            expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59) if expiry_date_str else None
+        except ValueError as e:
+            return create_error_response(f'Invalid date format: {str(e)}. Use YYYY-MM-DD format.', 400)
+
+        current_date = datetime.utcnow()
+        if start_date < current_date.replace(hour=0, minute=0, second=0, microsecond=0):
+            return create_error_response('Start date cannot be in the past', 400)
+        
+        if expiry_date and expiry_date <= start_date:
+            return create_error_response('End date must be after start date', 400)
+
         promo_data = {
-            'code': data['code'].upper().strip(),
+            'code': promo_code_value,
             'description': data.get('description'),
             'discount_type': data['discount_type'],
             'discount_value': float(data['discount_value']),
             'min_order_amount': float(data.get('min_order_amount', 0)),
             'max_discount_amount': float(data.get('max_discount_amount', 0)),
-            'start_date': datetime.fromisoformat(data['start_date']),
-            'expiry_date': datetime.fromisoformat(data['expiry_date']) if data.get('expiry_date') else None,
+            'start_date': start_date,
+            'expiry_date': expiry_date,
             'max_uses': int(data['max_uses']) if data.get('max_uses') else None,
             'uses_per_user': int(data.get('uses_per_user', 1)),
             'only_first_order': data.get('only_first_order', 'false').lower() == 'true',
             'is_active': data.get('is_active', 'true').lower() == 'true',
-            'applicable_to': data.get('applicable_to', 'all'),
             'created_by': session['user_id']
         }
 
-        if data.get('applicable_to') == 'specific' and data.getlist('products'):
-            applicable_products = []
-            for product_id in data.getlist('products'):
-                applicable_products.append(
-                    PromoCodeApplicableProducts(product_id=ObjectId(product_id))
-                )
-            if data.getlist('categories'):
-                for category_id in data.getlist('categories'):
-                    applicable_products.append(
-                        PromoCodeApplicableProducts(category_id=ObjectId(category_id))
-                    )
-            promo_data['applicable_products'] = applicable_products
+        if promo_data['discount_type'] == 'percentage' and promo_data['discount_value'] > 100:
+            return create_error_response('Percentage discount cannot exceed 100%', 400)
+        
+        if promo_data['discount_value'] <= 0:
+            return create_error_response('Discount value must be greater than 0', 400)
 
         promo_code = PromoCode(**promo_data)
         promo_code.save()
@@ -71,7 +80,9 @@ def handle_promo_code_submission():
             'promo_code_id': str(promo_code.id),
             'code': promo_code.code,
             'discount_value': float(promo_code.discount_value),
-            'discount_type': promo_code.discount_type
+            'discount_type': promo_code.discount_type,
+            'start_date': start_date_str,
+            'expiry_date': expiry_date_str if expiry_date_str else None
         }), 201
 
     except ValueError as e:
@@ -79,75 +90,87 @@ def handle_promo_code_submission():
     except Exception as e:
         return create_error_response(f'Server error: {str(e)}', 500)
 
-
 @admin_api.route(PROMO_CODE_LIST, methods=['GET'])
 def promo_code_list():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
-    
-    # Get query parameters
+
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('limit', 10, type=int)
-    search = request.args.get('search', '', type=str)
-    status = request.args.get('status', '', type=str)
-    discount_type = request.args.get('discount_type', '', type=str)
-    
-    # Build query
-    query = {}
+    limit = request.args.get('limit', 10, type=int)
+    search = request.args.get('promoSearch', '')
+    status = request.args.get('status', '')
+    discount_type = request.args.get('discount_type', '')
+
+    query = PromoCode.objects
+
     if search:
-        query['$or'] = [
-            {'code__icontains': search},
-            {'description__icontains': search}
-        ]
-    if status:
-        query['is_active'] = (status == 'active')
+        query = query.filter(
+            Q(code__icontains=search) | 
+            Q(description__icontains=search)
+        )
+
+    if status == 'active':
+        query = query.filter(is_active=True)
+    elif status == 'inactive':
+        query = query.filter(is_active=False)
+
     if discount_type:
-        query['discount_type'] = discount_type
-    
-    # Fetch promo codes with pagination
-    promo_codes = PromoCode.objects(**query).order_by('-created_at').paginate(page=page, per_page=per_page)
-    
-    # Prepare data for JSON response
+        query = query.filter(discount_type=discount_type)
+
+    promo_codes = query.order_by('-created_at').paginate(page=page, per_page=limit)
+
+    # Check if the request is expecting JSON (AJAX)
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        promo_list = []
+        for promo in promo_codes.items:
+            promo_list.append({
+                'id': str(promo.id),
+                'code': promo.code,
+                'description': promo.description,
+                'discount_type': promo.discount_type,
+                'discount_value': promo.discount_value,
+                'max_discount_amount': promo.max_discount_amount,
+                'start_date': promo.start_date.strftime('%Y-%m-%d') if promo.start_date else 'N/A',
+                'expiry_date': promo.expiry_date.strftime('%Y-%m-%d') if promo.expiry_date else 'N/A',
+                'current_uses': promo.current_uses,
+                'max_uses': promo.max_uses,
+                'is_active': promo.is_active
+            })
+
         return jsonify({
-            'data': [
-                {
-                    'id': str(promo.id),
-                    'code': promo.code,
-                    'description': promo.description,
-                    'discount_type': promo.discount_type,
-                    'discount_value': promo.discount_value,
-                    'max_discount_amount': promo.max_discount_amount,
-                    'start_date': promo.start_date.isoformat() if promo.start_date else None,
-                    'expiry_date': promo.expiry_date.isoformat() if promo.expiry_date else None,
-                    'current_uses': promo.current_uses,
-                    'max_uses': promo.max_uses,
-                    'is_active': promo.is_active
-                } for promo in promo_codes.items
-            ],
+            'promos': promo_list,
             'pagination': {
                 'page': promo_codes.page,
+                'per_page': promo_codes.per_page,
+                'total': promo_codes.total,
                 'pages': promo_codes.pages,
                 'has_prev': promo_codes.has_prev,
                 'has_next': promo_codes.has_next,
                 'prev_num': promo_codes.prev_num,
-                'next_num': promo_codes.next_num
+                'next_num': promo_codes.next_num,
+                'first_item': (promo_codes.page - 1) * promo_codes.per_page + 1,
+                'last_item': min(promo_codes.page * promo_codes.per_page, promo_codes.total),
+                'iter_pages': list(promo_codes.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2))
             },
-            'limit': per_page
+            'search': search,
+            'status': status,
+            'discount_type': discount_type,
+            'limit': limit
         })
-    
-    return render_template('admin/promo_codes/promo_code_list.html', 
-                         promos=promo_codes.items,
-                         pagination=promo_codes,
-                         search=search,
-                         status=status,
-                         discount_type=discount_type,
-                         limit=per_page)
 
-@admin_api.route('/api/promo-codes/<string:promo_code_id>', methods=['GET', 'PUT', 'DELETE'])
+    return render_template(
+        'admin/promo_codes/promo_code_list.html',
+        promos=promo_codes,
+        search=search,
+        status=status,
+        discount_type=discount_type,
+        limit=limit
+    )
+
+@admin_api.route('/api/promo-codes/<string:promo_code_id>', methods=['GET', 'PUT'])
 def edit_promo_code(promo_code_id):
     if 'user_id' not in session:
-        return create_error_response('Unauthorized', 401)
+        return redirect(url_for('admin_api.login_page'))
     
     try:
         promo_code = PromoCode.objects.get(id=promo_code_id)
@@ -155,7 +178,6 @@ def edit_promo_code(promo_code_id):
         return create_error_response('Promo code not found', 404)
     
     if request.method == 'GET':
-        # For displaying the edit form
         return jsonify({
             'code': promo_code.code,
             'description': promo_code.description,
@@ -164,13 +186,9 @@ def edit_promo_code(promo_code_id):
             'start_date': promo_code.start_date.isoformat(),
             'expiry_date': promo_code.expiry_date.isoformat() if promo_code.expiry_date else None,
             'is_active': promo_code.is_active,
-            # 'is_single_use': promo_code.is_single_use,
             'max_uses': promo_code.max_uses,
             'min_order_amount': float(promo_code.min_order_amount) if promo_code.min_order_amount else None,
             'max_discount_amount': float(promo_code.max_discount_amount) if promo_code.max_discount_amount else None,
-            'applicable_to': promo_code.applicable_to,
-            'applicable_products': [str(product.product_id.id) for product in promo_code.applicable_products] 
-                if promo_code.applicable_products else []
         })
     
     elif request.method == 'PUT':
@@ -184,20 +202,9 @@ def edit_promo_code(promo_code_id):
             promo_code.start_date = datetime.fromisoformat(data.get('start_date')) if data.get('start_date') else promo_code.start_date
             promo_code.expiry_date = datetime.fromisoformat(data.get('expiry_date')) if data.get('expiry_date') else promo_code.expiry_date
             promo_code.is_active = data.get('is_active', str(promo_code.is_active)).lower() == 'true'
-            # promo_code.is_single_use = data.get('is_single_use', str(promo_code.is_single_use)).lower() == 'true'
             promo_code.max_uses = int(data['max_uses']) if data.get('max_uses') else promo_code.max_uses
             promo_code.min_order_amount = float(data['min_order_amount']) if data.get('min_order_amount') else promo_code.min_order_amount
-            promo_code.max_discount_amount = float(data['max_discount']) if data.get('max_discount') else promo_code.max_discount_amount
-            promo_code.applicable_to = data.get('product_restriction', promo_code.applicable_to)
-            
-            # Handle product restrictions
-            if data.get('product_restriction') == 'specific' and data.getlist('products'):
-                promo_code.applicable_products = [
-                    PromoCodeApplicableProducts(product_id=ObjectId(product_id))
-                    for product_id in data.getlist('products')
-                ]
-            elif data.get('product_restriction') != 'specific':
-                promo_code.applicable_products = []
+            promo_code.max_discount_amount = float(data['max_discount']) if data.get('max_discount') else promo_code.max_discount_amount        
             
             promo_code.save()
             
@@ -210,13 +217,22 @@ def edit_promo_code(promo_code_id):
             return create_error_response(str(e), 400)
         except Exception as e:
             return create_error_response(str(e), 500)
+
+@admin_api.route(DELETE_PROMO_CODE, methods=['DELETE'])
+def delete_promo_code(promo_code_id):
+    if 'user_id' not in session:
+        return redirect(url_for('admin_api.login_page'))
     
-    elif request.method == 'DELETE':
-        try:
-            promo_code.delete()
-            return jsonify({
-                'success': True,
-                'message': 'Promo code deleted successfully'
-            })
-        except Exception as e:
-            return create_error_response(str(e), 500)
+    try:
+        promo_code = PromoCode.objects.get(id=promo_code_id)
+    except PromoCode.DoesNotExist:
+        return create_error_response('Promo code not found', 404)
+    
+    try:
+        promo_code.delete()
+        return jsonify({
+            'success': True,
+            'message': 'Promo code deleted successfully'
+        })
+    except Exception as e:
+        return create_error_response(str(e), 500)
