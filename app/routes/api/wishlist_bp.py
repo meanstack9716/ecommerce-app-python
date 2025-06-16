@@ -21,7 +21,7 @@ def add_to_wishlist():
     try:
         data = request.get_json()
     except Exception:
-        return jsonify({"error": "Invalid JSON data"}), 400
+        return create_error_response({"error": "Invalid JSON data"}, 400)
 
     required_fields = ['product_id', 'selected_size', 'selected_color']
     is_valid, validation_errors = validate_required_fields(data, required_fields)
@@ -38,7 +38,7 @@ def add_to_wishlist():
 
     product = Products.objects(id=product_id).first()
     if not product:
-        return jsonify({"error": "Product not found"}), 404
+        return create_error_response({"error": "Product not found"}, 404)
 
     variant = ProductVariant.objects(
         product_id=product_id,
@@ -49,7 +49,6 @@ def add_to_wishlist():
     if not variant:
         return create_error_response({"error": "Variant not found for the specified product, size, and color"}, 404)
 
-    # Check if item already exists in wishlist
     existing_item = WishlistItem.objects(
         user_id=user_id,
         product_id=product_id,

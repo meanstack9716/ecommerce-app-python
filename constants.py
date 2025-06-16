@@ -81,6 +81,9 @@ DELETE_SUB_CATEGORY_WEB_URL = '/delete_sub_category/<sub_category_id>'
 SUB_SUB_CATEGORY_LIST_WEB_URL = f'/sub-sub-category-list'
 SUB_SUB_CATEGORY_WEB_URL = f'sub-sub-category/add'
 DELETE_SUB_SUB_CATEGORY_WEB_URL = '/delete-sub-sub-category/<sub_sub_category_id>'
+EDIT_SUB_SUB_CATEGORY_WEB_URL= '/sub-sub-category/edit/<sub_sub_category_id>'
+UPDATE_SUB_SUB_CATEGORY_WEB_URL = f'/sub-sub-category/update/<sub_sub_category_id>'
+
 
 ADD_NEW_PRODUCT_WEB_URL = f'/api/products/add'
 ADD_PRODUCT_PAGE_WEB_URL = f'/products/add'
