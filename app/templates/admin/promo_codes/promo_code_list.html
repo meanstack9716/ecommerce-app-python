@@ -93,10 +93,6 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-2">
-            <span id="pagination-info" class="text-sm text-gray-600"></span>
-        </div>
-
         <div id="pagination-controls" class="flex gap-2"></div>
     </div>
 </div>
@@ -110,7 +106,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearSearch = document.getElementById('clear-search');
     const itemsPerPage = document.getElementById('items-per-page');
     const promoTableBody = document.getElementById('promo-table-body');
-    const paginationInfo = document.getElementById('pagination-info');
     const paginationControls = document.getElementById('pagination-controls');
     
     let currentState = {
@@ -121,7 +116,6 @@ document.addEventListener('DOMContentLoaded', function() {
         discount_type: ''
     };
 
-    // Debounce function to limit how often the filter is applied
     let debounceTimer;
     function debounce(callback, delay) {
         clearTimeout(debounceTimer);
@@ -200,7 +194,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const start = (currentState.page - 1) * currentState.limit + 1;
         const end = Math.min(currentState.page * currentState.limit, data.total);
 
-        paginationInfo.textContent = `Showing ${start} to ${end} of ${data.total} items`;
         paginationControls.innerHTML = '';
 
         const prevButton = document.createElement('button');
