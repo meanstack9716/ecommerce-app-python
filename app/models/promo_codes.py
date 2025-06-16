@@ -3,13 +3,6 @@ from datetime import datetime
 from mongoengine import EmbeddedDocument, EmbeddedDocumentField
 from bson import ObjectId
 
-class PromoCodeApplicableProducts(EmbeddedDocument):
-    product_id = db.ReferenceField('Products')
-    category_id = db.ReferenceField('Category')
-    subcategory_id = db.ReferenceField('SubCategory')
-    subsubcategory_id = db.ReferenceField('SubSubCategory')
-    brand_id = db.ReferenceField('ProductBrands')
-
 class PromoCode(db.Document):
     code = db.StringField(required=True, unique=True)
     discount_type = db.StringField(required=True, choices=['percentage', 'fixed_amount'])
@@ -26,8 +19,6 @@ class PromoCode(db.Document):
     only_first_order = db.BooleanField(default=False)
     used_count = db.IntField(default=0)
     is_active = db.BooleanField(default=True)
-    applicable_to = db.StringField(default='all', choices=['all', 'specific'])
-    applicable_products = db.ListField(EmbeddedDocumentField(PromoCodeApplicableProducts), default=[])
     
     created_at = db.DateTimeField(default=datetime.utcnow)
     
@@ -38,12 +29,11 @@ class PromoCode(db.Document):
             'start_date',
             'expiry_date',
             'is_active',
-            'created_by',
-            'applicable_to'
+            'created_by'
         ]
     }
 
-    def is_valid(self, user_id, order_amount, products):
+    def is_valid(self, user_id, order_amount):
         now = datetime.utcnow()
         
         if not self.is_active:
@@ -56,20 +46,6 @@ class PromoCode(db.Document):
             return False, "Promo code usage limit reached"
         if order_amount < float(self.min_order_amount):
             return False, f"Minimum order amount of {self.min_order_amount} required"
-        
-        if self.applicable_to == 'specific' and products:
-            valid = False
-            for product in products:
-                for applicable in self.applicable_products:
-                    if (applicable.product_id and product.id == applicable.product_id.id) or \
-                       (applicable.category_id and product.category_id.id == applicable.category_id.id) or \
-                       (applicable.subcategory_id and product.subcategory_id.id == applicable.subcategory_id.id) or \
-                       (applicable.subsubcategory_id and product.subsubcategory_id.id == applicable.subsubcategory_id.id) or \
-                       (applicable.brand_id and product.brand_id.id == applicable.brand_id.id):
-                        valid = True
-                        break
-                if not valid:
-                    return False, "Promo code not applicable to all products in cart"
         
         return True, "Valid promo code"
 

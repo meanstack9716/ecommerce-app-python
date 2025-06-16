@@ -180,13 +180,7 @@
                     
                     // Handle discount type
                     toggleMaxDiscountField(data.discount_type);
-                    
-                    // Handle product restrictions
-                    if (data.applicable_to === 'specific') {
-                        restrictSpecificRadio.checked = true;
-                        productSelectionContainer.classList.remove('hidden');
-                        await loadProducts(data.applicable_products);
-                    }
+
                     
                 } else {
                     alert('Failed to load promo code: ' + (data.message || 'Unknown error'));

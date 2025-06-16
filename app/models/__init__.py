@@ -10,6 +10,6 @@ from .productCart import ProductCart
 from .order import Order, OrderItem
 from .wishlist import Wishlist, WishlistItem
 from .saveforlater import SaveForLater, SaveForLaterItem
-from .promo_codes import PromoCode, PromoCodeApplicableProducts
+from .promo_codes import PromoCode
 from .product_review import ProductReview
 from .search_keyword_analytics import SearchKeywordAnalytics

@@ -8,27 +8,16 @@ from constants import ALLOWED_SIZES
 from app.utils.utils import create_error_response
 from app.utils.image_upload import get_local_ip
 from flask import current_app
+from app.utils.jwt_handlers import jwt_error_handler
 from flask_jwt_extended import jwt_required, get_jwt_identity
-
-
 
 cart_bp = Blueprint('cart', __name__)
 
-def get_user_id():
-    if 'user_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-    return session['user_id']
-
 @cart_bp.route(CART_ADD, methods=['POST'])
+@jwt_error_handler
+@jwt_required()
 def add_to_cart():
-    user_id_response = get_user_id()
-    if isinstance(user_id_response, tuple):
-        return user_id_response
-    user_id = user_id_response
-
-    if not request.is_json:
-        return create_error_response({"error": "Request must be JSON"}, 400)
-
+    user_id = get_jwt_identity()
     try:
         data = request.get_json()
     except Exception:
@@ -198,10 +187,10 @@ def get_cart():
     }
     
 @cart_bp.route(CART_REMOVE, methods=['DELETE'])
+@jwt_error_handler
+@jwt_required()
 def remove_from_cart():
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
+    user_id = get_jwt_identity()
 
     data = request.json
     item_ids = data.get('item_ids')
@@ -244,11 +233,11 @@ def remove_from_cart():
 
 
 @cart_bp.route(CART_REMOVE_ALL, methods=['DELETE'])
+@jwt_error_handler
+@jwt_required()
 def remove_all_from_cart():
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
-
+    user_id = get_jwt_identity()
+    
     delete_result = ProductCart.objects(user_id=user_id).delete()
 
     if delete_result == 0:

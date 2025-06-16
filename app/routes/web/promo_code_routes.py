@@ -1,6 +1,6 @@
 from flask import render_template, session, redirect, url_for, request, jsonify
 from . import admin_api
-from app.models import User, PromoCode, PromoCodeApplicableProducts
+from app.models import User, PromoCode
 from constants import ADD_PROMO_CODE_WEB_URL, PROMO_CODE_LIST, DELETE_PROMO_CODE
 from datetime import datetime
 from bson import ObjectId
@@ -28,12 +28,16 @@ def handle_promo_code_submission():
         required_fields = ['code', 'discount_type', 'discount_value', 'start_date']
         
         is_valid, validation_errors = validate_fields(data, required_fields)
-
         if not is_valid:
             return create_error_response(validation_errors, 400)
 
+        promo_code_value = data['code'].upper().strip()
+
+        if PromoCode.objects(code=promo_code_value).first():
+            return create_error_response(f"Promo code '{promo_code_value}' already exists.", 400)
+
         promo_data = {
-            'code': data['code'].upper().strip(),
+            'code': promo_code_value,
             'description': data.get('description'),
             'discount_type': data['discount_type'],
             'discount_value': float(data['discount_value']),
@@ -45,22 +49,8 @@ def handle_promo_code_submission():
             'uses_per_user': int(data.get('uses_per_user', 1)),
             'only_first_order': data.get('only_first_order', 'false').lower() == 'true',
             'is_active': data.get('is_active', 'true').lower() == 'true',
-            'applicable_to': data.get('applicable_to', 'all'),
             'created_by': session['user_id']
         }
-
-        if data.get('applicable_to') == 'specific' and data.getlist('products'):
-            applicable_products = []
-            for product_id in data.getlist('products'):
-                applicable_products.append(
-                    PromoCodeApplicableProducts(product_id=ObjectId(product_id))
-                )
-            if data.getlist('categories'):
-                for category_id in data.getlist('categories'):
-                    applicable_products.append(
-                        PromoCodeApplicableProducts(category_id=ObjectId(category_id))
-                    )
-            promo_data['applicable_products'] = applicable_products
 
         promo_code = PromoCode(**promo_data)
         promo_code.save()
@@ -178,9 +168,6 @@ def edit_promo_code(promo_code_id):
             'max_uses': promo_code.max_uses,
             'min_order_amount': float(promo_code.min_order_amount) if promo_code.min_order_amount else None,
             'max_discount_amount': float(promo_code.max_discount_amount) if promo_code.max_discount_amount else None,
-            'applicable_to': promo_code.applicable_to,
-            'applicable_products': [str(product.product_id.id) for product in promo_code.applicable_products] 
-                if promo_code.applicable_products else []
         })
     
     elif request.method == 'PUT':
@@ -196,17 +183,7 @@ def edit_promo_code(promo_code_id):
             promo_code.is_active = data.get('is_active', str(promo_code.is_active)).lower() == 'true'
             promo_code.max_uses = int(data['max_uses']) if data.get('max_uses') else promo_code.max_uses
             promo_code.min_order_amount = float(data['min_order_amount']) if data.get('min_order_amount') else promo_code.min_order_amount
-            promo_code.max_discount_amount = float(data['max_discount']) if data.get('max_discount') else promo_code.max_discount_amount
-            promo_code.applicable_to = data.get('product_restriction', promo_code.applicable_to)
-            
-            # Handle product restrictions
-            if data.get('product_restriction') == 'specific' and data.getlist('products'):
-                promo_code.applicable_products = [
-                    PromoCodeApplicableProducts(product_id=ObjectId(product_id))
-                    for product_id in data.getlist('products')
-                ]
-            elif data.get('product_restriction') != 'specific':
-                promo_code.applicable_products = []
+            promo_code.max_discount_amount = float(data['max_discount']) if data.get('max_discount') else promo_code.max_discount_amount        
             
             promo_code.save()
             
