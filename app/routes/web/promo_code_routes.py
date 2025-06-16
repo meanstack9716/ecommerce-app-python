@@ -6,6 +6,7 @@ from datetime import datetime
 from bson import ObjectId,errors
 from app.utils.utils import create_error_response
 from app.utils.image_upload import validate_fields
+from mongoengine.queryset.visitor import Q
 
 @admin_api.route(ADD_PROMO_CODE_WEB_URL, methods=['GET', 'POST'])
 def add_promo_code():

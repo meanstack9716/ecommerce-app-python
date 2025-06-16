@@ -196,13 +196,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function updatePagination(data) {
         const start = (currentState.page - 1) * currentState.limit + 1;
         const end = Math.min(currentState.page * currentState.limit, data.total);
-        paginationInfo.textContent = `Showing ${start} to ${end} of ${data.total} entries`;
 
         paginationControls.innerHTML = '';
 
         const prevButton = document.createElement('button');
         prevButton.textContent = 'Previous';
-        prevButton.className = `px-4 py-2 border rounded-lg ${currentState.page === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'}`;
+        prevButton.className = `px-4 py-2 text-sm border rounded-lg ${currentState.page === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'}`;
         prevButton.disabled = currentState.page === 1;
         prevButton.addEventListener('click', () => {
             if (currentState.page > 1) {
@@ -214,8 +213,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         for (let i = 1; i <= data.pages; i++) {
             const pageButton = document.createElement('button');
-            pageButton.textContent = i;
-            pageButton.className = `px-4 py-2 border rounded-lg ${i === currentState.page ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-50'}`;
+            pageButton.textContent = `Page ${i} of ${data.pages}`;
+            pageButton.className = `px-4 py-2 text-sm`;
             pageButton.addEventListener('click', () => {
                 currentState.page = i;
                 loadPromoCodes();
@@ -225,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const nextButton = document.createElement('button');
         nextButton.textContent = 'Next';
-        nextButton.className = `px-4 py-2 border rounded-lg ${currentState.page === data.pages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'}`;
+        nextButton.className = `px-4 py-2 text-sm border rounded-lg ${currentState.page === data.pages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'}`;
         nextButton.disabled = currentState.page === data.pages;
         nextButton.addEventListener('click', () => {
             if (currentState.page < data.pages) {
