@@ -30,9 +30,24 @@ def handle_promo_code_submission():
             return create_error_response(validation_errors, 400)
 
         promo_code_value = data['code'].upper().strip()
-
         if PromoCode.objects(code=promo_code_value).first():
             return create_error_response(f"Promo code '{promo_code_value}' already exists.", 400)
+
+        start_date_str = data['start_date']
+        expiry_date_str = data.get('expiry_date')
+        
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').replace(hour=0, minute=0, second=0)
+            expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59) if expiry_date_str else None
+        except ValueError as e:
+            return create_error_response(f'Invalid date format: {str(e)}. Use YYYY-MM-DD format.', 400)
+
+        current_date = datetime.utcnow()
+        if start_date < current_date.replace(hour=0, minute=0, second=0, microsecond=0):
+            return create_error_response('Start date cannot be in the past', 400)
+        
+        if expiry_date and expiry_date <= start_date:
+            return create_error_response('End date must be after start date', 400)
 
         promo_data = {
             'code': promo_code_value,
@@ -41,14 +56,20 @@ def handle_promo_code_submission():
             'discount_value': float(data['discount_value']),
             'min_order_amount': float(data.get('min_order_amount', 0)),
             'max_discount_amount': float(data.get('max_discount_amount', 0)),
-            'start_date': datetime.fromisoformat(data['start_date']),
-            'expiry_date': datetime.fromisoformat(data['expiry_date']) if data.get('expiry_date') else None,
+            'start_date': start_date,
+            'expiry_date': expiry_date,
             'max_uses': int(data['max_uses']) if data.get('max_uses') else None,
             'uses_per_user': int(data.get('uses_per_user', 1)),
             'only_first_order': data.get('only_first_order', 'false').lower() == 'true',
             'is_active': data.get('is_active', 'true').lower() == 'true',
             'created_by': session['user_id']
         }
+
+        if promo_data['discount_type'] == 'percentage' and promo_data['discount_value'] > 100:
+            return create_error_response('Percentage discount cannot exceed 100%', 400)
+        
+        if promo_data['discount_value'] <= 0:
+            return create_error_response('Discount value must be greater than 0', 400)
 
         promo_code = PromoCode(**promo_data)
         promo_code.save()
@@ -59,7 +80,9 @@ def handle_promo_code_submission():
             'promo_code_id': str(promo_code.id),
             'code': promo_code.code,
             'discount_value': float(promo_code.discount_value),
-            'discount_type': promo_code.discount_type
+            'discount_type': promo_code.discount_type,
+            'start_date': start_date_str,
+            'expiry_date': expiry_date_str if expiry_date_str else None
         }), 201
 
     except ValueError as e:

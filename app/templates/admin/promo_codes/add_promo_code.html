@@ -36,7 +36,8 @@
             </div>
 
             <div>
-                <label for="discount_value" class="block text-base font-medium text-black mb-1 tracking-wide">Discount Value</label>
+                <label for="discount_value" class="block text-base font-medium text-black mb-1 tracking-wide">Discount
+                    Value</label>
                 <input type="number" id="discount_value" name="discount_value" min="0" step="0.01"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="e.g. 20">
@@ -44,7 +45,8 @@
             </div>
 
             <div id="maxDiscountContainer" class="hidden">
-                <label for="max_discount" class="block text-base font-medium text-black mb-1 tracking-wide">Maximum Discount</label>
+                <label for="max_discount" class="block text-base font-medium text-black mb-1 tracking-wide">Maximum
+                    Discount</label>
                 <input type="number" id="max_discount" name="max_discount" min="0" step="0.01"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Optional">
@@ -52,7 +54,8 @@
             </div>
 
             <div>
-                <label for="min_order_amount" class="block text-base font-medium text-black mb-1 tracking-wide">Minimum Order Amount</label>
+                <label for="min_order_amount" class="block text-base font-medium text-black mb-1 tracking-wide">Minimum
+                    Order Amount</label>
                 <input type="number" id="min_order_amount" name="min_order_amount" min="0" step="0.01"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Optional">
@@ -61,7 +64,8 @@
         </div>
 
         <div>
-            <label for="description" class="block text-base font-medium text-black mb-1 tracking-wide">Description</label>
+            <label for="description"
+                class="block text-base font-medium text-black mb-1 tracking-wide">Description</label>
             <div id="editor-container" class="h-40 border border-gray-300 rounded-md"></div>
             <input type="hidden" id="description" name="description">
             <p class="mt-1 text-xs text-gray-500">Description that will be shown to customers about this promo</p>
@@ -69,13 +73,14 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label for="start_date" class="block text-base font-medium text-black mb-1 tracking-wide">Start Date</label>
-                <input type="datetime-local" id="start_date" name="start_date"
+                <label for="start_date" class="block text-base font-medium text-black mb-1 tracking-wide">Start
+                    Date</label>
+                <input type="date" id="start_date" name="start_date"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
             </div>
             <div>
                 <label for="end_date" class="block text-base font-medium text-black mb-1 tracking-wide">End Date</label>
-                <input type="datetime-local" id="end_date" name="end_date"
+                <input type="date" id="end_date" name="end_date"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
                 <p class="mt-1 text-xs text-gray-500">Leave empty for no expiration</p>
             </div>
@@ -83,14 +88,16 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label for="max_uses" class="block text-base font-medium text-black mb-1 tracking-wide">Total Usage Limit</label>
+                <label for="max_uses" class="block text-base font-medium text-black mb-1 tracking-wide">Total Usage
+                    Limit</label>
                 <input type="number" id="max_uses" name="max_uses" min="0"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Optional">
                 <p class="mt-1 text-xs text-gray-500">Leave empty for unlimited uses</p>
             </div>
             <div>
-                <label for="user_max_uses" class="block text-base font-medium text-black mb-1 tracking-wide">Uses Per Customer</label>
+                <label for="user_max_uses" class="block text-base font-medium text-black mb-1 tracking-wide">Uses Per
+                    Customer</label>
                 <input type="number" id="user_max_uses" name="user_max_uses" min="1" value="1"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
             </div>
@@ -105,7 +112,8 @@
             <div class="flex items-center">
                 <input id="only_first_order" name="only_first_order" type="checkbox"
                     class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                <label for="only_first_order" class="ml-2 block text-base font-medium text-black tracking-wide">First Order Only</label>
+                <label for="only_first_order" class="ml-2 block text-base font-medium text-black tracking-wide">First
+                    Order Only</label>
             </div>
         </div>
 
@@ -116,9 +124,11 @@
                 <div id="loading-spinner" class="hidden">
                     <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
                         <path class="opacity-75" fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
                     </svg>
                 </div>
             </button>
@@ -161,7 +171,7 @@
         }
 
         const now = new Date();
-        const nowString = now.toISOString().slice(0, 16);
+        const nowString = now.toISOString().split('T')[0]; // Get just the date part
         const startDateField = document.getElementById('start_date');
         const endDateField = document.getElementById('end_date');
 
@@ -205,14 +215,15 @@
             isValid &= validators.minValue(minimum_order_amount, 1, 'Minimum Order Value');
 
             const now = new Date();
+            const today = new Date(now.setHours(0, 0, 0, 0));
             const startDate = new Date(startDateField.value);
-            if (startDateField.value && startDate < now.setHours(0, 0, 0, 0)) {
+
+            if (startDateField.value && startDate < today) {
                 showErrorMessage(startDateField, 'Start date cannot be in the past');
                 isValid = false;
             } else {
                 removeErrorMessage(startDateField);
             }
-
             if (endDateField.value) {
                 const endDate = new Date(endDateField.value);
                 if (endDate <= startDate) {
@@ -252,14 +263,17 @@
                 formData.append('discount_value', parseFloat(form.discount_value.value));
                 formData.append('min_order_amount', parseFloat(form.min_order_amount.value) || 0);
                 formData.append('max_discount_amount', parseFloat(form.max_discount.value) || 0);
-                formData.append('start_date', form.start_date.value);
-                if (form.end_date.value) formData.append('expiry_date', form.end_date.value);
+                formData.append('start_date', form.start_date.value.split('T')[0]);
+                if (form.end_date.value) {
+                    formData.append('expiry_date', form.end_date.value.split('T')[0]);
+                }
+
                 if (parseInt(form.max_uses.value)) formData.append('max_uses', parseInt(form.max_uses.value));
                 formData.append('uses_per_user', parseInt(form.user_max_uses.value) || 1);
                 formData.append('only_first_order', form.only_first_order.checked);
                 formData.append('is_active', form.is_active.checked);
 
-                const result = await sendPostRequest('/api/promo-codes', formData);
+                const result = await sendPostRequest('/add-promo-code', formData);
 
                 if (result.success) {
                     showToast('Promo code created successfully!', 'success');

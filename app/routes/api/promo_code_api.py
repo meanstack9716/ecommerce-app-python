@@ -26,15 +26,10 @@ def validate_promo_code():
         cart_items = ProductCart.objects(id__in=[ObjectId(item_id) for item_id in cart_items_ids], user_id=user_id)
         
         total_amount = 0
-        product_ids = []
-        
         for item in cart_items:
             product = Products.objects(id=item.product_id.id).first()
-            if not product:
-                continue
-            
-            product_ids.append(str(product.id))
-            total_amount += float(product.price) * item.quantity
+            if product:
+                total_amount += float(product.price) * item.quantity
     
     except Exception as e:
         return create_error_response('Invalid cart items', 400)
@@ -70,18 +65,20 @@ def validate_promo_code():
         return create_error_response('Promo code usage limit reached', 400)
     
     discount_amount = promo_code.calculate_discount(total_amount)
+    discounted_amount = total_amount - discount_amount
     
     response = {
-        'valid': True,
+        'message': 'Promo code is valid and can be applied',
         'promo_code': promo_code.code,
-        'discount_type': promo_code.discount_type,
-        'discount_value': float(promo_code.discount_value),
         'discount_amount': float(discount_amount),
         'total_amount': float(total_amount),
-        'min_order_amount': float(promo_code.min_order_amount),
-        'max_discount_amount': float(promo_code.max_discount_amount) if promo_code.max_discount_amount else None,
-        'description': promo_code.description,
-        'product_ids': product_ids
+        'discounted_amount': float(discounted_amount),
+        'discount_details': {
+            'type': promo_code.discount_type,
+            'value': float(promo_code.discount_value),
+            'min_order_amount': float(promo_code.min_order_amount),
+            'max_discount': float(promo_code.max_discount_amount) if promo_code.max_discount_amount else None
+        }
     }
     
     return jsonify(response), 200
