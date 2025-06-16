@@ -2,7 +2,7 @@ from datetime import datetime
 from bson import ObjectId
 from flask import request, jsonify, Blueprint
 from app.models import Order, Products, PromoCode, ProductCart
-from constants import VALIDATE_PROMO_CODE
+from constants import VALIDATE_PROMO_CODE, PROMO_CODE_LIST
 from app.utils.utils import create_error_response
 from app.utils.jwt_handlers import jwt_error_handler
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -82,3 +82,43 @@ def validate_promo_code():
     }
     
     return jsonify(response), 200
+
+
+@promo_bp.route(PROMO_CODE_LIST, methods=['GET'])
+def list_promo_codes():
+    try:
+        current_date = datetime.utcnow()
+        promo_codes = PromoCode.objects(
+            is_active=True,
+            start_date__lte=current_date,
+            expiry_date__gte=current_date
+        ).order_by('-created_at')
+        
+        promo_codes_data = []
+        for promo in promo_codes:
+            promo_data = {
+                'id': str(promo.id),
+                'code': promo.code,
+                'description': promo.description,
+                'discount_type': promo.discount_type,
+                'discount_value': float(promo.discount_value),
+                'min_order_amount': float(promo.min_order_amount),
+                'max_discount_amount': float(promo.max_discount_amount),
+                'start_date': promo.start_date.strftime('%Y-%m-%d') if promo.start_date else None,
+                'expiry_date': promo.expiry_date.strftime('%Y-%m-%d') if promo.expiry_date else None,
+                'max_uses': promo.max_uses,
+                'uses_per_user': promo.uses_per_user,
+                'only_first_order': promo.only_first_order,
+                # 'current_uses': promo.current_uses,
+                'created_at': promo.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            }
+            promo_codes_data.append(promo_data)
+        
+        return jsonify({
+            'success': True,
+            'data': promo_codes_data,
+            'count': len(promo_codes_data)
+        }), 200
+    
+    except Exception as e:
+        return create_error_response({"error": f'Server error: {str(e)}'}, 500)

@@ -59,7 +59,7 @@ def add_new_product():
         subsubcategory = SubSubCategory.objects(id=data['subsubcategory_id']).first()
 
         if not category or not subcategory or not subsubcategory:
-            return create_error_response({"error": 
+            return create_error_response({
                 'category_id': 'Invalid category ID',
                 'subcategory_id': 'Invalid subcategory ID',
                 'subsubcategory_id': 'Invalid subsubcategory ID'

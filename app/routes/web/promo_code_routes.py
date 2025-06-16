@@ -1,7 +1,7 @@
 from flask import render_template, session, redirect, url_for, request, jsonify
 from . import admin_api
 from app.models import User, PromoCode
-from constants import ADD_PROMO_CODE_WEB_URL, PROMO_CODE_LIST, DELETE_PROMO_CODE, EDIT_PROMO_CODE, UPDATE_PROMO_CODE_WEB_URL
+from constants import ADD_PROMO_CODE_WEB_URL, PROMO_CODE_LIST_WEB_URL, DELETE_PROMO_CODE, EDIT_PROMO_CODE, UPDATE_PROMO_CODE_WEB_URL
 from datetime import datetime
 from bson import ObjectId,errors
 from app.utils.utils import create_error_response
@@ -90,7 +90,7 @@ def handle_promo_code_submission():
     except Exception as e:
         return create_error_response({"error" : f'Server error: {str(e)}'}, 500)
 
-@admin_api.route(PROMO_CODE_LIST, methods=['GET'])
+@admin_api.route(PROMO_CODE_LIST_WEB_URL, methods=['GET'])
 def promo_code_list():
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
@@ -309,22 +309,3 @@ def update_promo_code(promo_code_id):
 
     except Exception as e:
         return create_error_response({"error": f'Server error: {str(e)}'}, 500)
-
-@admin_api.route(DELETE_PROMO_CODE, methods=['DELETE'])
-def delete_promo_code(promo_code_id):
-    if 'user_id' not in session:
-        return redirect(url_for('admin_api.login_page'))
-    
-    try:
-        promo_code = PromoCode.objects.get(id=promo_code_id)
-    except PromoCode.DoesNotExist:
-        return create_error_response({"error": 'Promo code not found'}, 404)
-    
-    try:
-        promo_code.delete()
-        return jsonify({
-            'success': True,
-            'message': 'Promo code deleted successfully'
-        })
-    except Exception as e:
-        return create_error_response({"error": str(e)}, 500)
