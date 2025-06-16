@@ -105,7 +105,9 @@ ORDER_DETAILS_PAGE_WEB_URL = f'/order-details/<order_id>'
 
 ADD_PROMO_CODE_WEB_URL = '/add-promo-code'
 PROMO_CODE_LIST = '/promo-code-list'
-DELETE_PROMO_CODE = '/api/promo-codes/<string:promo_code_id>/delete'
+EDIT_PROMO_CODE = f'/promo-code/edit/<promo_code_id>'
+UPDATE_PROMO_CODE_WEB_URL = f'/promo-code/update/<promo_code_id>'
+DELETE_PROMO_CODE = '/api/promo-code/<string:promo_code_id>/delete'
 VALIDATE_PROMO_CODE = '/api/orders/validate-promo-code'
 # WEB Endpoint Constants End
 
