@@ -1,7 +1,7 @@
 from datetime import datetime
 from bson import ObjectId
 from flask import request, jsonify, Blueprint
-from app.models import Order, Products, PromoCode
+from app.models import Order, Products, PromoCode, ProductCart
 from constants import VALIDATE_PROMO_CODE
 from app.utils.utils import create_error_response
 from app.utils.jwt_handlers import jwt_error_handler
@@ -21,21 +21,31 @@ def validate_promo_code():
     
     promo_code_str = data['promo_code'].upper().strip()
     cart_items_ids = data['cart_items_ids']
-    print(promo_code_str)
-    print(cart_items_ids)
+    
     try:
-        cart_object_ids = [ObjectId(item_id) for item_id in cart_items_ids]
-    except:
-        return create_error_response('Invalid cart item ID format', 400)
+        cart_items = ProductCart.objects(id__in=[ObjectId(item_id) for item_id in cart_items_ids], user_id=user_id)
+        
+        total_amount = 0
+        product_ids = []
+        
+        for item in cart_items:
+            product = Products.objects(id=item.product_id.id).first()
+            if not product:
+                continue
+            
+            product_ids.append(str(product.id))
+            total_amount += float(product.price) * item.quantity
+    
+    except Exception as e:
+        return create_error_response('Invalid cart items', 400)
     
     current_datetime = datetime.utcnow()
-    
     promo_code = PromoCode.objects(
         code=promo_code_str,
         is_active=True,
         start_date__lte=current_datetime,
     ).first()
-    print(promo_code, ">>>")
+    
     if not promo_code:
         return create_error_response('Invalid or expired promo code', 404)
     
@@ -50,14 +60,28 @@ def validate_promo_code():
         if has_previous_orders:
             return create_error_response('This promo code is only valid for first orders', 400)
     
-
+    if total_amount < float(promo_code.min_order_amount):
+        return create_error_response(
+            f'Minimum order amount of {promo_code.min_order_amount} required. Your current order amount is {total_amount}', 
+            400
+        )
+    
+    if promo_code.max_uses and promo_code.used_count >= promo_code.max_uses:
+        return create_error_response('Promo code usage limit reached', 400)
+    
+    discount_amount = promo_code.calculate_discount(total_amount)
     
     response = {
         'valid': True,
         'promo_code': promo_code.code,
         'discount_type': promo_code.discount_type,
         'discount_value': float(promo_code.discount_value),
+        'discount_amount': float(discount_amount),
+        'total_amount': float(total_amount),
+        'min_order_amount': float(promo_code.min_order_amount),
+        'max_discount_amount': float(promo_code.max_discount_amount) if promo_code.max_discount_amount else None,
         'description': promo_code.description,
+        'product_ids': product_ids
     }
     
     return jsonify(response), 200

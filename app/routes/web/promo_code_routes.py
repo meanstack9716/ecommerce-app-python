@@ -17,8 +17,6 @@ def add_promo_code():
     
     return render_template('admin/promo_codes/add_promo_code.html')
 
-
-@admin_api.route('/api/promo-codes', methods=['POST'])
 def handle_promo_code_submission():
     if 'user_id' not in session:
         return create_error_response('Unauthorized', 401)
