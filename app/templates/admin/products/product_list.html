@@ -4,7 +4,13 @@
 
 {% block admin_content %}
 <div class="mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-white rounded-lg shadow">
-    <h1 class="text-2xl md:text-3xl font-bold mb-6 text-center text-black">Product List</h1>
+    <div class="flex items-center justify-between mb-10">
+        <h1 class="text-2xl md:text-3xl font-bold text-center text-black">Product List</h1>
+        <a href="{{ url_for('admin_api.get_products_page') }}"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:text-gray-700 text-sm">
+            Add New Product
+        </a>
+    </div>
     <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
         <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
@@ -50,15 +56,16 @@
                         class="block w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                 </div>
             </div>
+            <input type="hidden" name="page" value="1">
+
+            <!-- Filter Button -->
+            <button type="submit"
+                class="w-full sm:w-36 self-end px-6 py-3 tracking-wider border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                Apply Filters
+            </button>
         </div>
 
-        <input type="hidden" name="page" value="1">
 
-        <!-- Filter Button -->
-        <button type="submit"
-            class="w-full sm:w-36 self-end px-6 py-3 tracking-wider border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-            Apply Filters
-        </button>
     </form>
 
     <!-- Product Table -->
@@ -97,8 +104,8 @@
                                 {% if product.variants %}
                                 {% set first_variant = product.variants[0] %}
                                 {% if first_variant.images %}
-                                <img src="http://{{ local_ip }}:8080/static/uploads/{{ first_variant.images.0.image_url }}" alt="{{ product.name }}"
-                                    class="max-w-full max-h-full object-contain rounded" />
+                                <img src="http://{{ local_ip }}:8080/static/uploads/{{ first_variant.images.0.image_url }}"
+                                    alt="{{ product.name }}" class="max-w-full max-h-full object-contain rounded" />
                                 {% else %}
                                 <span class="text-gray-400 text-xs">No Image</span>
                                 {% endif %}
@@ -164,7 +171,7 @@
                         {{ amount }}</option>
                     {% endfor %}
                 </select>
-                 <span
+                <span
                     class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-1 text-gray-500 rotate-90 pointer-events-none">chevron_right</span>
             </div>
         </div>
@@ -202,7 +209,7 @@
 
     async function fetchProducts() {
         if (!filterForm) return;
-        
+
         loader?.classList?.remove('hidden');
         if (errorMessage) errorMessage.remove();
 
@@ -214,11 +221,11 @@
                 method: 'GET',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
+
             const data = await response.json();
 
             if (data.error) {
@@ -278,9 +285,9 @@
                 <td class="px-4 py-3 text-center whitespace-nowrap">
                     <div class="w-12 h-12 mx-auto flex items-center justify-center">
                         ${product.image_url ?
-                            `<img src="${product.image_url}" alt="${product.name}" class="max-w-full max-h-full object-contain rounded" loading="lazy" />` :
-                            `<span class="text-gray-400 text-xs">No Image</span>`
-                        }
+                    `<img src="${product.image_url}" alt="${product.name}" class="max-w-full max-h-full object-contain rounded" loading="lazy" />` :
+                    `<span class="text-gray-400 text-xs">No Image</span>`
+                }
                     </div>
                 </td>
                 <td class="px-4 py-3 text-center whitespace-normal max-w-xs">
@@ -332,7 +339,7 @@
 
     function changePage(page) {
         if (!filterForm) return;
-        
+
         const pageInput = filterForm.querySelector('input[name="page"]');
         if (pageInput) {
             pageInput.value = page;
@@ -342,13 +349,13 @@
 
     function updateLimit(limit) {
         if (!filterForm) return;
-        
+
         const pageInput = filterForm.querySelector('input[name="page"]');
         const limitSelect = filterForm.querySelector('select[onchange]');
-        
+
         if (pageInput) pageInput.value = 1;
         if (limitSelect) limitSelect.value = limit;
-        
+
         fetchProducts();
     }
 

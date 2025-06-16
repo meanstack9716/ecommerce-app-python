@@ -16,6 +16,7 @@ class Address(db.Document):
     contact_number = db.IntField()
     type = db.StringField(choices=ADDRESS_TYPES, required=True)
     is_primary = db.BooleanField(default=False)
+    is_business_address = db.BooleanField(default=False)
     created_at = db.DateTimeField(default=datetime.utcnow)
     
     meta = {

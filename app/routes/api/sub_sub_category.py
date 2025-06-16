@@ -3,7 +3,7 @@ from app.models import SubSubCategory, SubCategory, Category
 from app.utils.image_upload import upload_image, validate_fields
 from app.utils.utils import create_error_response
 from bson import ObjectId
-from constants import SUB_SUB_CATEGORY_ADD_API, GET_SUBSUBCATEGORIES_BY_CATEGORY_ID_API
+from constants import SUB_SUB_CATEGORY_ADD_API, GET_SUBSUBCATEGORIES_BY_CATEGORY_ID_API, DELETE_SUB_SUB_CATEGORY_WEB_URL
 
 sub_sub_category_bp = Blueprint('sub_sub_category_bp', __name__)
 
@@ -81,3 +81,31 @@ def get_sub_sub_category():
             'subcategoryName': pt.sub_category_id.name
         } for pt in product_types
     ])
+
+
+@sub_sub_category_bp.route(DELETE_SUB_SUB_CATEGORY_WEB_URL, methods=['DELETE'])
+def delete_sub_sub_category(sub_sub_category_id):
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized access'}), 401
+    
+    if not sub_sub_category_id:
+        return jsonify({'success': False, 'message': 'Sub-sub category ID is required'}), 400
+    
+    try:
+        sub_sub_category = SubSubCategory.objects(id=ObjectId(sub_sub_category_id)).first()
+        if not sub_sub_category:
+            return jsonify({'success': False, 'message': 'Sub-sub category not found'}), 404
+        
+        sub_sub_category.delete()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Sub-sub category deleted successfully'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': 'An error occurred while deleting the sub-sub category',
+            'error': str(e)
+        }), 500

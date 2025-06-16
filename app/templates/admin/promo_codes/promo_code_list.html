@@ -4,7 +4,13 @@
 
 {% block admin_content %}
 <div class="bg-white rounded-lg shadow-lg p-8">
-    <h1 class="text-3xl font-semibold text-gray-800 mb-6 text-center">Promo Code List</h1>
+    <div class="flex items-center justify-between mb-10">
+        <h1 class="text-3xl font-semibold text-gray-800 mb-6 text-center">Promo Code List</h1>
+        <a href="{{ url_for('admin_api.add_promo_code') }}"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:text-gray-700 text-sm">
+            Add New Promo Code
+        </a>
+    </div>
     <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
         <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
@@ -50,8 +56,12 @@
             </div>
         </div>
         <div class="flex gap-4 w-full sm:w-auto">
+            <button type="submit"
+                class="w-full sm:w-36 text-center py-3 px-4 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
+                Search
+            </button>
             <a href="#" id="clear-search"
-                class="w-full sm:w-36 text-center py-3 px-4 border border-red-500 rounded-lg text-red-500 text-sm font-medium">
+                class="w-full sm:w-36 text-center py-3 px-4 border border-red-500 rounded-lg text-red-500 text-sm font-medium hover:bg-red-50">
                 Clear Filters
             </a>
         </div>
@@ -60,75 +70,73 @@
     <!-- Promo Code Table -->
     {% set promo_headers = ['S.No', 'Code', 'Description', 'Discount', 'Valid From', 'Valid To', 'Uses', 'Status',
     'Actions'] %}
-    <table class="min-w-full divide-y divide-gray-200 text-gray-800" id="promo-table">
-        <thead class="bg-gray-50">
-            <tr>
-                {% for header in promo_headers %}
-                <th
-                    class="border border-gray-200 px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
-                    {{ header }}
-                </th>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 text-gray-800" id="promo-table">
+            <thead class="bg-gray-50">
+                <tr>
+                    {% for header in promo_headers %}
+                    <th
+                        class="border border-gray-200 px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                        {{ header }}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody id="promo-table-body">
+                {% for promo in promos.items %}
+                <tr class="text-center hover:bg-gray-50">
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">{{ (promos.page - 1) *
+                        promos.per_page + loop.index }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 font-mono">{{ promo.code }}</td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                        {{ promo.description | safe }}
+                    </td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                        {% if promo.discount_type == 'percentage' %}
+                        {{ promo.discount_value }}%
+                        {% if promo.max_discount_amount %}
+                        (max {{ promo.max_discount_amount }})
+                        {% endif %}
+                        {% else %}
+                        {{ promo.discount_value }} fixed
+                        {% endif %}
+                    </td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                        {{ promo.start_date.strftime('%Y-%m-%d') if promo.start_date else 'N/A' }}
+                    </td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                        {{ promo.expiry_date.strftime('%Y-%m-%d') if promo.expiry_date else 'N/A' }}
+                    </td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                        {{ promo.current_uses }}{% if promo.max_uses %}/{{ promo.max_uses }}{% endif %}
+                    </td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                        {% if promo.is_active %}
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
+                        {% else %}
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                        <div class="flex space-x-6 justify-center">
+                            <!--  -->
+                            <button type="submit" class="text-red-600 hover:text-red-800" data-promo-id="{{ promo.id }}"
+                                onclick="showDeleteModal(this)"><span class="material-symbols-outlined">
+                                    delete
+                                </span></button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-gray-500">No promo codes found.</td>
+                </tr>
                 {% endfor %}
-            </tr>
-        </thead>
-        <tbody id="promo-table-body">
-            {% for promo in promos %}
-            <tr class="text-center">
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">{{ loop.index + (pagination.page -
-                    1) * limit }}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 font-mono">{{ promo.code }}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
-                    {{ promo.description | safe }}
-                </td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
-                    {% if promo.discount_type == 'percentage' %}
-                    {{ promo.discount_value }}%
-                    {% if promo.max_discount_amount %}
-                    (max {{ promo.max_discount_amount }})
-                    {% endif %}
-                    {% else %}
-                    {{ promo.discount_value }} fixed
-                    {% endif %}
-                </td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
-                    {{ promo.start_date.strftime('%Y-%m-%d') if promo.start_date else 'N/A' }}
-                </td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
-                    {{ promo.expiry_date.strftime('%Y-%m-%d') if promo.expiry_date else 'N/A' }}
-                </td>
-
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
-                    {{ promo.current_uses }}{% if promo.max_uses %}/{{ promo.max_uses }}{% endif %}
-                </td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
-                    {% if promo.is_active %}
-                    <span class="badge bg-success">Active</span>
-                    {% else %}
-                    <span class="badge bg-danger">Inactive</span>
-                    {% endif %}
-                </td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
-                    <div class="flex space-x-6 justify-center">
-                        <a href="{{ url_for('admin_api.edit_promo_code', promo_code_id=promo.id) }}"
-                            class="text-blue-600 hover:text-blue-800"><span
-                                class="material-symbols-outlined">edit_square</span></a>
-                        <form action="/admin/promo-codes/delete/{{ promo.id }}" method="POST" class="inline">
-                            <input type="hidden" name="page" value="{{ pagination.page }}">
-                            <input type="hidden" name="search" value="{{ search }}">
-                            <input type="hidden" name="limit" value="{{ limit }}">
-                            <button type="submit" class="text-red-600 hover:text-red-800"><span
-                                    class="material-symbols-outlined">delete</span></button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="9" class="text-center py-4 text-gray-500">No promo codes found.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
 
     <!-- Enhanced Pagination -->
     <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
@@ -148,44 +156,50 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-2" id="pagination">
-            {% if pagination.pages > 1 %}
-            <a href="#" data-page="{{ pagination.prev_num if pagination.has_prev else 1 }}"
-                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link {% if not pagination.has_prev %}text-gray-400 cursor-not-allowed{% endif %}">
+        <div class="flex items-center gap-2">
+            <span class="text-sm text-gray-600">
+                Showing {{ promos.first_item }} to {{ promos.last_item }} of {{ promos.total }} entries
+            </span>
+        </div>
+
+        <div class="flex gap-2">
+            <a href="{{ url_for('admin_api.promo_code_list', page=promos.prev_num, limit=limit, promoSearch=search, status=status, discount_type=discount_type) if promos.has_prev else '#' }}"
+                class="px-4 py-2 border rounded-lg {% if not promos.has_prev %}text-gray-400 cursor-not-allowed{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
                 Previous
             </a>
 
-            {% set max_pages = 5 %}
-            {% set start_page = (pagination.page - max_pages // 2) | max(1) %}
-            {% set end_page = (start_page + max_pages - 1) | min(pagination.pages) %}
-            {% if start_page > 1 %}
-            <a href="#" data-page="1"
-                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">1</a>
-            {% if start_page > 2 %}
-            <span class="px-4 py-2 text-sm">...</span>
-            {% endif %}
-            {% endif %}
-
-            {% for p in range(start_page, end_page + 1) %}
-            <a href="#" data-page="{{ p }}"
-                class="px-4 py-2 border text-sm rounded-lg transition page-link {% if p == pagination.page %}bg-indigo-600 text-white{% else %}hover:bg-gray-100{% endif %}">
-                {{ p }}
+            {% for page_num in promos.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+            <a href="{{ url_for('admin_api.promo_code_list', page=page_num, limit=limit, promoSearch=search, status=status, discount_type=discount_type) }}"
+                class="px-4 py-2 border rounded-lg {% if page_num == promos.page %}bg-blue-500 text-white{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
+                {{ page_num }}
             </a>
+            {% else %}
+            <span class="px-4 py-2">...</span>
+            {% endif %}
             {% endfor %}
 
-            {% if end_page < pagination.pages %} {% if end_page < pagination.pages - 1 %} <span
-                class="px-4 py-2 text-sm">...</span>
-                {% endif %}
-                <a href="#" data-page="{{ pagination.pages }}"
-                    class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">{{
-                    pagination.pages }}</a>
-                {% endif %}
+            <a href="{{ url_for('admin_api.promo_code_list', page=promos.next_num, limit=limit, promoSearch=search, status=status, discount_type=discount_type) if promos.has_next else '#' }}"
+                class="px-4 py-2 border rounded-lg {% if not promos.has_next %}text-gray-400 cursor-not-allowed{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
+                Next
+            </a>
+        </div>
+    </div>
+</div>
 
-                <a href="#" data-page="{{ pagination.next_num if pagination.has_next else pagination.pages }}"
-                    class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link {% if not pagination.has_next %}text-gray-400 cursor-not-allowed{% endif %}">
-                    Next
-                </a>
-                {% endif %}
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Delete Promo Code</h3>
+        <p class="text-gray-600 mb-6">Are you sure you want to delete this promo code? This action cannot be undone.</p>
+        <div class="flex justify-end space-x-4">
+            <button id="cancel-delete"
+                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                Cancel
+            </button>
+            <button id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                Delete
+            </button>
         </div>
     </div>
 </div>
@@ -193,175 +207,187 @@
 
 {% block js %}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function () {
         const searchForm = document.getElementById('search-form');
-        const searchInput = searchForm.querySelector('input[name="promoSearch"]');
-        const statusSelect = searchForm.querySelector('select[name="status"]');
-        const discountTypeSelect = searchForm.querySelector('select[name="discount_type"]');
+        const itemsPerPage = document.getElementById('items-per-page');
         const clearSearch = document.getElementById('clear-search');
         const promoTableBody = document.getElementById('promo-table-body');
-        const paginationDiv = document.getElementById('pagination');
-        const itemsPerPageSelect = document.getElementById('items-per-page');
         const loader = document.getElementById('loader');
-        let debounceTimer;
+        const paginationContainer = document.querySelector('.flex.flex-col.sm\\:flex-row.items-center.justify-between.mt-8.gap-4');
 
-        async function fetchPromos(page = 1, search = '', status = '', discount_type = '', limit = 10) {
+        function fetchPromoCodes(params = {}) {
             loader.classList.remove('hidden');
-            const url = `/api/promo-code-list?page=${page}&search=${encodeURIComponent(search)}&status=${status}&discount_type=${discount_type}&limit=${limit}`;
 
-            try {
-                const data = await fetchJsonData(url);
-                promoTableBody.innerHTML = '';
-                if (data.data.length === 0) {
-                    promoTableBody.innerHTML = `
-                        <tr>
-                            <td colspan="9" class="text-center py-4 text-gray-500">No promo codes found.</td>
-                        </tr>`;
-                } else {
-                    data.data.forEach((promo, index) => {
-                        const row = `
-                            <tr class="text-center">
-                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${(data.pagination.page - 1) * data.limit + index + 1}</td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 font-mono">${promo.code}</td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${promo.description}</td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
-                                    ${promo.discount_type === 'percentage' ?
-                                `${promo.discount_value}%${promo.max_discount_amount ? ` (max ${promo.max_discount_amount})` : ''}` :
-                                `${promo.discount_value} fixed`}
-                                </td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${promo.start_date ? new Date(promo.start_date).toLocaleDateString() : 'N/A'}</td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${promo.expiry_date ? new Date(promo.expiry_date).toLocaleDateString() : 'N/A'}</td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
-                                    ${promo.current_uses}${promo.max_uses ? `/${promo.max_uses}` : ''}
-                                </td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
-                                    ${promo.is_active ?
-                                '<span class="badge bg-success">Active</span>' :
-                                '<span class="badge bg-danger">Inactive</span>'}
-                                </td>
-                                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
-                                    <div class="flex space-x-6 justify-center">
-                                        <a href="/admin/promo-codes/edit/${promo.id}" class="text-blue-600 hover:text-blue-800">
-                                            <span class="material-symbols-outlined">edit_square</span>
-                                        </a>
-                                        <form action="/admin/promo-codes/delete/${promo.id}" method="POST" class="inline">
-                                            <input type="hidden" name="page" value="${data.pagination.page}">
-                                            <input type="hidden" name="search" value="${search}">
-                                            <input type="hidden" name="status" value="${status}">
-                                            <input type="hidden" name="discount_type" value="${discount_type}">
-                                            <input type="hidden" name="limit" value="${data.limit}">
-                                            <button type="submit" class="text-red-600 hover:text-red-800">
-                                                <span class="material-symbols-outlined">delete</span>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>`;
-                        promoTableBody.innerHTML += row;
-                    });
+            // Use window.location.origin to ensure an absolute URL
+            const baseUrl = window.location.origin;
+            const endpoint = '{{ url_for("admin_api.promo_code_list") }}';
+            const url = new URL(endpoint, baseUrl);
+
+            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
-
-                const maxPages = 5;
-                let startPage = Math.max(1, data.pagination.page - Math.floor(maxPages / 2));
-                let endPage = Math.min(data.pagination.pages, startPage + maxPages - 1);
-                if (endPage - startPage < maxPages - 1) {
-                    startPage = Math.max(1, endPage - maxPages + 1);
-                }
-
-                let paginationHTML = `
-                    <a href="#" data-page="${data.pagination.has_prev ? data.pagination.prev_num : 1}"
-                        class="px-4 py-2 border text-sm rounded-lg transition page-link ${!data.pagination.has_prev ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gray-100'}">
-                        Previous
-                    </a>`;
-
-                if (startPage > 1) {
-                    paginationHTML += `
-                        <a href="#" data-page="1" class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">1</a>
-                        ${startPage > 2 ? '<span class="px-4 py-2 text-sm">...</span>' : ''}`;
-                }
-
-                for (let p = startPage; p <= endPage; p++) {
-                    paginationHTML += `
-                        <a href="#" data-page="${p}"
-                            class="px-4 py-2 border text-sm rounded-lg transition page-link ${p === data.pagination.page ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100'}">
-                            ${p}
-                        </a>`;
-                }
-
-                if (endPage < data.pagination.pages) {
-                    paginationHTML += `
-                        ${endPage < data.pagination.pages - 1 ? '<span class="px-4 py-2 text-sm">...</span>' : ''}
-                        <a href="#" data-page="${data.pagination.pages}" class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition page-link">${data.pagination.pages}</a>`;
-                }
-
-                paginationHTML += `
-                    <a href="#" data-page="${data.pagination.has_next ? data.pagination.next_num : data.pagination.pages}"
-                        class="px-4 py-2 border text-sm rounded-lg transition page-link ${!data.pagination.has_next ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-gray-100'}">
-                        Next
-                    </a>`;
-
-                paginationDiv.innerHTML = paginationHTML;
-                attachPaginationListeners();
-
-            } catch (error) {
-                console.error('Failed to fetch promo codes:', error);
-                promoTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="9" class="text-center py-4 text-red-500">Error loading promo codes. Please try again.</td>
-                    </tr>`;
-            } finally {
-                loader.classList.add('hidden');
-            }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    updateTable(data.promos, data.pagination);
+                    updatePagination(data.pagination, data);
+                    loader.classList.add('hidden');
+                })
+                .catch(error => {
+                    console.error('Error fetching promo codes:', error);
+                    loader.classList.add('hidden');
+                });
         }
 
-        function attachPaginationListeners() {
-            const pageLinks = document.querySelectorAll('.page-link');
-            pageLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const page = link.getAttribute('data-page');
-                    const search = searchInput.value.trim();
-                    const status = statusSelect.value;
-                    const discount_type = discountTypeSelect.value;
-                    const limit = itemsPerPageSelect.value;
-                    fetchPromos(page, search, status, discount_type, limit);
-                });
+        // Function to update the table body
+        function updateTable(promos, pagination) {
+            promoTableBody.innerHTML = '';
+            if (promos.length === 0) {
+                promoTableBody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-gray-500">No promo codes found.</td>
+                </tr>`;
+                return;
+            }
+
+            promos.forEach((promo, index) => {
+                const row = document.createElement('tr');
+                row.className = 'text-center hover:bg-gray-50';
+                row.innerHTML = `
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${(pagination.page - 1) * pagination.per_page + index + 1}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 font-mono">${promo.code}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${promo.description}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    ${promo.discount_type === 'percentage'
+                        ? `${promo.discount_value}%${promo.max_discount_amount ? ` (max ${promo.max_discount_amount})` : ''}`
+                        : `${promo.discount_value} fixed`}
+                </td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${promo.start_date}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">${promo.expiry_date}</td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    ${promo.current_uses}${promo.max_uses ? `/${promo.max_uses}` : ''}
+                </td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    ${promo.is_active
+                        ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>'
+                        : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Inactive</span>'}
+                </td>
+                <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+                    <div class="flex space-x-6 justify-center">
+                        <button type="button" class="text-red-600 hover:text-red-800" data-promo-id="${promo.id}" onclick="showDeleteModal(this)">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                    </div>
+                </td>
+            `;
+                promoTableBody.appendChild(row);
             });
         }
 
-        function handleFilterChange() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                const search = searchInput.value.trim();
-                const status = statusSelect.value;
-                const discount_type = discountTypeSelect.value;
-                const limit = itemsPerPageSelect.value;
-                fetchPromos(1, search, status, discount_type, limit);
-            }, 300);
+        // Function to update pagination
+        function updatePagination(pagination, params) {
+            paginationContainer.innerHTML = `
+            <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-600">Items per page:</span>
+                    <div class="relative">
+                        <select id="items-per-page" class="border w-24 border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
+                            ${[10, 20, 50, 100].map(amount =>
+                `<option value="${amount}" ${pagination.per_page == amount ? 'selected' : ''}>${amount}</option>`
+            ).join('')}
+                        </select>
+                        <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                            expand_more
+                        </span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-600">
+                        Showing ${pagination.first_item} to ${pagination.last_item} of ${pagination.total} entries
+                    </span>
+                </div>
+                <div class="flex gap-2">
+                    <a href="#" class="px-4 py-2 border rounded-lg ${pagination.has_prev ? 'text-gray-700 hover:bg-gray-50' : 'text-gray-400 cursor-not-allowed'}" 
+                       data-page="${pagination.prev_num}" onclick="handlePaginationClick(event, this)">
+                        Previous
+                    </a>
+                    ${pagination.iter_pages.map(page_num =>
+                page_num
+                    ? `<a href="#" class="px-4 py-2 border rounded-lg ${page_num == pagination.page ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-gray-50'}" 
+                                 data-page="${page_num}" onclick="handlePaginationClick(event, this)">
+                                 ${page_num}
+                               </a>`
+                    : '<span class="px-4 py-2">...</span>'
+            ).join('')}
+                    <a href="#" class="px-4 py-2 border rounded-lg ${pagination.has_next ? 'text-gray-700 hover:bg-gray-50' : 'text-gray-400 cursor-not-allowed'}" 
+                       data-page="${pagination.next_num}" onclick="handlePaginationClick(event, this)">
+                        Next
+                    </a>
+                </div>
+            </div>
+        `;
+            // Re-attach event listener for items-per-page
+            document.getElementById('items-per-page').addEventListener('change', handleItemsPerPageChange);
         }
 
-        searchInput.addEventListener('input', handleFilterChange);
-        statusSelect.addEventListener('change', handleFilterChange);
-        discountTypeSelect.addEventListener('change', handleFilterChange);
-
-        clearSearch.addEventListener('click', (e) => {
+        // Handle form submission
+        searchForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            searchInput.value = '';
-            statusSelect.value = '';
-            discountTypeSelect.value = '';
-            const limit = itemsPerPageSelect.value;
-            fetchPromos(1, '', '', '', limit);
+            const formData = new FormData(searchForm);
+            const params = {
+                promoSearch: formData.get('promoSearch'),
+                status: formData.get('status'),
+                discount_type: formData.get('discount_type'),
+                limit: itemsPerPage.value,
+                page: 1
+            };
+            fetchPromoCodes(params);
         });
 
-        itemsPerPageSelect.addEventListener('change', () => {
-            const search = searchInput.value.trim();
-            const status = statusSelect.value;
-            const discount_type = discountTypeSelect.value;
-            const limit = itemsPerPageSelect.value;
-            fetchPromos(1, search, status, discount_type, limit);
-        });
+        function handleItemsPerPageChange() {
+            const formData = new FormData(searchForm);
+            const params = {
+                promoSearch: formData.get('promoSearch'),
+                status: formData.get('status'),
+                discount_type: formData.get('discount_type'),
+                limit: itemsPerPage.value,
+                page: 1
+            };
+            fetchPromoCodes(params);
+        }
+        itemsPerPage.addEventListener('change', handleItemsPerPageChange);
 
-        attachPaginationListeners();
+        function handlePaginationClick(e, element) {
+            e.preventDefault();
+            const page = element.getAttribute('data-page');
+            if (!page || element.classList.contains('cursor-not-allowed')) return;
+            const formData = new FormData(searchForm);
+            const params = {
+                promoSearch: formData.get('promoSearch'),
+                status: formData.get('status'),
+                discount_type: formData.get('discount_type'),
+                limit: itemsPerPage.value,
+                page: page
+            };
+            fetchPromoCodes(params);
+        }
+
+        clearSearch.addEventListener('click', function (e) {
+            e.preventDefault();
+            const inputs = searchForm.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (input.tagName === 'INPUT') {
+                    input.value = '';
+                } else if (input.tagName === 'SELECT') {
+                    input.selectedIndex = 0;
+                }
+            });
+            itemsPerPage.value = 10;
+            fetchPromoCodes({ limit: 10, page: 1 });
+        });
     });
 </script>
 {% endblock %}

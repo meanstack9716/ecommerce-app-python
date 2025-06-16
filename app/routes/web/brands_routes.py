@@ -1,6 +1,6 @@
 from flask import render_template, session, redirect, url_for, request, jsonify
 from . import admin_api
-from app.models import ProductBrands
+from app.models import ProductBrands, Products, ProductVariant, ProductVariantImage
 from constants import GET_BRANDS_WEB_URL, ADD_BRAND_WEB_URL, UPDATE_BRAND_WEB_URL, DELETE_BRAND_API
 from app.utils.image_upload import get_local_ip
 from flask import current_app
@@ -72,6 +72,16 @@ def delete_brand(brand_id):
 
     brand = ProductBrands.objects(id=brand_id).first()
     if brand:
+        products = Products.objects(brand_id=brand_id)
+        
+        for product in products:
+            for variant in product.variants:
+                ProductVariantImage.objects(variant_id=variant.id).delete()
+            
+            ProductVariant.objects(product_id=product.id).delete()
+        
+        products.delete()
+        
         brand.delete()
         
         remaining_count = ProductBrands.objects(name__icontains=search_query).count()

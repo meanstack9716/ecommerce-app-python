@@ -55,6 +55,10 @@
     const loader = document.getElementById('loading-spinner');
     const nextBtnText = document.getElementById('nextStep');
 
+    const hiddenInput = document.getElementById('business_address_type_input');
+    const options = document.querySelectorAll('#business-type-options .option');
+
+
     let currentStepIndex = 0;
     const formData = {};
 
@@ -219,25 +223,36 @@
     // Rest of your code (submitForm, handleErrors, etc.) remains the same
     initForm();
 
-    const indianStates = {{ INDIAN_STATES | tojson }};
+    const indianStates = {{ INDIAN_STATES | tojson
+  }};
 
-    const stateDropdown = document.getElementById('state');
-      const businessStateDropdown = document.getElementById('business_state');
+  const stateDropdown = document.getElementById('state');
+  const businessStateDropdown = document.getElementById('business_state');
 
-    indianStates.forEach(state => {
-        const option = document.createElement('option');
-        option.value = state;
-        option.textContent = state;
-        stateDropdown.appendChild(option);
+  indianStates.forEach(state => {
+    const option = document.createElement('option');
+    option.value = state;
+    option.textContent = state;
+    stateDropdown.appendChild(option);
+  });
+
+  // Populate the dropdown with states
+  indianStates.forEach(state => {
+    const option = document.createElement('option');
+    option.value = state;
+    option.textContent = state;
+    businessStateDropdown.appendChild(option);
+  });
+
+  options.forEach(option => {
+    option.addEventListener('click', () => {
+      options.forEach(o => o.classList.remove('bg-indigo-500', 'text-white', 'border-indigo-500'));
+      option.classList.add('bg-indigo-500', 'text-white', 'border-indigo-500');
+      hiddenInput.value = option.dataset.value;
     });
+  });
 
-    // Populate the dropdown with states
-    indianStates.forEach(state => {
-        const option = document.createElement('option');
-        option.value = state;
-        option.textContent = state;
-        businessStateDropdown.appendChild(option);
-    });
+
   });
 </script>
 {% endblock %}

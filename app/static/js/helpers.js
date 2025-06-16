@@ -92,3 +92,27 @@ function attachPaginationListeners(selector, fetchFunction) {
     });
   });
 }
+
+
+function handleResponse(response) {
+        document.getElementById('loader').classList.add('hidden');
+        document.getElementById('btn-text').classList.remove('hidden');
+
+        if (response.success) {
+            showToast('Category Added Successfully!', 'success');
+            document.getElementById('categoryForm').reset();
+            // Clear image preview
+            document.getElementById('category-image-preview').innerHTML = '';
+            document.getElementById('category-image-preview').classList.add('hidden');
+        } else {
+            if (response.errors) {
+                Object.keys(response.errors).forEach(field => {
+                    const fieldError = response.errors[field];
+                    const fieldElement = document.getElementById(field);
+                    showToast(fieldError, 'error');
+                });
+            } else {
+                showToast(response.message || 'Failed to add category.', 'error');
+            }
+        }
+    }

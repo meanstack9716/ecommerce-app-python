@@ -80,6 +80,7 @@ DELETE_SUB_CATEGORY_WEB_URL = '/delete_sub_category/<sub_category_id>'
 
 SUB_SUB_CATEGORY_LIST_WEB_URL = f'/sub-sub-category-list'
 SUB_SUB_CATEGORY_WEB_URL = f'sub-sub-category/add'
+DELETE_SUB_SUB_CATEGORY_WEB_URL = '/delete-sub-sub-category/<sub_sub_category_id>'
 
 ADD_NEW_PRODUCT_WEB_URL = f'/api/products/add'
 ADD_PRODUCT_PAGE_WEB_URL = f'/products/add'
@@ -102,6 +103,8 @@ ORDER_DETAILS_PAGE_WEB_URL = f'/order-details/<order_id>'
 
 ADD_PROMO_CODE_WEB_URL = '/add-promo-code'
 PROMO_CODE_LIST = '/promo-code-list'
+DELETE_PROMO_CODE = '/api/promo-codes/<string:promo_code_id>/delete'
+VALIDATE_PROMO_CODE = '/api/orders/validate-promo-code'
 # WEB Endpoint Constants End
 
 # API Endpoint Constants Start
@@ -164,7 +167,7 @@ ADDRESS_TYPES_API = '/api/address/types-list'
 # Wishlist Endpoint Start
 WISHLIST_ADD = '/api/wishlist/add'
 WISHLIST_REMOVE = '/api/wishlist/remove'
-WISHLIST_LIST = '/api/wishlist'
+WISHLIST_LIST = '/api/wishlist/list'
 # Wishlist Endpoint End
 
 # SaveForLater Endpoint Start

@@ -4,8 +4,14 @@
 
 {% block admin_content %}
 <div class="bg-white rounded-lg shadow-lg p-4 md:p-8">
-    <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-4 md:mb-6">Seller List</h1>
 
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-4 md:mb-6">Seller List</h1>
+        <a href="{{ url_for('admin_api.add_new_seller') }}"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:text-gray-700 text-sm">
+            Add New Seller
+        </a>
+    </div>
     <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
         <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
@@ -55,22 +61,21 @@
             <thead class="bg-gray-100">
                 <tr>
                     {% set seller_list_header = [
-                        ('S.No', 'index'),
-                        ('Name', 'user.first_name'),
-                        ('Email', 'user.email'),
-                        ('Phone Number', 'user.phone_number'),
-                        ('Business Name', 'seller.businessName'),
-                        ('Business Type', 'seller.businessType'),
-                        ('Business Email', 'seller.businessEmail'),
-                        ('Business Mobile', 'businessMobile'),
-                        ('Status', 'seller.is_approved'),
-                        ('Actions', None)
+                    ('S.No', 'index'),
+                    ('Name', 'user.first_name'),
+                    ('Email', 'user.email'),
+                    ('Phone Number', 'user.phone_number'),
+                    ('Business Name', 'seller.businessName'),
+                    ('Business Type', 'seller.businessType'),
+                    ('Business Email', 'seller.businessEmail'),
+                    ('Business Mobile', 'businessMobile'),
+                    ('Status', 'seller.is_approved'),
+                    ('Actions', None)
                     ] %}
                     {% for header, sort_key in seller_list_header %}
-                    <th
-                        class="px-4 py-4 text-xs font-semibold text-gray-500 text-center uppercase tracking-wide border border-gray-200
-                        {% if sort_key %}cursor-pointer hover:bg-gray-100{% endif %}"
-                        {% if sort_key %}data-sort-key="{{ sort_key }}"{% endif %}>
+                    <th class="px-4 py-4 text-xs font-semibold text-gray-500 text-center uppercase tracking-wide border border-gray-200
+                        {% if sort_key %}cursor-pointer hover:bg-gray-100{% endif %}" {% if sort_key
+                        %}data-sort-key="{{ sort_key }}" {% endif %}>
                         <div class="flex items-center justify-center">
                             {{ header }}
                             {% if sort_key %}
@@ -79,7 +84,8 @@
                                     {% if filters.sort_order == 'asc' %}sort-asc{% else %}sort-desc{% endif %}
                                 {% endif %}">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7l4-4m0 0l4 4m-4-4v18"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7l4-4m0 0l4 4m-4-4v18" />
                                 </svg>
                             </span>
                             {% endif %}
@@ -116,10 +122,23 @@
 </div>
 
 <style>
-.sort-icon { opacity: 0.3; }
-.sort-icon.sort-asc { opacity: 1; transform: rotate(0deg); }
-.sort-icon.sort-desc { opacity: 1; transform: rotate(180deg); }
-th:hover .sort-icon { opacity: 0.6; }
+    .sort-icon {
+        opacity: 0.3;
+    }
+
+    .sort-icon.sort-asc {
+        opacity: 1;
+        transform: rotate(0deg);
+    }
+
+    .sort-icon.sort-desc {
+        opacity: 1;
+        transform: rotate(180deg);
+    }
+
+    th:hover .sort-icon {
+        opacity: 0.6;
+    }
 </style>
 {% endblock %}
 
@@ -195,10 +214,10 @@ th:hover .sort-icon { opacity: 0.6; }
                 <td class="px-4 py-3 text-center text-sm border border-gray-200 text-gray-800">
                     <div class="flex items-center gap-2">
                         ${item.seller.is_approved === 'approved' ?
-                            '<span class="material-symbols-outlined text-green-600 text-lg" title="Approved">check_circle</span>' :
-                            item.seller.is_approved === 'pending' ?
-                            '<span class="material-symbols-outlined text-yellow-600 text-lg" title="Pending">pending</span>' :
-                            '<span class="material-symbols-outlined text-red-700 text-lg" title="On Hold">pause_circle</span>'}
+                    '<span class="material-symbols-outlined text-green-600 text-lg" title="Approved">check_circle</span>' :
+                    item.seller.is_approved === 'pending' ?
+                        '<span class="material-symbols-outlined text-yellow-600 text-lg" title="Pending">pending</span>' :
+                        '<span class="material-symbols-outlined text-red-700 text-lg" title="On Hold">pause_circle</span>'}
                         <span>${item.seller.is_approved.charAt(0).toUpperCase() + item.seller.is_approved.slice(1)}</span>
                     </div>
                 </td>
@@ -220,14 +239,14 @@ th:hover .sort-icon { opacity: 0.6; }
         function updatePagination(pagination) {
             paginationDiv.innerHTML = `
             ${pagination.has_prev ?
-                `<a href="#" data-page="${pagination.prev_page}" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link">Previous</a>` :
-                `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Previous</span>`
-            }
+                    `<a href="#" data-page="${pagination.prev_page}" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link">Previous</a>` :
+                    `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Previous</span>`
+                }
             <span class="px-4 py-2 text-sm">Page ${pagination.page} of ${pagination.total_pages}</span>
             ${pagination.has_next ?
-                `<a href="#" data-page="${pagination.next_page}" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link">Next</a>` :
-                `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Next</span>`
-            }
+                    `<a href="#" data-page="${pagination.next_page}" class="px-3 py-1 md:px-4 md:py-2 border text-sm rounded-lg hover:bg-gray-100 transition pagination-link">Next</a>` :
+                    `<span class="px-3 py-1 md:px-4 md:py-2 border rounded-lg text-sm text-gray-400 cursor-not-allowed">Next</span>`
+                }
         `;
 
             document.querySelectorAll('.pagination-link').forEach(link => {

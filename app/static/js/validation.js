@@ -28,11 +28,11 @@ function removeErrorMessage(field) {
 const validators = {
   required: (field, fieldName) => {
     if (!field.value.trim()) {
-      showErrorMessage(field, `${fieldName} is required`)
-      return false
+      showErrorMessage(field, `${fieldName} is required`);
+      return false;
     }
-    removeErrorMessage(field)
-    return true
+    removeErrorMessage(field);
+    return true;
   },
   minValue: (field, minValue, fieldName) => {
     const value = parseFloat(field.value);
@@ -44,118 +44,140 @@ const validators = {
     return true;
   },
   email: (field) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(field.value)) {
-      showErrorMessage(field, "Please enter a valid email address")
-      return false
+      showErrorMessage(field, "Please enter a valid email address");
+      return false;
     }
-    removeErrorMessage(field)
-    return true
+    removeErrorMessage(field);
+    return true;
   },
   minLength: function (field, minLength, fieldName) {
     if (field.value.trim().length < minLength) {
       showErrorMessage(
         field,
         `${fieldName} must be at least ${minLength} characters.`
-      )
-      return false
+      );
+      return false;
     }
-    return true
+    return true;
   },
   phone: (field) => {
-    const phoneRegex = /^[0-9]{10,15}$/
+    const phoneRegex = /^[0-9]{10,15}$/;
     if (!phoneRegex.test(field.value)) {
       showErrorMessage(
         field,
         "Please enter a valid phone number (10-15 digits)"
-      )
-      return false
+      );
+      return false;
     }
-    removeErrorMessage(field)
-    return true
+    removeErrorMessage(field);
+    return true;
   },
   requiredRadioGroup: function (fieldName, fieldSelector) {
-    const field = document.querySelector(fieldSelector)
-    const checked = document.querySelector(`input[name="${fieldName}"]:checked`)
-
+    const field = document.querySelector(fieldSelector);
+    const checked = document.querySelector(`input[name="${fieldName}"]:checked`);
     if (!checked) {
-      showErrorMessage(field, `${fieldName.replace(/_/g, " ")} is required`)
-      return false
+      showErrorMessage(field, `${fieldName.replace(/_/g, " ")} is required`);
+      return false;
     }
-
-    removeErrorMessage(field)
-    return true
+    removeErrorMessage(field);
+    return true;
   },
-
-  sizeSelection: (field, fieldName) => {
-    const sizeSelect = field.querySelector(".size-select")
-    const customSizeInput = field.querySelector(".custom-size-input")
+  sizeSelection: (block, fieldName) => {
+    const sizeSelect = block.querySelector(".size-select");
+    const customSizeInput = block.querySelector(".custom-size-input");
+    const sizeError = block.querySelector(".size-error");
     const sizeValue =
       sizeSelect.value === "custom"
         ? customSizeInput.value.trim()
-        : sizeSelect.value.trim()
+        : sizeSelect.value.trim();
 
     if (!sizeValue) {
-      showErrorMessage(field, `${fieldName} is required`)
-      return false
+      showErrorMessage(sizeError, `${fieldName} is required`);
+      return false;
     }
-    removeErrorMessage(field)
-    return true
-  },
 
-  colorQuantities: (field, fieldName) => {
-    let hasValidColor = false
+    // Check for duplicate sizes
+    const allSizeBlocks = document.querySelectorAll(".size-block");
+    let isDuplicate = false;
+    const currentSize = sizeValue;
+
+    allSizeBlocks.forEach((otherBlock) => {
+      if (otherBlock === block) return;
+      const otherSelect = otherBlock.querySelector(".size-select");
+      const otherCustomInput = otherBlock.querySelector(".custom-size-input");
+      let otherSize = otherSelect.value;
+      if (otherSize === "custom") {
+        otherSize = otherCustomInput.value.trim();
+      }
+      if (otherSize && otherSize === currentSize) {
+        isDuplicate = true;
+      }
+    });
+
+    if (isDuplicate) {
+      showErrorMessage(sizeError, `Size "${currentSize}" is already selected`);
+      return false;
+    }
+
+    removeErrorMessage(sizeError);
+    return true;
+  },
+  colorQuantities: (block, fieldName) => {
+    let hasValidColor = false;
+    const colorError = block.querySelector(".color-error");
 
     // Check standard colors
-    const colorCheckboxes = field.querySelectorAll(".color-checkbox")
+    const colorCheckboxes = block.querySelectorAll(".color-checkbox");
     colorCheckboxes.forEach((checkbox) => {
       if (checkbox.checked) {
-        const quantityInput = checkbox.closest("div").nextElementSibling
-        const quantity = parseInt(quantityInput.value, 10) || 0
+        const quantityInput = checkbox.closest("div").nextElementSibling;
+        const quantity = parseInt(quantityInput.value, 10) || 0;
         if (quantity > 0) {
-          hasValidColor = true
+          hasValidColor = true;
         }
       }
-    })
+    });
 
     // Check custom colors
-    const customColorContainers = field.querySelectorAll(
+    const customColorContainers = block.querySelectorAll(
       ".custom-color-container > div"
-    )
+    );
     customColorContainers.forEach((customColor) => {
-      const nameInput = customColor.querySelector(".custom-color-name")
-      const quantityInput = customColor.querySelector(".custom-color-quantity")
-      const quantity = parseInt(quantityInput.value, 10) || 0
+      const nameInput = customColor.querySelector(".custom-color-name");
+      const quantityInput = customColor.querySelector(".custom-color-quantity");
+      const quantity = parseInt(quantityInput.value, 10) || 0;
       if (nameInput.value.trim() && quantity > 0) {
-        hasValidColor = true
+        hasValidColor = true;
       }
-    })
+    });
 
     if (!hasValidColor) {
       showErrorMessage(
-        field,
+        colorError,
         `${fieldName} must have at least one color with quantity greater than 0`
-      )
-      return false
+      );
+      return false;
     }
 
-    removeErrorMessage(field)
-    return true
+    removeErrorMessage(colorError);
+    return true;
   },
-
   atLeastOneSize: (containerId, fieldName) => {
-    const container = document.getElementById(containerId)
-    const sizeBlocks = container.querySelectorAll(".size-block")
+    const container = document.getElementById(containerId);
+    const blocks = container.querySelectorAll(".size-block");
+    const errorElement = container; // Adjust if there's a specific error element for this
 
-    if (sizeBlocks.length === 0) {
-      showErrorMessage(container, `${fieldName} must have at least one size`)
-      return false
+    if (blocks.length === 0) {
+      showErrorMessage(errorElement, `${fieldName} must have at least one size`);
+      return false;
     }
 
-    removeErrorMessage(container)
-    return true
+    removeErrorMessage(errorElement);
+    return true;
   },
-}
+};
 
 // Validation personal details functions
 function validatePersonalInfo() {

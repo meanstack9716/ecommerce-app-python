@@ -58,7 +58,7 @@ def create_app(config_class=Config):
     from app.routes.api.manage_address_api import address_bp
     from app.routes.api.dashboard_sales_api import sales_api
     from app.routes.api.product_review_api import reviews_bp
-    
+    from app.routes.api.promo_code_api import promo_bp
     # Register blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_api)
@@ -77,6 +77,7 @@ def create_app(config_class=Config):
     app.register_blueprint(address_bp)
     app.register_blueprint(sales_api)
     app.register_blueprint(reviews_bp)
+    app.register_blueprint(promo_bp)
 
     from app.utils.image_upload import image_store
     import base64
