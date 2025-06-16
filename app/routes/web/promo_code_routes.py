@@ -90,82 +90,6 @@ def handle_promo_code_submission():
     except Exception as e:
         return create_error_response({"error" : f'Server error: {str(e)}'}, 500)
 
-@admin_api.route(PROMO_CODE_LIST_WEB_URL, methods=['GET'])
-def promo_code_list():
-    if 'user_id' not in session:
-        return redirect(url_for('admin_api.login_page'))
-
-    page = request.args.get('page', 1, type=int)
-    limit = request.args.get('limit', 10, type=int)
-    search = request.args.get('promoSearch', '')
-    status = request.args.get('status', '')
-    discount_type = request.args.get('discount_type', '')
-
-    query = PromoCode.objects
-
-    if search:
-        query = query.filter(
-            Q(code__icontains=search) | 
-            Q(description__icontains=search)
-        )
-
-    if status == 'active':
-        query = query.filter(is_active=True)
-    elif status == 'inactive':
-        query = query.filter(is_active=False)
-
-    if discount_type:
-        query = query.filter(discount_type=discount_type)
-
-    promo_codes = query.order_by('-created_at').paginate(page=page, per_page=limit)
-
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        promo_list = []
-        for promo in promo_codes.items:
-            promo_list.append({
-                'id': str(promo.id),
-                'code': promo.code,
-                'description': promo.description,
-                'discount_type': promo.discount_type,
-                'discount_value': promo.discount_value,
-                'max_discount_amount': promo.max_discount_amount,
-                'start_date': promo.start_date.strftime('%Y-%m-%d') if promo.start_date else 'N/A',
-                'expiry_date': promo.expiry_date.strftime('%Y-%m-%d') if promo.expiry_date else 'N/A',
-                'current_uses': promo.current_uses,
-                'max_uses': promo.max_uses,
-                'is_active': promo.is_active
-            })
-
-        return jsonify({
-            'promos': promo_list,
-            'pagination': {
-                'page': promo_codes.page,
-                'per_page': promo_codes.per_page,
-                'total': promo_codes.total,
-                'pages': promo_codes.pages,
-                'has_prev': promo_codes.has_prev,
-                'has_next': promo_codes.has_next,
-                'prev_num': promo_codes.prev_num,
-                'next_num': promo_codes.next_num,
-                'first_item': (promo_codes.page - 1) * promo_codes.per_page + 1,
-                'last_item': min(promo_codes.page * promo_codes.per_page, promo_codes.total),
-                'iter_pages': list(promo_codes.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2))
-            },
-            'search': search,
-            'status': status,
-            'discount_type': discount_type,
-            'limit': limit
-        })
-
-    return render_template(
-        'admin/promo_codes/promo_code_list.html',
-        promos=promo_codes,
-        search=search,
-        status=status,
-        discount_type=discount_type,
-        limit=limit
-    )
-
 @admin_api.route(EDIT_PROMO_CODE, methods=['GET'])
 def edit_promo_code_page(promo_code_id):
     if 'user_id' not in session:
@@ -309,3 +233,106 @@ def update_promo_code(promo_code_id):
 
     except Exception as e:
         return create_error_response({"error": f'Server error: {str(e)}'}, 500)
+
+
+@admin_api.route('/admin/promo-codes', methods=['GET'])
+def promo_code_list():
+    if 'user_id' not in session:
+        return redirect(url_for('admin_api.login_page'))
+
+    # Get query parameters
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 10, type=int)
+    search = request.args.get('promoSearch', '')
+    status = request.args.get('status', '')
+    discount_type = request.args.get('discount_type', '')
+
+    # Build query
+    query = PromoCode.objects
+
+    if search:
+        query = query.filter(
+            Q(code__icontains=search) |
+            Q(description__icontains=search)
+        )
+
+    if status == 'active':
+        query = query.filter(is_active=True)
+    elif status == 'inactive':
+        query = query.filter(is_active=False)
+
+    if discount_type:
+        query = query.filter(discount_type=discount_type)
+
+    promo_codes = query.order_by('-created_at').paginate(page=page, per_page=limit)
+
+    return render_template(
+        'admin/promo_codes/promo_code_list.html',
+        promos=promo_codes,
+        search=search,
+        status=status,
+        discount_type=discount_type,
+        limit=limit
+    )
+
+
+    
+
+@admin_api.route('/api/admin/promo-codes', methods=['GET'])
+def api_promo_code_list():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    # Get query parameters
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 10, type=int)
+    search = request.args.get('promoSearch', '')
+    status = request.args.get('status', '')
+    discount_type = request.args.get('discount_type', '')
+
+    # Build query
+    query = PromoCode.objects
+
+    if search:
+        query = query.filter(
+            Q(code__icontains=search) |
+            Q(description__icontains=search)
+        )
+
+    if status == 'active':
+        query = query.filter(is_active=True)
+    elif status == 'inactive':
+        query = query.filter(is_active=False)
+
+    if discount_type:
+        query = query.filter(discount_type=discount_type)
+
+    promo_codes = query.order_by('-created_at').paginate(page=page, per_page=limit)
+
+    # Serialize data
+    promos_data = []
+    for promo in promo_codes.items:
+        promos_data.append({
+            'id': str(promo.id),
+            'code': promo.code,
+            'description': promo.description,
+            'discount_type': promo.discount_type,
+            'discount_value': promo.discount_value,
+            'max_discount_amount': promo.max_discount_amount,
+            'start_date': promo.start_date.strftime('%Y-%m-%d') if promo.start_date else None,
+            'expiry_date': promo.expiry_date.strftime('%Y-%m-%d') if promo.expiry_date else None,
+            'max_uses': promo.max_uses,
+            'is_active': promo.is_active,
+            'created_at': promo.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        })
+
+    return jsonify({
+        'promos': promos_data,
+        'total': promo_codes.total,
+        'pages': promo_codes.pages,
+        'current_page': promo_codes.page,
+        'has_next': promo_codes.has_next,
+        'has_prev': promo_codes.has_prev,
+        'next_num': promo_codes.next_num,
+        'prev_num': promo_codes.prev_num
+    })

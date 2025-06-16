@@ -109,7 +109,6 @@ def list_promo_codes():
                 'max_uses': promo.max_uses,
                 'uses_per_user': promo.uses_per_user,
                 'only_first_order': promo.only_first_order,
-                # 'current_uses': promo.current_uses,
                 'created_at': promo.created_at.strftime('%Y-%m-%d %H:%M:%S')
             }
             promo_codes_data.append(promo_data)
