@@ -171,6 +171,7 @@ ADDRESS_TYPES_API = '/api/address/types-list'
 WISHLIST_ADD = '/api/wishlist/add'
 WISHLIST_REMOVE = '/api/wishlist/remove'
 WISHLIST_LIST = '/api/wishlist/list'
+WISHLIST_REMOVE_ALL= '/api/wishlist/remove-all'
 # Wishlist Endpoint End
 
 # SaveForLater Endpoint Start
