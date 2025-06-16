@@ -19,8 +19,8 @@ def validate_promo_code():
     user_id = get_jwt_identity()
     data = request.get_json()
     
-    if not data or 'promo_code' not in data or 'order_amount' not in data:
-        return create_error_response('Promo code and order amount are required', 400)
+    if not data or 'promo_code' not in data:
+        return create_error_response('Promo code is required', 400)
     
     promo_code_str = data['promo_code'].upper().strip()
     order_amount = float(data['order_amount'])
