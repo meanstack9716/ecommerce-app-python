@@ -1,9 +1,9 @@
 from flask import render_template, session, redirect, url_for, request, jsonify
 from . import admin_api
 from app.models import User, PromoCode
-from constants import ADD_PROMO_CODE_WEB_URL, PROMO_CODE_LIST, DELETE_PROMO_CODE
+from constants import ADD_PROMO_CODE_WEB_URL, PROMO_CODE_LIST, DELETE_PROMO_CODE, EDIT_PROMO_CODE, UPDATE_PROMO_CODE_WEB_URL
 from datetime import datetime
-from bson import ObjectId
+from bson import ObjectId,errors
 from app.utils.utils import create_error_response
 from app.utils.image_upload import validate_fields
 
@@ -119,7 +119,6 @@ def promo_code_list():
 
     promo_codes = query.order_by('-created_at').paginate(page=page, per_page=limit)
 
-    # Check if the request is expecting JSON (AJAX)
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         promo_list = []
         for promo in promo_codes.items:
@@ -167,56 +166,149 @@ def promo_code_list():
         limit=limit
     )
 
-@admin_api.route('/api/promo-codes/<string:promo_code_id>', methods=['GET', 'PUT'])
-def edit_promo_code(promo_code_id):
+@admin_api.route(EDIT_PROMO_CODE, methods=['GET'])
+def edit_promo_code_page(promo_code_id):
     if 'user_id' not in session:
         return redirect(url_for('admin_api.login_page'))
-    
     try:
-        promo_code = PromoCode.objects.get(id=promo_code_id)
-    except PromoCode.DoesNotExist:
-        return create_error_response('Promo code not found', 404)
-    
-    if request.method == 'GET':
-        return jsonify({
-            'code': promo_code.code,
-            'description': promo_code.description,
-            'discount_type': promo_code.discount_type,
-            'discount_value': float(promo_code.discount_value),
-            'start_date': promo_code.start_date.isoformat(),
-            'expiry_date': promo_code.expiry_date.isoformat() if promo_code.expiry_date else None,
-            'is_active': promo_code.is_active,
-            'max_uses': promo_code.max_uses,
-            'min_order_amount': float(promo_code.min_order_amount) if promo_code.min_order_amount else None,
-            'max_discount_amount': float(promo_code.max_discount_amount) if promo_code.max_discount_amount else None,
-        })
-    
-    elif request.method == 'PUT':
-        try:
-            data = request.form if request.form else request.json
-            
-            # Update basic fields
-            promo_code.description = data.get('description', promo_code.description)
-            promo_code.discount_type = data.get('discount_type', promo_code.discount_type)
-            promo_code.discount_value = float(data.get('discount_value', promo_code.discount_value))
-            promo_code.start_date = datetime.fromisoformat(data.get('start_date')) if data.get('start_date') else promo_code.start_date
-            promo_code.expiry_date = datetime.fromisoformat(data.get('expiry_date')) if data.get('expiry_date') else promo_code.expiry_date
-            promo_code.is_active = data.get('is_active', str(promo_code.is_active)).lower() == 'true'
-            promo_code.max_uses = int(data['max_uses']) if data.get('max_uses') else promo_code.max_uses
-            promo_code.min_order_amount = float(data['min_order_amount']) if data.get('min_order_amount') else promo_code.min_order_amount
-            promo_code.max_discount_amount = float(data['max_discount']) if data.get('max_discount') else promo_code.max_discount_amount        
-            
-            promo_code.save()
-            
-            return jsonify({
-                'success': True,
-                'message': 'Promo code updated successfully'
-            })
+        promo_obj_id = ObjectId(promo_code_id)
+        promo_code = PromoCode.objects.get(id=promo_obj_id)
+    except (errors.InvalidId, PromoCode.DoesNotExist):
+        return create_error_response("Promo code not found or invalid", 404)
+
+    return render_template('admin/promo_codes/edit_promo_code.html', promo_code=promo_code)
+
+@admin_api.route(UPDATE_PROMO_CODE_WEB_URL, methods=['PUT'])
+def update_promo_code(promo_code_id):
+    if 'user_id' not in session:
+        return create_error_response('Unauthorized', 401)
+
+    try:
+        promo_code = PromoCode.objects(id=promo_code_id).first()
+        if not promo_code:
+            return create_error_response('Promo code not found', 404)
+
+        if str(promo_code.created_by.id) != session['user_id']:
+            return create_error_response('You can only update promo codes you created', 403)
+
+        data = request.get_json() if request.is_json else request.form
+        update_data = {}
+
+        if 'code' in data:
+            new_code = data['code'].upper().strip()
+            if new_code != promo_code.code and PromoCode.objects(code=new_code).first():
+                return create_error_response(f"Promo code '{new_code}' already exists", 400)
+            update_data['code'] = new_code
+
+        if 'description' in data:
+            update_data['description'] = data['description']
+
+        if 'discount_type' in data:
+            if data['discount_type'] not in ['percentage', 'fixed_amount']:
+                return create_error_response('Invalid discount type. Must be "percentage" or "fixed_amount"', 400)
+            update_data['discount_type'] = data['discount_type']
+
+        if 'discount_value' in data:
+            try:
+                discount_value = float(data['discount_value'])
+                if discount_value <= 0:
+                    return create_error_response('Discount value must be greater than 0', 400)
+                if 'discount_type' in update_data and update_data['discount_type'] == 'percentage' and discount_value > 100:
+                    return create_error_response('Percentage discount cannot exceed 100%', 400)
+                if 'discount_type' not in update_data and promo_code.discount_type == 'percentage' and discount_value > 100:
+                    return create_error_response('Percentage discount cannot exceed 100%', 400)
+                update_data['discount_value'] = discount_value
+            except ValueError:
+                return create_error_response('Invalid discount value', 400)
+
+        if 'min_order_amount' in data:
+            try:
+                update_data['min_order_amount'] = max(0, float(data['min_order_amount']))
+            except ValueError:
+                return create_error_response('Invalid minimum order amount', 400)
+
+        if 'max_discount_amount' in data:
+            try:
+                update_data['max_discount_amount'] = max(0, float(data['max_discount_amount']))
+            except ValueError:
+                return create_error_response('Invalid maximum discount amount', 400)
+
+        current_date = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         
-        except ValueError as e:
-            return create_error_response(str(e), 400)
-        except Exception as e:
-            return create_error_response(str(e), 500)
+        if 'start_date' in data:
+            try:
+                new_start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').replace(hour=0, minute=0, second=0)
+                
+                if new_start_date < current_date and promo_code.is_active:
+                    return create_error_response('Cannot move start date to past for active promo codes', 400)
+                    
+                update_data['start_date'] = new_start_date
+            except ValueError:
+                return create_error_response('Invalid start date format. Use YYYY-MM-DD', 400)
+
+        if 'expiry_date' in data:
+            if data['expiry_date']:
+                try:
+                    new_expiry_date = datetime.strptime(data['expiry_date'], '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+                    
+                    start_date = update_data.get('start_date', promo_code.start_date)
+                    if new_expiry_date <= start_date:
+                        return create_error_response('End date must be after start date', 400)
+                        
+                    update_data['expiry_date'] = new_expiry_date
+                except ValueError:
+                    return create_error_response('Invalid expiry date format. Use YYYY-MM-DD', 400)
+            else:
+                update_data['expiry_date'] = None
+
+        if 'max_uses' in data:
+            if data['max_uses']:
+                try:
+                    update_data['max_uses'] = max(1, int(data['max_uses']))
+                except ValueError:
+                    return create_error_response('Invalid max uses value', 400)
+            else:
+                update_data['max_uses'] = None
+
+        if 'uses_per_user' in data:
+            try:
+                update_data['uses_per_user'] = max(1, int(data['uses_per_user']))
+            except ValueError:
+                return create_error_response('Invalid uses per user value', 400)
+
+        if 'only_first_order' in data:
+            update_data['only_first_order'] = str(data['only_first_order']).lower() == 'true'
+
+        if 'is_active' in data:
+            new_active_status = str(data['is_active']).lower() == 'true'
+            
+            start_date = update_data.get('start_date', promo_code.start_date)
+            if new_active_status and start_date > current_date:
+                return create_error_response('Cannot activate promo code with future start date', 400)
+                
+            update_data['is_active'] = new_active_status
+
+        promo_code.update(**update_data)
+        promo_code.reload()
+
+        response_data = {
+            'success': True,
+            'message': 'Promo code updated successfully',
+            'promo_code': {
+                'id': str(promo_code.id),
+                'code': promo_code.code,
+                'discount_type': promo_code.discount_type,
+                'discount_value': float(promo_code.discount_value),
+                'start_date': promo_code.start_date.strftime('%Y-%m-%d'),
+                'expiry_date': promo_code.expiry_date.strftime('%Y-%m-%d') if promo_code.expiry_date else None,
+                'is_active': promo_code.is_active,
+            }
+        }
+
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        return create_error_response(f'Server error: {str(e)}', 500)
 
 @admin_api.route(DELETE_PROMO_CODE, methods=['DELETE'])
 def delete_promo_code(promo_code_id):

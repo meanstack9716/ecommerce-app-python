@@ -4,137 +4,133 @@
 
 {% block admin_content %}
 <div class="bg-white rounded-lg shadow-lg p-8">
-    <h1 class="text-3xl font-semibold text-gray-800 mb-6">Edit Promo Code</h1>
-    <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
-        <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Edit Promo Code</h1>
+        <p class="mt-2 text-sm text-gray-600">Fill in the details below to edit a promo code</p>
     </div>
-    
-    <form id="edit-promo-form" class="space-y-6">
-        <input type="hidden" id="promo_code_id" value="{{ promo_code_id }}">
-        
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <!-- Code -->
+
+    <form id="editPromoForm" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label for="code" class="block text-sm font-medium text-gray-700">Promo Code *</label>
-                <input type="text" id="code" name="code" required
-                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <label for="code" class="block text-base font-medium text-black mb-1 tracking-wide">Promo Code</label>
+                <input type="text" id="code" name="code"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g. SUMMER20" value="{{ promo_code.code }}">
+                <p class="mt-1 text-xs text-gray-500">Unique code customers will enter</p>
             </div>
-            
-            <!-- Description -->
+
             <div>
-                <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-                <input type="text" id="description" name="description"
-                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            
-            <!-- Discount Type -->
-            <div>
-                <label for="discount_type" class="block text-sm font-medium text-gray-700">Discount Type *</label>
-                <select id="discount_type" name="discount_type" required
-                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                    <option value="percentage">Percentage</option>
-                    <option value="fixed">Fixed Amount</option>
-                </select>
-            </div>
-            
-            <!-- Discount Value -->
-            <div>
-                <label for="discount_value" class="block text-sm font-medium text-gray-700">Discount Value *</label>
-                <input type="number" id="discount_value" name="discount_value" step="0.01" min="0" required
-                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            
-            <!-- Max Discount (for percentage) -->
-            <div id="max-discount-container" class="hidden">
-                <label for="max_discount" class="block text-sm font-medium text-gray-700">Maximum Discount Amount</label>
-                <input type="number" id="max_discount" name="max_discount" step="0.01" min="0"
-                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            
-            <!-- Start Date -->
-            <div>
-                <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date *</label>
-                <input type="datetime-local" id="start_date" name="start_date" required
-                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            
-            <!-- End Date -->
-            <div>
-                <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
-                <input type="datetime-local" id="end_date" name="end_date"
-                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            
-            <!-- Minimum Order Amount -->
-            <div>
-                <label for="min_order_amount" class="block text-sm font-medium text-gray-700">Minimum Order Amount</label>
-                <input type="number" id="min_order_amount" name="min_order_amount" step="0.01" min="0"
-                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            
-            <!-- Max Uses -->
-            <div>
-                <label for="max_uses" class="block text-sm font-medium text-gray-700">Maximum Uses</label>
-                <input type="number" id="max_uses" name="max_uses" min="1"
-                    class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            
-            <!-- Status -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Status</label>
-                <div class="mt-1 flex items-center">
-                    <input type="checkbox" id="is_active" name="is_active" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                    <label for="is_active" class="ml-2 block text-sm text-gray-700">Active</label>
-                </div>
-            </div>
-            
-            <!-- Single Use -->
-            <!-- <div>
-                <label class="block text-sm font-medium text-gray-700">Usage Type</label>
-                <div class="mt-1 flex items-center">
-                    <input type="checkbox" id="is_single_use" name="is_single_use" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                    <label for="is_single_use" class="ml-2 block text-sm text-gray-700">Single Use Only</label>
-                </div>
-            </div> -->
-        </div>
-        
-        <!-- Product Restrictions -->
-        <div class="pt-4 border-t border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Product Restrictions</h3>
-            
-            <div class="space-y-4">
-                <div class="flex items-center space-x-4">
+                <label class="block text-base font-medium text-black mb-1 tracking-wide">Discount Type</label>
+                <div class="flex space-x-4">
                     <div class="flex items-center">
-                        <input id="restrict-all" name="product_restriction" type="radio" value="all" checked
-                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                        <label for="restrict-all" class="ml-2 block text-sm text-gray-700">No restrictions (apply to all products)</label>
+                        <input id="percentage" name="discount_type" type="radio" value="percentage" checked
+                            class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
+                        <label for="percentage" class="ml-2 block text-sm text-gray-700">Percentage</label>
                     </div>
-                    
                     <div class="flex items-center">
-                        <input id="restrict-specific" name="product_restriction" type="radio" value="specific"
-                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                        <label for="restrict-specific" class="ml-2 block text-sm text-gray-700">Specific products only</label>
+                        <input id="fixed" name="discount_type" type="radio" value="fixed_amount"
+                            class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
+                        <label for="fixed" class="ml-2 block text-sm text-gray-700">Fixed Amount</label>
                     </div>
                 </div>
-                
-                <div id="product-selection-container" class="hidden">
-                    <label class="block text-sm font-medium text-gray-700">Select Products</label>
-                    <select id="products" name="products" multiple
-                        class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        <!-- Products will be loaded here via AJAX -->
-                    </select>
-                </div>
+            </div>
+
+            <div>
+                <label for="discount_value" class="block text-base font-medium text-black mb-1 tracking-wide">Discount
+                    Value</label>
+                <input type="number" id="discount_value" name="discount_value" min="0" step="0.01"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g. 20">
+                <p class="mt-1 text-xs text-gray-500" id="discountHint">Percentage discount (e.g. 20 for 20%)</p>
+            </div>
+
+            <div id="maxDiscountContainer" class="hidden">
+                <label for="max_discount" class="block text-base font-medium text-black mb-1 tracking-wide">Maximum
+                    Discount</label>
+                <input type="number" id="max_discount" name="max_discount" min="0" step="0.01"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Optional">
+                <p class="mt-1 text-xs text-gray-500">Maximum discount amount for percentage discounts</p>
+            </div>
+
+            <div>
+                <label for="min_order_amount" class="block text-base font-medium text-black mb-1 tracking-wide">Minimum
+                    Order Amount</label>
+                <input type="number" id="min_order_amount" name="min_order_amount" min="0" step="0.01"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Optional">
+                <p class="mt-1 text-xs text-gray-500">Minimum order total to apply this promo</p>
             </div>
         </div>
-        
-        <div class="flex justify-end space-x-4 pt-6">
-            <button type="button" id="cancel-btn" 
-                class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                Cancel
-            </button>
-            <button type="submit"
-                class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                Update Promo Code
+
+        <div>
+            <label for="description"
+                class="block text-base font-medium text-black mb-1 tracking-wide">Description</label>
+            <div id="editor-container" class="h-40 border border-gray-300 rounded-md"></div>
+            <input type="hidden" id="description" name="description">
+            <p class="mt-1 text-xs text-gray-500">Description that will be shown to customers about this promo</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label for="start_date" class="block text-base font-medium text-black mb-1 tracking-wide">Start
+                    Date</label>
+                <input type="date" id="start_date" name="start_date"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+                <label for="end_date" class="block text-base font-medium text-black mb-1 tracking-wide">End Date</label>
+                <input type="date" id="end_date" name="end_date"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                <p class="mt-1 text-xs text-gray-500">Leave empty for no expiration</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label for="max_uses" class="block text-base font-medium text-black mb-1 tracking-wide">Total Usage
+                    Limit</label>
+                <input type="number" id="max_uses" name="max_uses" min="0"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Optional">
+                <p class="mt-1 text-xs text-gray-500">Leave empty for unlimited uses</p>
+            </div>
+            <div>
+                <label for="user_max_uses" class="block text-base font-medium text-black mb-1 tracking-wide">Uses Per
+                    Customer</label>
+                <input type="number" id="user_max_uses" name="user_max_uses" min="1" value="1"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <div class="flex items-center">
+                <input id="is_active" name="is_active" type="checkbox" checked
+                    class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                <label for="is_active" class="block text-base font-medium text-black ml-2 tracking-wide">Active</label>
+            </div>
+            <div class="flex items-center">
+                <input id="only_first_order" name="only_first_order" type="checkbox" value="true"
+                    class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                <label for="only_first_order" class="ml-2 block text-base font-medium text-black tracking-wide">First
+                    Order Only</label>
+            </div>
+        </div>
+
+        <div class="pt-4 flex justify-end">
+            <button type="submit" id="updateButton" disabled
+                class="w-48 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out disabled:bg-gray-300 disabled:cursor-not-allowed">
+                <span id="btn-text">Update Promo Code</span>
+                <div id="loading-spinner" class="hidden">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                </div>
             </button>
         </div>
     </form>
@@ -143,156 +139,162 @@
 
 {% block js %}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const loader = document.getElementById('loader');
-        const promoCodeId = document.getElementById('promo_code_id').value;
-        const form = document.getElementById('edit-promo-form');
-        const cancelBtn = document.getElementById('cancel-btn');
-        const discountTypeSelect = document.getElementById('discount_type');
-        const maxDiscountContainer = document.getElementById('max-discount-container');
-        const restrictAllRadio = document.getElementById('restrict-all');
-        const restrictSpecificRadio = document.getElementById('restrict-specific');
-        const productSelectionContainer = document.getElementById('product-selection-container');
-        const productsSelect = document.getElementById('products');
-        
-        // Load promo code data
-        async function loadPromoCode() {
-            loader.classList.remove('hidden');
-            try {
-                const response = await fetch(`/api/promo-codes/${promoCodeId}`);
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Populate form fields
-                    document.getElementById('code').value = data.code;
-                    document.getElementById('description').value = data.description || '';
-                    document.getElementById('discount_type').value = data.discount_type;
-                    document.getElementById('discount_value').value = data.discount_value;
-                    document.getElementById('start_date').value = data.start_date.slice(0, 16); // Remove seconds and timezone
-                    if (data.end_date) {
-                        document.getElementById('end_date').value = data.end_date.slice(0, 16);
-                    }
-                    document.getElementById('is_active').checked = data.is_active;
-                    // document.getElementById('is_single_use').checked = data.is_single_use;
-                    document.getElementById('max_uses').value = data.max_uses || '';
-                    document.getElementById('min_order_amount').value = data.min_order_amount || '';
-                    document.getElementById('max_discount').value = data.max_discount_amount || '';
-                    
-                    // Handle discount type
-                    toggleMaxDiscountField(data.discount_type);
+    document.addEventListener('DOMContentLoaded', function () {
+        const quill = new Quill('#editor-container', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
+                    [{ 'indent': '-1' }, { 'indent': '+1' }],
+                    [{ 'direction': 'rtl' }],
+                    [{ 'script': 'sub' }, { 'script': 'super' }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'font': [] }],
+                    [{ 'align': [] }],
+                    ['clean'],
+                    ['link', 'image']
+                ]
+            },
+            placeholder: 'Enter promo code description...'
+        });
 
-                    
-                } else {
-                    alert('Failed to load promo code: ' + (data.message || 'Unknown error'));
-                    window.location.href = '/admin/promo-code-list';
-                }
-            } catch (error) {
-                console.error('Error loading promo code:', error);
-                alert('An error occurred while loading the promo code');
-                window.location.href = '/admin/promo-code-list';
-            } finally {
-                loader.classList.add('hidden');
-            }
-        }
-        
-        // Load products for restriction
-        async function loadProducts(selectedProductIds = []) {
-            try {
-                const response = await fetch('/api/products?limit=1000'); // Adjust as needed
-                const data = await response.json();
-                
-                if (response.ok) {
-                    productsSelect.innerHTML = '';
-                    data.data.forEach(product => {
-                        const option = document.createElement('option');
-                        option.value = product.id;
-                        option.textContent = product.name;
-                        option.selected = selectedProductIds.includes(product.id);
-                        productsSelect.appendChild(option);
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading products:', error);
-            }
-        }
-        
-        // Toggle max discount field based on discount type
-        function toggleMaxDiscountField(discountType) {
+        let initialFormState = {};
+        const promoCodeData = JSON.parse('{{ promo_code|tojson|safe }}');
+        const loader = document.getElementById('loading-spinner');
+        const btnText = document.getElementById('btn-text');
+        const submitBtn = document.getElementById('updateButton');
+
+        function toggleDiscountFields() {
+            const discountType = document.querySelector('input[name="discount_type"]:checked').value;
+            const maxDiscountContainer = document.getElementById('maxDiscountContainer');
+            const discountHint = document.getElementById('discountHint');
+
             if (discountType === 'percentage') {
                 maxDiscountContainer.classList.remove('hidden');
+                discountHint.textContent = 'Percentage discount (e.g. 20 for 20%)';
             } else {
                 maxDiscountContainer.classList.add('hidden');
+                discountHint.textContent = 'Fixed amount discount (e.g. 20 for $20 off)';
             }
         }
-        
-        // Form submission
-        form.addEventListener('submit', async (e) => {
+
+        function getFormState() {
+            return {
+                code: document.getElementById('code').value,
+                discount_type: document.querySelector('input[name="discount_type"]:checked').value,
+                discount_value: document.getElementById('discount_value').value,
+                max_discount: document.getElementById('max_discount')?.value || null,
+                min_order_amount: document.getElementById('min_order_amount').value || null,
+                description: quill.root.innerHTML,
+                start_date: document.getElementById('start_date').value || null,
+                end_date: document.getElementById('end_date').value || null,
+                max_uses: document.getElementById('max_uses').value || null,
+                user_max_uses: document.getElementById('user_max_uses').value || 1,
+                is_active: document.getElementById('is_active').checked,
+                only_first_order: document.getElementById('only_first_order').checked
+            };
+        }
+
+        function hasFormChanged() {
+            return JSON.stringify(getFormState()) !== JSON.stringify(initialFormState);
+        }
+
+        function updateSubmitButton() {
+            submitBtn.disabled = !hasFormChanged();
+        }
+
+        function populateFormFields() {
+            const form = document.getElementById('editPromoForm');
+            form.code.value = promoCodeData.code || '';
+            form.discount_value.value = promoCodeData.discount_value || '';
+            form.min_order_amount.value = promoCodeData.min_order_amount || '';
+            if (form.max_discount) form.max_discount.value = promoCodeData.max_discount_amount || '';
+            form.max_uses.value = promoCodeData.max_uses || '';
+            form.user_max_uses.value = promoCodeData.uses_per_user || 1;
+            form.is_active.checked = promoCodeData.is_active || false;
+            form.only_first_order.checked = promoCodeData.only_first_order || false;
+
+            const discountType = promoCodeData.discount_type || 'percentage';
+            form.querySelector(`input[name="discount_type"][value="${discountType}"]`).checked = true;
+
+            form.start_date.value = promoCodeData.start_date ? new Date(promoCodeData.start_date.$date).toISOString().split('T')[0] : '';
+            form.end_date.value = promoCodeData.expiry_date ? new Date(promoCodeData.expiry_date.$date).toISOString().split('T')[0] : '';
+
+            if (promoCodeData.description && quill) {
+                quill.root.innerHTML = promoCodeData.description;
+            }
+
+            initialFormState = getFormState();
+        }
+
+        async function handleFormSubmit(e) {
             e.preventDefault();
+
+            document.getElementById('description').value = quill.root.innerHTML;
+
             loader.classList.remove('hidden');
-            
+            loader.offsetHeight;
+            btnText.classList.add('hidden');
+            submitBtn.disabled = true;
+
             try {
-                const formData = new FormData(form);
-                const data = Object.fromEntries(formData.entries());
-                
-                // Convert checkboxes to boolean
-                data.is_active = formData.has('is_active');
-                // data.is_single_use = formData.has('is_single_use');
-                
-                // Get all selected products
-                if (data.product_restriction === 'specific') {
-                    data.products = Array.from(productsSelect.selectedOptions).map(opt => opt.value);
-                }
-                
-                const response = await fetch(`/api/promo-codes/${promoCodeId}`, {
+                const formData = new FormData(document.getElementById('editPromoForm'));
+                formData.set('is_active', document.getElementById('is_active').checked);
+                formData.set('only_first_order', document.getElementById('only_first_order').checked);
+                formData.append('description', quill.root.innerHTML);
+
+                const response = await fetch(`/promo-code/update/${promoCodeData._id.$oid}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
+                    body: formData
                 });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    alert('Promo code updated successfully');
-                    window.location.href = '/admin/promo-code-list';
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('Promo code updated successfully', 'success');
+                    initialFormState = getFormState();
+                    updateSubmitButton();
                 } else {
-                    alert('Failed to update promo code: ' + (result.message || 'Unknown error'));
+                    showToast(data.message || 'Failed to update promo code', 'error');
+                    submitBtn.disabled = false;
                 }
             } catch (error) {
-                console.error('Error updating promo code:', error);
-                alert('An error occurred while updating the promo code');
+                showToast('An error occurred while updating the promo code', 'error');
+                submitBtn.disabled = false;
             } finally {
                 loader.classList.add('hidden');
+                btnText.classList.remove('hidden');
             }
-        });
-        
-        // Event listeners
-        discountTypeSelect.addEventListener('change', (e) => {
-            toggleMaxDiscountField(e.target.value);
-        });
-        
-        restrictAllRadio.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                productSelectionContainer.classList.add('hidden');
-            }
-        });
-        
-        restrictSpecificRadio.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                productSelectionContainer.classList.remove('hidden');
-                if (productsSelect.options.length === 0) {
-                    loadProducts();
-                }
-            }
-        });
-        
-        cancelBtn.addEventListener('click', () => {
-            window.location.href = '/admin/promo-code-list';
-        });
-        
-        // Initialize
-        loadPromoCode();
+        }
+
+        function setupEventListeners() {
+            document.querySelectorAll('input[name="discount_type"]').forEach(radio => {
+                radio.addEventListener('change', () => {
+                    toggleDiscountFields();
+                    updateSubmitButton();
+                });
+            });
+
+            const form = document.getElementById('editPromoForm');
+            form.querySelectorAll('input, select, textarea').forEach(input => {
+                input.addEventListener('input', updateSubmitButton);
+                input.addEventListener('change', updateSubmitButton);
+            });
+
+            form.is_active.addEventListener('change', updateSubmitButton);
+            form.only_first_order.addEventListener('change', updateSubmitButton);
+
+            quill.on('text-change', updateSubmitButton);
+
+            form.addEventListener('submit', handleFormSubmit);
+        }
+
+        populateFormFields();
+        setupEventListeners();
+        toggleDiscountFields();
+        updateSubmitButton();
     });
 </script>
 {% endblock %}
