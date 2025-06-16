@@ -1,13 +1,10 @@
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.utils.utils import create_error_response
-from app.utils.jwt_handlers import jwt_error_handler
-from mongoengine.queryset.visitor import Q
 from datetime import datetime
 from bson import ObjectId
+from flask import request, jsonify
 from app.models.promo_code import PromoCode, PromoCodeUsage
 from app.models.user import User
 from app.models.order import Order
+from app.models.product import Product
 from constants import VALIDATE_PROMO_CODE
 
 promo_bp = Blueprint('promo_code', __name__)
@@ -23,12 +20,13 @@ def validate_promo_code():
         return create_error_response('Promo code is required', 400)
     
     promo_code_str = data['promo_code'].upper().strip()
-    order_amount = float(data['order_amount'])
-    product_ids = data.get('product_ids', [])
-    category_ids = data.get('category_ids', [])
+    cart_items_ids = data.get('cart_items_ids', [])
+
+    order_amount = float(data.get('order_amount', 0))
     
     current_datetime = datetime.now()
     
+    # Find active promo code
     promo_code = PromoCode.objects(
         code=promo_code_str,
         is_active=True,
@@ -48,26 +46,39 @@ def validate_promo_code():
         )
     
     if promo_code.applicable_to == 'specific':
+        if not cart_items_ids:
+            return create_error_response('This promo code requires specific items in cart', 400)
+        
         applicable = False
+        applicable_product_ids = []
+        applicable_category_ids = []
         
-        if product_ids:
-            applicable_products = [p.product_id for p in promo_code.applicable_products if p.product_id]
-            if any(ObjectId(pid) in applicable_products for pid in product_ids):
-                applicable = True
+        for item in promo_code.applicable_products:
+            if item.product_id:
+                applicable_product_ids.append(item.product_id)
+            if item.category_id:
+                applicable_category_ids.append(item.category_id)
         
-        if not applicable and category_ids:
-            applicable_categories = [p.category_id for p in promo_code.applicable_products if p.category_id]
-            if any(ObjectId(cid) in applicable_categories for cid in category_ids):
+        products_in_cart = Product.objects(id__in=[ObjectId(pid) for pid in cart_items_ids]).only('id', 'category_id')
+        
+        for product in products_in_cart:
+            if product.id in applicable_product_ids:
                 applicable = True
+                break
+            if product.category_id in applicable_category_ids:
+                applicable = True
+                break
         
         if not applicable:
-            return create_error_response('This promo code is not applicable to items in your order', 400)
+            return create_error_response('This promo code is not applicable to items in your cart', 400)
     
+    # Check max uses
     if promo_code.max_uses is not None:
         usage_count = PromoCodeUsage.objects(promo_code=promo_code).count()
         if usage_count >= promo_code.max_uses:
             return create_error_response('This promo code has reached its maximum usage limit', 400)
     
+    # Check user-specific limits
     user_usage_count = PromoCodeUsage.objects(promo_code=promo_code, user_id=user_id).count()
     
     if promo_code.only_first_order:
@@ -94,8 +105,8 @@ def validate_promo_code():
         'discount_amount': round(discount_amount, 2),
         'min_order_amount': promo_code.min_order_amount,
         'max_discount_amount': promo_code.max_discount_amount,
-        'description': promo_code.description
+        'description': promo_code.description,
+        'applicable_to_cart': True
     }
     
     return jsonify(response), 200
-
