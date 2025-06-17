@@ -59,7 +59,7 @@ def add_sub_sub_category():
             'description': new_ptype.description,
             'category': new_ptype.category_id.name,
             'subcategory': new_ptype.sub_category_id.name,
-            'img_url': new_ptype.img_url
+            'img_url': url_for('serve_uploaded_files', filename=new_ptype.img_url, _external=True) if new_ptype.img_url else ''
         }
     })
 
@@ -75,7 +75,7 @@ def get_sub_sub_category():
         {
             'id': str(pt.id),
             'name': pt.name,
-            'img_url': pt.img_url,
+            'img_url': url_for('serve_uploaded_files', filename=pt.img_url, _external=True) if pt.img_url else '',
             'description': pt.description,
             'categoryName': pt.category_id.name,
             'subcategoryName': pt.sub_category_id.name

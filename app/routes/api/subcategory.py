@@ -32,7 +32,7 @@ def get_subcategory_list():
                 "id": str(subcat.category.id),
                 "name": subcat.category.name,
                 "description": subcat.category.description,
-                "img_url": subcat.category.img_url,
+                "img_url": url_for('serve_uploaded_files', filename=subcat.category.img_url, _external=True) if subcat.category.img_url else '',
                 "sub_category_count": sub_category_count,
                 "sub_sub_category_count": sub_sub_category_total
             }
@@ -41,7 +41,7 @@ def get_subcategory_list():
             "id": str(subcat.id),
             "name": subcat.name,
             "description": subcat.description,
-            "img_url": subcat.img_url,
+            "img_url": url_for('serve_uploaded_files', filename=subcat.img_url, _external=True) if subcat.img_url else '',
             "created_at": subcat.created_at.isoformat(),
             "sub_sub_category_count": sub_sub_category_count,
             "category": category_data
@@ -120,7 +120,7 @@ def get_subcategories_by_category(category_id):
             "category_id": str(ssc.category_id.id) if ssc.category_id else None,
             "sub_category_id": str(ssc.sub_category_id.id) if ssc.sub_category_id else None,
             "id": str(ssc.id),
-            "img_url": ssc.img_url
+            "img_url": url_for('serve_uploaded_files', filename=ssc.img_url, _external=True) if ssc.img_url else ''
         } for ssc in sub_sub_categories]
         
         subcategory_data = {
@@ -128,7 +128,7 @@ def get_subcategories_by_category(category_id):
             "description": subcategory.description,
             "category_id": str(subcategory.category.id),
             "id": str(subcategory.id),
-            "img_url": subcategory.img_url,
+            "img_url": url_for('serve_uploaded_files', filename=subcategory.img_url, _external=True) if subcategory.img_url else '',
             "sub_sub_category_count": sub_sub_categories.count(),
             "category": {
                 "name": category.name,

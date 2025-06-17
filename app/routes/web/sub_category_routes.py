@@ -27,7 +27,7 @@ def fetch_subcategories_data(category_id='', page=1, per_page=10):
             'id': str(subcategory.id),
             'name': subcategory.name,
             'description': subcategory.description,
-            'img_url': subcategory.img_url,
+            'img_url': url_for('serve_uploaded_files', filename=subcategory.img_url, _external=True) if subcategory.img_url else '',
             'category': {
                 'id': str(subcategory.category.id),
                 'name': subcategory.category.name
