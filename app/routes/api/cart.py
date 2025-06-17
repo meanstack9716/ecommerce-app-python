@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, session
 from app.models.productCart import ProductCart
 from app.models.products import Products, ProductVariant, ProductVariantImage
 from datetime import datetime
-from constants import CART_ADD, CART_REMOVE, CART_LIST, CART_CHECKOUT, CART_REMOVE_ALL
+from constants import CART_ADD, CART_REMOVE, CART_LIST, CART_CHECKOUT, CART_REMOVE_ALL, UPDATE_CART
 from bson import ObjectId
 from constants import ALLOWED_SIZES
 from app.utils.utils import create_error_response
@@ -22,9 +22,6 @@ def add_to_cart():
         data = request.get_json()
     except Exception:
         return create_error_response({"error": "Invalid JSON data"}, 400)
-
-    if not isinstance(data, dict):
-        return create_error_response({"error": "Invalid data format, expected JSON object"}, 400)
 
     required_fields = ['product_id', 'selected_size', 'selected_color']
     for field in required_fields:
@@ -89,6 +86,97 @@ def add_to_cart():
 
     response_data = {
         "message": message,
+        "data": {
+            "id": str(cart_item.id),
+            "product_id": str(cart_item.product_id),
+            "user_id": str(cart_item.user_id),
+            "quantity": cart_item.quantity,
+            "selected_size": cart_item.selected_size,
+            "selected_color": cart_item.selected_color,
+            "selected_color_name": cart_item.selected_color_name
+        }
+    }
+
+    return jsonify(response_data), 200
+
+@cart_bp.route(UPDATE_CART, methods=['PUT'])
+@jwt_error_handler
+@jwt_required()
+def update_cart_item():
+    user_id = get_jwt_identity()
+    
+    try:
+        data = request.get_json()
+    except Exception:
+        return create_error_response({"error": "Invalid JSON data"}, 400)
+
+    if not data or 'id' not in data:
+        return create_error_response({"error": "Cart item ID is required"}, 400)
+
+    try:
+        cart_item = ProductCart.objects(id=ObjectId(data['id']), user_id=user_id).first()
+    except Exception:
+        return create_error_response({"error": "Invalid cart item ID"}, 400)
+    
+    if not cart_item:
+        return create_error_response({"error": "Cart item not found"}, 404)
+
+    update_fields = {}
+    if 'quantity' in data:
+        if not isinstance(data['quantity'], int) or data['quantity'] <= 0:
+            return create_error_response({"error": "Quantity must be a positive integer"}, 400)
+        update_fields['quantity'] = data['quantity']
+
+    if 'size' in data and data['size']:
+        update_fields['selected_size'] = data['size']
+
+    if 'color' in data and data['color']:
+        update_fields['selected_color'] = data['color']
+
+    if 'selected_size' in update_fields or 'selected_color' in update_fields:
+        new_size = update_fields.get('selected_size', cart_item.selected_size)
+        new_color = update_fields.get('selected_color', cart_item.selected_color)
+        
+        variant = ProductVariant.objects(
+            product_id=cart_item.product_id,
+            size=new_size,
+            color_hexa_code=new_color
+        ).first()
+
+        if not variant:
+            return create_error_response({
+                "error": f"No variant found for size {new_size} and color {new_color}"
+            }, 404)
+
+        if 'selected_color' in update_fields:
+            update_fields['selected_color_name'] = variant.color
+
+        requested_quantity = update_fields.get('quantity', cart_item.quantity)
+        if variant.stock_quantity < requested_quantity:
+            return create_error_response({
+                "error": f"Insufficient stock for size {new_size} and color {new_color}. Available: {variant.stock_quantity}"
+            }, 400)
+
+    elif 'quantity' in update_fields:
+        variant = ProductVariant.objects(
+            product_id=cart_item.product_id,
+            size=cart_item.selected_size,
+            color_hexa_code=cart_item.selected_color
+        ).first()
+        
+        if variant.stock_quantity < update_fields['quantity']:
+            return create_error_response({
+                "error": f"Insufficient stock. Available: {variant.stock_quantity}"
+            }, 400)
+
+    cart_item.update(
+        **update_fields,
+        updated_at=datetime.utcnow()
+    )
+    cart_item.reload()
+
+    response_data = {
+        "message": "Cart item updated successfully",
         "data": {
             "id": str(cart_item.id),
             "product_id": str(cart_item.product_id),

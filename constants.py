@@ -160,6 +160,7 @@ CART_REMOVE = '/api/cart/remove'
 CART_REMOVE_ALL = '/api/cart/remove-all'
 CART_LIST = '/api/cart/list'
 CART_CHECKOUT = '/api/cart/checkout'
+UPDATE_CART = f'/api/cart/update'
 # Cart Endpoint API End
 
 # Address Endpoint Start

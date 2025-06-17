@@ -27,7 +27,7 @@ def get_user_profile():
         "email": user.email,
         "first_name": user.first_name,
         "last_name": user.last_name,
-        "mobile": user.phone_number,
+        "phone_number": user.phone_number,
         "profile_pic": user.profile_pic,
         "id": str(user.id),
         "role": {
@@ -85,7 +85,7 @@ def update_profile_picture():
 
         return {
             "message": "Profile picture updated",
-            "profile_pic": user.profile_pic
+            "image": user.profile_pic
         }, 200
 
     except Exception as e:

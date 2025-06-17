@@ -29,7 +29,8 @@ def validate_promo_code():
         for item in cart_items:
             product = Products.objects(id=item.product_id.id).first()
             if product:
-                total_amount += float(product.price) * item.quantity
+                # Use final_price instead of price
+                total_amount += float(product.final_price) * item.quantity
     
     except Exception as e:
         return create_error_response({"error": 'Invalid cart items'}, 400)
@@ -99,6 +100,7 @@ def list_promo_codes():
             promo_data = {
                 'id': str(promo.id),
                 'code': promo.code,
+                'is_active': promo.is_active,
                 'description': promo.description,
                 'discount_type': promo.discount_type,
                 'discount_value': float(promo.discount_value),

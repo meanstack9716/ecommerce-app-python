@@ -161,6 +161,8 @@ def update_address():
 
 
 @address_bp.route(ADDRESS_REMOVE, methods=['DELETE'])
+@jwt_error_handler
+@jwt_required()
 def delete_address(address_id):
     payload = {}
     if request.is_json:
@@ -172,9 +174,8 @@ def delete_address(address_id):
     if not address_id or not ObjectId.is_valid(address_id):
         return create_error_response({"error": "Invalid address ID format"}, 400)
 
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
+    user_id = get_jwt_identity()
+    user = User.objects(id=user_id).first()
 
     try:
         address = Address.objects.get(id=ObjectId(address_id), user_id=user_id)
