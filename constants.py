@@ -136,7 +136,7 @@ API_GET_SUBCATEGORIES_BY_CATEGORY_ID = '/api/sub-categories/list/<category_id>'
 
 # Sub Sub Category API Endpoint Constants
 SUB_SUB_CATEGORY_ADD_API = '/api/sub-sub-category/add'
-GET_SUBSUBCATEGORIES_BY_CATEGORY_ID_API = '/api/sub-sub-categories/list';
+GET_SUBSUBCATEGORIES_BY_CATEGORY_ID_API = '/api/sub-sub-categories/list/<category_id>'
 # Sub Sub Category API Endpoint Constants End
 
 #Product API Endpoint Constants Start

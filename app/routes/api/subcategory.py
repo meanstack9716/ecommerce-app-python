@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, session, Blueprint, request, jsonify
 from constants import API_SUBCATEGORY_LIST, API_ADD_SUBCATEGORY, API_GET_SUBCATEGORIES_BY_CATEGORY_ID
-from app.models import SubCategory, Category
+from app.models import SubCategory, Category, SubSubCategory
 from app.utils.validation import validate_required_fields
 from app.utils.image_upload import upload_image, validate_fields
 from app.utils.utils import create_error_response
@@ -13,7 +13,6 @@ def get_subcategory_list():
     category_id = request.args.get('categoryId', '').strip()
     query = SubCategory.objects
 
-
     if category_id:
         query = query(category=category_id)
 
@@ -21,18 +20,31 @@ def get_subcategory_list():
 
     subcategories_json = []
     for subcat in subcategories:
+        sub_sub_category_count = SubSubCategory.objects(sub_category_id=subcat).count()        
+        category_data = None
+        if subcat.category:
+            sub_category_count = SubCategory.objects(category=subcat.category).count()
+            sub_sub_category_total = 0
+            for sc in SubCategory.objects(category=subcat.category):
+                sub_sub_category_total += SubSubCategory.objects(sub_category_id=sc).count()
+            
+            category_data = {
+                "id": str(subcat.category.id),
+                "name": subcat.category.name,
+                "description": subcat.category.description,
+                "img_url": subcat.category.img_url,
+                "sub_category_count": sub_category_count,
+                "sub_sub_category_count": sub_sub_category_total
+            }
+
         subcategories_json.append({
             "id": str(subcat.id),
             "name": subcat.name,
             "description": subcat.description,
             "img_url": subcat.img_url,
             "created_at": subcat.created_at.isoformat(),
-            "category": {
-                "id": str(subcat.category.id) if subcat.category else None,
-                "name": subcat.category.name if subcat.category else None,
-                "description": subcat.category.description if subcat.category else None,
-                "img_url": subcat.category.img_url if subcat.category else None,
-            }
+            "sub_sub_category_count": sub_sub_category_count,
+            "category": category_data
         })
 
     return jsonify({"data": subcategories_json}), 200
@@ -90,13 +102,48 @@ def add_new_subcategory():
 
 @subcategory_bp.route(API_GET_SUBCATEGORIES_BY_CATEGORY_ID, methods=['GET'])
 def get_subcategories_by_category(category_id):
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-
     subcategories = SubCategory.objects(category=category_id)
-    subcategory_list = [{"id": str(sub.id), "name": sub.name} for sub in subcategories]
-    return jsonify(subcategory_list)
-
+    response_data = []
+    
+    for subcategory in subcategories:
+        category = subcategory.category
+        sub_category_count = SubCategory.objects(category=category).count()
+        
+        sub_sub_category_total = 0
+        for sc in SubCategory.objects(category=category):
+            sub_sub_category_total += SubSubCategory.objects(sub_category_id=sc).count()
+        
+        sub_sub_categories = SubSubCategory.objects(sub_category_id=subcategory)
+        sub_sub_category_list = [{
+            "name": ssc.name,
+            "description": ssc.description,
+            "category_id": str(ssc.category_id.id) if ssc.category_id else None,
+            "sub_category_id": str(ssc.sub_category_id.id) if ssc.sub_category_id else None,
+            "id": str(ssc.id),
+            "img_url": ssc.img_url
+        } for ssc in sub_sub_categories]
+        
+        subcategory_data = {
+            "name": subcategory.name,
+            "description": subcategory.description,
+            "category_id": str(subcategory.category.id),
+            "id": str(subcategory.id),
+            "img_url": subcategory.img_url,
+            "sub_sub_category_count": sub_sub_categories.count(),
+            "category": {
+                "name": category.name,
+                "description": category.description,
+                "id": str(category.id),
+                "img_url": category.img_url,
+                "sub_category_count": sub_category_count,
+                "sub_sub_category_count": sub_sub_category_total
+            },
+            "sub_sub_categories": sub_sub_category_list
+        }
+        
+        response_data.append(subcategory_data)
+    
+    return jsonify({"data": response_data}), 200
 
 @subcategory_bp.route('/delete_subcategory/<string:subcategory_id>', methods=['POST'])
 def delete_subcategory(subcategory_id):

@@ -113,21 +113,18 @@ def get_category_with_children(category_id):
     try:
         category = Category.objects.get(id=category_id)
     except Category.DoesNotExist:
-        return jsonify({
-            'status': 'error',
-            'message': 'Category not found'
-        }), 404
+        return jsonify({'status': 'error', 'message': 'Category not found'}), 404
 
-    # Fetch subcategories for this category
     subcategories = SubCategory.objects(category=category)
     
     subcategories_data = []
+    total_subsubcategories = 0
+    
     for subcategory in subcategories:
-        # Fetch sub-subcategories for this subcategory
-        subsubcategories = SubSubCategory.objects(
-            category_id=category,
-            sub_category_id=subcategory
-        )
+        subsubcategories = SubSubCategory.objects(sub_category_id=subcategory)
+        subsubcategories_count = subsubcategories.count()
+        total_subsubcategories += subsubcategories_count
+        
         subsubcategories_data = [{
             'id': str(subsub.id),
             'name': subsub.name,
@@ -142,7 +139,8 @@ def get_category_with_children(category_id):
             'description': subcategory.description,
             'img_url': subcategory.img_url,
             'created_at': subcategory.created_at.isoformat() if subcategory.created_at else None,
-            'subsubcategories': subsubcategories_data
+            'subsubcategories': subsubcategories_data,
+            'subsubcategories_count': subsubcategories_count
         })
 
     category_data = {
@@ -151,10 +149,9 @@ def get_category_with_children(category_id):
         'description': category.description,
         'img_url': category.img_url,
         'created_at': category.created_at.isoformat() if category.created_at else None,
-        'subcategories': subcategories_data
+        'subcategories': subcategories_data,
+        'subcategories_count': len(subcategories_data),
+        'subsubcategories_count': total_subsubcategories
     }
 
-    return jsonify({
-        'status': 'success',
-        'data': category_data
-    })
+    return jsonify({'status': 'success', 'data': category_data})
