@@ -175,6 +175,7 @@ WISHLIST_ADD = '/api/wishlist/add'
 WISHLIST_REMOVE = '/api/wishlist/remove'
 WISHLIST_LIST = '/api/wishlist/list'
 WISHLIST_REMOVE_ALL= '/api/wishlist/remove-all'
+WISHLIST_MOVE_TO_CART = '/api/wishlist/to-cart'
 # Wishlist Endpoint End
 
 # SaveForLater Endpoint Start

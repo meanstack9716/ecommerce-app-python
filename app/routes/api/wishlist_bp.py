@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app, url_for
-from app.models import Products, ProductVariant , User, WishlistItem, Seller
+from app.models import Products, ProductVariant , User, WishlistItem, Seller, ProductCart
 from datetime import datetime
-from constants import WISHLIST_ADD, WISHLIST_REMOVE, WISHLIST_LIST, ALLOWED_SIZES, WISHLIST_REMOVE_ALL
+from constants import WISHLIST_ADD, WISHLIST_REMOVE, WISHLIST_LIST, ALLOWED_SIZES, WISHLIST_REMOVE_ALL, WISHLIST_MOVE_TO_CART
 from app.utils.validation import validate_required_fields
 from app.utils.utils import create_error_response
 from app.utils.jwt_handlers import jwt_error_handler
@@ -290,3 +290,79 @@ def get_main_product_image(product):
     if hasattr(product, 'images') and product.images:
         return product.images[0].image_url
     return None
+
+@wishlist_bp.route(WISHLIST_MOVE_TO_CART, methods=['POST'])
+@jwt_error_handler
+@jwt_required()
+def move_wishlist_to_cart():
+    user_id = get_jwt_identity()
+    user = User.objects(id=user_id).first()
+
+    try:
+        data = request.get_json()
+    except Exception:
+        return create_error_response({"error": "Invalid JSON data"}, 400)
+
+    required_fields = ['item_ids']
+    is_valid, validation_errors = validate_required_fields(data, required_fields)
+    if not is_valid:
+        return create_error_response({"error": validation_errors}, 400)
+
+    item_ids = data['item_ids']
+    
+    if not isinstance(item_ids, list):
+        return create_error_response({"error": "item_ids must be an array"}, 400)
+
+    moved_items = []
+    not_found_items = []
+    already_in_cart_items = []
+
+    for item_id in item_ids:
+        # Get wishlist item
+        wishlist_item = WishlistItem.objects(
+            id=item_id,
+            user_id=user_id
+        ).first()
+
+        if not wishlist_item:
+            not_found_items.append(item_id)
+            continue
+
+        # Check if item already exists in cart
+        existing_cart_item = ProductCart.objects(
+            user_id=user_id,
+            product_id=wishlist_item.product_id,
+            selected_size=wishlist_item.size,
+            selected_color=wishlist_item.color_hexa_code
+        ).first()
+
+        if existing_cart_item:
+            # Update quantity if already in cart
+            existing_cart_item.quantity += wishlist_item.quantity
+            existing_cart_item.updated_at = datetime.utcnow()
+            existing_cart_item.save()
+            already_in_cart_items.append(str(wishlist_item.id))
+        else:
+            # Create new cart item
+            cart_item = ProductCart(
+                user_id=user_id,
+                product_id=wishlist_item.product_id,
+                selected_size=wishlist_item.size,
+                selected_color=wishlist_item.color_hexa_code,
+                selected_color_name=wishlist_item.color,
+                quantity=wishlist_item.quantity
+            )
+            cart_item.save()
+
+        # Remove from wishlist
+        wishlist_item.delete()
+        moved_items.append(str(wishlist_item.id))
+
+    response_data = {
+        "message": "Items moved to cart",
+        "moved_items": moved_items,
+        "not_found_items": not_found_items,
+        "already_in_cart_items": already_in_cart_items
+    }
+
+    return jsonify(response_data), 200
