@@ -3,17 +3,21 @@ from datetime import datetime
 from constants import PRODUCT_LISTS_API, PRODUCT_LISTS_BY_ID_API
 from app.models import Products, Category, SubCategory, SubSubCategory, Seller, User
 from app.models.products import ProductVariant, ProductVariantImage
-from app.utils.image_upload import upload_image, get_local_ip
+from app.utils.image_upload import upload_image
 from app.utils.validation import validate_required_fields
 from app.utils.utils import create_error_response
 from flask import current_app
 from mongoengine.queryset.visitor import Q
 from app.extensions import db
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 products_bp = Blueprint('products_bp', __name__)
 
 @products_bp.route(PRODUCT_LISTS_API, methods=['GET'])
 def get_all_products():
+    NGROK_BASE_URL = os.getenv("NGROK_BASE_URL")
     try:
         all_data = request.args.get('all_data', 'false').lower() == 'true'
         page = int(request.args.get('page', 1)) if not all_data else 1
@@ -33,8 +37,6 @@ def get_all_products():
         colors = request.args.get('colors')
         
         query = Products.objects()
-        local_ip = get_local_ip()
-        port = current_app.config.get('SERVER_PORT', 8080)
 
         # Step 1: Filter by size and color (if provided)
         variant_ids = []
@@ -129,13 +131,13 @@ def get_all_products():
                     gallery_data[variant.color].append({
                         'color': variant.color,
                         'id': str(image.id),
-                        'img_url': f"http://{local_ip}:{port}/static/uploads/{image.image_url}"
+                        'img_url': f"{NGROK_BASE_URL}/static/uploads/{image.image_url}"
                     })
-
+            
             thumbnail_url = None
             if product.variants and product.variants[0].images:
                 image_url = product.variants[0].images[0].image_url
-                thumbnail_url = f"http://{local_ip}:{port}/static/uploads/{image_url}"
+                thumbnail_url = f"{NGROK_BASE_URL}/static/uploads/{image_url}"
 
             seller_data = None
             if product.seller_id:
@@ -224,9 +226,6 @@ def get_product_by_id(product_id):
         if not product:
             return create_error_response({"error": "Product not found"}, status_code=404)
         
-        local_ip = get_local_ip()
-        port = current_app.config.get('SERVER_PORT', 8080)
-
         sizes_data = {}
         gallery_data = {}
 
@@ -253,12 +252,12 @@ def get_product_by_id(product_id):
                 gallery_data[variant.color].append({
                     'color': variant.color,
                     'id': str(image.id),
-                    'img_url': f"http://{local_ip}:{port}/static/uploads/{image.image_url}"
+                    'img_url': f"{NGROK_BASE_URL}/static/uploads/{image.image_url}"
                 })
 
         thumbnail_url = None
         if product.variants and product.variants[0].images:
-            thumbnail_url = f"http://{local_ip}:{port}/static/uploads/{product.variants[0].images[0].image_url}"
+            thumbnail_url = f"{NGROK_BASE_URL}/static/uploads/{product.variants[0].images[0].image_url}"
 
         product_data = {
             'seller_id': str(product.seller_id.id) if product.seller_id else None,
