@@ -8,6 +8,7 @@ class ProductReview(Document):
     user_id = ReferenceField(User, required=True)
     rating = IntField(required=True, min_value=1, max_value=5)
     review = StringField(required=True, max_length=1000)
+    image_url = StringField()
     created_at = DateTimeField(default=datetime.utcnow)
 
     meta = {
