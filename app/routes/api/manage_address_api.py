@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session
-from app.models.address import Address
+from app.models import Address, User
 from datetime import datetime
 from bson import ObjectId
 from mongoengine.errors import ValidationError, DoesNotExist
