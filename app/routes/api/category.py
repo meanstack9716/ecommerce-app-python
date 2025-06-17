@@ -50,7 +50,6 @@ def add_new_category():
         }
     })
 
-# Route to fetch the list of all categories
 @category_bp.route(API_CATEGORY_LIST, methods=['GET'])
 def get_category_list():
     search_query = request.args.get('search', '').strip()
@@ -66,10 +65,15 @@ def get_category_list():
     for category in categories:
         subcategories = SubCategory.objects(category=category)
         subcategories_data = []
+        
+        total_sub_subcategories = 0
 
         for subcategory in subcategories:
             subsubcategories = SubSubCategory.objects(sub_category_id=subcategory)
             sub_sub_categories_data = []
+            
+            sub_sub_category_count = subsubcategories.count()
+            total_sub_subcategories += sub_sub_category_count
 
             for subsub in subsubcategories:
                 sub_sub_categories_data.append({
@@ -85,6 +89,7 @@ def get_category_list():
                 'description': subcategory.description,
                 'img_url': f"http://{local_ip}:{port}/static/uploads/{subcategory.img_url}" or '',
                 'sub_sub_categories': sub_sub_categories_data,
+                'sub_sub_category_count': sub_sub_category_count,
             })
 
         categories_data.append({
@@ -93,6 +98,8 @@ def get_category_list():
             'description': category.description,
             'img_url': f"http://{local_ip}:{port}/static/uploads/{category.img_url}" or '',
             'sub_categories': subcategories_data,
+            'sub_category_count': subcategories.count(),
+            'sub_sub_category_count': total_sub_subcategories,
         })
 
     return jsonify({
