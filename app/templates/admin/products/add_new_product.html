@@ -136,13 +136,14 @@
 
             if (categoryId) {
                 const { success, data } = await sendGetRequest(`/api/sub-categories/list/${categoryId}`);
-                if (success && Array.isArray(data)) {
-                    data.forEach(sub => {
+                if (success && Array.isArray(data.data)) {
+                    data.data.forEach(sub => {
                         const option = document.createElement('option');
                         option.value = sub.id;
                         option.textContent = sub.name;
                         subCategorySelect.appendChild(option);
                     });
+                    console.log("Enabling subCategorySelect");
                     subCategorySelect.disabled = false;
                 }
             } else {
