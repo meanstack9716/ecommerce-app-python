@@ -105,6 +105,7 @@ def create_app(config_class=Config):
 
     @app.route('/static/uploads/<path:filename>')
     def serve_uploaded_files(filename):
-        return send_from_directory('static/uploads', filename)
+        uploads_dir = os.path.join(app.root_path, 'static', 'uploads')
+        return send_from_directory(uploads_dir, filename)
 
     return app
