@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, url_for
 from datetime import datetime
 from constants import PRODUCT_LISTS_API, PRODUCT_LISTS_BY_ID_API
 from app.models import Products, Category, SubCategory, SubSubCategory, Seller, User
@@ -9,15 +9,12 @@ from app.utils.utils import create_error_response
 from flask import current_app
 from mongoengine.queryset.visitor import Q
 from app.extensions import db
-from dotenv import load_dotenv
-import os
 
 load_dotenv()
 products_bp = Blueprint('products_bp', __name__)
 
 @products_bp.route(PRODUCT_LISTS_API, methods=['GET'])
 def get_all_products():
-    NGROK_BASE_URL = os.getenv("NGROK_BASE_URL")
     try:
         all_data = request.args.get('all_data', 'false').lower() == 'true'
         page = int(request.args.get('page', 1)) if not all_data else 1
@@ -131,13 +128,12 @@ def get_all_products():
                     gallery_data[variant.color].append({
                         'color': variant.color,
                         'id': str(image.id),
-                        'img_url': f"{NGROK_BASE_URL}/static/uploads/{image.image_url}"
+                        'img_url': url_for('serve_uploaded_files', filename=image.image_url, _external=True)
                     })
-            
             thumbnail_url = None
             if product.variants and product.variants[0].images:
                 image_url = product.variants[0].images[0].image_url
-                thumbnail_url = f"{NGROK_BASE_URL}/static/uploads/{image_url}"
+                thumbnail_url = url_for('serve_uploaded_files', filename=image_url, _external=True)
 
             seller_data = None
             if product.seller_id:
@@ -217,7 +213,7 @@ def get_all_products():
 
     except Exception as e:
         return create_error_response({"error": str(e)}, status_code=500)
-        
+
 @products_bp.route(PRODUCT_LISTS_BY_ID_API, methods=['GET'])
 def get_product_by_id(product_id):
     try:
@@ -252,12 +248,12 @@ def get_product_by_id(product_id):
                 gallery_data[variant.color].append({
                     'color': variant.color,
                     'id': str(image.id),
-                    'img_url': f"{NGROK_BASE_URL}/static/uploads/{image.image_url}"
+                    'img_url': url_for('serve_uploaded_files', filename=image.image_url, _external=True)
                 })
 
         thumbnail_url = None
         if product.variants and product.variants[0].images:
-            thumbnail_url = f"{NGROK_BASE_URL}/static/uploads/{product.variants[0].images[0].image_url}"
+            thumbnail_url = url_for('serve_uploaded_files', filename=product.variants[0].images[0].image_url, _external=True)
 
         product_data = {
             'seller_id': str(product.seller_id.id) if product.seller_id else None,
