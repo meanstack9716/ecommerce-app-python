@@ -240,10 +240,6 @@ def get_addresses():
 
 @address_bp.route(ADDRESS_TYPES_API, methods=['GET'])
 def get_addresses_types():
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
-
     try:
         type = ADDRESS_TYPES
         return jsonify({
