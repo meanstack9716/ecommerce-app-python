@@ -10,7 +10,6 @@ from flask import current_app
 from mongoengine.queryset.visitor import Q
 from app.extensions import db
 
-load_dotenv()
 products_bp = Blueprint('products_bp', __name__)
 
 @products_bp.route(PRODUCT_LISTS_API, methods=['GET'])
