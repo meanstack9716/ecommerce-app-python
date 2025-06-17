@@ -1,5 +1,5 @@
-from flask import Blueprint, request, jsonify, current_app
-from app.models import Products, ProductVariant , User, WishlistItem
+from flask import Blueprint, request, jsonify, current_app, url_for
+from app.models import Products, ProductVariant , User, WishlistItem, Seller
 from datetime import datetime
 from constants import WISHLIST_ADD, WISHLIST_REMOVE, WISHLIST_LIST, ALLOWED_SIZES, WISHLIST_REMOVE_ALL
 from app.utils.validation import validate_required_fields
@@ -138,7 +138,6 @@ def remove_from_wishlist():
 @jwt_error_handler
 def get_wishlist():
     user_id = get_jwt_identity()
-    port = current_app.config.get('SERVER_PORT', 8080)
     
     wishlist_items = WishlistItem.objects(user_id=user_id).order_by('-added_at')
     
@@ -155,29 +154,111 @@ def get_wishlist():
         ).first()
         
         image_urls = []
-        if variant and hasattr(variant, 'images'):
-            image_urls = [
-                f"http://{local_ip}:{port}/static/uploads/{img.image_url}"
-                for img in variant.images
-                if hasattr(img, 'image_url')
-            ]
+        if variant and variant.images:
+            for img in variant.images:
+                image_urls.append({
+                    "image_url": img.image_url,
+                    "alt_text": img.alt_text if hasattr(img, 'alt_text') else None
+                })
+        
+        all_variants = ProductVariant.objects(product_id=item.product_id)
+        sizes_with_variants = []
+        colors_available = set()
+        
+        size_map = {}
+        for v in all_variants:
+            if v.size not in size_map:
+                size_map[v.size] = {
+                    "product_id": str(v.product_id.id),
+                    "value": v.size,
+                    "size_type": "numeric",
+                    "id": str(v.id),
+                    "variants": []
+                }
+            color_variant = {
+                "value": v.color_hexa_code,
+                "name": v.color,
+                "stock_quantity": v.stock_quantity,
+                "id": str(v.id)
+            }
+            size_map[v.size]["variants"].append(color_variant)
+            colors_available.add((v.color, v.color_hexa_code))
+        
+        sizes_with_variants = list(size_map.values())
+        
+        gallery_images = []
+        for v in all_variants:
+            if v.images:
+                for img in v.images:
+                    gallery_images.append({
+                        "color": v.color,
+                        "id": str(img.id),
+                        "img_url": url_for('serve_uploaded_files', filename=img.image_url, _external=True) if img.image_url else '',
+                        
+                    })
+        
+        category = {
+            "name": product.category_id.name,
+            "description": product.category_id.description,
+            "id": str(product.category_id.id),
+            "img_url": product.category_id.img_url,
+            "created_at": product.category_id.created_at.isoformat()
+        } if product.category_id else None
+        
+        sub_category = {
+            "name": product.subcategory_id.name,
+            "description": product.subcategory_id.description,
+            "category": {
+                "id": str(product.subcategory_id.category.id),
+                "name": product.subcategory_id.category.name
+            },
+            "id": str(product.subcategory_id.id),
+            "img_url": product.subcategory_id.img_url,
+            "created_at": product.subcategory_id.created_at.isoformat()
+        } if product.subcategory_id else None
+        
+        sub_sub_category = {
+            "name": product.subsubcategory_id.name,
+            "description": product.subsubcategory_id.description,
+            "category_id": {
+                "id": str(product.subsubcategory_id.category_id.id),
+                "name": product.subsubcategory_id.category_id.name
+            },
+            "sub_category_id": {
+                "id": str(product.subsubcategory_id.sub_category_id.id),
+                "name": product.subsubcategory_id.sub_category_id.name
+            },
+            "id": str(product.subsubcategory_id.id),
+            "img_url": product.subsubcategory_id.img_url,
+            "created_at": product.subsubcategory_id.created_at.isoformat()
+        } if product.subsubcategory_id else None
         
         items_with_details.append({
-            "wishlist_item_id": str(item.id),
-            "product_id": str(item.product_id),
-            "size": item.size,
-            "color": item.color,
-            "color_hexa_code": item.color_hexa_code,
+            "selected_size": item.size,
+            "selected_color": item.color_hexa_code,
+            "selected_color_name": item.color,
             "quantity": item.quantity,
-            "added_at": item.added_at.isoformat(),
-            "product_details": {
-                "name": product.name,
+            "id": str(item.id),
+            "product": {
+                "title": product.name,
+                "description": product.description,
+                "details": product.details,
                 "price": float(product.price),
-                "discount_price": float(product.discount_price) if product.discount_price else None,
-                "final_price": float(product.final_price),
+                "delivery_days": product.delivery_days if hasattr(product, 'delivery_days') else None,
+                "sku": product.sku_number,
                 "stock_quantity": variant.stock_quantity if variant else 0,
-                "images": image_urls,
-                "variant_id": str(variant.id) if variant else None
+                "final_price": float(product.final_price),
+                "id": str(product.id),
+                "thumbnail_url": product.thumbnail_url if hasattr(product, 'thumbnail_url') else None,
+                "total_rating": product.total_rating if hasattr(product, 'total_rating') else None,
+                "material": product.material if hasattr(product, 'material') else None,
+                "gender": product.gender,
+                "category": category,
+                "sub_category": sub_category,
+                "sub_sub_category": sub_sub_category,
+                "gallery": gallery_images,
+                "sizes": sizes_with_variants,
+                "reviews": []
             }
         })
 

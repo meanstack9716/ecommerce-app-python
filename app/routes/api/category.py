@@ -1,4 +1,4 @@
-from flask import request, jsonify, session, Blueprint
+from flask import request, jsonify, session, Blueprint, url_for
 from constants import API_CATEGORY_LIST, API_ADD_CATEGORY, API_CATEGORY_LIST_BY_ID
 from app.models import Category, SubCategory, SubSubCategory
 from app.utils.validation import validate_required_fields
@@ -83,7 +83,7 @@ def get_category_list():
                 'id': str(subcategory.id),
                 'name': subcategory.name,
                 'description': subcategory.description,
-                'img_url': url_for('serve_uploaded_files', filename=subcategory.img_url, _external=True) if subcategory.img_url else ''
+                'img_url': url_for('serve_uploaded_files', filename=subcategory.img_url, _external=True) if subcategory.img_url else '',
                 'sub_sub_categories': sub_sub_categories_data,
                 'sub_sub_category_count': sub_sub_category_count,
             })
@@ -92,7 +92,7 @@ def get_category_list():
             'id': str(category.id),
             'name': category.name,
             'description': category.description,
-            'img_url': url_for('serve_uploaded_files', filename=category.img_url, _external=True) if category.img_url else ''
+            'img_url': url_for('serve_uploaded_files', filename=category.img_url, _external=True) if category.img_url else '',
             'sub_categories': subcategories_data,
             'sub_category_count': subcategories.count(),
             'sub_sub_category_count': total_sub_subcategories,
