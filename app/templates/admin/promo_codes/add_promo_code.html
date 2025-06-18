@@ -12,7 +12,7 @@
     <form id="addPromoForm" class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label for="code" class="block text-base font-medium text-black mb-1 tracking-wide">Promo Code</label>
+                <label for="code" class="block text-base font-medium text-black mb-1 tracking-wide">Promo Code *</label>
                 <input type="text" id="code" name="code"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="e.g. SUMMER20">
@@ -25,19 +25,19 @@
                     <div class="flex items-center">
                         <input id="percentage" name="discount_type" type="radio" value="percentage" checked
                             class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
-                        <label for="percentage" class="ml-2 block text-sm text-gray-700">Percentage</label>
+                        <label for="percentage" class="ml-2 block text-sm text-gray-700">Discount in Percent</label>
                     </div>
                     <div class="flex items-center">
                         <input id="fixed" name="discount_type" type="radio" value="fixed_amount"
                             class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
-                        <label for="fixed" class="ml-2 block text-sm text-gray-700">Fixed Amount</label>
+                        <label for="fixed" class="ml-2 block text-sm text-gray-700">Discounted Amount</label>
                     </div>
                 </div>
             </div>
 
             <div>
                 <label for="discount_value" class="block text-base font-medium text-black mb-1 tracking-wide">Discount
-                    Value</label>
+                    Value *</label>
                 <input type="number" id="discount_value" name="discount_value" min="0" step="0.01"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="e.g. 20">
@@ -55,7 +55,7 @@
 
             <div>
                 <label for="min_order_amount" class="block text-base font-medium text-black mb-1 tracking-wide">Minimum
-                    Order Amount</label>
+                    Order Amount *</label>
                 <input type="number" id="min_order_amount" name="min_order_amount" min="0" step="0.01"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Optional">
@@ -171,7 +171,7 @@
         }
 
         const now = new Date();
-        const nowString = now.toISOString().split('T')[0]; // Get just the date part
+        const nowString = now.toISOString().split('T')[0];
         const startDateField = document.getElementById('start_date');
         const endDateField = document.getElementById('end_date');
 
@@ -194,7 +194,7 @@
                 discountHint.textContent = 'Percentage discount (e.g. 20 for 20%)';
             } else {
                 maxDiscountContainer.classList.add('hidden');
-                discountHint.textContent = 'Fixed amount discount (e.g. 20 for $20 off)';
+                discountHint.textContent = 'Fixed amount discount (e.g. 20 for Rs 20 off)';
             }
         }
 
@@ -280,7 +280,7 @@
                     form.reset();
                     quill.setContents([]);
                 } else {
-                    showToast(result.errors || result.message || 'Failed to create promo code', 'error');
+                    handleErrors(result.errors || result.message || 'Failed to create promo code', 'error');
                 }
             } catch (error) {
                 console.error('Submission error:', error);

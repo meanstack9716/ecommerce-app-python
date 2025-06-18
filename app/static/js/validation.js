@@ -167,7 +167,7 @@ const validators = {
   atLeastOneSize: (containerId, fieldName) => {
     const container = document.getElementById(containerId);
     const blocks = container.querySelectorAll(".size-block");
-    const errorElement = container; // Adjust if there's a specific error element for this
+    const errorElement = container;
 
     if (blocks.length === 0) {
       showErrorMessage(errorElement, `${fieldName} must have at least one size`);
