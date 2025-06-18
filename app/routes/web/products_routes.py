@@ -33,19 +33,18 @@ def add_new_product():
         if 'user_id' not in session:
             return redirect(url_for('admin_api.login_page'))
         user_id = session.get('user_id')
-        print(user_id, ">>>>>>")
         try:
             user_object_id = ObjectId(user_id)
         except Exception:
-            return create_error_response({'user_id': 'Invalid user ID'}, 400)
+            return create_error_response({'error': 'Invalid user ID'}, 400)
 
         user = User.objects(id=user_object_id).first()
         if not user:
-            return create_error_response({'user_id': 'User not found'}, 404)
+            return create_error_response({'error': 'User not found'}, 404)
 
         seller = Seller.objects(user_id=user_object_id).first()
         if not seller:
-            return create_error_response({'seller': 'Seller profile not found'}, 400)
+            return create_error_response({'error': 'Seller profile not found'}, 400)
 
         required_fields = ['name', 'price', 'category_id', 'subcategory_id', 'subsubcategory_id', 'details', 'description', 'stock_quantity']
         form_data = request.form.to_dict(flat=False)
@@ -53,7 +52,7 @@ def add_new_product():
 
         is_valid, validation_errors = validate_required_fields(data, required_fields)
         if not is_valid:
-            return create_error_response({'validation': validation_errors}, 400)
+            return create_error_response({'error': validation_errors}, 400)
 
         category = Category.objects(id=data['category_id']).first()
         subcategory = SubCategory.objects(id=data['subcategory_id']).first()
@@ -105,7 +104,7 @@ def add_new_product():
         try:
             variations_list = json.loads(data.get('variations', '[]'))
         except json.JSONDecodeError:
-            return create_error_response({'variations': 'Invalid variations format'}, 400)
+            return create_error_response({'error': 'Invalid variations format'}, 400)
 
         variants = []
         for var in variations_list:
@@ -123,7 +122,7 @@ def add_new_product():
                 )
                 variants.append(variant)
             except (KeyError, ValueError) as e:
-                return create_error_response({'variations': f'Invalid variation data: {str(e)}'}, 400)
+                return create_error_response({'varierrorations': f'Invalid variation data: {str(e)}'}, 400)
 
         color_size_images = {}
         for file_key in request.files:
@@ -141,10 +140,10 @@ def add_new_product():
                     for file in request.files.getlist(file_key):
                         image_path, error = upload_image(file)
                         if error:
-                            return create_error_response({'images': error}, 400)
+                            return create_error_response({'error': error}, 400)
                         color_size_images[color][size].append(image_path)
                 except Exception as e:
-                    return create_error_response({'images': f'Invalid image key format: {str(e)}'}, 400)
+                    return create_error_response({'error': f'Invalid image key format: {str(e)}'}, 400)
 
         saved_variants = []
         for variant in variants:
@@ -216,7 +215,7 @@ def add_new_product():
         }), 201
 
     except Exception as error:
-        return create_error_response({'unexpected_error': str(error)}, 500)
+        return create_error_response({'error': str(error)}, 500)
 
 
 def get_filtered_products(seller_id=None):
@@ -516,19 +515,19 @@ def edit_product():
     try:
         user_id = session.get('user_id')
         if not user_id:
-            return create_error_response({'user_id': 'User not logged in'}, 401)
+            return create_error_response({'error': 'User not logged in'}, 401)
         
         # Validate IDs
         try:
             user_object_id = ObjectId(user_id)
             product_id = ObjectId(request.form.get('product_id'))
         except Exception:
-            return create_error_response({'id': 'Invalid ID format'}, 400)
+            return create_error_response({'error': 'Invalid ID format'}, 400)
 
         # Find the product
         product = Products.objects(id=product_id).first()
         if not product:
-            return create_error_response({'product': 'Product not found or unauthorized'}, 404)
+            return create_error_response({'error': 'Product not found or unauthorized'}, 404)
 
         # Prepare update fields
         data = request.form.to_dict()
@@ -552,7 +551,7 @@ def edit_product():
         if brand_value and brand_value != 'other':
             brand = ProductBrands.objects(id=brand_value).first()
             if not brand:
-                return create_error_response({'brand': 'Invalid brand ID'}, 400)
+                return create_error_response({'error': 'Invalid brand ID'}, 400)
             update_fields['brand_id'] = brand
         elif brand_value == 'other' and other_brand_name:
             brand = ProductBrands.objects(name__iexact=other_brand_name.strip()).first()
@@ -569,7 +568,7 @@ def edit_product():
         try:
             variations_list = json.loads(data.get('variations', '[]'))
         except json.JSONDecodeError:
-            return create_error_response({'variations': 'Invalid variations format'}, 400)
+            return create_error_response({'error': 'Invalid variations format'}, 400)
 
         # Process uploaded images
         color_size_images = {}
@@ -589,10 +588,10 @@ def edit_product():
                     for file in request.files.getlist(file_key):
                         image_path, error = upload_image(file)
                         if error:
-                            return create_error_response({'images': error}, 400)
+                            return create_error_response({'error': error}, 400)
                         color_size_images[color][size].append(image_path)
                 except Exception as e:
-                    return create_error_response({'images': f'Invalid image key format: {str(e)}'}, 400)
+                    return create_error_response({'error': f'Invalid image key format: {str(e)}'}, 400)
 
         # Process variants
         existing_variants = {f"{v.color}_{v.size}": v for v in product.variants}
@@ -655,7 +654,7 @@ def edit_product():
                     product.variants.append(variant)
                     
             except (KeyError, ValueError) as e:
-                return create_error_response({'variations': f'Invalid variation data: {str(e)}'}, 400)
+                return create_error_response({'error': f'Invalid variation data: {str(e)}'}, 400)
 
         # Remove variants that are no longer present
         for variant_key, variant in existing_variants.items():
@@ -680,4 +679,4 @@ def edit_product():
         }), 200
 
     except Exception as error:
-        return create_error_response({'unexpected_error': str(error)}, 500)
+        return create_error_response({'error': str(error)}, 500)

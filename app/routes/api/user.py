@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, url_for
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import User, Role, Seller, Address, Identification
 import cloudinary.uploader
@@ -9,7 +9,8 @@ from app import db
 from mongoengine import ValidationError
 from werkzeug.utils import secure_filename
 import os
-
+from app.utils.utils import create_error_response
+from app.utils.image_upload import upload_image
 
 user_bp = Blueprint('user', __name__, url_prefix='/api/user')
 
@@ -27,8 +28,8 @@ def get_user_profile():
         "email": user.email,
         "first_name": user.first_name,
         "last_name": user.last_name,
-        "mobile": user.phone_number,
-        "profile_pic": user.profile_pic,
+        "phone_number": user.phone_number,
+        "image": url_for('serve_uploaded_files', filename=user.profile_pic, _external=True) if user.profile_pic else None,
         "id": str(user.id),
         "role": {
             "name": user.role.name if user.role else None,
@@ -65,31 +66,29 @@ def update_profile_picture():
     user = User.objects(id=user_id).first()
 
     if not user:
-        return {"message": "User not found"}, 404
+        return create_error_response({"error": "User not found"}, 404)
 
     if 'image' not in request.files:
-        return {"message": "No file part"}, 400
+        return create_error_response({"error": "No file part"}, 400)
 
-    file = request.files['image']
-    if file.filename == '':
-        return {"message": "No selected file"}, 400
+    profile_image_file = request.files['image']
 
     try:
-        if user.cloudinary_id:
-            cloudinary.uploader.destroy(user.cloudinary_id)
+        uploaded_image_url, upload_error = upload_image(profile_image_file)
 
-        upload_result = cloudinary.uploader.upload(file.stream)
-        user.profile_pic = upload_result['secure_url']
-        user.cloudinary_id = upload_result['public_id']
+        if upload_error:
+            return create_error_response({"error": upload_error}, 400)
+
+        user.profile_pic = uploaded_image_url
         user.save()
 
-        return {
+        return jsonify({
+            'status': 'success',
             "message": "Profile picture updated",
-            "profile_pic": user.profile_pic
-        }, 200
+        }), 200
 
     except Exception as e:
-        return {"message": "Upload failed", "error": str(e)}, 500
+        return create_error_response({"error": "Upload failed", "details": str(e)}, 500)
 
 # Delete profile picture
 @user_bp.route(DELETE_PROFILE_PIC, methods=['DELETE'])
@@ -99,19 +98,20 @@ def delete_profile_picture():
     user = User.objects(id=user_id).first()
 
     if not user:
-        return jsonify({'message': 'User not found'}), 404
+        return create_error_response({"error": "User not found"}, 404)
 
-    if not user.cloudinary_id:
-        return jsonify({'message': 'No profile picture found'}), 404
+    if not user.profile_pic:
+        return create_error_response({"error": "No profile picture found"}, 404)
 
     try:
-        cloudinary.uploader.destroy(user.cloudinary_id)
-        user.profile_picture = None
-        user.cloudinary_id = None
+        user.profile_pic = None
         user.save()
 
-        return jsonify({'message': 'Profile picture deleted successfully'}), 200
+        return jsonify({
+            'status': 'success',
+            'message': 'Profile picture deleted successfully',
+        }), 200
 
     except Exception as e:
-        return jsonify({'message': 'Deletion failed', 'error': str(e)}), 500
+        return create_error_response({"error": "Deletion failed", "details": str(e)}, 500)
 

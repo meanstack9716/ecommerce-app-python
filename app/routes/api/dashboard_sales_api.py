@@ -35,11 +35,11 @@ def sales_overview():
     try:
         user_id = session.get('user_id')
         if not user_id:
-            return create_error_response({'user_id': 'User not logged in'}, 401)
+            return redirect(url_for('admin_api.login_page'))
         
         user = User.objects(id=user_id).first()
         if not user:
-            return create_error_response({'user': 'User not found'}, 404)
+            return create_error_response({'error': 'User not found'}, 404)
         
         seller_id = request.args.get('seller_id')
         period = request.args.get('period', 'this_month')
@@ -76,13 +76,13 @@ def sales_overview():
             if seller_id:
                 seller = Seller.objects(id=seller_id).first()
                 if not seller:
-                    return create_error_response({'seller': 'Seller not found'}, 404)
+                    return create_error_response({'error': 'Seller not found'}, 404)
                 query &= Q(seller_id=seller)
                 prev_query &= Q(seller_id=seller)
         else:
             seller = Seller.objects(user_id=user).first()
             if not seller:
-                return create_error_response({'seller': 'Seller profile not found'}, 404)
+                return create_error_response({'error': 'Seller profile not found'}, 404)
             query &= Q(seller_id=seller)
             prev_query &= Q(seller_id=seller)
             
@@ -120,11 +120,11 @@ def sales_over_time():
     try:
         user_id = session.get('user_id')
         if not user_id:
-            return create_error_response({'user_id': 'User not logged in'}, 401)
+            return create_error_response({'error': 'User not logged in'}, 401)
         
         user = User.objects(id=user_id).first()
         if not user:
-            return create_error_response({'user': 'User not found'}, 404)
+            return create_error_response({'error': 'User not found'}, 404)
         
         seller_id = request.args.get('seller_id')
         period = request.args.get('period', 'monthly')
@@ -196,14 +196,14 @@ def get_sellers():
     try:
         user_id = session.get('user_id')
         if not user_id:
-            return create_error_response({'user_id': 'User not logged in'}, 401)
+            return create_error_response({'error': 'User not logged in'}, 401)
         
         user = User.objects(id=user_id).first()
         if not user:
-            return create_error_response({'user': 'User not found'}, 404)
+            return create_error_response({'error': 'User not found'}, 404)
             
         if not user.is_admin:
-            return create_error_response({'permission': 'Unauthorized access'}, 403)
+            return create_error_response({'error': 'Unauthorized access'}, 403)
             
         sellers = Seller.objects(is_approved='approved').only(
             'id', 'businessName', 'user_id'
@@ -227,11 +227,11 @@ def top_products():
     try:
         user_id = session.get('user_id')
         if not user_id:
-            return create_error_response({'user_id': 'User not logged in'}, 401)
+            return create_error_response({'error': 'User not logged in'}, 401)
         
         user = User.objects(id=user_id).first()
         if not user:
-            return create_error_response({'user': 'User not found'}, 404)
+            return create_error_response({'error': 'User not found'}, 404)
         
         seller_id = request.args.get('seller_id')
         period = request.args.get('period', 'this_month')
@@ -248,12 +248,12 @@ def top_products():
             if seller_id:
                 seller = Seller.objects(id=seller_id).first()
                 if not seller:
-                    return create_error_response({'seller': 'Seller not found'}, 404)
+                    return create_error_response({'error': 'Seller not found'}, 404)
                 query &= Q(seller_id=seller)
         else:
             seller = Seller.objects(user_id=user).first()
             if not seller:
-                return create_error_response({'seller': 'Seller profile not found'}, 404)
+                return create_error_response({'error': 'Seller profile not found'}, 404)
             query &= Q(seller_id=seller)
             
         orders = Order.objects(query)
@@ -291,11 +291,11 @@ def recent_sales():
     try:
         user_id = session.get('user_id')
         if not user_id:
-            return create_error_response({'user_id': 'User not logged in'}, 401)
+            return create_error_response({'error': 'User not logged in'}, 401)
         
         user = User.objects(id=user_id).first()
         if not user:
-            return create_error_response({'user': 'User not found'}, 404)
+            return create_error_response({'error': 'User not found'}, 404)
         
         seller_id = request.args.get('seller_id')
         limit = int(request.args.get('limit', 5))
@@ -314,12 +314,12 @@ def recent_sales():
             if seller_id:
                 seller = Seller.objects(id=seller_id).first()
                 if not seller:
-                    return create_error_response({'seller': 'Seller not found'}, 404)
+                    return create_error_response({'error': 'Seller not found'}, 404)
                 query &= Q(seller_id=seller)
         else:
             seller = Seller.objects(user_id=user).first()
             if not seller:
-                return create_error_response({'seller': 'Seller profile not found'}, 404)
+                return create_error_response({'error': 'Seller profile not found'}, 404)
             query &= Q(seller_id=seller)
             
         total_orders = Order.objects(query).count()

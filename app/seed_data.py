@@ -8,46 +8,21 @@ def seed_categories():
         return
 
     category_data = {
-        "MEN": ["Shirts", "Pants", "Shoes", "Accessories"],
-        "WOMEN": ["Dresses", "Handbags", "Shoes", "Jewelry"],
-        "KIDS": ["Toys", "Clothing", "Shoes"],
-        "ELECTRONICS": ["Mobiles", "Laptops", "Headphones"],
-        "HOME": ["Furniture", "Kitchen", "Decor"],
-        "BEAUTY": ["Skincare", "Makeup", "Haircare"],
-        "SPORTS": ["Equipment", "Activewear", "Footwear"],
-        "TOYS": ["Action Figures", "Dolls", "Puzzles"],
-        "BOOKS": ["Fiction", "Non-Fiction", "Comics"],
+        "MEN": ["Shirts", "Pants"],
+        "WOMEN": ["Dresses", "Handbags"],
+        "ELECTRONICS": ["Mobiles", "Laptops"],
+        "HOME": ["Furniture", "Kitchen"],
     }
 
     sub_sub_category_data = {
         "Shirts": ["Casual Shirts", "Formal Shirts"],
         "Pants": ["Jeans", "Chinos"],
-        "Shoes": ["Sneakers", "Formal Shoes", "Running Shoes", "Cleats"],
-        "Accessories": ["Belts", "Wallets"],
         "Dresses": ["Evening Dresses", "Casual Dresses"],
         "Handbags": ["Totes", "Clutches"],
-        "Jewelry": ["Necklaces", "Earrings"],
         "Mobiles": ["Android Phones", "iPhones"],
         "Laptops": ["Gaming Laptops", "Ultrabooks"],
-        "Headphones": ["Wireless", "Noise Cancelling"],
         "Furniture": ["Sofas", "Beds"],
         "Kitchen": ["Cookware", "Appliances"],
-        "Decor": ["Wall Art", "Lamps"],
-        "Skincare": ["Moisturizers", "Serums"],
-        "Makeup": ["Lipsticks", "Foundations"],
-        "Haircare": ["Shampoo", "Conditioner"],
-        "Equipment": ["Dumbbells", "Treadmills"],
-        "Activewear": ["Tracksuits", "Leggings"],
-        "Footwear": ["Running Shoes", "Cleats"],
-        "Action Figures": ["Superheroes", "Movie Characters"],
-        "Dolls": ["Barbie", "Baby Dolls"],
-        "Puzzles": ["Jigsaw", "3D Puzzles"],
-        "Fiction": ["Novels", "Short Stories"],
-        "Non-Fiction": ["Biographies", "Self-Help"],
-        "Comics": ["Marvel", "DC"],
-        "Car Accessories": ["Seat Covers", "Floor Mats"],
-        "Bike Accessories": ["Helmets", "Bike Locks"],
-        "Tools": ["Wrenches", "Screwdrivers"]
     }
 
     categories = {}

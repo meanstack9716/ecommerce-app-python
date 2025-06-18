@@ -24,7 +24,7 @@ def add_seller():
 
     is_valid, errors = validate_required_fields(data, required_fields)
     if not is_valid:
-        return create_error_response(errors, 400)
+        return create_error_response({"error": errors}, 400)
 
     required_files = ['panCardFront', 'addressProofFront']
     missing_files = {}
@@ -32,18 +32,18 @@ def add_seller():
         if file_key not in files or files.get(file_key).filename == '':
             missing_files[file_key] = f"The {file_key} file is required."
     if missing_files:
-        return create_error_response(missing_files, 400)
+        return create_error_response({"error": missing_files}, 400)
 
     is_valid, email_error = validate_email(data.get('email'))
     if not is_valid:
-        return create_error_response({"email": email_error}, 400)
+        return create_error_response({"error": email_error}, 400)
 
     if User.objects(email=data.get('email')).first():
-        return create_error_response({"email": "User with this email already exists"}, 409)
+        return create_error_response({"error": "User with this email already exists"}, 409)
 
     role = Role.objects(name='user').first()
     if not role:
-        return create_error_response({"message": "Default role not found"}, 500)
+        return create_error_response({"error": "Default role not found"}, 500)
 
     with db.connection.start_session() as session:
         session.start_transaction()
@@ -138,12 +138,12 @@ def add_seller():
 
         except ValidationError as e:
             session.abort_transaction()
-            return create_error_response({"message": f"Validation error: {str(e)}"}, 400)
+            return create_error_response({"error": f"Validation error: {str(e)}"}, 400)
         except Exception as e:
             session.abort_transaction()
             import traceback
             traceback.print_exc()
-            return create_error_response({"message": f"Internal server error: {str(e)}"}, 500)
+            return create_error_response({"error": f"Internal server error: {str(e)}"}, 500)
 
 
 @seller_bp.route(UPDATE_SELLER, methods=['PUT'])
@@ -153,15 +153,15 @@ def update_seller():
     seller_id = data.get('seller_id')
     
     if not seller_id:
-        return create_error_response({"seller_id": "Seller ID is required"}, 400)
+        return create_error_response({"error": "Seller ID is required"}, 400)
 
     seller = Seller.objects(id=seller_id).first()
     if not seller:
-        return create_error_response({"seller_id": "Seller not found"}, 404)
+        return create_error_response({"error": "Seller not found"}, 404)
 
     user = User.objects(id=seller.user_id.id).first()
     if not user:
-        return create_error_response({"user": "Associated user not found"}, 404)
+        return create_error_response({"error": "Associated user not found"}, 404)
 
     updatable_user_fields = ['email', 'first_name', 'last_name', 'phoneNumber']
     updatable_seller_fields = ['businessName', 'businessType', 'businessEmail', 'businessMobile', 'gst_number']
@@ -180,7 +180,7 @@ def update_seller():
     if 'addressProofFront' not in files and 'addressProofFront' not in data:
         missing_files['addressProofFront'] = "Address proof front image is required"
     if missing_files:
-        return create_error_response(missing_files, 400)
+        return create_error_response({"error": missing_files}, 400)
 
     with db.connection.start_session() as session:
         session.start_transaction()
@@ -188,10 +188,10 @@ def update_seller():
             if 'email' in data:
                 is_valid, email_error = validate_email(data.get('email'))
                 if not is_valid:
-                    return create_error_response({"email": email_error}, 400)
+                    return create_error_response({"error": email_error}, 400)
                 existing_user = User.objects(email=data.get('email')).first()
                 if existing_user and str(existing_user.id) != str(user.id):
-                    return create_error_response({"email": "Email already in use"}, 409)
+                    return create_error_response({"error": "Email already in use"}, 409)
 
             # Update user fields
             for field in updatable_user_fields:
@@ -283,7 +283,7 @@ def update_seller():
                 if field in data:
                     if field == 'is_approved':
                         if data.get(field) not in APPROVAL_STATUSES:
-                            return create_error_response({"is_approved": f"Invalid status. Must be one of: {APPROVAL_STATUSES}"}, 400)
+                            return create_error_response({"error": f"Invalid status. Must be one of: {APPROVAL_STATUSES}"}, 400)
                     setattr(seller, field, data.get(field))
             
             if personal_address:
@@ -343,9 +343,9 @@ def update_seller():
 
         except ValidationError as e:
             session.abort_transaction()
-            return create_error_response({"message": f"Validation error: {str(e)}"}, 400)
+            return create_error_response({"error": f"Validation error: {str(e)}"}, 400)
         except Exception as e:
             session.abort_transaction()
             import traceback
             traceback.print_exc()
-            return create_error_response({"message": f"Internal server error: {str(e)}"}, 500)
+            return create_error_response({"error": f"Internal server error: {str(e)}"}, 500)

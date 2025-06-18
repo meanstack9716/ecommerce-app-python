@@ -10,6 +10,7 @@ from app.utils.utils import create_error_response
 from constants import ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, ORDER_STATUS
 from app.utils.jwt_handlers import jwt_error_handler
 from mongoengine.queryset.visitor import Q
+from app.utils.validation import validate_required_fields
 
 order_bp = Blueprint('order', __name__)
 
@@ -28,7 +29,7 @@ def place_order():
         return create_error_response({'error': 'No data provided'}, 400)
 
     required_fields = ['cart_items_ids', 'shipping_address_id', 'payment_method']
-    is_valid, validation_errors = validate_fields(data, required_fields)
+    is_valid, validation_errors = validate_required_fields(data, required_fields)
     if not is_valid:
         return create_error_response(validation_errors, 400)
 
