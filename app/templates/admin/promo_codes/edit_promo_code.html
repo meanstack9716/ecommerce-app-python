@@ -25,12 +25,12 @@
                     <div class="flex items-center">
                         <input id="percentage" name="discount_type" type="radio" value="percentage" checked
                             class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
-                        <label for="percentage" class="ml-2 block text-sm text-gray-700">Percentage</label>
+                        <label for="percentage" class="ml-2 block text-sm text-gray-700">Discount in Percent</label>
                     </div>
                     <div class="flex items-center">
                         <input id="fixed" name="discount_type" type="radio" value="fixed_amount"
                             class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
-                        <label for="fixed" class="ml-2 block text-sm text-gray-700">Fixed Amount</label>
+                        <label for="fixed" class="ml-2 block text-sm text-gray-700">Discounted Amount</label>
                     </div>
                 </div>
             </div>
@@ -74,7 +74,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label for="start_date" class="block text-base font-medium text-black mb-1 tracking-wide">Start
-                    Date</label>
+                    Date *</label>
                 <input type="date" id="start_date" name="start_date"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
             </div>
@@ -177,7 +177,7 @@
                 discountHint.textContent = 'Percentage discount (e.g. 20 for 20%)';
             } else {
                 maxDiscountContainer.classList.add('hidden');
-                discountHint.textContent = 'Fixed amount discount (e.g. 20 for $20 off)';
+                discountHint.textContent = 'Fixed amount discount (e.g. 20 for Rs 20 off)';
             }
         }
 
