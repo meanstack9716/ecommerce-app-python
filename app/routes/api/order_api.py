@@ -244,7 +244,7 @@ def payment_callback():
         order.status = 'confirmed'
         order.updated_at = datetime.utcnow()
         order.save()
-        app_base_url = os.getenv('APP_BASE_URL', 'http://127.0.0.1:8080')
+        app_base_url = os.getenv('APP_BASE_URL')
         app_redirect_url = f"{app_base_url}/order-success?order_number={order_number}&status=success"
         return redirect(app_redirect_url, code=302)
 
