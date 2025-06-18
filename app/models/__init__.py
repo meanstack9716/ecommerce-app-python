@@ -8,7 +8,7 @@ from .products import Products, ProductVariant, ProductVariantImage
 from .brands import ProductBrands
 from .productCart import ProductCart
 from .order import Order, OrderItem
-from .wishlist import Wishlist, WishlistItem
+from .wishlist import WishlistItem
 from .saveforlater import SaveForLater, SaveForLaterItem
 from .promo_codes import PromoCode
 from .product_review import ProductReview

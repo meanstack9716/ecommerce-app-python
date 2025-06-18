@@ -184,13 +184,13 @@ def update_category(category_id):
         }, required_fields)
 
         if not is_valid:
-            return create_error_response(validation_errors, 400)
+            return create_error_response({"error": validation_errors}, 400)
 
         image_filename = category.img_url
         if image and image.filename != '':
             image_filename, image_error = upload_image(image)
             if image_error:
-                return create_error_response({'image': image_error}, 400)
+                return create_error_response({'error': image_error}, 400)
 
         category.update(
             name=name,

@@ -52,10 +52,10 @@
         {% for category in categories %}
         <div class="bg-gray-50 rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105">
             <img src="http://{{ local_ip }}:8080/static/uploads/{{ category.img_url }}" alt="Category Image"
-                class="w-full h-48 object-contain bg-white p-4">
+                class="w-full h-52 object-cover bg-white">
             <div class="p-4">
                 <h2 class="text-md font-semibold text-gray-800 mb-2">{{ category.name }}</h2>
-                <p class="text-gray-600 text-sm leading-relaxed line-clamp-3">{{ category.description }}</p>
+                <p class="text-gray-600 text-sm leading-relaxed line-clamp-3">{{ category.description|safe }}</p>
             </div>
             <div class="px-4 pb-4 flex justify-between items-center text-sm">
                 <a href="/category/edit/{{ category.id }}" class="text-blue-600 hover:text-blue-800">Edit</a>
@@ -102,7 +102,6 @@
             </div>
         </div>
 
-        <!-- Hidden no categories message for dynamic updates -->
         <!-- Page Navigation -->
         <div class="flex items-center gap-2" id="pagination">
             {% if pagination.has_prev %}

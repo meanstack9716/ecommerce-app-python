@@ -282,7 +282,7 @@
             const row = document.createElement('tr');
             row.className = 'hover:bg-gray-50';
             row.innerHTML = `
-                <td class="px-4 py-3 text-center whitespace-nowrap">
+                <td class="px-4 py-3 border border-gray-200 text-center whitespace-nowrap">
                     <div class="w-12 h-12 mx-auto flex items-center justify-center">
                         ${product.image_url ?
                     `<img src="${product.image_url}" alt="${product.name}" class="max-w-full max-h-full object-contain rounded" loading="lazy" />` :
@@ -290,22 +290,22 @@
                 }
                     </div>
                 </td>
-                <td class="px-4 py-3 text-center whitespace-normal max-w-xs">
+                <td class="px-4 py-3 border border-gray-200 text-center whitespace-normal max-w-xs">
                     <div class="text-sm font-medium text-gray-900 line-clamp-2">${product.name}</div>
                 </td>
-                <td class="px-4 py-3 whitespace-nowrap">
+                <td class="px-4 py-3 border border-gray-200 whitespace-nowrap">
                     <div class="text-sm font-bold text-gray-900">₹${Math.floor(product.price || 0)}</div>
                 </td>
-                <td class="px-4 py-3 whitespace-nowrap text-center hidden sm:table-cell">
+                <td class="px-4 py-3 border border-gray-200 whitespace-nowrap text-center hidden sm:table-cell">
                     <div class="text-sm text-gray-500">${product.discount_price > 0 ? product.discount_price + '%' : '-'}</div>
                 </td>
-                <td class="px-4 py-3 whitespace-nowrap text-center hidden md:table-cell">
+                <td class="px-4 py-3 border border-gray-200 whitespace-nowrap text-center hidden md:table-cell">
                     <div class="text-sm font-bold text-gray-900">₹${Math.floor(product.final_price || 0)}</div>
                 </td>
-                <td class="px-4 py-3 whitespace-nowrap text-center hidden lg:table-cell">
+                <td class="px-4 py-3 border border-gray-200 whitespace-nowrap text-center hidden lg:table-cell">
                     <div class="text-sm text-gray-500">${product.sku_number || '-'}</div>
                 </td>
-                <td class="px-4 py-3 whitespace-nowrap text-center text-right">
+                <td class="px-4 py-3 border border-gray-200 whitespace-nowrap text-center text-right">
                     <div class="flex justify-center space-x-2">
                         <a href="${product.edit_url || '#'}" class="text-blue-600 hover:text-blue-800" title="Edit">
                             <span class="material-symbols-outlined text-xl">edit_square</span>

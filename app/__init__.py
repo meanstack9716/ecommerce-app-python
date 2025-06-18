@@ -81,7 +81,7 @@ def create_app(config_class=Config):
 
     from app.utils.image_upload import image_store
     import base64
-    from flask import Response
+    from flask import Response, send_from_directory
 
     @app.route('/image/<image_id>')
     def serve_image(image_id):
@@ -102,5 +102,10 @@ def create_app(config_class=Config):
     @app.route('/')
     def index():
         return redirect(url_for('admin_api.login_page'))
+
+    @app.route('/static/uploads/<path:filename>')
+    def serve_uploaded_files(filename):
+        uploads_dir = os.path.join(app.root_path, 'static', 'uploads')
+        return send_from_directory(uploads_dir, filename)
 
     return app

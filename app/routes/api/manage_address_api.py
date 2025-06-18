@@ -1,10 +1,12 @@
 from flask import Blueprint, request, jsonify, session
-from app.models.address import Address
+from app.models import Address, User
 from datetime import datetime
 from bson import ObjectId
 from mongoengine.errors import ValidationError, DoesNotExist
 from constants import ADDRESS_ADD, ADDRESS_UPDATE, ADDRESS_REMOVE, ADDRESS_LIST, ADDRESS_TYPES, ADDRESS_TYPES_API
 from app.utils.utils import create_error_response
+from app.utils.jwt_handlers import jwt_error_handler
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 address_bp = Blueprint('address', __name__)
 
@@ -14,6 +16,8 @@ def get_user_id():
     return session['user_id']
 
 @address_bp.route(ADDRESS_ADD, methods=['POST'])
+@jwt_error_handler
+@jwt_required()
 def create_address():
     if not request.is_json:
         return create_error_response({"error": "Request must be JSON"}, 400)
@@ -23,9 +27,8 @@ def create_address():
     except Exception:
         return create_error_response({"error": "Invalid JSON data"}, 400)
 
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
+    user_id = get_jwt_identity()
+    user = User.objects(id=user_id).first()
 
     required_fields = ['line1', 'city', 'state', 'postal_code', 'country', 'type']
     for field in required_fields:
@@ -80,6 +83,8 @@ def create_address():
 
 
 @address_bp.route(ADDRESS_UPDATE, methods=['PUT'])
+@jwt_error_handler
+@jwt_required()
 def update_address():
     if not request.is_json:
         return create_error_response({"error": "Request must be JSON"}, 400)
@@ -93,9 +98,8 @@ def update_address():
     if not address_id:
         return create_error_response({"error": "address_id is required"}, 400)
 
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
+    user_id = get_jwt_identity()
+    user = User.objects(id=user_id).first()
 
     try:
         address = Address.objects.get(id=ObjectId(address_id), user_id=user_id)
@@ -156,8 +160,9 @@ def update_address():
         return create_error_response({"error": "Internal server error"}, 500)
 
 
-
 @address_bp.route(ADDRESS_REMOVE, methods=['DELETE'])
+@jwt_error_handler
+@jwt_required()
 def delete_address(address_id):
     payload = {}
     if request.is_json:
@@ -169,9 +174,8 @@ def delete_address(address_id):
     if not address_id or not ObjectId.is_valid(address_id):
         return create_error_response({"error": "Invalid address ID format"}, 400)
 
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
+    user_id = get_jwt_identity()
+    user = User.objects(id=user_id).first()
 
     try:
         address = Address.objects.get(id=ObjectId(address_id), user_id=user_id)
@@ -198,10 +202,11 @@ def delete_address(address_id):
         return create_error_response({"error": "Internal server error"}, 500)
 
 @address_bp.route(ADDRESS_LIST, methods=['GET'])
+@jwt_error_handler
+@jwt_required()
 def get_addresses():
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
+    user_id = get_jwt_identity()
+    user = User.objects(id=user_id).first()
 
     try:
         addresses = Address.objects(user_id=user_id).order_by('-created_at')
@@ -212,7 +217,7 @@ def get_addresses():
                 "id": str(address.id),
                 "user_id": str(address.user_id.id),
                 "contact_name": address.contact_name,
-                "contact_number": address.contact_number,
+                "contact_number": str(address.contact_number),
                 "type": address.type,
                 "line1": address.line1,
                 "line2": address.line2,
@@ -236,10 +241,6 @@ def get_addresses():
 
 @address_bp.route(ADDRESS_TYPES_API, methods=['GET'])
 def get_addresses_types():
-    user_id = get_user_id()
-    if isinstance(user_id, tuple):
-        return user_id
-
     try:
         type = ADDRESS_TYPES
         return jsonify({
