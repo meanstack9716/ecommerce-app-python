@@ -199,6 +199,7 @@ ORDER_PLACE_API = f'/api/orders/new'
 ORDER_LIST_API = f'/api/orders/list'
 GET_ORDER_STATUS_TYPES = f'/api/orders/status-types'
 PAYMENT_CALLBACK_API = f'/api/payment-callback'
+VERIFY_PAYMENT = f'/api/orders/verify-payment'
 # Orders Endpoint End
 
 # Sales OverView Endpoint Start

@@ -10,7 +10,7 @@ import json
 from bson import ObjectId
 import decimal
 from app.utils.utils import create_error_response
-from constants import ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, ORDER_STATUS, CREATE_RAZORPAY_PAYMENT_LINK, PAYMENT_CALLBACK_API, RAZOR_PAY_PAYMENT_LINK
+from constants import ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, ORDER_STATUS, CREATE_RAZORPAY_PAYMENT_LINK, PAYMENT_CALLBACK_API, RAZOR_PAY_PAYMENT_LINK, VERIFY_PAYMENT
 from app.utils.jwt_handlers import jwt_error_handler
 from mongoengine.queryset.visitor import Q
 from app.utils.validation import validate_required_fields
@@ -258,7 +258,7 @@ def order_success():
     status = request.args.get('status')
     return f"Order {order_number} status: {status}"
 
-@order_bp.route('/api/orders/verify-payment', methods=['POST'])
+@order_bp.route(VERIFY_PAYMENT, methods=['POST'])
 @jwt_required()
 def verify_payment():
     user_id = get_jwt_identity()
