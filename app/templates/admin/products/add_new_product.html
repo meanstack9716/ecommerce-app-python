@@ -53,18 +53,18 @@
             theme: 'snow',
             modules: {
                 toolbar: [
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                        [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
-                        [{ 'indent': '-1' }, { 'indent': '+1' }],
-                        [{ 'direction': 'rtl' }],
-                        [{ 'script': 'sub' }, { 'script': 'super' }],
-                        [{ 'color': [] }, { 'background': [] }],
-                        [{ 'font': [] }],
-                        [{ 'align': [] }],
-                        ['clean'],
-                        ['link', 'image']
-                    ]
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
+                    [{ 'indent': '-1' }, { 'indent': '+1' }],
+                    [{ 'direction': 'rtl' }],
+                    [{ 'script': 'sub' }, { 'script': 'super' }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'font': [] }],
+                    [{ 'align': [] }],
+                    ['clean'],
+                    ['link', 'image']
+                ]
             },
             placeholder: 'Enter product details...',
         });
@@ -240,7 +240,7 @@
         function createVariantFormData() {
             const formData = new FormData();
             const variations = [];
-            const images = {};
+            const sizeBlocks = document.querySelectorAll('.size-block');
 
             // Get basic form values
             const formValues = {
@@ -257,7 +257,9 @@
 
             // Append basic form values to FormData
             for (const key in formValues) {
-                formData.append(key, formValues[key]);
+                if (formValues[key] !== undefined && formValues[key] !== null) {
+                    formData.append(key, formValues[key]);
+                }
             }
 
             // Handle brand ID
@@ -273,17 +275,91 @@
                 formData.append('thumbnail', thumbnailInput.files[0]);
             }
 
-            const sizeBlocks = document.querySelectorAll('.size-block');
+            // Create a map to track which colors have been processed
+            const processedColors = new Set();
 
+            // Process all standard colors
+            document.querySelectorAll('.standard-colors input[type="checkbox"]:checked').forEach(checkbox => {
+                const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1];
+                const colorNameInput = checkbox.closest('div').querySelector(`input[name*="[${colorHex}][name]"]`);
+                const colorName = colorNameInput ? colorNameInput.value : colorHex;
+
+                if (processedColors.has(colorName)) return;
+                processedColors.add(colorName);
+
+                const uploadId = `upload_${colorHex}`;
+                const fileInput = document.getElementById(uploadId);
+
+                if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                    // Get all sizes that have this color
+                    const sizesWithThisColor = [];
+                    sizeBlocks.forEach(sizeBlock => {
+                        const sizeName = sizeBlock.querySelector('.size-select').value === 'custom'
+                            ? sizeBlock.querySelector('.custom-size-input').value
+                            : sizeBlock.querySelector('.size-select').value;
+
+                        const isChecked = sizeBlock.querySelector(`.standard-colors input[name*="[standard][${colorHex}]"]:checked`);
+                        if (isChecked) sizesWithThisColor.push(sizeName);
+                    });
+
+                    // Add the same images for each size that has this color
+                    Array.from(fileInput.files).forEach((file, fileIndex) => {
+                        sizesWithThisColor.forEach(size => {
+                            formData.append(`images[${colorName}][${size}]`, file, `image_${fileIndex}_${size}.${file.name.split('.').pop()}`);
+                        });
+                    });
+                }
+            });
+
+            // Process all custom colors
+            document.querySelectorAll('.custom-color-container > div').forEach(customColorDiv => {
+                const hexInput = customColorDiv.querySelector('input[type="color"]');
+                const nameInput = customColorDiv.querySelector('input[placeholder="Color name"]');
+
+                if (hexInput && nameInput && nameInput.value.trim()) {
+                    const colorHex = hexInput.value;
+                    const colorName = nameInput.value.trim();
+                    const customColorId = nameInput.name.match(/\[custom\]\[(.*?)\]/)[1];
+
+                    if (processedColors.has(colorName)) return;
+                    processedColors.add(colorName);
+
+                    const uploadId = `upload_custom_${customColorId}`;
+                    const fileInput = document.getElementById(uploadId);
+
+                    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                        // Get all sizes that have this color
+                        const sizesWithThisColor = [];
+                        sizeBlocks.forEach(sizeBlock => {
+                            const sizeName = sizeBlock.querySelector('.size-select').value === 'custom'
+                                ? sizeBlock.querySelector('.custom-size-input').value
+                                : sizeBlock.querySelector('.size-select').value;
+
+                            const customColorDiv = sizeBlock.querySelector(`.custom-color-container input[value="${colorHex}"]`);
+                            if (customColorDiv && customColorDiv.closest('div').querySelector('input[placeholder="Color name"]').value.trim() === colorName) {
+                                sizesWithThisColor.push(sizeName);
+                            }
+                        });
+
+                        // Add the same images for each size that has this color
+                        Array.from(fileInput.files).forEach((file, fileIndex) => {
+                            sizesWithThisColor.forEach(size => {
+                                formData.append(`images[${colorName}][${size}]`, file, `image_${fileIndex}_${size}.${file.name.split('.').pop()}`);
+                            });
+                        });
+                    }
+                }
+            });
+
+            // Process variations (size + color combinations)
             sizeBlocks.forEach(sizeBlock => {
                 const sizeName = sizeBlock.querySelector('.size-select').value === 'custom'
                     ? sizeBlock.querySelector('.custom-size-input').value
                     : sizeBlock.querySelector('.size-select').value;
                 const sizeId = sizeBlock.dataset.sizeId;
 
-                // Process standard colors
-                const checkedStandardColors = sizeBlock.querySelectorAll('.standard-colors input[type="checkbox"]:checked');
-                checkedStandardColors.forEach(checkbox => {
+                // Standard colors
+                sizeBlock.querySelectorAll('.standard-colors input[type="checkbox"]:checked').forEach(checkbox => {
                     const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1];
                     const colorNameInput = checkbox.closest('div').querySelector(`input[name*="[${colorHex}][name]"]`);
                     const colorName = colorNameInput ? colorNameInput.value : colorHex;
@@ -291,48 +367,39 @@
                     const quantity = parseInt(quantityInput.value) || 0;
 
                     if (sizeName && colorName && colorHex) {
-                        variations.push({ size: sizeName, color: colorName, stock_quantity: quantity, color_hexa_code: colorHex });
-
-                        // Get images from custom uploader
-                        const uploadId = `upload_${sizeId}_${colorHex}`;
-                        const fileInput = document.getElementById(uploadId);
-                        if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                            Array.from(fileInput.files).forEach((file, index) => {
-                                formData.append(`images[${colorName}][${sizeName}]`, file, file.name);
-                            });
-                        }
+                        variations.push({
+                            size: sizeName,
+                            color: colorName,
+                            stock_quantity: quantity,
+                            color_hexa_code: colorHex
+                        });
                     }
                 });
 
-                // Process custom colors
-                const customColorDivs = sizeBlock.querySelectorAll('.custom-color-container > div');
-                customColorDivs.forEach(customColorDiv => {
+                // Custom colors
+                sizeBlock.querySelectorAll('.custom-color-container > div').forEach(customColorDiv => {
                     const hexInput = customColorDiv.querySelector('input[type="color"]');
                     const nameInput = customColorDiv.querySelector('input[placeholder="Color name"]');
                     const quantityInput = customColorDiv.querySelector('.custom-color-quantity');
-                    const quantity = parseInt(quantityInput.value) || 0;
-                    const colorHexCode = hexInput ? hexInput.value : null;
-                    const colorName = nameInput ? nameInput.value.trim() : null;
 
-                    if (colorHexCode && colorName && sizeName) {
-                        variations.push({ size: sizeName, color: colorName, quantity: quantity, color_hexa_code: colorHexCode });
+                    if (hexInput && nameInput && nameInput.value.trim()) {
+                        const quantity = parseInt(quantityInput.value) || 0;
+                        const colorHex = hexInput.value;
+                        const colorName = nameInput.value.trim();
 
-                        // Get images from custom uploader
-                        const customColorId = nameInput.name.match(/\[custom\]\[(.*?)\]/)[1];
-                        const uploadId = `upload_${sizeId}_custom_${customColorId}`;
-                        const fileInput = document.getElementById(uploadId);
-                        if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                            Array.from(fileInput.files).forEach((file, index) => {
-                                formData.append(`images[${colorName}][${sizeName}]`, file, file.name);
-                            });
-                        }
+                        variations.push({
+                            size: sizeName,
+                            color: colorName,
+                            stock_quantity: quantity,
+                            color_hexa_code: colorHex
+                        });
                     }
                 });
             });
 
             formData.append('variations', JSON.stringify(variations));
 
-            // Log the formData (for debugging)
+            // For debugging - log FormData entries
             for (const pair of formData.entries()) {
                 console.log(pair[0], pair[1]);
             }
@@ -345,81 +412,85 @@
         function generateImageUploadFields() {
             variantImagesContainer.innerHTML = '';
             const sizeBlocks = document.querySelectorAll('.size-block');
+            const colorUploadMap = {}; // To track which colors we've already created upload fields for
 
-            sizeBlocks.forEach(sizeBlock => {
-                const sizeName = sizeBlock.querySelector('.size-select').value === 'custom'
-                    ? sizeBlock.querySelector('.custom-size-input').value
-                    : sizeBlock.querySelector('.size-select').value;
-                const sizeId = sizeBlock.dataset.sizeId;
+            // First handle standard colors
+            document.querySelectorAll('.standard-colors input[type="checkbox"]:checked').forEach(checkbox => {
+                const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1];
+                const colorNameInput = checkbox.closest('div').querySelector(`input[name*="[${colorHex}][name]"]`);
+                const colorName = colorNameInput ? colorNameInput.value : colorHex;
 
-                // Standard Colors
-                const checkedStandardColors = sizeBlock.querySelectorAll('.standard-colors input[type="checkbox"]:checked');
-                checkedStandardColors.forEach(checkbox => {
-                    const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1];
-                    const colorNameInput = checkbox.closest('div').querySelector(`input[name*="[${colorHex}][name]"]`);
-                    const colorName = colorNameInput ? colorNameInput.value : colorHex;
-                    const uploadId = `upload_${sizeId}_${colorHex}`;
+                if (!colorUploadMap[`standard_${colorHex}`]) {
+                    createColorUploadField(colorHex, colorName, 'standard');
+                    colorUploadMap[`standard_${colorHex}`] = true;
+                }
+            });
 
-                    const imageUploadDiv = document.createElement('div');
-                    imageUploadDiv.className = 'mb-6 p-4 border border-gray-300 rounded-xl shadow-sm';
-                    imageUploadDiv.innerHTML = `
-                <h4 class="text-md font-semibold text-gray-700 mb-2">${sizeName} - ${colorName}</h4>
-                <div class="flex flex-col space-y-4">
-                    <div class="flex items-center space-x-4">
-                        <label for="${uploadId}" class="cursor-pointer flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition duration-150 ease-in-out">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
-                            Select Images
-                        </label>
-                        <span class="text-sm text-gray-500">Max 8 images</span>
-                    </div>
-                    <input type="file" id="${uploadId}" multiple class="hidden" accept="image/*">
-                    <div id="preview_${uploadId}" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2"></div>
-                </div>
-            `;
-                    variantImagesContainer.appendChild(imageUploadDiv);
+            // Then handle custom colors
+            document.querySelectorAll('.custom-color-container > div').forEach(customColorDiv => {
+                const hexInput = customColorDiv.querySelector('input[type="color"]');
+                const nameInput = customColorDiv.querySelector('input[placeholder="Color name"]');
 
-                    // Set up event listeners
-                    setupCustomUpload(uploadId);
-                });
+                if (hexInput && nameInput && nameInput.value.trim()) {
+                    const colorHex = hexInput.value;
+                    const colorName = nameInput.value.trim();
+                    const customColorId = nameInput.name.match(/\[custom\]\[(.*?)\]/)[1];
 
-                // Custom Colors
-                const customColorDivs = sizeBlock.querySelectorAll('.custom-color-container > div');
-                customColorDivs.forEach(customColorDiv => {
-                    const hexInput = customColorDiv.querySelector('input[type="color"]');
-                    const nameInput = customColorDiv.querySelector('input[placeholder="Color name"]');
-                    if (hexInput && nameInput && nameInput.value.trim()) {
-                        const colorHex = hexInput.value;
-                        const colorName = nameInput.value.trim();
-                        const customColorId = nameInput.name.match(/\[custom\]\[(.*?)\]/)[1];
-                        const uploadId = `upload_${sizeId}_custom_${customColorId}`;
+                    if (!colorUploadMap[`custom_${customColorId}`]) {
+                        createColorUploadField(colorHex, colorName, 'custom', customColorId);
+                        colorUploadMap[`custom_${customColorId}`] = true;
+                    }
+                }
+            });
 
-                        const imageUploadDiv = document.createElement('div');
-                        imageUploadDiv.className = 'mb-6 p-4 border border-gray-300 rounded-xl shadow-sm';
-                        imageUploadDiv.innerHTML = `
-                    <h4 class="text-md font-semibold text-gray-700 mb-2">${sizeName} - ${colorName}</h4>
-                    <div class="flex flex-col space-y-4">
-                        <div class="flex items-center space-x-4">
-                            <label for="${uploadId}" class="cursor-pointer flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition duration-150 ease-in-out">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                </svg>
-                                Select Images
-                            </label>
-                            <span class="text-sm text-gray-500">Max 8 images</span>
-                        </div>
-                        <input type="file" id="${uploadId}" multiple class="hidden" accept="image/*">
-                        <div id="preview_${uploadId}" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2"></div>
-                    </div>
-                `;
-                        variantImagesContainer.appendChild(imageUploadDiv);
+            function createColorUploadField(colorHex, colorName, type, customColorId = null) {
+                const uploadId = type === 'standard'
+                    ? `upload_${colorHex}`
+                    : `upload_custom_${customColorId}`;
 
-                        // Set up event listeners
-                        setupCustomUpload(uploadId);
+                // Get all sizes that have this color
+                const sizesWithThisColor = [];
+                sizeBlocks.forEach(sizeBlock => {
+                    const sizeName = sizeBlock.querySelector('.size-select').value === 'custom'
+                        ? sizeBlock.querySelector('.custom-size-input').value
+                        : sizeBlock.querySelector('.size-select').value;
+
+                    if (type === 'standard') {
+                        const isChecked = sizeBlock.querySelector(`.standard-colors input[name*="[standard][${colorHex}]"]:checked`);
+                        if (isChecked) sizesWithThisColor.push(sizeName);
+                    } else {
+                        const customColorDiv = sizeBlock.querySelector(`.custom-color-container input[value="${colorHex}"]`);
+                        if (customColorDiv && customColorDiv.closest('div').querySelector('input[placeholder="Color name"]').value.trim() === colorName) {
+                            sizesWithThisColor.push(sizeName);
+                        }
                     }
                 });
-            });
+
+                if (sizesWithThisColor.length === 0) return;
+
+                const imageUploadDiv = document.createElement('div');
+                imageUploadDiv.className = 'mb-6 p-4 border border-gray-300 rounded-xl shadow-sm';
+                imageUploadDiv.innerHTML = `
+            <h4 class="text-md font-semibold text-gray-700 mb-2">${colorName} (Sizes: ${sizesWithThisColor.join(', ')})</h4>
+            <div class="flex flex-col space-y-4">
+                <div class="flex items-center space-x-4">
+                    <label for="${uploadId}" class="cursor-pointer flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition duration-150 ease-in-out">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Select Images
+                    </label>
+                    <span class="text-sm text-gray-500">Max 8 images</span>
+                </div>
+                <input type="file" id="${uploadId}" multiple class="hidden" accept="image/*">
+                <div id="preview_${uploadId}" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2"></div>
+            </div>
+        `;
+                variantImagesContainer.appendChild(imageUploadDiv);
+
+                // Set up event listeners
+                setupCustomUpload(uploadId);
+            }
         }
 
         function setupCustomUpload(uploadId) {
