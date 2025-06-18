@@ -76,14 +76,14 @@ def get_category_list():
                     'id': str(subsub.id),
                     'name': subsub.name,
                     'description': subsub.description,
-                    'img_url': url_for('serve_uploaded_files', filename=subsub.img_url, _external=True) if subsub.img_url else ''
+                    'img_url': url_for('serve_uploaded_files', filename=subsub.img_url, _external=True) if subsub.img_url else None
                 })
 
             subcategories_data.append({
                 'id': str(subcategory.id),
                 'name': subcategory.name,
                 'description': subcategory.description,
-                'img_url': url_for('serve_uploaded_files', filename=subcategory.img_url, _external=True) if subcategory.img_url else '',
+                'img_url': url_for('serve_uploaded_files', filename=subcategory.img_url, _external=True) if subcategory.img_url else None,
                 'sub_sub_categories': sub_sub_categories_data,
                 'sub_sub_category_count': sub_sub_category_count,
             })

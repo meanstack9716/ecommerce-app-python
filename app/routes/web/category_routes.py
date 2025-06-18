@@ -68,7 +68,7 @@ def fetch_categories_data(search='', category_id='', page=1, per_page=10):
             'id': str(category.id),
             'name': category.name,
             'description': category.description,
-            'img_url': category.img_url
+            'img_url': url_for('serve_uploaded_files', filename=category.img_url, _external=True) if category.img_url else None
         }
         for category in categories
     ]
@@ -102,9 +102,21 @@ def get_category_list_page():
 
     data = fetch_categories_data(search, category_id, page, per_page)
 
+    # Add full image URL to each category
+    categories_with_images = []
+    for category in data['categories']:
+        # Create a new dictionary or modify the existing one
+        category_dict = dict(category)  # Make a copy
+        category_dict['img_url_full'] = url_for(
+            'serve_uploaded_files', 
+            filename=category['img_url'],  # Access as dictionary key
+            _external=True
+        ) if category.get('img_url') else ''
+        categories_with_images.append(category_dict)
+
     return render_template(
         "admin/categorySubCategory/category/category_list.html",
-        categories=data['categories'],
+        categories=categories_with_images,
         all_categories=data['all_categories'],
         pagination=data['pagination'],
         limit=per_page,
