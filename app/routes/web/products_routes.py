@@ -472,7 +472,10 @@ def edit_product_page(product_id):
         })
         
         for image in variant.images:
-            colors_data[color_name]['images'].add(image.image_url)
+            if image.image_url:
+                image_url = url_for('serve_uploaded_files', filename=image.image_url, _external=True)
+                colors_data[color_name]['images'].add(image_url)
+
     
     for color_data in colors_data.values():
         color_data['images'] = list(color_data['images'])
