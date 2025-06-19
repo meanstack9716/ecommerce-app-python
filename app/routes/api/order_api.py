@@ -39,7 +39,7 @@ def place_order():
     if not is_valid:
         return create_error_response(validation_errors, 400)
 
-    valid_payment_methods = ['cod', 'card']
+    valid_payment_methods = ['Cash On Delivery', 'card']
     if data['payment_method'] not in valid_payment_methods:
         return create_error_response({'error': 'Invalid payment method'}, 400)
 
