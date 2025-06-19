@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, redirect
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import Address, Seller, User, ProductCart, Products, ProductVariant, ProductVariantImage, Order, OrderItem
 from datetime import datetime, timedelta
@@ -10,7 +10,7 @@ import json
 from bson import ObjectId
 import decimal
 from app.utils.utils import create_error_response
-from constants import ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, ORDER_STATUS, CREATE_RAZORPAY_PAYMENT_LINK, PAYMENT_CALLBACK_API, RAZOR_PAY_PAYMENT_LINK
+from constants import ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, ORDER_STATUS, CREATE_RAZORPAY_PAYMENT_LINK, PAYMENT_CALLBACK_API, RAZOR_PAY_PAYMENT_LINK, VERIFY_PAYMENT
 from app.utils.jwt_handlers import jwt_error_handler
 from mongoengine.queryset.visitor import Q
 from app.utils.validation import validate_required_fields
@@ -169,7 +169,6 @@ def place_order():
                     customer_email=user.email,
                     customer_phone=user.phone_number if hasattr(user, 'phone_number') and user.phone_number else '',
                     description=f"Order {order_numbers[i]}",
-                    callback_url=f"{os.getenv('APP_BASE_URL')}/api/payment-callback"
                 )
                 payment_links.append({
                     'order_number': order_numbers[i],
@@ -214,14 +213,14 @@ def payment_callback():
         payment_id = request.args.get('razorpay_payment_id')
         payment_link_id = request.args.get('razorpay_payment_link_id')
         payment_link_reference_id = request.args.get('razorpay_payment_link_reference_id')
+        order_number = request.args.get('order_number')
 
-        if not all([payment_id, payment_link_id, payment_link_reference_id]):
+        if not all([payment_id, payment_link_id, payment_link_reference_id, order_number]):
             return create_error_response({
                 'error': 'Invalid callback parameters',
                 'message': 'Missing required callback parameters'
             }, 400)
 
-        # Verify payment link status
         payment_link = get_razorpay_payment_link(payment_link_id)
         if payment_link['status'] != 'paid':
             return create_error_response({
@@ -229,9 +228,8 @@ def payment_callback():
                 'message': 'Payment link status is not paid'
             }, 400)
 
-        # Find and update Order
         order = Order.objects(
-            order_number=payment_link_reference_id,
+            order_number=order_number,
             payment_link_id=payment_link_id
         ).first()
 
@@ -246,12 +244,58 @@ def payment_callback():
         order.status = 'confirmed'
         order.updated_at = datetime.utcnow()
         order.save()
+        app_base_url = os.getenv('APP_BASE_URL')
+        app_redirect_url = f"{app_base_url}/order-success?order_number={order_number}&status=success"
+        return redirect(app_redirect_url, code=302)
+
+    except Exception as e:
+        app_redirect_url = f"{os.getenv('APP_BASE_URL')}/order-failed?error={str(e)}"
+        return redirect(app_redirect_url, code=302)
+
+@order_bp.route('/order-success')
+def order_success():
+    order_number = request.args.get('order_number')
+    status = request.args.get('status')
+    return f"Order {order_number} status: {status}"
+
+@order_bp.route(VERIFY_PAYMENT, methods=['POST'])
+@jwt_required()
+def verify_payment():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    required_fields = ['order_number', 'payment_id']
+    is_valid, validation_errors = validate_required_fields(data, required_fields)
+    if not is_valid:
+        return create_error_response(validation_errors, 400)
+
+    try:
+        order = Order.objects(
+            user_id=user_id,
+            order_number=data['order_number'],
+            payment_id=data['payment_id']
+        ).first()
+
+        if not order:
+            return create_error_response({'error': 'Order not found'}, 404)
+
+        payment_link = get_razorpay_payment_link(order.payment_link_id)
+        if payment_link['status'] != 'paid':
+            return create_error_response({
+                'error': 'Payment not verified',
+                'message': 'Payment status is not paid'
+            }, 400)
+
+        if order.payment_status != 'paid':
+            order.payment_status = 'paid'
+            order.status = 'confirmed'
+            order.updated_at = datetime.utcnow()
+            order.save()
 
         return jsonify({
             'message': 'Payment verified successfully',
             'order_number': order.order_number,
-            'payment_id': payment_id,
-            'payment_status': 'paid'
+            'status': order.status
         }), 200
 
     except Exception as e:
@@ -260,14 +304,14 @@ def payment_callback():
             'message': str(e)
         }, 500)
 
-def generate_razorpay_payment_link(amount, reference_id, customer_name, customer_email, customer_phone='', description=None, callback_url=None):
+def generate_razorpay_payment_link(amount, reference_id, customer_name, customer_email, 
+                                 customer_phone='', description=None):
     url = RAZOR_PAY_PAYMENT_LINK
     amount_in_paise = int(amount * 100)
     
     if amount_in_paise < 100:
         raise ValueError("Amount must be at least 1 INR")
 
-    # Ensure expire_by is at least 15 minutes in the future
     expire_by = int((datetime.utcnow() + timedelta(days=7)).timestamp())
     
     payload = {
@@ -288,12 +332,10 @@ def generate_razorpay_payment_link(amount, reference_id, customer_name, customer
         'expire_by': expire_by,
         'notes': {
             'order_number': reference_id
-        }
+        },
+        'callback_url': f"{os.getenv('API_BASE_URL')}/payment-callback?order_number={reference_id}",
+        'callback_method': 'get'
     }
-
-    if callback_url and callback_url.startswith('https://'):
-        payload['callback_url'] = callback_url
-        payload['callback_method'] = 'get'
 
     auth = (os.getenv('RAZORPAY_KEY_ID'), os.getenv('RAZORPAY_KEY_SECRET'))
     headers = {'Content-Type': 'application/json'}
@@ -303,14 +345,13 @@ def generate_razorpay_payment_link(amount, reference_id, customer_name, customer
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
+        error_message = str(e)
         try:
             error_details = response.json()
             error_message = error_details.get('error', {}).get('description', str(e))
         except ValueError:
-            error_message = str(e)
+            pass
         raise Exception(f"Razorpay payment link creation failed: {error_message}")
-    except requests.exceptions.RequestException as e:
-        raise Exception(f"Razorpay payment link creation failed: {str(e)}")
 
 def get_razorpay_payment_link(payment_link_id):
     url = f"https://api.razorpay.com/v1/payment_links/{payment_link_id}"
