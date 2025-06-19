@@ -206,9 +206,8 @@ def get_cart():
             product = item.product_id
             
             sizes = []
-            # Only include variants that match the selected color
             for variant in product.variants:
-                if variant.color_hexa_code == item.selected_color:  # Filter by selected color
+                if variant.color_hexa_code == item.selected_color:
                     size_exists = False
                     for size in sizes:
                         if size['value'] == variant.size:
@@ -235,10 +234,9 @@ def get_cart():
                             }]
                         })
             
-            # Build gallery with only the selected color's images
             gallery = []
             for variant in product.variants:
-                if variant.color_hexa_code == item.selected_color:  # Filter by selected color
+                if variant.color_hexa_code == item.selected_color:
                     for image in variant.images:
                         gallery.append({
                             'color': variant.color,

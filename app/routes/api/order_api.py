@@ -245,7 +245,7 @@ def payment_callback():
         order.updated_at = datetime.utcnow()
         order.save()
         app_base_url = os.getenv('APP_BASE_URL')
-        app_redirect_url = f"{app_base_url}/order-success?order_number={order_number}&status=success"
+        app_redirect_url = f"ecommerce://order-success?order_number={order_number}&status=success"
         return redirect(app_redirect_url, code=302)
 
     except Exception as e:
@@ -333,7 +333,7 @@ def generate_razorpay_payment_link(amount, reference_id, customer_name, customer
         'notes': {
             'order_number': reference_id
         },
-        'callback_url': f"{os.getenv('API_BASE_URL')}/payment-callback?order_number={reference_id}",
+        'callback_url': f"ecommerce://payment-callback?order_number={reference_id}",
         'callback_method': 'get'
     }
 
