@@ -641,24 +641,22 @@ admin_content %}
     // Image Upload Management
     const generateImageUploadFields = () => {
       DOM.variantImagesContainer.innerHTML = "";
-      const colorUploadMap = {};
+      const colorGroups = {};
 
-      // Process all colors (standard + custom) and create one uploader per unique color
+      // Process all colors (standard + custom) and group them by color hex and name
       const allColorElements = [
         ...document.querySelectorAll('.standard-colors input[type="checkbox"]:checked'),
         ...document.querySelectorAll('.custom-color-container > div')
       ];
 
       allColorElements.forEach(element => {
-        let colorHex, colorName, colorKey, uploadId;
+        let colorHex, colorName;
 
         // Handle standard colors
         if (element.type === 'checkbox') {
           colorHex = element.name.match(/\[standard\]\[(.*?)\]/)[1];
           const colorNameInput = element.closest("div").querySelector(`input[name*="[${colorHex}][name]"]`);
           colorName = colorNameInput ? colorNameInput.value : colorHex;
-          colorKey = `standard_${colorHex}`;
-          uploadId = `upload_color_${colorHex}`;
         }
         // Handle custom colors
         else {
@@ -668,40 +666,56 @@ admin_content %}
 
           colorHex = hexInput.value;
           colorName = nameInput.value.trim();
-          const customColorId = nameInput.name.match(/\[custom\]\[(.*?)\]/)[1];
-          colorKey = `custom_${customColorId}`;
-          uploadId = `upload_custom_${customColorId}`;
         }
 
-        if (!colorUploadMap[colorKey]) {
-          const colorData = productData.colors.find(c => c.value === colorHex);
+        // Create a unique key for this color
+        const colorKey = `${colorHex}_${colorName}`;
 
-          // Find all sizes with this color
-          const sizeNames = [];
-          document.querySelectorAll(".size-block").forEach(sizeBlock => {
-            const sizeName = getSizeNameFromBlock(sizeBlock);
-            // Check if this size has the current color
-            if (element.type === 'checkbox') {
-              const isChecked = sizeBlock.querySelector(`.standard-colors input[name*="[standard][${colorHex}]"]:checked`);
-              if (isChecked) sizeNames.push(sizeName);
-            } else {
-              const customColorInput = sizeBlock.querySelector(`.custom-color-container input[value="${colorHex}"]`);
-              if (customColorInput && customColorInput.closest("div").querySelector('input[placeholder="Color name"]').value.trim() === colorName) {
-                sizeNames.push(sizeName);
-              }
+        if (!colorGroups[colorKey]) {
+          colorGroups[colorKey] = {
+            colorHex,
+            colorName,
+            sizes: new Set(),
+            existingImages: []
+          };
+
+          // Find existing images for this color from product data
+          const colorData = productData.colors.find(c => c.value === colorHex && c.name === colorName);
+          if (colorData?.images) {
+            colorGroups[colorKey].existingImages = colorData.images;
+          }
+        }
+
+        // Add all sizes that have this color
+        document.querySelectorAll(".size-block").forEach(sizeBlock => {
+          const sizeName = getSizeNameFromBlock(sizeBlock);
+
+          // Check if this size has the current color
+          if (element.type === 'checkbox') {
+            const isChecked = sizeBlock.querySelector(`.standard-colors input[name*="[standard][${colorHex}]"]:checked`);
+            if (isChecked) colorGroups[colorKey].sizes.add(sizeName);
+          } else {
+            const customColorInput = sizeBlock.querySelector(`.custom-color-container input[value="${colorHex}"]`);
+            if (customColorInput && customColorInput.closest("div").querySelector('input[placeholder="Color name"]').value.trim() === colorName) {
+              colorGroups[colorKey].sizes.add(sizeName);
             }
-          });
+          }
+        });
+      });
 
+      // Create one upload section per unique color group
+      Object.values(colorGroups).forEach(colorGroup => {
+        if (colorGroup.sizes.size > 0) {
+          const sizesList = Array.from(colorGroup.sizes).join(', ');
+          const uploadId = `upload_${colorGroup.colorHex.replace('#', '')}_${colorGroup.colorName.replace(/\s+/g, '_')}`;
           createImageUploadSection(
             uploadId,
-            `${colorName} (Sizes: ${sizeNames.join(', ')})`,
-            colorData?.images || []
+            `${colorGroup.colorName} (Sizes: ${sizesList})`,
+            colorGroup.existingImages
           );
-          colorUploadMap[colorKey] = true;
         }
       });
     };
-
 
     const getSizeNameFromBlock = (sizeBlock) => {
       const isCustom = sizeBlock.querySelector(".size-select").value === "custom";
