@@ -32,9 +32,8 @@
         <div class="mb-6">
             <label for="description" class="block text-base font-medium text-black mb-1 tracking-wide">Description <span
                     class="text-red-500">*</span></label>
-            <textarea name="description" id="description"
-                class="block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out"
-                rows="5"></textarea>
+            <input type="hidden" name="description" id="description">
+            <div id="editor-container" class="h-48"></div>
         </div>
 
         <div class="pt-4 flex justify-end">
@@ -55,6 +54,35 @@
 
 {% block js %}
 <script>
+
+    let quill;
+    document.addEventListener('DOMContentLoaded', function () {
+        try {
+            quill = new Quill('#editor-container', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        [{ 'indent': '-1' }, { 'indent': '+1' }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'align': [] }],
+                        ['clean'],
+                        ['link']
+                    ]
+                },
+                placeholder: 'Enter brand description...'
+            });
+
+            const descriptionInput = document.getElementById('description');
+            quill.on('text-change', function () {
+                descriptionInput.value = quill.root.innerHTML;
+            });
+        } catch (error) {
+            console.error('Failed to initialize text editor:', error);
+            showToast('Failed to initialize text editor', 'error');
+        }
+    });
     document.getElementById('categoryForm').addEventListener('submit', async function (e) {
         e.preventDefault();
 

@@ -67,7 +67,6 @@
         loader.classList.add('hidden');
     }
 
-    // Debounce function to limit how often the search executes
     function debounce(func, timeout = 300) {
         let timer;
         return (...args) => {
@@ -76,15 +75,9 @@
         };
     }
 
-    // Filter categories based on search input
     const filterCategories = debounce((searchTerm) => {
-        if (searchTerm.length < 1) {
-            categoryDropdown.classList.add('hidden');
-            return;
-        }
-
         const filtered = categories.filter(cat =>
-            cat.name.toLowerCase().includes(searchTerm.toLowerCase())
+            searchTerm.length === 0 || cat.name.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
         if (filtered.length > 0) {
@@ -96,7 +89,6 @@
         }
     });
 
-    // Render category options in dropdown
     function renderCategoryOptions(filteredCategories) {
         categoryDropdown.innerHTML = filteredCategories.map(cat => `
             <div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" 
@@ -107,7 +99,6 @@
         `).join('');
     }
 
-    // Handle category selection
     function selectCategory(id, name) {
         selectedCategoryId.value = id;
         categorySearch.value = name;
@@ -127,16 +118,20 @@
             showLoader();
             try {
                 const { success, data } = await sendGetRequest(`/api/sub-categories/list/${categoryId}`);
-                if (success && Array.isArray(data)) {
-                    data.forEach(sub => {
+                if (success && Array.isArray(data.data)) {
+                    data.data.forEach((sub, index) => {
                         const tab = createTab(sub.name, async () => {
                             await loadSubSubCategoryByCategory(sub.id);
                         });
                         subCategoryTabs.appendChild(tab);
+
+                        if (index === 0) {
+                            tab.click();
+                        }
                     });
 
-                    if (data.length > 0) {
-                        subCategoryTabs.querySelector('button').click();
+                    if (data.data.length === 0) {
+                        cardsContainer.innerHTML = '<div class="col-span-full text-center text-gray-500">No subcategories available for this category.</div>';
                     }
                 } else {
                     cardsContainer.innerHTML = '<div class="col-span-full text-center text-red-500">Failed to load subcategories.</div>';
@@ -196,7 +191,7 @@
         data.forEach(pt => {
             const cardHTML = `
             <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <img src="/static/${pt.img_url}" alt="${pt.name}" class="w-full h-48 object-cover">
+                <img src="${pt.img_url}" alt="${pt.name}" class="w-full h-52 object-cover">
                 <div class="p-4 flex justify-between flex-col gap-4">
                     <h2 class="text-xl font-semibold text-gray-800">${pt.name}</h2>
                     <div class="">
@@ -204,7 +199,8 @@
                         <p class="text-gray-600 mt-2 text-sm">${pt.categoryName}</p>
                         <p class="text-gray-600 mt-1 text-sm">${pt.subcategoryName}</p>
                     </div>
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-end justify-between">
+                        <a href="/sub-sub-category/edit/${pt.id}" class="text-blue-600 hover:text-blue-800">Edit</a>
                         <button type="button" class="text-red-600 hover:text-red-800 font-medium"
                             data-category-id="${pt.id}" onclick="showDeleteModal(this)">
                             Delete
@@ -233,8 +229,8 @@
                     if (result.success) {
                         showToast('Sub-Sub Category deleted successfully', 'success');
                         setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
+                            window.location.reload();
+                        }, 500);
                     } else {
                         showToast(result.errors || result.message || 'Something went wrong', 'error');
                     }
@@ -249,6 +245,12 @@
     // Event listeners
     categorySearch.addEventListener('input', (e) => {
         filterCategories(e.target.value);
+    });
+
+    categorySearch.addEventListener('click', (e) => {
+        if (categoryDropdown.classList.contains('hidden')) {
+            filterCategories('');
+        }
     });
 
     // Close dropdown when clicking outside

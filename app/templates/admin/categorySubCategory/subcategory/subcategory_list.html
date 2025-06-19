@@ -45,13 +45,13 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6" id="subcategory-grid">
         {% for subcategory in subcategories %}
-        <div class="bg-white border flex flex-col justify-between rounded-lg shadow-lg p-4 w-full h-96 relative">
-            <div class="mb-4 h-40">
-                <img src="/static/{{ subcategory.img_url }}" alt="{{ subcategory.name }}"
-                    class="w-full h-full object-contain rounded-t-lg">
+        <div class="bg-white border flex flex-col justify-between rounded-lg shadow-lgw-full h-90 relative">
+            <div class="mb-4 h-52">
+                <img src="{{ subcategory.img_url }}" alt="{{ subcategory.name }}"
+                    class="w-full h-full object-cover rounded-t-lg">
             </div>
 
-            <div class="flex flex-col items-center text-center px-2">
+            <div class="flex flex-col items-center text-center p-4">
                 <p class="text-sm text-gray-600 mb-2">{{ subcategory.category.name }}</p>
                 <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ subcategory.name }}</h3>
                 <p class="text-sm text-gray-600 mb-4 relative group">
@@ -62,7 +62,7 @@
                     </span>
                 </p>
                 <div class="flex justify-between w-full mt-auto">
-                    <a href="/sub-category/edit/{{ subcategory.id }}" class="text-blue-600 hover:text-blue-800">Edit</a>
+                    <a href="/sub-category/edit/{{ subcategory.id }}" class="text-blue-600 text-sm hover:text-blue-800">Edit</a>
                     <button type="button" class="text-red-600 hover:underline text-sm delete-subcategory-btn"
                         data-subcategory-id="{{ subcategory.id }}"
                         data-subcategory-name="{{ subcategory.name }}">Delete</button>
@@ -208,12 +208,12 @@
                     noSubcategoriesMessage.classList.add('hidden');
                     data.subcategories.forEach(subcategory => {
                         const card = `
-                        <div class="bg-white border rounded-lg shadow-lg p-4 w-full h-96 relative">
-                            <div class="mb-4 h-40">
-                                <img src="/static/${subcategory.img_url}" alt="${subcategory.name}"
-                                    class="w-full h-full object-contain rounded-t-lg">
+                        <div class="bg-white border rounded-lg shadow-lg w-full h-90 relative">
+                            <div class="mb-4 h-52">
+                                <img src="${subcategory.img_url}" alt="${subcategory.name}"
+                                    class="w-full h-full object-cover rounded-t-lg">
                             </div>
-                            <div class="flex flex-col items-center text-center px-2">
+                            <div class="flex flex-col items-center text-center p-4">
                                 <p class="text-sm text-gray-600 mb-2">${subcategory.category.name}</p>
                                 <h3 class="text-lg font-semibold text-gray-800 mb-2">${subcategory.name}</h3>
                                 <p class="text-sm text-gray-600 mb-4 relative group">
@@ -223,7 +223,7 @@
                                     </span>
                                 </p>
                                 <div class="flex justify-between w-full mt-auto">
-                                    <a href="/sub-category/edit/${subcategory.id}" class="text-blue-600 hover:text-blue-800">Edit</a>
+                                    <a href="/sub-category/edit/${subcategory.id}" class="text-blue-600 text-sm hover:text-blue-800">Edit</a>
                                     <button type="button" class="text-red-600 hover:underline text-sm delete-subcategory-btn" 
                                             data-subcategory-id="${subcategory.id}" 
                                             data-subcategory-name="${subcategory.name}">Delete</button>

@@ -33,28 +33,28 @@ def register():
         ['email', 'password', 'password_confirmation']
     )
     if not is_valid:
-        return create_error_response(errors, 400)
+        return create_error_response({"error": errors}, 400)
 
     is_valid_email, email_error = validate_email(email)
     if not is_valid_email:
-        return create_error_response({"email": email_error}, 400)
+        return create_error_response({"error": email_error}, 400)
 
     is_valid_password, password_error = validate_password(password)
     if not is_valid_password:
-        return create_error_response({"password": password_error}, 400)
+        return create_error_response({"error": password_error}, 400)
 
     if password != password_confirmation:
-        return create_error_response({"password_confirmation": "Password and confirmation do not match."}, 400)
+        return create_error_response({"error": "Password and confirmation do not match."}, 400)
 
     if User.objects(email=email).first():
-        return create_error_response({"email": "Email already exists"}, 409)
+        return create_error_response({"error": "Email already exists"}, 409)
 
     otp = str(random.randint(100000, 999999))
     otp_expiry = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
 
     role = Role.objects(name='user').first()
     if not role:
-        return create_error_response({"role": "Default user role not found"}, 500)
+        return create_error_response({"error": "Default user role not found"}, 500)
 
     msg = Message("Your OTP Code", recipients=[email])
     msg.body = f"Your OTP is {otp}. It will expire in 10 minutes."
@@ -86,15 +86,15 @@ def login():
     if not password:
         errors['password'] = 'Password is required.'
     if errors:
-        return create_error_response(errors, 400)
+        return create_error_response({"error": errors}, 400)
 
     is_valid_email, email_error = validate_email(email)
     if not is_valid_email:
-        return create_error_response({"email": email_error}, 400)
+        return create_error_response({"error": email_error}, 400)
 
     user = User.objects(email=email).first()
     if not user or not user.check_password(password):
-        return create_error_response({"email": "Email or password is wrong."}, 401)
+        return create_error_response({"error": "Email or password is wrong."}, 401)
 
     access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(days=1))
 

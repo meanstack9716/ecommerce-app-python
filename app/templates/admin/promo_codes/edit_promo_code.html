@@ -25,12 +25,12 @@
                     <div class="flex items-center">
                         <input id="percentage" name="discount_type" type="radio" value="percentage" checked
                             class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
-                        <label for="percentage" class="ml-2 block text-sm text-gray-700">Percentage</label>
+                        <label for="percentage" class="ml-2 block text-sm text-gray-700">Discount in Percent</label>
                     </div>
                     <div class="flex items-center">
                         <input id="fixed" name="discount_type" type="radio" value="fixed_amount"
                             class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded-full">
-                        <label for="fixed" class="ml-2 block text-sm text-gray-700">Fixed Amount</label>
+                        <label for="fixed" class="ml-2 block text-sm text-gray-700">Discounted Amount</label>
                     </div>
                 </div>
             </div>
@@ -74,13 +74,14 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label for="start_date" class="block text-base font-medium text-black mb-1 tracking-wide">Start
-                    Date</label>
+                    Date *</label>
                 <input type="date" id="start_date" name="start_date"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
             </div>
             <div>
-                <label for="end_date" class="block text-base font-medium text-black mb-1 tracking-wide">End Date</label>
-                <input type="date" id="end_date" name="end_date"
+                <label for="end_dateexpiry_date" class="block text-base font-medium text-black mb-1 tracking-wide">End
+                    Date</label>
+                <input type="date" id="expiry_date" name="expiry_date"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
                 <p class="mt-1 text-xs text-gray-500">Leave empty for no expiration</p>
             </div>
@@ -96,9 +97,9 @@
                 <p class="mt-1 text-xs text-gray-500">Leave empty for unlimited uses</p>
             </div>
             <div>
-                <label for="user_max_uses" class="block text-base font-medium text-black mb-1 tracking-wide">Uses Per
+                <label for="uses_per_user" class="block text-base font-medium text-black mb-1 tracking-wide">Uses Per
                     Customer</label>
-                <input type="number" id="user_max_uses" name="user_max_uses" min="1" value="1"
+                <input type="number" id="uses_per_user" name="uses_per_user" min="1" value="1"
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
             </div>
         </div>
@@ -176,7 +177,7 @@
                 discountHint.textContent = 'Percentage discount (e.g. 20 for 20%)';
             } else {
                 maxDiscountContainer.classList.add('hidden');
-                discountHint.textContent = 'Fixed amount discount (e.g. 20 for $20 off)';
+                discountHint.textContent = 'Fixed amount discount (e.g. 20 for Rs 20 off)';
             }
         }
 
@@ -189,9 +190,9 @@
                 min_order_amount: document.getElementById('min_order_amount').value || null,
                 description: quill.root.innerHTML,
                 start_date: document.getElementById('start_date').value || null,
-                end_date: document.getElementById('end_date').value || null,
+                expiry_date: document.getElementById('expiry_date').value || null,
                 max_uses: document.getElementById('max_uses').value || null,
-                user_max_uses: document.getElementById('user_max_uses').value || 1,
+                uses_per_user: document.getElementById('uses_per_user').value || 1,
                 is_active: document.getElementById('is_active').checked,
                 only_first_order: document.getElementById('only_first_order').checked
             };
@@ -212,7 +213,7 @@
             form.min_order_amount.value = promoCodeData.min_order_amount || '';
             if (form.max_discount) form.max_discount.value = promoCodeData.max_discount_amount || '';
             form.max_uses.value = promoCodeData.max_uses || '';
-            form.user_max_uses.value = promoCodeData.uses_per_user || 1;
+            form.uses_per_user.value = promoCodeData.uses_per_user || 1;
             form.is_active.checked = promoCodeData.is_active || false;
             form.only_first_order.checked = promoCodeData.only_first_order || false;
 
@@ -220,7 +221,7 @@
             form.querySelector(`input[name="discount_type"][value="${discountType}"]`).checked = true;
 
             form.start_date.value = promoCodeData.start_date ? new Date(promoCodeData.start_date.$date).toISOString().split('T')[0] : '';
-            form.end_date.value = promoCodeData.expiry_date ? new Date(promoCodeData.expiry_date.$date).toISOString().split('T')[0] : '';
+            form.expiry_date.value = promoCodeData.expiry_date ? new Date(promoCodeData.expiry_date.$date).toISOString().split('T')[0] : '';
 
             if (promoCodeData.description && quill) {
                 quill.root.innerHTML = promoCodeData.description;
@@ -256,8 +257,11 @@
                     showToast('Promo code updated successfully', 'success');
                     initialFormState = getFormState();
                     updateSubmitButton();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 100);
                 } else {
-                    showToast(data.message || 'Failed to update promo code', 'error');
+                    handleErrors(data.errors);
                     submitBtn.disabled = false;
                 }
             } catch (error) {
