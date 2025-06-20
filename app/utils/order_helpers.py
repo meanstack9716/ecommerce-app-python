@@ -47,7 +47,11 @@ def get_cart_items(user_id, cart_items_ids):
 
 def validate_promo_code(user_id, promo_code_str, total_amount):
     current_datetime = datetime.utcnow()
-    promo_code = PromoCode.objects(code=promo_code_str.upper().strip(), is_active=True, start_date__lte=current_datetime).first()
+    promo_code = PromoCode.objects(
+        code=promo_code_str.upper().strip(),
+        is_active=True,
+        start_date__lte=current_datetime
+    ).first()
     
     if not promo_code:
         return None, {'error': 'Invalid or expired promo code'}
@@ -64,9 +68,10 @@ def validate_promo_code(user_id, promo_code_str, total_amount):
     if promo_code.max_uses and promo_code.used_count >= promo_code.max_uses:
         return None, {'error': 'Promo code usage limit reached'}
     
-    promo_discount = promo_code.calculate_discount(float(total_amount))
+    # Ensure discount is positive
+    promo_discount = abs(promo_code.calculate_discount(float(total_amount)))
     return promo_code, decimal.Decimal(str(promo_discount))
-
+    
 def group_cart_items_by_seller(cart_items):
     seller_items = {}
     for cart_item in cart_items:
@@ -141,8 +146,10 @@ def create_order_object(user, seller_data, order_number, order_items, shipping_a
         updated_at=datetime.utcnow()
     )
 
-def create_razorpay_payment_link(order, user):
+def create_razorpay_payment_link(order, user, redirect_url):
     customer_name = f"{user.first_name or ''} {user.last_name or ''}".strip() or "Customer"
+    # Use a static URL for testing
+    static_redirect_url = "https://your-frontend-domain.com/order-success"  # Change this to your actual frontend URL
     return generate_razorpay_payment_link(
         amount=float(order.total_amount),
         reference_id=order.order_number,
@@ -150,9 +157,10 @@ def create_razorpay_payment_link(order, user):
         customer_email=user.email,
         customer_phone=user.phone_number if hasattr(user, 'phone_number') and user.phone_number else '',
         description=f"Order {order.order_number}",
+        redirect_url=static_redirect_url  # Use static URL here
     )
 
-def generate_razorpay_payment_link(amount, reference_id, customer_name, customer_email, customer_phone='', description=None):
+def generate_razorpay_payment_link(amount, reference_id, customer_name, customer_email, customer_phone='', description=None, redirect_url=None):
     amount_in_paise = int(amount * 100)
     expire_by = int((datetime.utcnow() + timedelta(days=7)).timestamp())
     
@@ -173,11 +181,14 @@ def generate_razorpay_payment_link(amount, reference_id, customer_name, customer
         'reminder_enable': True,
         'expire_by': expire_by,
         'notes': {
-            'order_number': reference_id
+            'order_number': reference_id,
+            'redirect_url': redirect_url
         },
-        'callback_url': f"ecommerce://payment-callback?order_number={reference_id}",
+        'callback_url': f"{os.getenv('API_BASE_URL')}/api/payment-callback",
         'callback_method': 'get'
     }
+    print(f"Generated callback URL: {os.getenv('API_BASE_URL')}/api/payment-callback")
+
 
     auth = (os.getenv('RAZORPAY_KEY_ID'), os.getenv('RAZORPAY_KEY_SECRET'))
     headers = {'Content-Type': 'application/json'}

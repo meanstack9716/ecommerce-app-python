@@ -10,7 +10,7 @@ import decimal
 from app.utils.utils import create_error_response
 from constants import (
     ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, 
-    ORDER_STATUS, PAYMENT_CALLBACK_API, VERIFY_PAYMENT
+    ORDER_STATUS, PAYMENT_CALLBACK_API, VERIFY_PAYMENT, ORDER_SUCCESS_ROUTE
 )
 from app.utils.jwt_handlers import jwt_error_handler
 from mongoengine.queryset.visitor import Q
@@ -20,7 +20,7 @@ from app.utils.order_helpers import (
     validate_promo_code, group_cart_items_by_seller, 
     generate_order_numbers, create_order_items, 
     create_order_object, verify_order_payment, 
-    handle_payment_callback
+    handle_payment_callback, create_razorpay_payment_link
 )
 
 order_bp = Blueprint('order', __name__)
@@ -97,9 +97,9 @@ def place_order():
                 promo_discount=seller_promo_discount,
                 order_note=data.get('order_note', '')
             )
-
+            redirect_url = data.get('redirect_url')
             if data['payment_method'] == 'card':
-                payment_link = create_razorpay_payment_link(order, user)
+                payment_link = create_razorpay_payment_link(order, user, redirect_url)
                 payment_links.append({
                     'order_number': order_numbers[i],
                     'payment_link_id': payment_link['id'],
@@ -157,15 +157,29 @@ def payment_callback():
             'message': 'Missing required callback parameters'
         }, 400)
 
-    order, error = handle_payment_callback(payment_id, payment_link_id, payment_link_reference_id, order_number)
-    if error:
-        app_redirect_url = f"{os.getenv('APP_BASE_URL')}/order-failed?error={error.get('message')}"
-        return redirect(app_redirect_url, code=302)
+    try:
+        url = f"https://api.razorpay.com/v1/payments/{payment_id}"
+        auth = (os.getenv('RAZORPAY_KEY_ID'), os.getenv('RAZORPAY_KEY_SECRET'))
+        response = requests.get(url, auth=auth)
+        response.raise_for_status()
+        payment_data = response.json()
 
-    app_redirect_url = f"ecommerce://order-success?order_number={order_number}&status=success"
-    return redirect(app_redirect_url, code=302)
+        order, error = handle_payment_callback(payment_id, payment_link_id, payment_link_reference_id, order_number)
+        if error:
+            redirect_url = f"{os.getenv('APP_BASE_URL')}/order-failed?error={error.get('message')}"
+            return redirect(redirect_url, code=302)
 
-@order_bp.route('/order-success')
+        redirect_url = payment_data.get('notes', {}).get('redirect_url')
+        if not redirect_url:
+            redirect_url = f"{os.getenv('APP_BASE_URL')}/order-success?order_number={order_number}"
+
+        return redirect(redirect_url, code=302)
+
+    except Exception as e:
+        redirect_url = f"{os.getenv('APP_BASE_URL')}/order-failed?error={str(e)}"
+        return redirect(redirect_url, code=302)
+
+@order_bp.route(ORDER_SUCCESS_ROUTE)
 def order_success():
     order_number = request.args.get('order_number')
     status = request.args.get('status')
