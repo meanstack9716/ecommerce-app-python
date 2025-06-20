@@ -1,32 +1,35 @@
 from flask import Blueprint, request, jsonify, redirect, url_for
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import Address, Seller, User, ProductCart, Products, ProductVariant, ProductVariantImage, Order, OrderItem, Category, SubCategory, SubSubCategory, PromoCode
+from app.models import (
+    Address, Seller, User, ProductCart, Products, ProductVariant, 
+    ProductVariantImage, Order, OrderItem, Category, SubCategory, 
+    SubSubCategory, PromoCode
+)
 from datetime import datetime, timedelta
-import random
-import string
-import requests
-import os
-import json
-from bson import ObjectId
 import decimal
 from app.utils.utils import create_error_response
-from constants import ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, ORDER_STATUS, CREATE_RAZORPAY_PAYMENT_LINK, PAYMENT_CALLBACK_API, RAZOR_PAY_PAYMENT_LINK, VERIFY_PAYMENT
+from constants import (
+    ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, 
+    ORDER_STATUS, PAYMENT_CALLBACK_API, VERIFY_PAYMENT
+)
 from app.utils.jwt_handlers import jwt_error_handler
 from mongoengine.queryset.visitor import Q
 from app.utils.validation import validate_required_fields
+from app.utils.order_helpers import (
+    get_user, validate_shipping_address, get_cart_items, 
+    validate_promo_code, group_cart_items_by_seller, 
+    generate_order_numbers, create_order_items, 
+    create_order_object, verify_order_payment, 
+    handle_payment_callback
+)
 
 order_bp = Blueprint('order', __name__)
 
 @order_bp.route(ORDER_PLACE_API, methods=['POST'])
-@jwt_error_handler
 @jwt_required()
 def place_order():
     user_id = get_jwt_identity()
-    try:
-        user = User.objects(id=user_id).first()
-    except DoesNotExist:
-        return create_error_response({'error': 'User not found'}, 404)
-    
+    user = get_user(user_id)
     if not user:
         return create_error_response({'error': 'User not found'}, 404)
 
@@ -39,191 +42,69 @@ def place_order():
     if not is_valid:
         return create_error_response(validation_errors, 400)
 
-    valid_payment_methods = ['cod', 'card']
-    if data['payment_method'] not in valid_payment_methods:
+    if data['payment_method'] not in ['cod', 'card']:
         return create_error_response({'error': 'Invalid payment method'}, 400)
 
-    try:
-        shipping_address = Address.objects(
-            user_id=user_id,
-            id=ObjectId(data['shipping_address_id'])
-        ).first()
+    shipping_address, error = validate_shipping_address(user_id, data['shipping_address_id'])
+    if error:
+        return create_error_response(error, error.get('status', 400))
 
-        if not shipping_address:
-            return create_error_response({
-                'error': 'Shipping address not found',
-                'message': 'The specified shipping address doesn\'t exist or doesn\'t belong to you'
-            }, 404)
-
-        address_fields = ['line1', 'city', 'state', 'postal_code', 'country']
-        if not all(getattr(shipping_address, field) for field in address_fields):
-            return create_error_response({
-                'error': 'Incomplete shipping address',
-                'message': 'The shipping address is missing required fields'
-            }, 400)
-
-    except Exception as e:
-        return create_error_response({
-            'error': 'Invalid shipping address',
-            'message': str(e)
-        }, 400)
-
-    cart_items_query = ProductCart.objects(user_id=user_id)
-    
-    if data['cart_items_ids']:
-        try:
-            cart_items_ids = [ObjectId(id) for id in data['cart_items_ids']]
-            cart_items = cart_items_query.filter(id__in=cart_items_ids)
-        except Exception:
-            return create_error_response({'error': 'Invalid cart item IDs format'}, 400)
-    else:
-        cart_items = cart_items_query
-    
+    cart_items, error = get_cart_items(user_id, data.get('cart_items_ids', []))
+    if error:
+        return create_error_response(error, 400)
     if not cart_items:
         return create_error_response({'error': 'No cart items found'}, 400)
 
     promo_code = None
     promo_discount = decimal.Decimal('0.00')
     if 'promo_code' in data and data['promo_code']:
-        promo_code_str = data['promo_code'].upper().strip()
-        current_datetime = datetime.utcnow()
-        
-        try:
-            total_amount = decimal.Decimal('0.00')
-            for item in cart_items:
-                product = item.product_id
-                if product:
-                    final_price = decimal.Decimal(str(product.final_price))
-                    total_amount += final_price * item.quantity
+        total_amount = sum(
+            decimal.Decimal(str(item.product_id.final_price)) * item.quantity
+            for item in cart_items if item.product_id
+        )
+        promo_code, promo_discount = validate_promo_code(user_id, data['promo_code'], total_amount)
+        if not promo_code:
+            return create_error_response(promo_discount, 400)
 
-            promo_code = PromoCode.objects(
-                code=promo_code_str,
-                is_active=True,
-                start_date__lte=current_datetime
-            ).first()
-
-            if not promo_code:
-                return create_error_response({'error': 'Invalid or expired promo code'}, 400)
-
-            if promo_code.expiry_date and promo_code.expiry_date < current_datetime:
-                return create_error_response({'error': 'Promo code has expired'}, 400)
-
-            if promo_code.only_first_order and Order.objects(user_id=user_id).count() > 0:
-                return create_error_response({'error': 'This promo code is only valid for first orders'}, 400)
-
-            if total_amount < decimal.Decimal(str(promo_code.min_order_amount)):
-                return create_error_response({
-                    'error': f'Minimum order amount of {promo_code.min_order_amount} required'
-                }, 400)
-
-            if promo_code.max_uses and promo_code.used_count >= promo_code.max_uses:
-                return create_error_response({'error': 'Promo code usage limit reached'}, 400)
-
-            promo_discount = promo_code.calculate_discount(float(total_amount))
-            promo_discount = decimal.Decimal(str(promo_discount))
-
-        except Exception as e:
-            return create_error_response({'error': f'Promo code validation failed: {str(e)}'}, 400)
-
-    seller_items = {}
-    for cart_item in cart_items:
-        product = cart_item.product_id
-        if not product:
-            continue
-        seller_id = str(product.seller_id.id) if product.seller_id else None
-        if seller_id not in seller_items:
-            seller_items[seller_id] = {
-                'seller': product.seller_id,
-                'items': []
-            }
-        seller_items[seller_id]['items'].append(cart_item)
-
-    order_numbers = set()
-    while len(order_numbers) < len(seller_items):
-        order_number = 'ORD-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
-        order_numbers.add(order_number)
-    order_numbers = list(order_numbers)
-
+    seller_items = group_cart_items_by_seller(cart_items)
+    order_numbers = generate_order_numbers(len(seller_items))
     orders = []
     payment_links = []
 
     try:
         for i, (seller_id, seller_data) in enumerate(seller_items.items()):
-            total_amount = decimal.Decimal('0.00')
-            order_items = []
+            order_items = create_order_items(seller_data['items'])
             
-            for cart_item in seller_data['items']:
-                product = cart_item.product_id
-                price = decimal.Decimal(str(product.price))
-                discount_percent = decimal.Decimal(str(product.discount_percent)) if hasattr(product, 'discount_percent') else decimal.Decimal('0')
-                final_price = price * (1 - discount_percent / 100)
-                total_amount += final_price * cart_item.quantity
-
-                order_item = OrderItem(
-                    product_id=product,
-                    selected_size=cart_item.selected_size,
-                    selected_color=cart_item.selected_color,
-                    selected_color_name=cart_item.selected_color_name,
-                    quantity=cart_item.quantity,
-                    price=price,
-                    discount_percent=discount_percent,
-                    final_price=int(final_price * 100)
-                )
-                order_items.append(order_item)
-
             seller_promo_discount = decimal.Decimal('0.00')
             if promo_code:
-                seller_ratio = total_amount / (total_amount + sum(o['total_amount'] for o in orders))
+                seller_ratio = sum(
+                    decimal.Decimal(str(item.final_price / 100)) * item.quantity
+                    for item in order_items
+                ) / sum(
+                    decimal.Decimal(str(item.final_price / 100)) * item.quantity
+                    for order in orders for item in order['items']
+                ) if orders else decimal.Decimal('1.00')
                 seller_promo_discount = promo_discount * seller_ratio
-                total_amount -= seller_promo_discount
 
-            if total_amount < decimal.Decimal('1.00'):
-                return create_error_response({
-                    'error': 'Invalid amount',
-                    'message': 'Total amount must be at least 1 INR'
-                }, 400)
-
-            order = Order(
-                user_id=user,
-                seller_id=seller_data['seller'] if seller_data['seller'] else None,
+            order = create_order_object(
+                user=user,
+                seller_data=seller_data,
                 order_number=order_numbers[i],
-                items=order_items,
-                total_amount=total_amount,
-                status='pending',
-                shipping_address={
-                    'id': str(shipping_address.id),
-                    'address_line1': shipping_address.line1,
-                    'address_line2': shipping_address.line2 if shipping_address.line2 else '',
-                    'city': shipping_address.city,
-                    'state': shipping_address.state,
-                    'postal_code': shipping_address.postal_code,
-                    'country': shipping_address.country,
-                    'type': shipping_address.type if shipping_address.type else 'home'
-                },
+                order_items=order_items,
+                shipping_address=shipping_address,
                 payment_method=data['payment_method'],
-                payment_status='pending',
-                order_note=data.get('order_note', ''),
-                applied_promo_code=promo_code,
-                promo_code_discount=seller_promo_discount,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                promo_code=promo_code,
+                promo_discount=seller_promo_discount,
+                order_note=data.get('order_note', '')
             )
 
             if data['payment_method'] == 'card':
-                customer_name = f"{user.first_name or ''} {user.last_name or ''}".strip() or "Customer"
-                payment_link = generate_razorpay_payment_link(
-                    amount=float(total_amount),
-                    reference_id=order_numbers[i],
-                    customer_name=customer_name,
-                    customer_email=user.email,
-                    customer_phone=user.phone_number if hasattr(user, 'phone_number') and user.phone_number else '',
-                    description=f"Order {order_numbers[i]}",
-                )
+                payment_link = create_razorpay_payment_link(order, user)
                 payment_links.append({
                     'order_number': order_numbers[i],
                     'payment_link_id': payment_link['id'],
                     'payment_link_url': payment_link['short_url'],
-                    'amount': total_amount
+                    'amount': order.total_amount
                 })
                 order.payment_link_id = payment_link['id']
 
@@ -231,7 +112,7 @@ def place_order():
             orders.append({
                 'order_id': str(order.id),
                 'order_number': order.order_number, 
-                'amount': float(total_amount),
+                'amount': float(order.total_amount),
                 'items_count': len(order_items),
                 'promo_discount': float(seller_promo_discount)
             })
@@ -263,51 +144,26 @@ def place_order():
             'message': str(e)
         }, 500)
 
-
 @order_bp.route(PAYMENT_CALLBACK_API, methods=['GET'])
 def payment_callback():
-    try:
-        payment_id = request.args.get('razorpay_payment_id')
-        payment_link_id = request.args.get('razorpay_payment_link_id')
-        payment_link_reference_id = request.args.get('razorpay_payment_link_reference_id')
-        order_number = request.args.get('order_number')
+    payment_id = request.args.get('razorpay_payment_id')
+    payment_link_id = request.args.get('razorpay_payment_link_id')
+    payment_link_reference_id = request.args.get('razorpay_payment_link_reference_id')
+    order_number = request.args.get('order_number')
 
-        if not all([payment_id, payment_link_id, payment_link_reference_id, order_number]):
-            return create_error_response({
-                'error': 'Invalid callback parameters',
-                'message': 'Missing required callback parameters'
-            }, 400)
+    if not all([payment_id, payment_link_id, payment_link_reference_id, order_number]):
+        return create_error_response({
+            'error': 'Invalid callback parameters',
+            'message': 'Missing required callback parameters'
+        }, 400)
 
-        payment_link = get_razorpay_payment_link(payment_link_id)
-        if payment_link['status'] != 'paid':
-            return create_error_response({
-                'error': 'Payment not completed',
-                'message': 'Payment link status is not paid'
-            }, 400)
-
-        order = Order.objects(
-            order_number=order_number,
-            payment_link_id=payment_link_id
-        ).first()
-
-        if not order:
-            return create_error_response({
-                'error': 'Order not found',
-                'message': 'No matching order found'
-            }, 404)
-
-        order.payment_id = payment_id
-        order.payment_status = 'paid'
-        order.status = 'confirmed'
-        order.updated_at = datetime.utcnow()
-        order.save()
-        app_base_url = os.getenv('APP_BASE_URL')
-        app_redirect_url = f"ecommerce://order-success?order_number={order_number}&status=success"
+    order, error = handle_payment_callback(payment_id, payment_link_id, payment_link_reference_id, order_number)
+    if error:
+        app_redirect_url = f"{os.getenv('APP_BASE_URL')}/order-failed?error={error.get('message')}"
         return redirect(app_redirect_url, code=302)
 
-    except Exception as e:
-        app_redirect_url = f"{os.getenv('APP_BASE_URL')}/order-failed?error={str(e)}"
-        return redirect(app_redirect_url, code=302)
+    app_redirect_url = f"ecommerce://order-success?order_number={order_number}&status=success"
+    return redirect(app_redirect_url, code=302)
 
 @order_bp.route('/order-success')
 def order_success():
@@ -326,106 +182,16 @@ def verify_payment():
     if not is_valid:
         return create_error_response(validation_errors, 400)
 
-    try:
-        order = Order.objects(
-            user_id=user_id,
-            order_number=data['order_number'],
-            payment_id=data['payment_id']
-        ).first()
+    order, error = verify_order_payment(user_id, data['order_number'], data['payment_id'])
+    if error:
+        return create_error_response(error, error.get('status', 400))
 
-        if not order:
-            return create_error_response({'error': 'Order not found'}, 404)
+    return jsonify({
+        'message': 'Payment verified successfully',
+        'order_number': order.order_number,
+        'status': order.status
+    }), 200
 
-        payment_link = get_razorpay_payment_link(order.payment_link_id)
-        if payment_link['status'] != 'paid':
-            return create_error_response({
-                'error': 'Payment not verified',
-                'message': 'Payment status is not paid'
-            }, 400)
-
-        if order.payment_status != 'paid':
-            order.payment_status = 'paid'
-            order.status = 'confirmed'
-            order.updated_at = datetime.utcnow()
-            order.save()
-
-        return jsonify({
-            'message': 'Payment verified successfully',
-            'order_number': order.order_number,
-            'status': order.status
-        }), 200
-
-    except Exception as e:
-        return create_error_response({
-            'error': 'Payment verification failed',
-            'message': str(e)
-        }, 500)
-
-def generate_razorpay_payment_link(amount, reference_id, customer_name, customer_email, customer_phone='', description=None):
-    url = RAZOR_PAY_PAYMENT_LINK
-    amount_in_paise = int(amount * 100)
-    
-    if amount_in_paise < 100:
-        raise ValueError("Amount must be at least 1 INR")
-
-    expire_by = int((datetime.utcnow() + timedelta(days=7)).timestamp())
-    
-    payload = {
-        'amount': amount_in_paise,
-        'currency': 'INR',
-        'description': description or f"Order {reference_id}",
-        'customer': {
-            'name': customer_name,
-            'email': customer_email,
-            'contact': customer_phone or ''
-        },
-        'reference_id': reference_id,
-        'notify': {
-            'sms': bool(customer_phone),
-            'email': bool(customer_email)
-        },
-        'reminder_enable': True,
-        'expire_by': expire_by,
-        'notes': {
-            'order_number': reference_id
-        },
-        'callback_url': f"ecommerce://payment-callback?order_number={reference_id}",
-        'callback_method': 'get'
-    }
-
-    auth = (os.getenv('RAZORPAY_KEY_ID'), os.getenv('RAZORPAY_KEY_SECRET'))
-    headers = {'Content-Type': 'application/json'}
-    
-    try:
-        response = requests.post(url, data=json.dumps(payload), auth=auth, headers=headers)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.HTTPError as e:
-        error_message = str(e)
-        try:
-            error_details = response.json()
-            error_message = error_details.get('error', {}).get('description', str(e))
-        except ValueError:
-            pass
-        raise Exception(f"Razorpay payment link creation failed: {error_message}")
-
-def get_razorpay_payment_link(payment_link_id):
-    url = f"https://api.razorpay.com/v1/payment_links/{payment_link_id}"
-    auth = (os.getenv('RAZORPAY_KEY_ID'), os.getenv('RAZORPAY_KEY_SECRET'))
-    
-    try:
-        response = requests.get(url, auth=auth)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.HTTPError as e:
-        try:
-            error_details = response.json()
-            error_message = error_details.get('error', {}).get('description', str(e))
-        except ValueError:
-            error_message = str(e)
-        raise Exception(f"Razorpay payment link fetch failed: {error_message}")
-    except requests.exceptions.RequestException as e:
-        raise Exception(f"Razorpay payment link fetch failed: {str(e)}")
 
 @order_bp.route(ORDER_LIST_API, methods=['GET'])
 @jwt_error_handler
