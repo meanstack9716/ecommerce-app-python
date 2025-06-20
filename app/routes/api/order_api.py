@@ -1,6 +1,6 @@
-from flask import Blueprint, request, jsonify, redirect
+from flask import Blueprint, request, jsonify, redirect, url_for
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import Address, Seller, User, ProductCart, Products, ProductVariant, ProductVariantImage, Order, OrderItem
+from app.models import Address, Seller, User, ProductCart, Products, ProductVariant, ProductVariantImage, Order, OrderItem, Category, SubCategory, SubSubCategory, PromoCode
 from datetime import datetime, timedelta
 import random
 import string
@@ -39,7 +39,7 @@ def place_order():
     if not is_valid:
         return create_error_response(validation_errors, 400)
 
-    valid_payment_methods = ['Cash On Delivery', 'card']
+    valid_payment_methods = ['cod', 'card']
     if data['payment_method'] not in valid_payment_methods:
         return create_error_response({'error': 'Invalid payment method'}, 400)
 
@@ -81,6 +81,49 @@ def place_order():
     
     if not cart_items:
         return create_error_response({'error': 'No cart items found'}, 400)
+
+    promo_code = None
+    promo_discount = decimal.Decimal('0.00')
+    if 'promo_code' in data and data['promo_code']:
+        promo_code_str = data['promo_code'].upper().strip()
+        current_datetime = datetime.utcnow()
+        
+        try:
+            total_amount = decimal.Decimal('0.00')
+            for item in cart_items:
+                product = item.product_id
+                if product:
+                    final_price = decimal.Decimal(str(product.final_price))
+                    total_amount += final_price * item.quantity
+
+            promo_code = PromoCode.objects(
+                code=promo_code_str,
+                is_active=True,
+                start_date__lte=current_datetime
+            ).first()
+
+            if not promo_code:
+                return create_error_response({'error': 'Invalid or expired promo code'}, 400)
+
+            if promo_code.expiry_date and promo_code.expiry_date < current_datetime:
+                return create_error_response({'error': 'Promo code has expired'}, 400)
+
+            if promo_code.only_first_order and Order.objects(user_id=user_id).count() > 0:
+                return create_error_response({'error': 'This promo code is only valid for first orders'}, 400)
+
+            if total_amount < decimal.Decimal(str(promo_code.min_order_amount)):
+                return create_error_response({
+                    'error': f'Minimum order amount of {promo_code.min_order_amount} required'
+                }, 400)
+
+            if promo_code.max_uses and promo_code.used_count >= promo_code.max_uses:
+                return create_error_response({'error': 'Promo code usage limit reached'}, 400)
+
+            promo_discount = promo_code.calculate_discount(float(total_amount))
+            promo_discount = decimal.Decimal(str(promo_discount))
+
+        except Exception as e:
+            return create_error_response({'error': f'Promo code validation failed: {str(e)}'}, 400)
 
     seller_items = {}
     for cart_item in cart_items:
@@ -124,9 +167,15 @@ def place_order():
                     quantity=cart_item.quantity,
                     price=price,
                     discount_percent=discount_percent,
-                    final_price=int(final_price * 100)  # Convert to paise
+                    final_price=int(final_price * 100)
                 )
                 order_items.append(order_item)
+
+            seller_promo_discount = decimal.Decimal('0.00')
+            if promo_code:
+                seller_ratio = total_amount / (total_amount + sum(o['total_amount'] for o in orders))
+                seller_promo_discount = promo_discount * seller_ratio
+                total_amount -= seller_promo_discount
 
             if total_amount < decimal.Decimal('1.00'):
                 return create_error_response({
@@ -134,7 +183,6 @@ def place_order():
                     'message': 'Total amount must be at least 1 INR'
                 }, 400)
 
-            # Create Order
             order = Order(
                 user_id=user,
                 seller_id=seller_data['seller'] if seller_data['seller'] else None,
@@ -155,12 +203,13 @@ def place_order():
                 payment_method=data['payment_method'],
                 payment_status='pending',
                 order_note=data.get('order_note', ''),
+                applied_promo_code=promo_code,
+                promo_code_discount=seller_promo_discount,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow()
             )
 
             if data['payment_method'] == 'card':
-                # Create Razorpay payment link
                 customer_name = f"{user.first_name or ''} {user.last_name or ''}".strip() or "Customer"
                 payment_link = generate_razorpay_payment_link(
                     amount=float(total_amount),
@@ -183,12 +232,19 @@ def place_order():
                 'order_id': str(order.id),
                 'order_number': order.order_number, 
                 'amount': float(total_amount),
-                'items_count': len(order_items)
+                'items_count': len(order_items),
+                'promo_discount': float(seller_promo_discount)
             })
+
+        if promo_code:
+            promo_code.used_count += 1
+            promo_code.save()
 
         response_data = {
             'message': f"{'Payment links and orders' if data['payment_method'] == 'card' else 'Orders'} created successfully",
             'orders': orders,
+            'promo_code': promo_code.code if promo_code else None,
+            'total_promo_discount': float(promo_discount) if promo_code else 0,
             'payment_links': [{
                 'payment_link_id': pl['payment_link_id'],
                 'payment_link_url': pl['payment_link_url'],
@@ -206,6 +262,7 @@ def place_order():
             'error': 'Failed to create order',
             'message': str(e)
         }, 500)
+
 
 @order_bp.route(PAYMENT_CALLBACK_API, methods=['GET'])
 def payment_callback():
@@ -304,8 +361,7 @@ def verify_payment():
             'message': str(e)
         }, 500)
 
-def generate_razorpay_payment_link(amount, reference_id, customer_name, customer_email, 
-                                 customer_phone='', description=None):
+def generate_razorpay_payment_link(amount, reference_id, customer_name, customer_email, customer_phone='', description=None):
     url = RAZOR_PAY_PAYMENT_LINK
     amount_in_paise = int(amount * 100)
     
@@ -384,15 +440,13 @@ def get_order_lists():
     search = request.args.get('search', '').strip()
     from_date = request.args.get('from_date')
     to_date = request.args.get('to_date')
+    status = request.args.get('status')
     
     orders = Order.objects(user_id=user_id)
     
     if search:
-        matching_products = Products.objects(name__icontains=search).only('id')
-        product_ids = [str(p.id) for p in matching_products]
-        
-        matching_sellers = Seller.objects(businessName__icontains=search).only('id')
-        seller_ids = [str(s.id) for s in matching_sellers]
+        product_ids = [str(p.id) for p in Products.objects(name__icontains=search).only('id')]
+        seller_ids = [str(s.id) for s in Seller.objects(businessName__icontains=search).only('id')]
         
         orders = orders.filter(
             Q(order_number__icontains=search) |
@@ -414,53 +468,111 @@ def get_order_lists():
         except ValueError:
             pass
     
-    orders = orders.order_by('-created_at')
+    if status:
+        orders = orders.filter(status=status)
     
-    def get_safe_reference(ref):
-        try:
-            return str(ref.id) if ref else None
-        except:
-            return None
+    orders = orders.order_by('-created_at')
     
     order_list = []
     for order in orders:
-        seller_details = {}
-        if order.seller_id:
-            seller = Seller.objects(id=order.seller_id.id).first()
-            if seller:
-                seller_details = {
-                    'seller_name': seller.businessName,
-                    'seller_contact': seller.businessMobile,
-                    'seller_email': seller.businessEmail
-                }
+        seller = Seller.objects(id=order.seller_id.id).first() if order.seller_id else None
+        
+        promo_code = None
+        if order.applied_promo_code:
+            promo_code = PromoCode.objects(id=order.applied_promo_code.id).first()
+        
+        items = []
+        for idx, item in enumerate(order.items):
+            product = Products.objects(id=item.product_id.id).first() if item.product_id else None
+            if not product:
+                continue
+                
+            category = Category.objects(id=product.category_id.id).first() if product.category_id else None
+            sub_category = SubCategory.objects(id=product.subcategory_id.id).first() if product.subcategory_id else None
+            
+            gallery = []
+            sizes = []
+            if hasattr(product, 'variants'):
+                for variant in product.variants:
+                    if variant.color_hexa_code == item.selected_color or variant.color == item.selected_color_name:
+                        if hasattr(variant, 'images'):
+                            for img in variant.images:
+                                gallery.append({
+                                    'color': variant.color,
+                                    'id': str(img.id),
+                                    'img_url': url_for('serve_uploaded_files', filename=img.image_url, _external=True) if img.image_url else None 
+                                    
+                                })
+                    
+                    if not any(size['value'] == variant.size for size in sizes):
+                        sizes.append({
+                            'value': variant.size,
+                            'size_type': 'standard',
+                            'id': str(variant.id)
+                        })
+            
+            product_data = {
+                'id': str(product.id),
+                'title': product.name,
+                'price': float(product.price),
+                'final_price': float(product.final_price),
+                'thumbnail_url': getattr(product, 'thumbnail_url', None),
+                'category': {
+                    'name': category.name if category else None,
+                    'id': str(category.id) if category else None
+                } if category else None,
+                'sub_category': {
+                    'name': sub_category.name if sub_category else None,
+                    'id': str(sub_category.id) if sub_category else None
+                } if sub_category else None,
+                'seller': {
+                    'business_name': seller.businessName if seller else None,
+                    'id': str(seller.id) if seller else None
+                },
+                'gallery': gallery,
+                'sizes': sizes
+            }
+            
+            items.append({
+                'item_id': f"{order.id}-{idx}",
+                'product': product_data,
+                'quantity': item.quantity,
+                'price': float(item.price),
+                'final_price': float(item.final_price),
+                'selected_size': item.selected_size,
+                'selected_color': item.selected_color,
+                'selected_color_name': item.selected_color_name
+            })
         
         order_data = {
             'id': str(order.id),
             'order_number': order.order_number,
+            'status': order.status,
             'total_amount': float(order.total_amount),
-            'orderStatus': order.status.capitalize(),
+            'created_at': order.created_at.isoformat() + 'Z',
+            'items': items,
             'payment_method': order.payment_method,
-            'payment_status': order.payment_status.capitalize(),
-            'created_at': order.created_at.isoformat() + 'Z' if order.created_at else None,
-            'seller_details': seller_details,
-            'items': [{
-                'product_id': get_safe_reference(item.product_id),
-                'product_name': item.product_id.name if item.product_id else None,
-                'selected_size': item.selected_size,
-                'selected_color': item.selected_color,
-                'quantity': item.quantity,
-                'price': float(item.price),
-                'final_price': float(item.final_price)
-            } for item in order.items]
+            'payment_status': order.payment_status,
+            'seller': {
+                'id': str(seller.id) if seller else None,
+                'business_name': seller.businessName if seller else None
+            },
+            'promo_code': {
+                'id': str(promo_code.id) if promo_code else None,
+                'code': promo_code.code if promo_code else None,
+                'discount_type': promo_code.discount_type if promo_code else None,
+                'discount_value': float(promo_code.discount_value) if promo_code else 0,
+                'discount_amount': float(order.promo_code_discount) if hasattr(order, 'promo_code_discount') else 0
+            } if promo_code else None
         }
         order_list.append(order_data)
     
     return jsonify({
         'status': 'success',
         'message': 'Orders fetched successfully',
-        'data': order_list
+        'data': order_list,
+        'count': len(order_list)
     })
-
 
 @order_bp.route(GET_ORDER_STATUS_TYPES, methods=['GET'])
 @jwt_error_handler
