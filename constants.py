@@ -146,7 +146,8 @@ PRODUCT_LISTS_API= f'/api/products/list'
 PRODUCT_LISTS__BY_ID_API = f'/api/products/<string:product_id>'
 PRODUCT_LISTS_BY_ID_API = f'/api/products/<string:product_id>'
 PRODUCT_REVIEW_API = f'/api/products/review'
-GET_PRODUCT_REVIEW_BY_ID_API = f'/api/products/review/<string:product_id>'
+GET_PRODUCT_REVIEW_BY_ID_API = f'/api/products/<string:product_id>/reviews'
+GET_PRODUCT_USER_REVIEW_BY_ID_API = "/api/products/<product_id>/user-review"
 #Product API Endpoint Constants End
 
 # Brand Endpoint API Start
