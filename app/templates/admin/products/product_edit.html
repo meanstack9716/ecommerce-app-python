@@ -840,9 +840,15 @@ admin_content %}
 
       try {
         setLoadingState(true);
-        const response = await submitFormData(formData);
-        handleSuccessResponse(response);
-        // window.location.href = "/products/list";
+
+        const response = await sendPostRequest("/api/products/edit", formData, 'PUT');
+        if (!response.success) {
+          throw new Error(response.message || "Failed to update product");
+        }
+        showToast(response.message, "success");
+      
+        window.location.href = "/products/list";
+
       } catch (error) {
         handleSubmissionError(error);
       } finally {
@@ -1174,25 +1180,6 @@ admin_content %}
             }
           }
         });
-    };
-
-    const submitFormData = async (formData) => {
-      const response = await fetch("/api/products/edit", {
-        method: "PUT",
-        body: formData,
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update product");
-      }
-
-      return await response.json();
-    };
-
-    const handleSuccessResponse = (response) => {
-      showToast(response.message, "success");
     };
 
     const handleSubmissionError = (error) => {
