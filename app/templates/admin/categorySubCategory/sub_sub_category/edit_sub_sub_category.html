@@ -204,7 +204,7 @@
                     throw new Error(result.message || result.errors || 'Failed to update');
                 }
             } catch (error) {
-                handleResponse('Error: ' + error.message);
+                handleErrors('Error: ' + error.message);
             } finally {
                 btnText.textContent = 'Update Sub-Sub Category';
                 loadingSpinner.classList.add('hidden');

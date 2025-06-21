@@ -46,26 +46,48 @@
         </div>
     </div>
 
-    <!-- Category Grid -->
+    <!-- Category Table -->
     {% if categories|length > 0 %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" id="category-grid">
-        {% for category in categories %}
-        <div class="bg-gray-50 rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105">
-            <img src="{{ category.img_url }}" alt="Category Image"
-                class="w-full h-52 object-cover bg-white">
-            <div class="p-4">
-                <h2 class="text-md font-semibold text-gray-800 mb-2">{{ category.name }}</h2>
-                <p class="text-gray-600 text-sm leading-relaxed line-clamp-3">{{ category.description|safe }}</p>
-            </div>
-            <div class="px-4 pb-4 flex justify-between items-center text-sm">
-                <a href="/category/edit/{{ category.id }}" class="text-blue-600 hover:text-blue-800">Edit</a>
-                <button type="button" class="text-red-600 hover:text-red-800 font-medium"
-                    data-category-id="{{ category.id }}" onclick="showDeleteModal(this)">
-                    Delete
-                </button>
-            </div>
-        </div>
-        {% endfor %}
+    <div class="overflow-x-auto">
+        {% set category_headers = ['Image', 'Name', 'Description', 'Actions'] %}
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    {% for header in category_headers %}
+                    <th scope="col"
+                        class="border border-gray-200 px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                        {{ header }}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200" id="category-table-body">
+                {% for category in categories %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                        <div class="flex-shrink-0 h-10 w-10 mx-auto">
+                            <img class="h-10 w-10 rounded-full object-cover" src="{{ category.img_url }}"
+                                alt="Category image">
+                        </div>
+                    </td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                        <div class="text-sm font-medium text-gray-900">{{ category.name }}</div>
+                    </td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                        <div class="text-sm text-gray-500">{{ category.description|striptags }}</div>
+                    </td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center font-medium">
+                        <a href="/category/edit/{{ category.id }}"
+                            class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</a>
+                        <button type="button" class="text-red-600 hover:text-red-900"
+                            data-category-id="{{ category.id }}" onclick="showDeleteModal(this)">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
     {% else %}
     <div class="text-center py-12">
@@ -137,7 +159,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('search-input');
         const clearFilterButton = document.getElementById('clear-filter');
-        const categoryGrid = document.getElementById('category-grid');
+        const categoryTableBody = document.getElementById('category-table-body');
         const itemsPerPageSelect = document.getElementById('items-per-page');
         const paginationDiv = document.getElementById('pagination');
         const noCategoriesMessage = document.getElementById('no-categories');
@@ -169,36 +191,38 @@
                 }
 
                 if (data.categories.length === 0) {
-                    // Show no categories message and hide grid and pagination
                     noCategoriesMessage.classList.remove('hidden');
-                    if (categoryGrid) categoryGrid.style.display = 'none';
+                    if (categoryTableBody) categoryTableBody.style.display = 'none';
                     if (paginationDiv) paginationDiv.style.display = 'none';
                 } else {
-                    // Show grid and pagination, hide no categories message
                     noCategoriesMessage.classList.add('hidden');
-                    if (categoryGrid) categoryGrid.style.display = 'grid';
+                    if (categoryTableBody) categoryTableBody.style.display = 'table-row-group';
                     if (paginationDiv) paginationDiv.style.display = 'flex';
 
-                    // Update category grid content
-                    categoryGrid.innerHTML = '';
+                    categoryTableBody.innerHTML = '';
                     data.categories.forEach(category => {
-                        const card = `
-                        <div class="bg-gray-50 rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105">
-                            <img src="${category.img_url}" alt="Category Image"
-                                class="w-full h-48 object-contain bg-white p-4" />
-                            <div class="p-4">
-                                <h2 class="text-md font-semibold text-gray-800 mb-2">${category.name}</h2>
-                                <p class="text-gray-600 text-sm leading-relaxed line-clamp-3">${category.description}</p>
-                            </div>
-                            <div class="px-4 pb-4 flex justify-between items-center text-sm">
-                                <a href="/category/edit/${category.id}" class="text-blue-600 hover:text-blue-800">Edit</a>
-                                <button type="button" class="text-red-600 hover:text-red-800 font-medium"
+                        const row = `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <img class="h-10 w-10 rounded-full object-cover" src="${category.img_url}" alt="Category image">
+                                </div>
+                            </td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                                <div class="text-sm font-medium text-gray-900">${category.name}</div>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="text-sm text-gray-500 max-w-xs truncate">${category.description.replace(/<[^>]*>?/gm, '')}</div>
+                            </td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-sm font-medium text-center">
+                                <a href="/category/edit/${category.id}" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</a>
+                                <button type="button" class="text-red-600 hover:text-red-900"
                                     data-category-id="${category.id}" onclick="showDeleteModal(this)">
                                     Delete
                                 </button>
-                            </div>
-                        </div>`;
-                        categoryGrid.innerHTML += card;
+                            </td>
+                        </tr>`;
+                        categoryTableBody.innerHTML += row;
                     });
                 }
 
@@ -269,7 +293,7 @@
                             showToast('Category deleted successfully', 'success');
                             fetchCategories(currentPage);
                         } else {
-                            showToast(result.errors || result.message || 'Something went wrong', 'error');
+                            handleErrors(result.errors || result.message || 'Something went wrong', 'error');
                         }
                     } catch (error) {
                         console.error('Error deleting category:', error);
