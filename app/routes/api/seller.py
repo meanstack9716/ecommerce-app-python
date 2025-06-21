@@ -5,7 +5,7 @@ from app.utils.utils import generate_random_password, create_error_response
 from app import db
 from mongoengine import ValidationError
 from app.utils.image_upload import upload_image, validate_fields
-from constants import ADD_SELLER, ADDRESS_TYPES, UPDATE_SELLER, APPROVAL_STATUSES
+from constants import ADD_SELLER, ADDRESS_TYPES, UPDATE_SELLER, APPROVAL_STATUSES, ROLE_ADMIN, ROLE_SELLER, ROLE_USER
 
 seller_bp = Blueprint('seller', __name__, url_prefix='/user')
 
@@ -151,7 +151,7 @@ def update_seller():
     data = request.form
     files = request.files
     seller_id = data.get('seller_id')
-    
+
     if not seller_id:
         return create_error_response({"error": "Seller ID is required"}, 400)
 
@@ -193,7 +193,6 @@ def update_seller():
                 if existing_user and str(existing_user.id) != str(user.id):
                     return create_error_response({"error": "Email already in use"}, 409)
 
-            # Update user fields
             for field in updatable_user_fields:
                 if field in data:
                     if field == 'phoneNumber':
@@ -202,7 +201,6 @@ def update_seller():
                         setattr(user, field, data.get(field))
             user.save(session=session)
 
-            # Update personal address (should be is_primary=True)
             personal_address = seller.address or Address.objects(
                 user_id=user.id, 
                 is_primary=True
@@ -222,7 +220,6 @@ def update_seller():
                         field_name = key.split('[')[1][:-1]
                         address_data[field_name] = data.get(key)
                 
-                # Ensure critical fields are set
                 address_data.update({
                     'is_primary': True,
                     'is_business_address': False,
@@ -237,7 +234,6 @@ def update_seller():
                 
                 personal_address.save(session=session)
 
-            # Update business address (should be is_business_address=True)
             business_address = seller.businessAddress or Address.objects(
                 user_id=user.id, 
                 is_business_address=True
@@ -258,7 +254,6 @@ def update_seller():
                         type=business_address_data.get('type', 'business')
                     )
                 
-                # Ensure critical fields are set
                 business_address_data.update({
                     'is_primary': False,
                     'is_business_address': True,
@@ -274,7 +269,6 @@ def update_seller():
                 business_address.save(session=session)
                 seller.businessAddress = business_address
 
-            # Update seller fields
             for field in updatable_seller_fields:
                 if field in data:
                     setattr(seller, field, data.get(field))
@@ -284,6 +278,19 @@ def update_seller():
                     if field == 'is_approved':
                         if data.get(field) not in APPROVAL_STATUSES:
                             return create_error_response({"error": f"Invalid status. Must be one of: {APPROVAL_STATUSES}"}, 400)
+                        
+                        if data.get(field) == "approved":
+                            new_role = Role.objects(name="seller").first()
+                        else:
+                            new_role = Role.objects(name="user").first()
+                            
+                        if not new_role:
+                            return create_error_response({"error": "Role not found in system"}, 500)
+                        
+                        if user.role != new_role:
+                            user.role = new_role
+                            user.save(session=session)
+                    
                     setattr(seller, field, data.get(field))
             
             if personal_address:
@@ -302,7 +309,6 @@ def update_seller():
                 if 'panNumber' in data:
                     identification.pan_number = data.get('panNumber')
                 
-                # Process PAN card file
                 if 'panCardFront' in files and files['panCardFront'].filename:
                     pan_card_front_url, err = upload_image(files['panCardFront'])
                     if err:
@@ -314,7 +320,6 @@ def update_seller():
                     else:
                         identification.pan_card_front = data['panCardFront']
                 
-                # Process address proof file
                 if 'addressProofFront' in files and files['addressProofFront'].filename:
                     address_proof_front_url, err = upload_image(files['addressProofFront'])
                     if err:
@@ -338,7 +343,8 @@ def update_seller():
                 "business_address_id": str(business_address.id) if business_address else None,
                 "identification_id": str(identification.id) if identification else None,
                 "is_approved": seller.is_approved,
-                "approved_by": str(seller.approved_by.id) if seller.approved_by else None
+                "approved_by": str(seller.approved_by.id) if seller.approved_by else None,
+                "role": user.role.name if user.role else None
             }), 200
 
         except ValidationError as e:
