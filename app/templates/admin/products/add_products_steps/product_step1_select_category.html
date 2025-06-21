@@ -2,52 +2,55 @@
 <div id="step-1" class="space-y-4 hidden">
 
     <div>
-        <label for="category_id" class="block text-base font-medium text-black mb-1 tracking-wide">Select Category <span
-            class="text-red-500">*</span></label>
+        <label for="category_search" class="block text-base font-medium text-black mb-1 tracking-wide">Select Category
+            <span class="text-red-500">*</span></label>
 
         <div class="relative">
-            <select id="category_id"
+            <input type="text" id="category_search" placeholder="Search category..."
                 class="block w-full border rounded-md px-5 py-3 appearance-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
-                <option value="">Select Category</option>
-                {% for category in categories %}
-                <option value="{{ category.id }}" class="text-base">{{ category.name }}</option>
-                {% endfor %}
-            </select>
+            <input type="hidden" id="category_id">
+            <div id="category_results"
+                class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg hidden max-h-60 overflow-auto">
+            </div>
             <span
                 class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                expand_more
+                search
             </span>
         </div>
     </div>
 
     <div>
-        <label for="sub_category_id" class="block text-base font-medium text-black mb-1 tracking-wide">Select Subcategory <span
-            class="text-red-500">*</span></label>
+        <label for="sub_category_search" class="block text-base font-medium text-black mb-1 tracking-wide">Select
+            Subcategory <span class="text-red-500">*</span></label>
 
         <div class="relative">
-            <select id="sub_category_id" disabled
+            <input type="text" id="sub_category_search" placeholder="Search subcategory..." disabled
                 class="block w-full border rounded-md px-5 py-3 appearance-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
-                <option value="">Select Subcategory</option>
-            </select>
+            <input type="hidden" id="sub_category_id">
+            <div id="sub_category_results"
+                class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg hidden max-h-60 overflow-auto">
+            </div>
             <span
                 class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                expand_more
+                search
             </span>
         </div>
     </div>
 
     <div>
-        <label for="sub_sub_categories_id" class="block text-base font-medium text-black mb-1 tracking-wide">Select Sub-Sub Category Type <span
-            class="text-red-500">*</span></label>
+        <label for="sub_sub_category_search" class="block text-base font-medium text-black mb-1 tracking-wide">Select
+            Sub-Sub Category Type <span class="text-red-500">*</span></label>
 
         <div class="relative">
-            <select id="sub_sub_categories_id" disabled
+            <input type="text" id="sub_sub_category_search" placeholder="Search product type..." disabled
                 class="block w-full border rounded-md px-5 py-3 appearance-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out">
-                <option value="" class="text-xs">Select Product Type</option>
-            </select>
+            <input type="hidden" id="sub_sub_categories_id">
+            <div id="sub_sub_category_results"
+                class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg hidden max-h-60 overflow-auto">
+            </div>
             <span
                 class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                expand_more
+                search
             </span>
         </div>
     </div>

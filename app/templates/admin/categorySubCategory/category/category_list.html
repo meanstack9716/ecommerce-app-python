@@ -27,8 +27,14 @@
                     <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-4 text-gray-500">
                         search
                     </span>
+                    <!-- Add this dropdown -->
+                    <div id="search-results"
+                        class="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-lg py-1 max-h-60 overflow-auto hidden">
+                        <!-- Results will be populated here -->
+                    </div>
                 </div>
             </div>
+
         </div>
 
         <!-- Clear Filter Button -->
@@ -164,16 +170,48 @@
         const paginationDiv = document.getElementById('pagination');
         const noCategoriesMessage = document.getElementById('no-categories');
         const loader = document.getElementById('loader');
+        const searchResults = document.getElementById('search-results');
 
         let currentPage = "{{ pagination.page | tojson | safe }}";
+        let allCategories = [];
+        let debounceTimer;
 
-        // Debounce function to limit API calls
         function debounce(func, wait) {
             let timeout;
             return function (...args) {
                 clearTimeout(timeout);
                 timeout = setTimeout(() => func.apply(this, args), wait);
             };
+        }
+
+        function showSearchResults() {
+            searchResults.classList.remove('hidden');
+            populateSearchResults(allCategories);
+        }
+
+        function hideSearchResults() {
+            searchResults.classList.add('hidden');
+        }
+
+        function populateSearchResults(categories) {
+            searchResults.innerHTML = '';
+
+            if (categories.length === 0) {
+                searchResults.innerHTML = '<div class="px-4 py-2 text-gray-500">No categories found</div>';
+                return;
+            }
+
+            categories.forEach(category => {
+                const item = document.createElement('div');
+                item.className = 'px-4 py-2 hover:bg-gray-100 cursor-pointer';
+                item.textContent = category.name;
+                item.addEventListener('click', () => {
+                    searchInput.value = category.name;
+                    hideSearchResults();
+                    fetchCategories(1);
+                });
+                searchResults.appendChild(item);
+            });
         }
 
         async function fetchCategories(page = currentPage) {
@@ -184,6 +222,10 @@
 
             try {
                 const data = await fetchJsonData(url);
+
+                if (page === 1) {
+                    allCategories = data.categories;
+                }
 
                 if (data.categories.length === 0 && page > 1) {
                     fetchCategories(page - 1);
@@ -202,26 +244,26 @@
                     categoryTableBody.innerHTML = '';
                     data.categories.forEach(category => {
                         const row = `
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
-                                <div class="flex-shrink-0 h-10 w-10">
-                                    <img class="h-10 w-10 rounded-full object-cover" src="${category.img_url}" alt="Category image">
-                                </div>
-                            </td>
-                            <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
-                                <div class="text-sm font-medium text-gray-900">${category.name}</div>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <div class="text-sm text-gray-500 max-w-xs truncate">${category.description.replace(/<[^>]*>?/gm, '')}</div>
-                            </td>
-                            <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-sm font-medium text-center">
-                                <a href="/category/edit/${category.id}" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</a>
-                                <button type="button" class="text-red-600 hover:text-red-900"
-                                    data-category-id="${category.id}" onclick="showDeleteModal(this)">
-                                    Delete
-                                </button>
-                            </td>
-                        </tr>`;
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                            <div class="flex-shrink-0 h-10 w-10 mx-auto">
+                                <img class="h-10 w-10 rounded-full object-cover" src="${category.img_url}" alt="Category image">
+                            </div>
+                        </td>
+                        <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                            <div class="text-sm font-medium text-gray-900">${category.name}</div>
+                        </td>
+                        <td class="px-6 py-4 text-center border border-gray-200">
+                            <div class="text-sm text-gray-500  truncate">${category.description.replace(/<[^>]*>?/gm, '')}</div>
+                        </td>
+                        <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-sm font-medium text-center">
+                            <a href="/category/edit/${category.id}" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</a>
+                            <button type="button" class="text-red-600 hover:text-red-900"
+                                data-category-id="${category.id}" onclick="showDeleteModal(this)">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>`;
                         categoryTableBody.innerHTML += row;
                     });
                 }
@@ -247,29 +289,29 @@
 
             if (pagination.has_prev) {
                 paginationDiv.innerHTML += `
-                <a href="#" data-page="${pagination.prev_num}"
-                    class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition categories-pagination-link">
-                    Previous
-                </a>`;
+            <a href="#" data-page="${pagination.prev_num}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition categories-pagination-link">
+                Previous
+            </a>`;
             } else {
                 paginationDiv.innerHTML += `
-                <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>`;
+            <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>`;
             }
 
             paginationDiv.innerHTML += `
-            <span class="px-4 py-2 text-sm" id="page-info">
-                Page ${pagination.page} of ${pagination.pages}
-            </span>`;
+        <span class="px-4 py-2 text-sm" id="page-info">
+            Page ${pagination.page} of ${pagination.pages}
+        </span>`;
 
             if (pagination.has_next) {
                 paginationDiv.innerHTML += `
-                <a href="#" data-page="${pagination.next_num}"
-                    class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition categories-pagination-link">
-                    Next
-                </a>`;
+            <a href="#" data-page="${pagination.next_num}"
+                class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition categories-pagination-link">
+                Next
+            </a>`;
             } else {
                 paginationDiv.innerHTML += `
-                <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>`;
+            <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>`;
             }
 
             attachPaginationListeners('.categories-pagination-link', fetchCategories);
@@ -293,7 +335,7 @@
                             showToast('Category deleted successfully', 'success');
                             fetchCategories(currentPage);
                         } else {
-                            handleErrors(result.errors || result.message || 'Something went wrong', 'error');
+                            showToast(result.errors || result.message || 'Something went wrong', 'error');
                         }
                     } catch (error) {
                         console.error('Error deleting category:', error);
@@ -303,11 +345,20 @@
             });
         };
 
-        // Debounced fetchCategories for search input
-        const debouncedFetchCategories = debounce(() => fetchCategories(1), 300);
+        searchInput.addEventListener('focus', showSearchResults);
+        searchInput.addEventListener('blur', () => setTimeout(hideSearchResults, 200));
 
-        // Input event for search
-        searchInput.addEventListener('input', debouncedFetchCategories);
+        searchInput.addEventListener('input', function () {
+            showSearchResults();
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const searchTerm = this.value.toLowerCase();
+                const filtered = allCategories.filter(cat =>
+                    cat.name.toLowerCase().includes(searchTerm)
+                );
+                populateSearchResults(filtered);
+            }, 300);
+        });
 
         clearFilterButton.addEventListener('click', (e) => {
             e.preventDefault();
@@ -319,9 +370,7 @@
             itemsPerPageSelect.addEventListener('change', () => fetchCategories(1));
         }
 
-        attachPaginationListeners('.categories-pagination-link', fetchCategories);
-
-        clearFilterButton.classList.toggle('hidden', !searchInput.value);
+        fetchCategories(1);
     });
 </script>
 {% endblock %}
