@@ -335,7 +335,7 @@
                             showToast('Category deleted successfully', 'success');
                             fetchCategories(currentPage);
                         } else {
-                            showToast(result.errors || result.message || 'Something went wrong', 'error');
+                            handleErrors(result.errors || result.message || 'Something went wrong', 'error');
                         }
                     } catch (error) {
                         console.error('Error deleting category:', error);
