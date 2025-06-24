@@ -207,3 +207,10 @@ SALES_TOP_PRODUCTS_API = f'/api/sales/top-products'
 RECENT_SALES_API = f'/api/sales/recent'
 TOP_PRODUCT_SALES_API = f'/api/sales/top-products'
 GET_SALES_SELLER = f'/api/sales/sellers'
+
+
+# Generate Referral Code Enpoint Start
+GENERATE_REFERRAL_CODE = f'/api/referral/generate'
+APPLY_REFERRAL_CODE = f'/api/referral/apply'
+GET_REWARDS = f'/my-rewards'
+# Generate Referral Code Enpoint End

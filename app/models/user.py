@@ -23,6 +23,7 @@ class User(db.Document):
     cloudinary_id = db.StringField()
     is_admin = db.BooleanField(default=False)
     is_email_verified = db.BooleanField(default=False)
+    referred_by = db.ReferenceField('self')
     status = db.StringField(choices=["activated", "deactivated", "hold"], default="activated")
     
     def hash_password(self):
