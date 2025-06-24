@@ -711,8 +711,8 @@ def update_product():
 def remove_product_image():
     try:
         user_id = session.get('user_id')
-        if not user_id:
-            return create_error_response({'error': 'Authentication required'}, 401)
+        if 'user_id' not in session:
+            return redirect(url_for('admin_api.login_page'))
         
         product_id = request.form.get('product_id')
         image_id = request.form.get('image_id')
