@@ -5,7 +5,7 @@ import string
 from datetime import datetime
 from bson import ObjectId
 from flask import render_template, redirect, url_for, session, request, jsonify
-from constants import ( ADD_PRODUCT_PAGE_WEB_URL, ADD_NEW_PRODUCT_WEB_URL, GET_PRODUCT_LIST_WEB_URL, GET_PRODUCT_DETAILS_WEB_URL, GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL, EDIT_PRODUCT_WEB_URL, ALLOWED_SIZES, ALLOWED_GENDERS)
+from constants import ( ADD_PRODUCT_PAGE_WEB_URL, ADD_NEW_PRODUCT_WEB_URL, GET_PRODUCT_LIST_WEB_URL, GET_PRODUCT_DETAILS_WEB_URL, GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL, EDIT_PRODUCT_WEB_URL, ALLOWED_SIZES, ALLOWED_GENDERS, REMOVE_PRODUCT_IMAGE_WEB_URL)
 from app.models import ( Category, SubCategory, SubSubCategory, Products, ProductVariant, ProductVariantImage, User, Seller, ProductBrands)
 from app.utils.image_upload import upload_image, get_local_ip
 from app.utils.utils import create_error_response
@@ -707,7 +707,7 @@ def update_product():
     except Exception as error:
         return create_error_response({'error': str(error)}, 500)
 
-@admin_api.route('/api/products/remove-image', methods=['DELETE'])
+@admin_api.route(REMOVE_PRODUCT_IMAGE_WEB_URL, methods=['DELETE'])
 def remove_product_image():
     try:
         user_id = session.get('user_id')
