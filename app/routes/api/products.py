@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session, url_for
 from datetime import datetime
-from constants import PRODUCT_LISTS_API, PRODUCT_LISTS_BY_ID_API
+from constants import PRODUCT_LISTS_API, PRODUCT_LISTS_BY_ID_API, GET_SIMILAR_PRODUCT_API
 from app.models import Products, Category, SubCategory, SubSubCategory, Seller, User
 from app.models.products import ProductVariant, ProductVariantImage
 from app.utils.image_upload import upload_image
@@ -9,7 +9,8 @@ from app.utils.utils import create_error_response
 from flask import current_app
 from mongoengine.queryset.visitor import Q
 from app.extensions import db
-
+from decimal import Decimal
+from bson import ObjectId
 products_bp = Blueprint('products_bp', __name__)
 
 @products_bp.route(PRODUCT_LISTS_API, methods=['GET'])
@@ -305,3 +306,88 @@ def get_product_by_id(product_id):
 
     except Exception as e:
         return create_error_response({"error": str(e)}, status_code=500)
+
+
+def format_product(product):
+    primary_image = None
+    if product.variants and len(product.variants) > 0:
+        variant = product.variants[0]
+        if variant.images and len(variant.images) > 0:
+            primary_image = url_for('serve_uploaded_files', filename=variant.images[0].image_url, _external=True)
+
+    return {
+        'id': str(product.id),
+        'name': product.name,
+        'brand_id': str(product.brand_id.id) if product.brand_id else None,
+        'price': float(product.price),
+        'discount_price': float(product.discount_price) if product.discount_price else None,
+        'final_price': float(product.final_price),
+        'primary_image': primary_image,
+        'category_id': str(product.category_id.id),
+        'subcategory_id': str(product.subcategory_id.id),
+        'subsubcategory_id': str(product.subsubcategory_id.id)
+    }
+
+@products_bp.route(GET_SIMILAR_PRODUCT_API, methods=['GET'])
+def get_similar_products(product_id):
+    try:
+        limit = int(request.args.get('limit', 8))
+        include_brand = request.args.get('include_brand', 'false').lower() == 'true'
+        include_price_range = request.args.get('include_price_range', 'false').lower() == 'true'
+        min_price = request.args.get('min_price')
+        max_price = request.args.get('max_price')
+        
+        current_product = Products.objects.get(id=product_id)
+        
+        # Base query
+        query = Q(status='active') & Q(id__ne=current_product.id)
+        
+        # Category filters
+        query &= Q(category_id=current_product.category_id)
+        query &= Q(subcategory_id=current_product.subcategory_id)
+        query &= Q(subsubcategory_id=current_product.subsubcategory_id)
+        
+        # Brand filter
+        if include_brand and current_product.brand_id:
+            query &= Q(brand_id=current_product.brand_id)
+        elif include_brand and not current_product.brand_id:
+            return jsonify({
+                'success': False,
+                'message': 'Current product has no brand associated'
+            }), 400
+            
+        # Price range filter - PRIORITIZE custom range if provided
+        if min_price and max_price:
+            try:
+                query &= Q(final_price__gte=Decimal(min_price)) & \
+                        Q(final_price__lte=Decimal(max_price))
+            except:
+                return jsonify({
+                    'success': False,
+                    'message': 'Invalid price range values'
+                }), 400
+        elif include_price_range:
+            # Fall back to 20% range if no custom range provided
+            price_min = float(current_product.final_price) * 0.8
+            price_max = float(current_product.final_price) * 1.2
+            query &= Q(final_price__gte=Decimal(str(price_min))) & \
+                    Q(final_price__lte=Decimal(str(price_max)))
+        
+        similar_products = Products.objects(query).limit(limit)
+        
+        return jsonify({
+            'success': True,
+            'data': [format_product(p) for p in similar_products],
+            'filters_applied': {
+                'same_brand': include_brand,
+                'price_range': bool(min_price and max_price) or include_price_range,
+                'price_min': float(min_price) if min_price else float(current_product.final_price) * 0.8,
+                'price_max': float(max_price) if max_price else float(current_product.final_price) * 1.2,
+                'original_product_brand': str(current_product.brand_id.id) if current_product.brand_id else None
+            }
+        }), 200
+        
+    except Products.DoesNotExist:
+        return create_error_response({'error': 'Product not found'}, 404)
+    except Exception as e:
+        return create_error_response({'error': str(e)}, 500)
