@@ -854,9 +854,15 @@ admin_content %}
 
       try {
         setLoadingState(true);
-        const response = await submitFormData(formData);
-        handleSuccessResponse(response);
+
+        const response = await sendPostRequest("/api/products/edit", formData, 'PUT');
+        if (!response.success) {
+          throw new Error(response.message || "Failed to update product");
+        }
+        showToast(response.message, "success");
+      
         window.location.href = "/products/list";
+
       } catch (error) {
         handleSubmissionError(error);
       } finally {
@@ -962,38 +968,161 @@ admin_content %}
       return isDetailsValid && isSizesValid && isColorsValid && areQuantitiesValid && areImagesValid && areSizesUnique;
     };
 
-    const prepareFormData = () => {
+    function prepareFormData() {
       const formData = new FormData();
       const variations = [];
+      const sizeBlocks = document.querySelectorAll('.size-block');
 
-      const basicFields = {
-        name: document.getElementById("title").value,
-        description: document.getElementById("description").value,
-        details: quill.root.innerHTML,
-        price: document.getElementById("price").value,
-        discount_price: document.getElementById("discount_price").value,
-        stock_quantity: document.getElementById("stock").value,
-        category_id: productData.category.id,
-        subcategory_id: productData.sub_category.id,
-        subsubcategory_id: productData.sub_sub_category.id,
-        brand:
-          DOM.brandSelect.value === "other" ? DOM.otherBrandInput.value : DOM.brandSelect.value,
+      const formValues = {
+        name: document.getElementById('title').value,
+        description: document.getElementById('description').value,
+        details: document.getElementById('product-details').value,
+        price: document.getElementById('price').value,
+        discount_price: document.getElementById('discount_price').value,
+        stock_quantity: document.getElementById('stock').value,
+        category_id: "{{ product.category.id }}",
+        subcategory_id: "{{ product.sub_category.id }}",
+        subsubcategory_id: "{{ product.sub_sub_category.id }}",
+        product_id: "{{ product.id }}"
       };
 
-      DOM.productDetails.value = quill.root.innerHTML;
-      Object.entries(basicFields).forEach(([key, value]) => formData.append(key, value));
-      formData.append("product_id", productData.id);
+      for (const key in formValues) {
+        if (formValues[key] !== undefined && formValues[key] !== null) {
+          formData.append(key, formValues[key]);
+        }
+      }
 
-      document.querySelectorAll(".size-block").forEach((sizeBlock) => {
-        const sizeName = getSizeNameFromBlock(sizeBlock);
-        const sizeId = sizeBlock.dataset.sizeId;
-        processStandardColorVariations(sizeBlock, sizeName, sizeId, variations, formData);
-        processCustomColorVariations(sizeBlock, sizeName, sizeId, variations, formData);
+      const brandSelect = document.getElementById('brand');
+      if (brandSelect) {
+        const brandValue = brandSelect.value;
+        formData.append('brand_id', brandValue === 'other' ? document.getElementById('other-brand').value : brandValue);
+      }
+
+      const thumbnailInput = document.getElementById('thumbnail');
+      if (thumbnailInput && thumbnailInput.files.length > 0) {
+        formData.append('thumbnail', thumbnailInput.files[0]);
+      }
+
+      const processedColors = new Set();
+
+      document.querySelectorAll('.standard-colors input[type="checkbox"]:checked').forEach(checkbox => {
+        const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1];
+        const colorNameInput = checkbox.closest('div').querySelector(`input[name*="[${colorHex}][name]"]`);
+        const colorName = colorNameInput ? colorNameInput.value : colorHex;
+
+        if (processedColors.has(colorName)) return;
+        processedColors.add(colorName);
+
+        const uploadId = `upload_color_${colorHex}`;
+        const fileInput = document.getElementById(uploadId);
+
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+          const sizesWithThisColor = [];
+          sizeBlocks.forEach(sizeBlock => {
+            const sizeName = sizeBlock.querySelector('.size-select').value === 'custom'
+              ? sizeBlock.querySelector('.custom-size-input').value
+              : sizeBlock.querySelector('.size-select').value;
+
+            const isChecked = sizeBlock.querySelector(`.standard-colors input[name*="[standard][${colorHex}]"]:checked`);
+            if (isChecked) sizesWithThisColor.push(sizeName);
+          });
+
+          Array.from(fileInput.files).forEach((file, fileIndex) => {
+            sizesWithThisColor.forEach(size => {
+              formData.append(`images[${colorName}][${size}]`, file, `image_${fileIndex}_${size}.${file.name.split('.').pop()}`);
+            });
+          });
+        }
       });
 
-      formData.append("variations", JSON.stringify(variations));
+      document.querySelectorAll('.custom-color-container > div').forEach(customColorDiv => {
+        const hexInput = customColorDiv.querySelector('input[type="color"]');
+        const nameInput = customColorDiv.querySelector('input[placeholder="Color name"]');
+
+        if (hexInput && nameInput && nameInput.value.trim()) {
+          const colorHex = hexInput.value;
+          const colorName = nameInput.value.trim();
+          const customColorId = nameInput.name.match(/\[custom\]\[(.*?)\]/)[1];
+
+          if (processedColors.has(colorName)) return;
+          processedColors.add(colorName);
+
+          const uploadId = `upload_custom_${customColorId}`;
+          const fileInput = document.getElementById(uploadId);
+
+          if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            const sizesWithThisColor = [];
+            sizeBlocks.forEach(sizeBlock => {
+              const sizeName = sizeBlock.querySelector('.size-select').value === 'custom'
+                ? sizeBlock.querySelector('.custom-size-input').value
+                : sizeBlock.querySelector('.size-select').value;
+
+              const customColorDiv = sizeBlock.querySelector(`.custom-color-container input[value="${colorHex}"]`);
+              if (customColorDiv && customColorDiv.closest('div').querySelector('input[placeholder="Color name"]').value.trim() === colorName) {
+                sizesWithThisColor.push(sizeName);
+              }
+            });
+
+            Array.from(fileInput.files).forEach((file, fileIndex) => {
+              sizesWithThisColor.forEach(size => {
+                formData.append(`images[${colorName}][${size}]`, file, `image_${fileIndex}_${size}.${file.name.split('.').pop()}`);
+              });
+            });
+          }
+        }
+      });
+
+      sizeBlocks.forEach(sizeBlock => {
+        const sizeName = sizeBlock.querySelector('.size-select').value === 'custom'
+          ? sizeBlock.querySelector('.custom-size-input').value
+          : sizeBlock.querySelector('.size-select').value;
+        const sizeId = sizeBlock.dataset.sizeId;
+
+        sizeBlock.querySelectorAll('.standard-colors input[type="checkbox"]:checked').forEach(checkbox => {
+          const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1];
+          const colorNameInput = checkbox.closest('div').querySelector(`input[name*="[${colorHex}][name]"]`);
+          const colorName = colorNameInput ? colorNameInput.value : colorHex;
+          const quantityInput = checkbox.closest('div').nextElementSibling;
+          const quantity = parseInt(quantityInput.value) || 0;
+
+          if (sizeName && colorName && colorHex) {
+            variations.push({
+              size: sizeName,
+              color: colorName,
+              stock_quantity: quantity,
+              color_hexa_code: colorHex
+            });
+          }
+        });
+
+        sizeBlock.querySelectorAll('.custom-color-container > div').forEach(customColorDiv => {
+          const hexInput = customColorDiv.querySelector('input[type="color"]');
+          const nameInput = customColorDiv.querySelector('input[placeholder="Color name"]');
+          const quantityInput = customColorDiv.querySelector('.custom-color-quantity');
+
+          if (hexInput && nameInput && nameInput.value.trim()) {
+            const quantity = parseInt(quantityInput.value) || 0;
+            const colorHex = hexInput.value;
+            const colorName = nameInput.value.trim();
+
+            variations.push({
+              size: sizeName,
+              color: colorName,
+              stock_quantity: quantity,
+              color_hexa_code: colorHex
+            });
+          }
+        });
+      });
+
+      formData.append('variations', JSON.stringify(variations));
+
+      for (const pair of formData.entries()) {
+        console.log(pair[0], pair[1]);
+      }
+
       return formData;
-    };
+    }
 
     const processStandardColorVariations = (
       sizeBlock,
@@ -1065,25 +1194,6 @@ admin_content %}
             }
           }
         });
-    };
-
-    const submitFormData = async (formData) => {
-      const response = await fetch("/api/products/edit", {
-        method: "PUT",
-        body: formData,
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update product");
-      }
-
-      return await response.json();
-    };
-
-    const handleSuccessResponse = (response) => {
-      showToast(response.message, "success");
     };
 
     const handleSubmissionError = (error) => {

@@ -4,7 +4,7 @@
 
 {% block admin_content %}
 <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 max-w-full mx-auto">
-  <h1 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">Order Management</h1>
+  <h1 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6 text-center">Order Management</h1>
 
   <!-- Toast Container -->
   <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
@@ -69,7 +69,7 @@
 
   <!-- Orders Table -->
   <div class="overflow-x-auto border border-gray-200 rounded-lg">
-    {% set order_list_header = ['Order #', 'Date', 'Total', 'Status', 'Payment', 'Actions'] %}
+    {% set order_list_header = ['Order #', 'Date', 'Total', 'Status', 'Payment'] %}
     <table class="min-w-full divide-y divide-gray-200 table-auto">
       <thead class="bg-gray-50 text-xs sm:table-header-group hidden">
         <tr>
@@ -94,10 +94,10 @@
               data-label="Status">Delivered</td>
           <td class="sm:table-cell hidden px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-b border-gray-200 sm:border-b-0 flex justify-between items-center before:content-[attr(data-label)] before:font-semibold before:text-gray-600 before:pr-2"
               data-label="Payment">Paid</td>
-          <td class="sm:table-cell block px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-b border-gray-200 sm:border-b-0 flex justify-center items-center before:content-[attr(data-label)] before:font-semibold before:text-gray-600 before:pr-2 sm:before:content-none"
+          <!-- <td class="sm:table-cell block px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-b border-gray-200 sm:border-b-0 flex justify-center items-center before:content-[attr(data-label)] before:font-semibold before:text-gray-600 before:pr-2 sm:before:content-none"
               data-label="Actions">
             <button class="text-indigo-600 hover:text-indigo-800">View</button>
-          </td>
+          </td> -->
         </tr>
       </tbody>
     </table>
@@ -231,16 +231,14 @@
                   </div>
                 </td>
                 <td class="px-4 py-3 border sm:px-6 sm:py-4 whitespace-nowrap flex flex-col gap-2">
-                  <span class="text-xs font-medium bg-yellow-100 py-2 rounded-2xl">
-                    ${order.payment_method}
+                  <span class="text-xs font-medium bg-yellow-100 py-2.5 rounded-2xl">
+                    ${order.payment_method.charAt(0).toUpperCase() + order.payment_method.slice(1)}
                   </span>
                   <span class="text-xs sm:text-sm font-medium">
                     ${order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
                   </span>
                 </td>
-                <td class="px-4 py-3 border sm:px-6 sm:py-4 whitespace-nowrap text-center text-xs sm:text-sm font-medium">
-                  <a href="/order-details/${order.id}" class="text-blue-600 hover:text-blue-800">View</a>
-                </td>
+             
               </tr>
             `;
             ordersTableBody.innerHTML += row;

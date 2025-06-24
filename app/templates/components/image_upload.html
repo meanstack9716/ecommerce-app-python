@@ -20,7 +20,7 @@
                         class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
                         <span>Upload files</span>
                         <input type="file" name="{{ name }}" id="{{ id }}" {% if multiple %}multiple{% endif %}
-                            accept="{{ accept }}" class="sr-only" onchange="handleImageUpload(this)">
+                            accept="{{ accept }}" class="sr-only" onchange="handleImageUpload(this)" onclick="event.stopPropagation()">
                     </label>
                     <p class="pl-1">or drag and drop</p>
                 </div>
@@ -60,6 +60,14 @@
     document.addEventListener('DOMContentLoaded', function () {
         const dropzone = document.getElementById('{{ id }}-dropzone');
         const fileInput = document.getElementById('{{ id }}');
+
+        // Add click handler to open file dialog when dropzone is clicked
+        dropzone.addEventListener('click', function(e) {
+            // Only trigger if the click wasn't on a child element that has its own click handler
+            if (e.target === dropzone || !e.target.closest('button, a, input')) {
+                fileInput.click();
+            }
+        });
 
         // Prevent default drag behaviors
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {

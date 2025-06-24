@@ -3,7 +3,7 @@ from constants import SUBCATEGORY_LIST_WEB_URL, Add_SUBCATEGORY_LIST_WEB_URL, GE
 from app.utils.image_upload import get_local_ip, upload_image
 from app.utils.validation import validate_required_fields
 from . import admin_api
-from app.models import Category, SubCategory, SubSubCategory
+from app.models import Category, SubCategory, SubSubCategory, Products
 from bson import ObjectId
 from flask import current_app
 from app.utils.utils import create_error_response
@@ -127,7 +127,7 @@ def edit_sub_category_page(sub_category_id):
 @admin_api.route(UPDATE_SUB_CATEGORY_WEB_URL, methods=['POST'])
 def update_sub_category(sub_category_id):
     if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
+        return redirect(url_for('admin_api.login_page'))
 
     try:
         sub_category = SubCategory.objects(id=ObjectId(sub_category_id)).first()
@@ -186,18 +186,18 @@ def update_sub_category(sub_category_id):
 @admin_api.route(DELETE_SUB_CATEGORY_WEB_URL, methods=['DELETE'])
 def delete_sub_category(sub_category_id):
     if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
+         return redirect(url_for('admin_api.login_page'))
 
     try:
-        # Find the subcategory to be deleted
         sub_category = SubCategory.objects(id=ObjectId(sub_category_id)).first()
         if not sub_category:
             return create_error_response({'error': 'SubCategory not found'}, 404)
 
-        # Delete all related SubSubCategories
-        SubSubCategory.objects(sub_category_id=ObjectId(sub_category_id)).delete()
+        products_count = Products.objects(subcategory_id=sub_category).count()
+        if products_count > 0:
+            return create_error_response({'error': 'Cannot delete sub-subcategory because it is linked to existing products.'}, 400)
 
-        # Delete the SubCategory itself
+        SubSubCategory.objects(sub_category_id=ObjectId(sub_category_id)).delete()
         sub_category.delete()
 
         return jsonify({

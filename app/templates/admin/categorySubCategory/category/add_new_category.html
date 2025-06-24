@@ -41,8 +41,15 @@
                 class="w-48 flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
                 <span id="btn-text" class="btn-text">Add Category</span>
                 <!-- Loader spinner -->
-                <div id="loader"
-                    class="loader hidden animate-spin h-5 w-5 border-t-2 border-white border-solid rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <div id="loading-spinner" class="hidden">
+                    <svg class="animate-spin h-5 w-5 text-white block" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
                 </div>
             </button>
         </div>
@@ -86,7 +93,7 @@
     document.getElementById('categoryForm').addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        document.getElementById('loader').classList.remove('hidden');
+        document.getElementById('loading-spinner').classList.remove('hidden');
         document.getElementById('btn-text').classList.add('hidden');
 
         const formData = new FormData(this);
@@ -116,9 +123,8 @@
             return isMinLengthValid;
         });
 
-
         if (!isImageValid || !areOtherFieldsValid) {
-            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('loading-spinner').classList.add('hidden');
             document.getElementById('btn-text').classList.remove('hidden');
             return;
         }
@@ -129,21 +135,23 @@
         } catch (error) {
             console.error('Error:', error);
             showToast('An error occurred while submitting the form', 'error');
-            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('loading-spinner').classList.add('hidden');
             document.getElementById('btn-text').classList.remove('hidden');
         }
     });
 
     function handleResponse(response) {
-        document.getElementById('loader').classList.add('hidden');
+        document.getElementById('loading-spinner').classList.add('hidden');
         document.getElementById('btn-text').classList.remove('hidden');
 
         if (response.success) {
             showToast('Category Added Successfully!', 'success');
             document.getElementById('categoryForm').reset();
-            // Clear image preview
             document.getElementById('category-image-preview').innerHTML = '';
             document.getElementById('category-image-preview').classList.add('hidden');
+            setTimeout(() => {
+                window.location.href = "{{ url_for('admin_api.get_category_list_page') }}";
+            }, 500)
         } else {
             if (response.errors) {
                 Object.keys(response.errors).forEach(field => {

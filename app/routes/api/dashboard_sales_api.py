@@ -33,6 +33,7 @@ def get_period_dates(period, now=None):
 @sales_api.route(SALES_OVERVIEW_API, methods=['GET'])
 def sales_overview():
     try:
+        # Authentication and authorization
         user_id = session.get('user_id')
         if not user_id:
             return redirect(url_for('admin_api.login_page'))
@@ -41,37 +42,70 @@ def sales_overview():
         if not user:
             return create_error_response({'error': 'User not found'}, 404)
         
+        # Get query parameters
         seller_id = request.args.get('seller_id')
-        period = request.args.get('period', 'this_month')
+        period = request.args.get('period')
+        start_date_param = request.args.get('start_date')
+        end_date_param = request.args.get('end_date')
         
         now = datetime.now(pytz.UTC)
-        start_date, end_date = get_period_dates(period, now)
         
-        prev_end_date = start_date - timedelta(seconds=1)
-        prev_start_date = prev_end_date
-        if period == 'this_month':
-            prev_start_date = (start_date - timedelta(days=1)).replace(day=1)
-        elif period == 'last_month':
+        # Date range handling
+        if start_date_param and end_date_param:
+            # Custom date range provided
+            try:
+                start_date = datetime.strptime(start_date_param, '%Y-%m-%d').replace(
+                    hour=0, minute=0, second=0, microsecond=0, tzinfo=pytz.UTC
+                )
+                end_date = datetime.strptime(end_date_param, '%Y-%m-%d').replace(
+                    hour=23, minute=59, second=59, microsecond=0, tzinfo=pytz.UTC
+                )
+                
+                # Calculate previous period (same duration before start_date)
+                delta = end_date - start_date
+                prev_end_date = start_date - timedelta(seconds=1)
+                prev_start_date = prev_end_date - delta
+            except ValueError as e:
+                return create_error_response({'error': f'Invalid date format: {str(e)}. Use YYYY-MM-DD'}, 400)
+        elif period:
+            # Period-based date range
+            start_date, end_date = get_period_dates(period, now)
+            
+            # Calculate previous period dates
+            prev_end_date = start_date - timedelta(seconds=1)
+            if period == 'this_month':
+                prev_start_date = (start_date - timedelta(days=1)).replace(day=1)
+            elif period == 'last_month':
+                prev_start_date = (start_date - timedelta(days=1)).replace(day=1)
+                prev_end_date = start_date - timedelta(seconds=1)
+            elif period == 'this_quarter':
+                prev_start_date = (start_date - timedelta(days=92)).replace(day=1)
+            elif period == 'this_year':
+                prev_start_date = start_date.replace(year=start_date.year-1)
+                prev_end_date = end_date.replace(year=end_date.year-1)
+            else:
+                prev_start_date = start_date - timedelta(days=30)  # default 30-day comparison
+        else:
+            # Default to current month if no parameters provided
+            start_date, end_date = get_period_dates('this_month', now)
             prev_start_date = (start_date - timedelta(days=1)).replace(day=1)
             prev_end_date = start_date - timedelta(seconds=1)
-        elif period == 'this_quarter':
-            prev_start_date = (start_date - timedelta(days=92)).replace(day=1)
-        elif period == 'this_year':
-            prev_start_date = start_date.replace(year=start_date.year-1)
-            prev_end_date = start_date.replace(month=12, day=31, hour=23, minute=59, second=59)
         
+        # Build main query
         query = Q(
             created_at__gte=start_date,
             created_at__lte=end_date,
             status__in=['confirmed', 'processing', 'shipped', 'outOfDelivery', 'delivered']
         )
         
+        # Build previous period query
         prev_query = Q(
             created_at__gte=prev_start_date,
             created_at__lte=prev_end_date,
             status__in=['confirmed', 'processing', 'shipped', 'outOfDelivery', 'delivered']
         )
         
+        # Apply seller filter if needed
         if user.is_admin:
             if seller_id:
                 seller = Seller.objects(id=seller_id).first()
@@ -86,24 +120,33 @@ def sales_overview():
             query &= Q(seller_id=seller)
             prev_query &= Q(seller_id=seller)
             
+        # Execute queries
         orders = Order.objects(query)
         prev_orders = Order.objects(prev_query)
 
+        # Calculate metrics
         total_sales = sum(order.total_amount for order in orders) or 0
         prev_total_sales = sum(order.total_amount for order in prev_orders) or 0
         sales_change = ((total_sales - prev_total_sales) / prev_total_sales * 100) if prev_total_sales > 0 else 0
 
-        order_count = orders.count() or 0
-        prev_order_count = prev_orders.count() or 0
+        order_count = orders.count()
+        prev_order_count = prev_orders.count()
         order_change = ((order_count - prev_order_count) / prev_order_count * 100) if prev_order_count > 0 else 0
 
         avg_order_value = total_sales / order_count if order_count > 0 else 0
         prev_avg_order_value = prev_total_sales / prev_order_count if prev_order_count > 0 else 0
         avg_order_change = ((avg_order_value - prev_avg_order_value) / prev_avg_order_value * 100) if prev_avg_order_value > 0 else 0
 
-        return jsonify({
+        # Prepare response
+        response_data = {
             'status': 'success',
             'data': {
+                'date_range': {
+                    'start': start_date.isoformat(),
+                    'end': end_date.isoformat(),
+                    'previous_start': prev_start_date.isoformat(),
+                    'previous_end': prev_end_date.isoformat()
+                },
                 'total_sales': float(total_sales),
                 'total_sales_change': float(sales_change),
                 'order_count': order_count,
@@ -111,9 +154,15 @@ def sales_overview():
                 'avg_order_value': float(avg_order_value),
                 'avg_order_change': float(avg_order_change),
             }
-        }), 200
+        }
+        
+        return jsonify(response_data), 200
+        
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+        }), 500
 
 @sales_api.route(SALES_OVER_TIME_API, methods=['GET'])
 def sales_over_time():
