@@ -142,9 +142,10 @@
       pageInfo: document.getElementById('page-info'),
       loader: document.getElementById('loader')
     };
-    let currentPage = {{ pagination.page | tojson | safe}};
-    let sortBy = '{{ filters.sort_by | default('') }}';
-    let sortOrder = '{{ filters.sort_order | default('asc') }}';
+    let currentPage = {{ pagination.page | tojson | safe
+  }};
+  let sortBy = '{{ filters.sort_by | default('') }}';
+  let sortOrder = '{{ filters.sort_order | default('asc') }}';
 
   const statusStyles = {
     activated: 'bg-green-100 text-green-800',
@@ -244,21 +245,28 @@
     });
   };
 
-  const handleSort = (sortKey) => {
+const handleSort = (sortKey) => {
+    // Toggle sort order if clicking the same column
     if (sortBy === sortKey) {
-      sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    } else {
-      sortBy = sortKey;
-      sortOrder = 'asc';
+        sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    } 
+    // Set new sort column and default to ascending
+    else {
+        sortBy = sortKey;
+        sortOrder = 'asc';
     }
-    fetchUsers(1);
-  };
+    
+    console.log(`Sorting by: ${sortBy}, order: ${sortOrder}`);  // Debug log
+    fetchUsers(1);  // Always reset to page 1 when changing sort
+};
 
-  document.querySelectorAll('th[data-sort-key]').forEach(th => {
-    th.addEventListener('click', () => {
-      handleSort(th.dataset.sortKey);
+// Make sure this event listener is properly set up
+document.querySelectorAll('th[data-sort-key]').forEach(th => {
+    th.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleSort(th.dataset.sortKey);
     });
-  });
+});
 
   const debouncedFetchUsers = debounce(() => fetchUsers(1), 300);
   elements.searchInput.addEventListener('input', debouncedFetchUsers);

@@ -91,6 +91,7 @@ GET_PRODUCT_LIST_WEB_URL = f'/products/list'
 GET_PRODUCT_DETAILS_WEB_URL = f'/products/<product_id>'
 GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL = f'/products/edit/<product_id>'
 EDIT_PRODUCT_WEB_URL = f'/api/products/edit'
+REMOVE_PRODUCT_IMAGE_WEB_URL = f'/api/products/remove-image'
 
 GET_BRANDS_WEB_URL = f'/brands/list'
 ADD_BRAND_WEB_URL = f'/brands/add'

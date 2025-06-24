@@ -2,6 +2,8 @@
 
 {% block title %}Subcategory List{% endblock %}
 
+{% set category_headers = ['Image', 'Category', 'Subcategory', 'Description', 'Actions'] %}
+
 {% block admin_content %}
 <div class="bg-white rounded-lg shadow p-6 mx-auto">
     <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">Subcategory List</h1>
@@ -12,7 +14,7 @@
 
     {% include '/components/deleteModal.html' %}
 
-    <div class="flex justify-between xl:flex-row gap-y-3 gap-x-8">
+    <div class="flex justify-between items-end xl:flex-row gap-y-3 gap-x-8 mb-6">
         <div class="flex items-center space-x-6">
             <div class="flex flex-col items-start gap-2 w-64 lg:w-80 xl:w-auto">
                 <label class="block text-sm lg:text-base font-medium text-black">Search by Category</label>
@@ -20,8 +22,11 @@
                     <input type="text" id="category-search" placeholder="Type to search categories..."
                         class="border w-full border-gray-300 rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         autocomplete="off">
-                    <div id="category-search-results" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-auto"></div>
-                    <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 pointer-events-none">
+                    <div id="category-search-results"
+                        class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-auto">
+                    </div>
+                    <span
+                        class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 pointer-events-none">
                         search
                     </span>
                 </div>
@@ -43,33 +48,56 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6" id="subcategory-grid">
-        {% for subcategory in subcategories %}
-        <div class="bg-white border flex flex-col justify-between rounded-lg shadow-lgw-full h-90 relative">
-            <div class="mb-4 h-52">
-                <img src="{{ subcategory.img_url }}" alt="{{ subcategory.name }}"
-                    class="w-full h-full object-cover rounded-t-lg">
-            </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    {% for header in category_headers %}
+                    <th scope="col"
+                        class="border border-gray-200 px-3 py-3 md:px-6 md:py-4 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
+                        {{ header }}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200" id="subcategory-table-body">
+                {% for subcategory in subcategories %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                        <div class="flex-shrink-0 h-10 w-10 mx-auto">
+                            <img class="h-10 w-10 rounded-full object-cover" src="{{ subcategory.img_url }}"
+                                alt="{{ subcategory.name }}">
+                        </div>
+                    </td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                        <div class="text-xs text-gray-500">{{ subcategory.category.name }}</div>
+                    </td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                        <div class="text-sm font-medium text-gray-900">{{ subcategory.name }}</div>
+                    </td>
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                        <div class="text-sm text-gray-500 max-w-xs mx-auto truncate relative group">
+                            {{ subcategory.description|striptags|truncate(100) }}
+                            {% if subcategory.description|length > 100 %}
+                            <span
+                                class="absolute hidden group-hover:block w-64 bg-black text-white text-xs rounded p-2 z-10 left-1/2 -translate-x-1/2 top-full mt-2">
+                                {{ subcategory.description|striptags }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </td>
 
-            <div class="flex flex-col items-center text-center p-4">
-                <p class="text-sm text-gray-600 mb-2">{{ subcategory.category.name }}</p>
-                <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ subcategory.name }}</h3>
-                <p class="text-sm text-gray-600 mb-4 relative group">
-                    {{ subcategory.description.split()[:20] | join(' ') }}{% if subcategory.description.split()|length > 20 %}...{% endif %}
-                    <span
-                        class="absolute hidden group-hover:block w-64 bg-black text-white text-xs rounded p-2 z-10 shadow-lg left-1/2 -translate-x-1/2 top-full mt-2">
-                        {{ subcategory.description }}
-                    </span>
-                </p>
-                <div class="flex justify-between w-full mt-auto">
-                    <a href="/sub-category/edit/{{ subcategory.id }}" class="text-blue-600 text-sm hover:text-blue-800">Edit</a>
-                    <button type="button" class="text-red-600 hover:underline text-sm delete-subcategory-btn"
-                        data-subcategory-id="{{ subcategory.id }}"
-                        data-subcategory-name="{{ subcategory.name }}">Delete</button>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+                    <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center font-medium">
+                        <a href="/sub-category/edit/{{ subcategory.id }}"
+                            class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</a>
+                        <button type="button" class="text-red-600 hover:text-red-900 delete-subcategory-btn"
+                            data-subcategory-id="{{ subcategory.id }}"
+                            data-subcategory-name="{{ subcategory.name }}">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
     {% if subcategories|length == 0 %}
@@ -129,7 +157,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         const loader = document.getElementById('loader');
         const clearFilterButton = document.getElementById('clear-filter');
-        const subcategoryGrid = document.getElementById('subcategory-grid');
+        const subcategoryTableBody = document.getElementById('subcategory-table-body');
         const itemsPerPageSelect = document.getElementById('items-per-page');
         const paginationDiv = document.getElementById('pagination');
         const noSubcategoriesMessage = document.getElementById('no-subcategories');
@@ -141,9 +169,9 @@
             const resultsContainer = document.getElementById('category-search-results');
             const selectedCategoryId = document.getElementById('selected-category-id');
 
-            searchInput.addEventListener('input', async function(e) {
+            searchInput.addEventListener('input', async function (e) {
                 const query = e.target.value.trim();
-                
+
                 if (query.length < 2) {
                     resultsContainer.classList.add('hidden');
                     selectedCategoryId.value = '';
@@ -153,7 +181,7 @@
                 try {
                     const response = await fetch(`/api/categories/search?q=${encodeURIComponent(query)}`);
                     const categories = await response.json();
-                    
+
                     if (categories.length > 0) {
                         resultsContainer.innerHTML = categories.map(cat => `
                             <div class="p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0" 
@@ -172,12 +200,12 @@
                 }
             });
 
-            resultsContainer.addEventListener('click', function(e) {
+            resultsContainer.addEventListener('click', function (e) {
                 const categoryItem = e.target.closest('[data-category-id]');
                 if (categoryItem) {
                     const categoryId = categoryItem.getAttribute('data-category-id');
                     const categoryName = categoryItem.textContent.trim();
-                    
+
                     searchInput.value = categoryName;
                     selectedCategoryId.value = categoryId;
                     resultsContainer.classList.add('hidden');
@@ -185,7 +213,7 @@
                 }
             });
 
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', function (e) {
                 if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
                     resultsContainer.classList.add('hidden');
                 }
@@ -201,77 +229,92 @@
             try {
                 const data = await fetchJsonData(url);
 
-                subcategoryGrid.innerHTML = '';
+                subcategoryTableBody.innerHTML = '';
                 if (data.subcategories.length === 0) {
                     noSubcategoriesMessage.classList.remove('hidden');
                 } else {
                     noSubcategoriesMessage.classList.add('hidden');
                     data.subcategories.forEach(subcategory => {
-                        const card = `
-                        <div class="bg-white border rounded-lg shadow-lg w-full h-90 relative">
-                            <div class="mb-4 h-52">
-                                <img src="${subcategory.img_url}" alt="${subcategory.name}"
-                                    class="w-full h-full object-cover rounded-t-lg">
-                            </div>
-                            <div class="flex flex-col items-center text-center p-4">
-                                <p class="text-sm text-gray-600 mb-2">${subcategory.category.name}</p>
-                                <h3 class="text-lg font-semibold text-gray-800 mb-2">${subcategory.name}</h3>
-                                <p class="text-sm text-gray-600 mb-4 relative group">
-                                    ${subcategory.description.split(' ').slice(0, 20).join(' ')}${subcategory.description.split(' ').length > 20 ? '...' : ''}
-                                    <span class="absolute hidden group-hover:block w-64 bg-black text-white text-xs rounded p-2 z-10 shadow-lg left-1/2 -translate-x-1/2 top-full mt-2">
+                        const row = `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                                <div class="flex-shrink-0 h-10 w-10 mx-auto">
+                                    <img class="h-10 w-10 rounded-full object-cover" src="${subcategory.img_url}" alt="${subcategory.name}">
+                                </div>
+                            </td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                                <div class="text-xs text-gray-500">${subcategory.category.name}</div>
+                            </td>
+                             <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                                <div class="text-sm font-medium text-gray-900">${subcategory.name}</div>
+                            </td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center">
+                                <div class="text-sm text-gray-500 max-w-xs mx-auto truncate relative group">
+                                    ${subcategory.description.substring(0, 100)}${subcategory.description.length > 100 ? '...' : ''}
+                                    ${subcategory.description.length > 100 ? `
+                                    <span class="absolute hidden group-hover:block w-64 bg-black text-white text-xs rounded p-2 z-10 left-1/2 -translate-x-1/2 top-full mt-2">
                                         ${subcategory.description}
                                     </span>
-                                </p>
-                                <div class="flex justify-between w-full mt-auto">
-                                    <a href="/sub-category/edit/${subcategory.id}" class="text-blue-600 text-sm hover:text-blue-800">Edit</a>
-                                    <button type="button" class="text-red-600 hover:underline text-sm delete-subcategory-btn" 
-                                            data-subcategory-id="${subcategory.id}" 
-                                            data-subcategory-name="${subcategory.name}">Delete</button>
+                                    ` : ''}
                                 </div>
-                            </div>
-                        </div>`;
-                        subcategoryGrid.innerHTML += card;
+                            </td>
+                            <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200 text-center font-medium">
+                                <a href="/sub-category/edit/${subcategory.id}" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</a>
+                                <button type="button" class="text-red-600 hover:text-red-900 delete-subcategory-btn"
+                                    data-subcategory-id="${subcategory.id}"
+                                    data-subcategory-name="${subcategory.name}">Delete</button>
+                            </td>
+                        </tr>`;
+                        subcategoryTableBody.innerHTML += row;
                     });
                 }
 
-                paginationDiv.innerHTML = '';
-                if (data.pagination.has_prev) {
-                    paginationDiv.innerHTML += `
-                    <a href="#" data-page="${data.pagination.prev_num}"
-                        class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition subCategories-pagination-link">
-                        Previous
-                    </a>`;
-                } else {
-                    paginationDiv.innerHTML += `
-                    <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>`;
-                }
-
-                paginationDiv.innerHTML += `
-                <span class="px-4 py-2 text-sm" id="page-info">
-                    Page ${data.pagination.page} of ${data.pagination.pages}
-                </span>`;
-
-                if (data.pagination.has_next) {
-                    paginationDiv.innerHTML += `
-                    <a href="#" data-page="${data.pagination.next_num}"
-                        class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition subCategories-pagination-link">
-                        Next
-                    </a>`;
-                } else {
-                    paginationDiv.innerHTML += `
-                    <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>`;
-                }
-
-                attachPaginationListeners('.subCategories-pagination-link', fetchSubcategories);
-                attachDeleteListeners();
+                updatePagination(data.pagination);
                 currentPage = data.pagination.page;
                 clearFilterButton.classList.toggle('hidden', !categoryId);
+                attachDeleteListeners();
 
             } catch (error) {
                 console.error('Error:', error);
+                showToast('Failed to load subcategories: ' + error.message, 'error');
             } finally {
                 loader.classList.add('hidden');
             }
+        }
+
+        function updatePagination(pagination) {
+            if (!paginationDiv) return;
+
+            paginationDiv.innerHTML = '';
+
+            if (pagination.has_prev) {
+                paginationDiv.innerHTML += `
+                <a href="#" data-page="${pagination.prev_num}"
+                    class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition subCategories-pagination-link">
+                    Previous
+                </a>`;
+            } else {
+                paginationDiv.innerHTML += `
+                <span class="px-4 py-2 border rounded-lg text-base text-gray-400 cursor-not-allowed">Previous</span>`;
+            }
+
+            paginationDiv.innerHTML += `
+            <span class="px-4 py-2 text-sm" id="page-info">
+                Page ${pagination.page} of ${pagination.pages}
+            </span>`;
+
+            if (pagination.has_next) {
+                paginationDiv.innerHTML += `
+                <a href="#" data-page="${pagination.next_num}"
+                    class="px-4 py-2 border text-sm rounded-lg hover:bg-gray-100 transition subCategories-pagination-link">
+                    Next
+                </a>`;
+            } else {
+                paginationDiv.innerHTML += `
+                <span class="px-4 py-2 border rounded-lg text-gray-400 cursor-not-allowed">Next</span>`;
+            }
+
+            attachPaginationListeners('.subCategories-pagination-link', fetchSubcategories);
         }
 
         function attachDeleteListeners() {
@@ -304,7 +347,7 @@
                             await fetchSubcategories(currentPage);
                             showToast(data.message || 'Subcategory deleted successfully', 'success');
                         } else {
-                            showToast(data.error || 'Failed to delete subcategory', 'error');
+                            handleErrors(data.errors || 'Failed to delete subcategory', 'error');
                         }
                     } catch (error) {
                         showToast('An error occurred while deleting the subcategory', 'error');
@@ -317,7 +360,7 @@
 
         function attachPaginationListeners(selector, callback) {
             document.querySelectorAll(selector).forEach(link => {
-                link.addEventListener('click', function(e) {
+                link.addEventListener('click', function (e) {
                     e.preventDefault();
                     const page = this.getAttribute('data-page');
                     callback(page);
