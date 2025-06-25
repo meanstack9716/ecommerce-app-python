@@ -313,15 +313,15 @@ def get_similar_products(product_id):
         # Get color parameter from query string (required)
         target_color = request.args.get('color', '').strip().lower()
         if not target_color:
-            return create_error_response({'error': 'Color parameter is required'}, 400)
+            return jsonify({'message': 'Color parameter is required'}), 400
 
         # Validate and get the reference product
         if not ObjectId.is_valid(product_id):
-            return create_error_response({'error': 'Invalid product ID'}, 400)
+            return jsonify({'message': 'Invalid product ID'}), 400
 
         ref_product = Products.objects(id=product_id).first()
         if not ref_product:
-            return create_error_response({'error': 'Product not found'}, 404)
+            return jsonify({'message': 'Product not found'}), 404
 
         # Get reference product's characteristics
         ref_category = str(ref_product.category_id.id)
@@ -329,7 +329,7 @@ def get_similar_products(product_id):
         ref_subsubcategory = str(ref_product.subsubcategory_id.id)
         ref_gender = ref_product.gender
 
-        # Pipeline to find exact color matches first
+        # Pipeline to find exact color matches
         pipeline = [
             {
                 '$match': {
