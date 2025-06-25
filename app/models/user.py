@@ -18,12 +18,13 @@ class User(db.Document):
     created_at = db.DateTimeField(default=datetime.utcnow)
     reset_token = db.StringField()
     reset_otp = db.StringField()
+    referral_code = db.StringField(unique=True, sparse=True)
+    referred_by = db.ReferenceField('self')
     otp_expiry = db.DateTimeField()
     profile_pic = db.StringField()
     cloudinary_id = db.StringField()
     is_admin = db.BooleanField(default=False)
     is_email_verified = db.BooleanField(default=False)
-    referred_by = db.ReferenceField('self')
     status = db.StringField(choices=["activated", "deactivated", "hold"], default="activated")
     
     def hash_password(self):

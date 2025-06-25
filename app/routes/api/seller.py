@@ -78,7 +78,6 @@ def add_seller():
             business_address = None
             if data.get('businessAddress[line1]'):
                 business_address_type = data.get('businessAddress[type]', 'Business')
-                print(business_address_type, ">>>>>>>")
                 if business_address_type not in ADDRESS_TYPES:
                     raise ValidationError(f"Invalid business address type: {business_address_type}")
 

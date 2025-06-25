@@ -3,6 +3,8 @@ from flask_jwt_extended import create_access_token
 from flask_mail import Message
 from app import bcrypt, mail
 import random
+import secrets
+import string
 from datetime import datetime, timedelta
 from app.routes.auth_decorator import role_required
 import cloudinary
@@ -14,6 +16,7 @@ from app.utils.utils import create_error_response
 from constants import OTP_EXPIRY_MINUTES, REGISTER, LOGIN, FORGOT_PASSWORD, VERIFY_OTP, RESET_PASSWORD, LOGOUT, RESEND_OTP, AUTHENTICATE_USER
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
+
 @auth_bp.route(REGISTER, methods=['POST'])
 def register():
     data = request.get_json()
@@ -23,10 +26,7 @@ def register():
     email = data.get('email')
     password = data.get('password')
     password_confirmation = data.get('password_confirmation')
-
-    print(f"Email: {email}")
-    print(f"Password: {password}")
-    print(f"Password Confirmation: {password_confirmation}")
+    referral_code_input = data.get('referral_code')
 
     is_valid, errors = validate_required_fields(
         {'email': email, 'password': password, 'password_confirmation': password_confirmation},
@@ -49,12 +49,23 @@ def register():
     if User.objects(email=email).first():
         return create_error_response({"error": "Email already exists"}, 409)
 
-    otp = str(random.randint(100000, 999999))
-    otp_expiry = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
+    # Generate referral code for new user
+    generated_referral_code = generate_referral_code()
+
+    # Optional: get the referring user
+    referred_by_user = None
+    if referral_code_input:
+        referred_by_user = User.objects(referral_code=referral_code_input).first()
+        if not referred_by_user:
+            return create_error_response({"error": "Invalid referral code"}, 400)
 
     role = Role.objects(name='user').first()
     if not role:
         return create_error_response({"error": "Default user role not found"}, 500)
+
+    OTP code (commented for now)
+    otp = str(random.randint(100000, 999999))
+    otp_expiry = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
 
     msg = Message("Your OTP Code", recipients=[email])
     msg.body = f"Your OTP is {otp}. It will expire in 10 minutes."
@@ -63,14 +74,18 @@ def register():
     user = User(
         email=email,
         password=password,
+        role=role,
+        referral_code=generated_referral_code,
         reset_otp=otp,
-        otp_expiry=otp_expiry,
-        role=role
+        otp_expiry=otp_expiry
     )
     user.hash_password()
     user.save()
 
-    return jsonify({'message': 'OTP sent to email. Please verify to complete registration.'}), 200
+    return jsonify({
+        'message': 'User registered successfully.',
+        'referral_code': generated_referral_code
+    }), 200
 
 @auth_bp.route(LOGIN, methods=['POST'])
 def login():
@@ -275,3 +290,9 @@ def handle_otp_verification(include_token):
         response_data['token'] = f'Bearer {access_token}'
 
     return jsonify(response_data), 200
+
+def generate_referral_code():
+    prefix = "REF-"
+    chars = string.ascii_uppercase + string.digits
+    random_part = ''.join(secrets.choice(chars) for _ in range(12))
+    return prefix + random_part

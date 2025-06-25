@@ -13,5 +13,4 @@ from .saveforlater import SaveForLater, SaveForLaterItem
 from .promo_codes import PromoCode
 from .product_review import ProductReview
 from .search_keyword_analytics import SearchKeywordAnalytics
-from .referral_model import ReferralCode, ReferralReward
 from .product_purchase_stats import ProductPurchaseStats
