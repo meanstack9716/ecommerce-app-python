@@ -307,87 +307,178 @@ def get_product_by_id(product_id):
     except Exception as e:
         return create_error_response({"error": str(e)}, status_code=500)
 
-
-def format_product(product):
-    primary_image = None
-    if product.variants and len(product.variants) > 0:
-        variant = product.variants[0]
-        if variant.images and len(variant.images) > 0:
-            primary_image = url_for('serve_uploaded_files', filename=variant.images[0].image_url, _external=True)
-
-    return {
-        'id': str(product.id),
-        'name': product.name,
-        'brand_id': str(product.brand_id.id) if product.brand_id else None,
-        'price': float(product.price),
-        'discount_price': float(product.discount_price) if product.discount_price else None,
-        'final_price': float(product.final_price),
-        'primary_image': primary_image,
-        'category_id': str(product.category_id.id),
-        'subcategory_id': str(product.subcategory_id.id),
-        'subsubcategory_id': str(product.subsubcategory_id.id)
-    }
-
 @products_bp.route(GET_SIMILAR_PRODUCT_API, methods=['GET'])
 def get_similar_products(product_id):
     try:
-        limit = int(request.args.get('limit', 8))
-        include_brand = request.args.get('include_brand', 'false').lower() == 'true'
-        include_price_range = request.args.get('include_price_range', 'false').lower() == 'true'
-        min_price = request.args.get('min_price')
-        max_price = request.args.get('max_price')
-        
-        current_product = Products.objects.get(id=product_id)
-        
-        # Base query
-        query = Q(status='active') & Q(id__ne=current_product.id)
-        
-        # Category filters
-        query &= Q(category_id=current_product.category_id)
-        query &= Q(subcategory_id=current_product.subcategory_id)
-        query &= Q(subsubcategory_id=current_product.subsubcategory_id)
-        
-        # Brand filter
-        if include_brand and current_product.brand_id:
-            query &= Q(brand_id=current_product.brand_id)
-        elif include_brand and not current_product.brand_id:
-            return jsonify({
-                'success': False,
-                'message': 'Current product has no brand associated'
-            }), 400
-            
-        # Price range filter - PRIORITIZE custom range if provided
-        if min_price and max_price:
-            try:
-                query &= Q(final_price__gte=Decimal(min_price)) & \
-                        Q(final_price__lte=Decimal(max_price))
-            except:
-                return jsonify({
-                    'success': False,
-                    'message': 'Invalid price range values'
-                }), 400
-        elif include_price_range:
-            # Fall back to 20% range if no custom range provided
-            price_min = float(current_product.final_price) * 0.8
-            price_max = float(current_product.final_price) * 1.2
-            query &= Q(final_price__gte=Decimal(str(price_min))) & \
-                    Q(final_price__lte=Decimal(str(price_max)))
-        
-        similar_products = Products.objects(query).limit(limit)
-        
-        return jsonify({
-            'success': True,
-            'data': [format_product(p) for p in similar_products],
-            'filters_applied': {
-                'same_brand': include_brand,
-                'price_range': bool(min_price and max_price) or include_price_range,
-                'price_min': float(min_price) if min_price else float(current_product.final_price) * 0.8,
-                'price_max': float(max_price) if max_price else float(current_product.final_price) * 1.2,
-                'original_product_brand': str(current_product.brand_id.id) if current_product.brand_id else None
+        # Get color parameter from query string (required)
+        target_color = request.args.get('color', '').strip().lower()
+        if not target_color:
+            return create_error_response({'error': 'Color parameter is required'}, 400)
+
+        # Validate and get the reference product
+        if not ObjectId.is_valid(product_id):
+            return create_error_response({'error': 'Invalid product ID'}, 400)
+
+        ref_product = Products.objects(id=product_id).first()
+        if not ref_product:
+            return create_error_response({'error': 'Product not found'}, 404)
+
+        # Get reference product's characteristics
+        ref_category = str(ref_product.category_id.id)
+        ref_subcategory = str(ref_product.subcategory_id.id)
+        ref_subsubcategory = str(ref_product.subsubcategory_id.id)
+        ref_gender = ref_product.gender
+
+        # Pipeline to find exact color matches first
+        pipeline = [
+            {
+                '$match': {
+                    '_id': {'$ne': ObjectId(product_id)},
+                    'status': 'active',
+                    'category_id': ObjectId(ref_category),
+                    'subcategory_id': ObjectId(ref_subcategory),
+                    'subsubcategory_id': ObjectId(ref_subsubcategory),
+                    **({'gender': ref_gender} if ref_gender else {})
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'product_variants',
+                    'localField': 'variants',
+                    'foreignField': '_id',
+                    'as': 'variants'
+                }
+            },
+            {
+                '$addFields': {
+                    'matching_variants': {
+                        '$filter': {
+                            'input': '$variants',
+                            'as': 'variant',
+                            'cond': {
+                                '$regexMatch': {
+                                    'input': {'$toLower': '$$variant.color'},
+                                    'regex': f'^{target_color}$',
+                                    'options': 'i'
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                '$match': {
+                    'matching_variants.0': {'$exists': True}
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'product_purchase_stats',
+                    'localField': '_id',
+                    'foreignField': 'product_id',
+                    'as': 'purchase_stats'
+                }
+            },
+            {
+                '$unwind': {
+                    'path': '$purchase_stats',
+                    'preserveNullAndEmptyArrays': True
+                }
+            },
+            {
+                '$addFields': {
+                    'purchase_count': {'$ifNull': ['$purchase_stats.purchase_count', 0]},
+                    'primary_variant': {'$arrayElemAt': ['$matching_variants', 0]},
+                    'all_sizes': {
+                        '$reduce': {
+                            'input': '$variants',
+                            'initialValue': [],
+                            'in': {
+                                '$concatArrays': [
+                                    '$$value',
+                                    {'$cond': [
+                                        {'$not': {'$in': ['$$this.size', '$$value']}},
+                                        ['$$this.size'],
+                                        []
+                                    ]}
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                '$sort': {
+                    'purchase_count': -1,
+                    'final_price': 1
+                }
+            },
+            {
+                '$limit': 10
+            },
+            {
+                '$project': {
+                    '_id': 1,
+                    'name': 1,
+                    'price': 1,
+                    'final_price': 1,
+                    'primary_variant': 1,
+                    'all_sizes': 1,
+                    'purchase_count': 1
+                }
             }
-        }), 200
-        
-    except Products.DoesNotExist:
-        return create_error_response({'error': 'Product not found'}, 404)
+        ]
+
+        # Execute the pipeline
+        similar_products = list(Products._get_collection().aggregate(pipeline))
+
+        # If no color matches found, return empty array
+        if not similar_products:
+            return jsonify({
+                'similar_products': [],
+                'reference_product': {
+                    'id': product_id,
+                    'color': target_color,
+                    'sizes': list({v.size for v in ref_product.variants}) if ref_product.variants else []
+                },
+                'search_color': target_color,
+                'message': 'No products found with matching color'
+            })
+
+        # Process results
+        results = []
+        for product in similar_products:
+            primary_image_url = None
+            if product['primary_variant']['images']:
+                image_id = product['primary_variant']['images'][0]
+                image = ProductVariantImage.objects(id=image_id).first()
+                if image and image.image_url:
+                    primary_image_url = url_for(
+                        'serve_uploaded_files', 
+                        filename=image.image_url, 
+                        _external=True
+                    )
+
+            results.append({
+                'product_id': str(product['_id']),
+                'name': product['name'],
+                'price': float(product['price']),
+                'final_price': float(product['final_price']),
+                'image_url': primary_image_url,
+                'color': product['primary_variant']['color'],
+                'sizes': product['all_sizes'],
+                'purchase_count': product['purchase_count']
+            })
+
+        return jsonify({
+            'similar_products': results,
+            'reference_product': {
+                'id': product_id,
+                'color': target_color,
+                'sizes': list({v.size for v in ref_product.variants}) if ref_product.variants else []
+            },
+            'search_color': target_color
+        })
+
     except Exception as e:
-        return create_error_response({'error': str(e)}, 500)
+        return create_error_response({'error': 'Internal server error'}, 500)
