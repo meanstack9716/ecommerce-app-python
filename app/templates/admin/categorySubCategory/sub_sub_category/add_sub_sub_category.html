@@ -51,20 +51,21 @@
                 <!-- Rest of your form remains the same -->
                 <!-- Product Type Name -->
                 <div class="mb-6">
-                    <label for="name" class="block text-base font-medium text-black mb-1 tracking-wide">Product Type Name <span
-                            class="text-red-500">*</span></label>
+                    <label for="name" class="block text-base font-medium text-black mb-1 tracking-wide">Subcategory Name
+                        <span class="text-red-500">*</span></label>
                     <input type="text" id="name" name="name"
                         class="block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm"
-                        placeholder="Enter product type name">
+                        placeholder="Enter subcategory type name">
                 </div>
 
                 <!-- Product Type Description -->
                 <div class="mb-6">
-                    <label for="description" class="block text-base font-medium text-black mb-1 tracking-wide">Product Type Description
+                    <label for="description"
+                        class="block text-base font-medium text-black mb-1 tracking-wide">Subcategory Description
                         <span class="text-red-500">*</span></label>
                     <textarea id="description" name="description"
                         class="block w-full border rounded-md px-5 py-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 ease-in-out placeholder:text-sm"
-                        placeholder="Enter product type description"></textarea>
+                        placeholder="Enter subcategory type description"></textarea>
                 </div>
 
                 <!-- Product Type Image -->
@@ -247,30 +248,22 @@
             return;
         }
 
-        const response = await sendPostRequest('/api/sub-sub-category/add', formData);
-        handleResponse(response);
-    });
-
-    function handleResponse(response) {
-        document.getElementById('loading-spinner').classList.add('hidden');
-        document.getElementById('btn-text').classList.remove('hidden');
-
-        if (response.success) {
-            showToast('Sub-Sub Category Added Successfully!', 'success');
-            document.getElementById('subSubCategoryForm').reset();
-            setTimeout(() => {
-                window.location.href = '{{ url_for("admin_api.sub_sub_category_list_page") }}';
-            }, 500);
-        } else {
-            if (response.errors) {
-                Object.keys(response.errors).forEach(field => {
-                    const fieldError = response.errors[field];
-                    showToast(fieldError, 'error');
-                });
+        try {
+            const response = await sendPostRequest('/api/sub-sub-category/add', formData);
+            if (response.success) {
+                showToast(response.message, 'success');
+                setTimeout(() => {
+                    window.location.href = "{{ url_for('admin_api.sub_sub_category_list_page') }}";
+                }, 500)
             } else {
-                showToast(response.errors || 'Failed to add sub-sub category.', 'error');
+                handleErrors(response.errors || response.message || 'An error occurred', 'error');
             }
+        } catch (error) {
+            showToast(error.message || 'An error occurred', 'error');
+        } finally {
+            document.getElementById('loading-spinner').classList.add('hidden');
+            document.getElementById('btn-text').classList.remove('hidden');
         }
-    }
+    });
 </script>
 {% endblock %}

@@ -1,17 +1,10 @@
 from flask import Blueprint, request, jsonify, redirect, url_for
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import (
-    Address, Seller, User, ProductCart, Products, ProductVariant, 
-    ProductVariantImage, Order, OrderItem, Category, SubCategory, 
-    SubSubCategory, PromoCode
-)
+from app.models import Address, Seller, User, ProductCart, Products, ProductVariant, ProductVariantImage, Order, OrderItem, ProductPurchaseStats
 from datetime import datetime, timedelta
 import decimal
 from app.utils.utils import create_error_response
-from constants import (
-    ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, 
-    ORDER_STATUS, PAYMENT_CALLBACK_API, VERIFY_PAYMENT, ORDER_SUCCESS_ROUTE
-)
+from constants import ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, ORDER_STATUS, GET_PRODUCT_PURCHASE_STATS
 from app.utils.jwt_handlers import jwt_error_handler
 from mongoengine.queryset.visitor import Q
 from app.utils.validation import validate_required_fields
@@ -363,3 +356,36 @@ def get_order_statuses():
         'message': 'Order statuses fetched successfully',
         'data': ORDER_STATUS
     }), 200
+
+
+@order_bp.route(GET_PRODUCT_PURCHASE_STATS, methods=['GET'])
+def get_top_purchased_products():
+    try:
+        limit = request.args.get('limit', default=10, type=int)
+        if limit <= 0 or limit > 100:
+            limit = 10
+
+        top_products = ProductPurchaseStats.objects.order_by('-purchase_count').limit(limit)
+        
+        result = []
+        for product in top_products:
+            result.append({
+                'product_id': str(product.product_id),
+                'product_name': product.product_name,
+                'purchase_count': product.purchase_count,
+                'last_purchased_at': product.last_purchased_at.isoformat() if product.last_purchased_at else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'top_products': result,
+                'count': len(result)
+            }
+        })
+
+    except Exception as e:
+        return create_error_response({'error': {
+            'success': False,
+            'error': str(e)
+        }},500)

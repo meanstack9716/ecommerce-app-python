@@ -1,7 +1,7 @@
 from flask import render_template, redirect, url_for, session, request, jsonify, flash
 from constants import CATEGORY_LIST_WEB_URL, ADD_CATEGORY_WEB_URL, GET_CATEGORIES_FILTER_API_URL, DELETE_CATEGORIES_API_WEB_URL, EDIT_CATEGORY_WEB_URL, SEARCH_CATEGORY_WEB_URL
 from . import admin_api
-from app.models import Category, SubCategory, SubSubCategory 
+from app.models import Category, SubCategory, SubSubCategory, Products
 from app.utils.image_upload import get_local_ip, upload_image, validate_fields
 from app.utils.utils import create_error_response
 from bson import ObjectId
@@ -178,7 +178,7 @@ def edit_category_page(category_id):
 @admin_api.route('/update_category/<category_id>', methods=['POST'])
 def update_category(category_id):
     if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
+        return redirect(url_for('admin_api.login_page'))
 
     try:
         category = Category.objects(id=ObjectId(category_id)).first()
@@ -230,17 +230,19 @@ def update_category(category_id):
 @admin_api.route(DELETE_CATEGORIES_API_WEB_URL, methods=['POST'])
 def delete_category(category_id):
     if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
+        return redirect(url_for('admin_api.login_page'))
 
     try:
         category = Category.objects(id=ObjectId(category_id)).first()
         if not category:
             return create_error_response({'error': 'Category not found'}, 404)
 
+        products_count = Products.objects(category_id=category).count()
+        if products_count > 0:
+            return create_error_response({'error': 'Cannot delete category because it is linked to existing products.'}, 400)
+
         SubSubCategory.objects(category_id=category).delete()
-
         SubCategory.objects(category=category).delete()
-
         category.delete()
 
         return jsonify({

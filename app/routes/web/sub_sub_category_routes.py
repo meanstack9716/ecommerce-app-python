@@ -1,8 +1,8 @@
 
 from flask import render_template, redirect, url_for, session, request, jsonify
-from constants import SUB_SUB_CATEGORY_LIST_WEB_URL,  SUB_SUB_CATEGORY_WEB_URL, EDIT_SUB_SUB_CATEGORY_WEB_URL, UPDATE_SUB_SUB_CATEGORY_WEB_URL
+from constants import SUB_SUB_CATEGORY_LIST_WEB_URL,  SUB_SUB_CATEGORY_WEB_URL, EDIT_SUB_SUB_CATEGORY_WEB_URL, UPDATE_SUB_SUB_CATEGORY_WEB_URL, DELETE_SUB_SUB_CATEGORY_WEB_URL
 from . import admin_api
-from app.models import Category, SubSubCategory, SubCategory
+from app.models import Category, SubSubCategory, SubCategory, Products
 from app.utils.utils import create_error_response
 from bson import ObjectId
 from flask import current_app
@@ -118,3 +118,26 @@ def update_sub_sub_category(sub_sub_category_id):
     except Exception as e:
         return create_error_response({'error': str(e)}, 500)
 
+
+@admin_api.route(DELETE_SUB_SUB_CATEGORY_WEB_URL, methods=['DELETE'])
+def delete_sub_sub_category(sub_sub_category_id):
+    if 'user_id' not in session:
+        return redirect(url_for('admin_api.login_page'))
+    
+    try:
+        sub_sub_category = SubSubCategory.objects(id=ObjectId(sub_sub_category_id)).first()
+        if not sub_sub_category:
+            return create_error_response({'error': 'Sub-sub category not found'}, 404)
+
+        if Products.objects(subsubcategory_id=sub_sub_category).count() > 0:
+            return create_error_response({'error': 'Cannot delete sub-sub-subcategory because it is linked to existing products.'}, 400)
+
+        sub_sub_category.delete()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Sub-sub category deleted successfully'
+        }), 200
+        
+    except Exception as e:
+        return create_error_response({'error': str(e)}, 500)

@@ -5,7 +5,7 @@ import string
 from datetime import datetime
 from bson import ObjectId
 from flask import render_template, redirect, url_for, session, request, jsonify
-from constants import ( ADD_PRODUCT_PAGE_WEB_URL, ADD_NEW_PRODUCT_WEB_URL, GET_PRODUCT_LIST_WEB_URL, GET_PRODUCT_DETAILS_WEB_URL, GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL, EDIT_PRODUCT_WEB_URL, ALLOWED_SIZES, ALLOWED_GENDERS)
+from constants import ( ADD_PRODUCT_PAGE_WEB_URL, ADD_NEW_PRODUCT_WEB_URL, GET_PRODUCT_LIST_WEB_URL, GET_PRODUCT_DETAILS_WEB_URL, GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL, EDIT_PRODUCT_WEB_URL, ALLOWED_SIZES, ALLOWED_GENDERS, REMOVE_PRODUCT_IMAGE_WEB_URL)
 from app.models import ( Category, SubCategory, SubSubCategory, Products, ProductVariant, ProductVariantImage, User, Seller, ProductBrands)
 from app.utils.image_upload import upload_image, get_local_ip
 from app.utils.utils import create_error_response
@@ -69,7 +69,6 @@ def add_new_product():
         discount_price = float(data.get('discount_price', 0))
 
         final_price = price
-
         if discount_price > 0:
             final_price = price - (price * discount_price / 100)
             
@@ -122,52 +121,58 @@ def add_new_product():
                 )
                 variants.append(variant)
             except (KeyError, ValueError) as e:
-                return create_error_response({'varierrorations': f'Invalid variation data: {str(e)}'}, 400)
+                return create_error_response({'variations': f'Invalid variation data: {str(e)}'}, 400)
 
-        color_size_images = {}
+        # Dictionary to store images by color (color: [image_urls])
+        color_images_map = {}
+
+        # Process all images, grouping by color (ignore size for upload)
         for file_key in request.files:
             if file_key.startswith('images[') and ']' in file_key:
                 try:
                     parts = file_key.split('[')
                     color = parts[1].split(']')[0]
-                    size = parts[2].split(']')[0]
                     
-                    if color not in color_size_images:
-                        color_size_images[color] = {}
-                    if size not in color_size_images[color]:
-                        color_size_images[color][size] = []
-                        
-                    for file in request.files.getlist(file_key):
-                        image_path, error = upload_image(file)
-                        if error:
-                            return create_error_response({'error': error}, 400)
-                        color_size_images[color][size].append(image_path)
+                    # Only process if we haven't seen this color before
+                    if color not in color_images_map:
+                        color_images_map[color] = []
+                        # Upload all files for this color
+                        for file in request.files.getlist(file_key):
+                            image_path, error = upload_image(file)
+                            if error:
+                                return create_error_response({'error': error}, 400)
+                            color_images_map[color].append(image_path)
                 except Exception as e:
                     return create_error_response({'error': f'Invalid image key format: {str(e)}'}, 400)
 
         saved_variants = []
+        # Dictionary to track all created images (image_url: image_object)
+        variant_images_map = {}
+
+        # First save all variants
         for variant in variants:
             variant.save()
             saved_variants.append(variant)
 
-        variant_images_map = {}
-
+        # Then create images and associate with variants
         for variant in saved_variants:
             color = variant.color
-            size = variant.size
-            if color in color_size_images and size in color_size_images[color]:
-                for image_url in color_size_images[color][size]:
+            if color in color_images_map:
+                for image_url in color_images_map[color]:
+                    # If image not already created, make new record
                     if image_url not in variant_images_map:
                         image = ProductVariantImage(
                             variant_id=variant.id,
                             image_url=image_url,
-                            alt_text=f"{data['name']} - {color} - {size}",
+                            alt_text=f"{data['name']} - {color} - {variant.size}",
                         )
                         image.save()
                         variant_images_map[image_url] = image
+                    # Associate image with variant (whether new or existing)
                     variant.images.append(variant_images_map[image_url])
-            variant.save()
+                variant.save()
 
+        # Create the main product
         product = Products(
             seller_id=seller.id,
             name=data['name'],
@@ -191,13 +196,12 @@ def add_new_product():
         )
         product.save()
 
+        # Update product_id reference in all images
         for image_obj in variant_images_map.values():
-            for variant in saved_variants:
-                if image_obj in variant.images:
-                    image_obj.product_id = product.id
-                    image_obj.save()
-                    break
+            image_obj.product_id = product.id
+            image_obj.save()
 
+        # Update product_id reference in all variants
         for variant in saved_variants:
             variant.product_id = product
             variant.save()
@@ -443,7 +447,6 @@ def product_details(product_id):
     return render_template('admin/products/product_details.html', product=product_dict, local_ip=local_ip)
 
 
-
 @admin_api.route(GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL, methods=['GET'])
 def edit_product_page(product_id):
     product = Products.objects(id=product_id).first()
@@ -461,7 +464,7 @@ def edit_product_page(product_id):
                 'name': color_name,
                 'value': color_value,
                 'sizes': [],
-                'images': set()
+                'images': []  # Changed from set to list to store dictionaries
             }
         
         colors_data[color_name]['sizes'].append({
@@ -472,10 +475,16 @@ def edit_product_page(product_id):
         })
         
         for image in variant.images:
-            colors_data[color_name]['images'].add(image.image_url)
-    
-    for color_data in colors_data.values():
-        color_data['images'] = list(color_data['images'])
+            if image.image_url:
+                image_url = url_for('serve_uploaded_files', filename=image.image_url, _external=True)
+                # Add both image URL and ID
+                image_data = {
+                    'url': image_url,
+                    'id': str(image.id)  # Assuming the image object has an 'id' field
+                }
+                # Check if this image is already added (by ID)
+                if not any(img['id'] == image_data['id'] for img in colors_data[color_name]['images']):
+                    colors_data[color_name]['images'].append(image_data)
 
     product_dict = {
         'seller_id': str(product.seller_id.id) if product.seller_id else None,
@@ -511,7 +520,7 @@ def edit_product_page(product_id):
 
 
 @admin_api.route(EDIT_PRODUCT_WEB_URL, methods=['PUT'])
-def edit_product():
+def update_product():
     try:
         user_id = session.get('user_id')
         if not user_id:
@@ -570,26 +579,27 @@ def edit_product():
         except json.JSONDecodeError:
             return create_error_response({'error': 'Invalid variations format'}, 400)
 
-        # Process uploaded images
-        color_size_images = {}
+        # Dictionary to store images by color (color: [image_urls])
+        color_images_map = {}
+        # Dictionary to track all created images (image_url: image_object)
+        variant_images_map = {}
+
+        # Process all images, grouping by color (ignore size for upload)
         for file_key in request.files:
             if file_key.startswith('images[') and ']' in file_key:
                 try:
-                    # Parse color and size from field name (format: images[color][size])
                     parts = file_key.split('[')
                     color = parts[1].split(']')[0].strip()
-                    size = parts[2].split(']')[0].strip()
                     
-                    if color not in color_size_images:
-                        color_size_images[color] = {}
-                    if size not in color_size_images[color]:
-                        color_size_images[color][size] = []
-                        
-                    for file in request.files.getlist(file_key):
-                        image_path, error = upload_image(file)
-                        if error:
-                            return create_error_response({'error': error}, 400)
-                        color_size_images[color][size].append(image_path)
+                    # Only process if we haven't seen this color before
+                    if color not in color_images_map:
+                        color_images_map[color] = []
+                        # Upload all files for this color
+                        for file in request.files.getlist(file_key):
+                            image_path, error = upload_image(file)
+                            if error:
+                                return create_error_response({'error': error}, 400)
+                            color_images_map[color].append(image_path)
                 except Exception as e:
                     return create_error_response({'error': f'Invalid image key format: {str(e)}'}, 400)
 
@@ -610,21 +620,29 @@ def edit_product():
                     variant.color_hexa_code = var.get('color_hexa_code')
                     variant.updated_at = datetime.utcnow()
                     
-                    # Handle images for existing variant
-                    if color in color_size_images and size in color_size_images[color]:
-                        # Clear existing images if you want to replace them
-                        ProductVariantImage.objects(variant_id=variant.id).delete()
-                        variant.images = []
+                    # Handle images for existing variant - MODIFIED TO PRESERVE EXISTING IMAGES
+                    if color in color_images_map:
+                        # Get existing image URLs to avoid duplicates
+                        existing_image_urls = {img.image_url for img in variant.images}
                         
-                        # Add new images
-                        for image_url in color_size_images[color][size]:
-                            image = ProductVariantImage(
-                                variant_id=variant.id,
-                                image_url=image_url,
-                                alt_text=f"{update_fields['name']} - {color} - {size}",
-                            )
-                            image.save()
-                            variant.images.append(image)
+                        # Add new images (shared across all variants with same color)
+                        for image_url in color_images_map[color]:
+                            # Skip if image already exists for this variant
+                            if image_url in existing_image_urls:
+                                continue
+                                
+                            # If image not already created in this session, make new record
+                            if image_url not in variant_images_map:
+                                image = ProductVariantImage(
+                                    variant_id=variant.id,
+                                    image_url=image_url,
+                                    alt_text=f"{update_fields['name']} - {color} - {size}",
+                                )
+                                image.save()
+                                variant_images_map[image_url] = image
+                            
+                            # Associate image with variant
+                            variant.images.append(variant_images_map[image_url])
                     
                     variant.save()
                 else:
@@ -638,17 +656,21 @@ def edit_product():
                     )
                     variant.save()
                     
-                    # Add images if they exist for this new variant
-                    if color in color_size_images and size in color_size_images[color]:
+                    if color in color_images_map:
                         variant.images = []
-                        for image_url in color_size_images[color][size]:
-                            image = ProductVariantImage(
-                                variant_id=variant.id,
-                                image_url=image_url,
-                                alt_text=f"{update_fields['name']} - {color} - {size}",
-                            )
-                            image.save()
-                            variant.images.append(image)
+                        for image_url in color_images_map[color]:
+                            # Reuse existing image record if available
+                            if image_url in variant_images_map:
+                                variant.images.append(variant_images_map[image_url])
+                            else:
+                                image = ProductVariantImage(
+                                    variant_id=variant.id,
+                                    image_url=image_url,
+                                    alt_text=f"{update_fields['name']} - {color} - {size}",
+                                )
+                                image.save()
+                                variant_images_map[image_url] = image
+                                variant.images.append(image)
                     
                     variant.save()
                     product.variants.append(variant)
@@ -656,15 +678,19 @@ def edit_product():
             except (KeyError, ValueError) as e:
                 return create_error_response({'error': f'Invalid variation data: {str(e)}'}, 400)
 
-        # Remove variants that are no longer present
         for variant_key, variant in existing_variants.items():
             if variant_key not in new_variant_keys:
                 ProductVariantImage.objects(variant_id=variant.id).delete()
                 product.variants.remove(variant)
                 variant.delete()
 
-        # Update product fields
         product.update(**update_fields)
+        
+        if update_fields['discount_price'] > 0:
+            product.final_price = update_fields['price'] - (update_fields['price'] * update_fields['discount_price'] / 100)
+        else:
+            product.final_price = update_fields['price']
+        
         product.save()
 
         return jsonify({
@@ -680,3 +706,84 @@ def edit_product():
 
     except Exception as error:
         return create_error_response({'error': str(error)}, 500)
+
+@admin_api.route(REMOVE_PRODUCT_IMAGE_WEB_URL, methods=['DELETE'])
+def remove_product_image():
+    try:
+        user_id = session.get('user_id')
+        if 'user_id' not in session:
+            return redirect(url_for('admin_api.login_page'))
+        
+        product_id = request.form.get('product_id')
+        image_id = request.form.get('image_id')
+        
+        if not product_id or not image_id:
+            return create_error_response({'error': 'Missing image_id or product_id'}, 400)
+
+        try:
+            product_id_obj = ObjectId(product_id)
+            image_id_obj = ObjectId(image_id)
+        except Exception as e:
+            return create_error_response({'error': 'Invalid ID format'}, 400)
+
+        product = Products.objects(id=product_id_obj).first()
+        if not product:
+            return create_error_response({'error': 'Product not found'}, 404)
+
+        image_removed = False
+        image_url = None
+
+        # Convert image_id to string for comparison
+        target_image_id_str = str(image_id_obj)
+
+        # Iterate through all variants
+        for variant in product.variants:
+            # Check each image in the variant
+            for img in variant.images:
+                if str(img.id) == target_image_id_str:
+                    image_url = img.image_url
+                    variant.images.remove(img)
+                    variant.save()
+                    image_removed = True
+                    break  # Exit inner loop once found
+
+            if image_removed:
+                break  # Exit outer loop if image was found and removed
+
+        if not image_removed:
+            # Provide more detailed error information
+            variant_images = []
+            for v in product.variants:
+                variant_images.extend(str(img.id) for img in v.images)
+            
+            return create_error_response({
+                'error': 'Image not found in product variants',
+                'details': {
+                    'requested_image_id': target_image_id_str,
+                    'existing_image_ids': variant_images,
+                    'variant_count': len(product.variants)
+                }
+            }, 404)
+
+        # Check if image is still referenced by any variant
+        image_still_used = any(
+            str(img.id) == target_image_id_str
+            for variant in product.variants
+            for img in variant.images
+        )
+
+        # Delete image record if no longer used (but keep the file in storage)
+        if not image_still_used:
+            ProductVariantImage.objects(id=image_id_obj).delete()
+            # Removed the delete_image_from_storage call
+
+        return jsonify({
+            "success": True,
+            "message": "Image removed successfully",
+            "image_id": target_image_id_str,
+            "note": "Image file was kept in storage"
+        }), 200
+
+    except Exception as error:
+        print(f"Error in remove_product_image: {str(error)}")
+        return create_error_response({'error': 'Internal server error'}, 500)
