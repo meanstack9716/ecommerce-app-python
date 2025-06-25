@@ -157,7 +157,6 @@ admin_content %}
 {% endblock %} {% block js %}
 <script>
   document.addEventListener("DOMContentLoaded", async () => {
-    // Configuration Constants
     const CONFIG = {
       standardColors: [
         { name: "White", hex: "#FFFFFF" },
@@ -398,56 +397,56 @@ admin_content %}
       const colorInputs = generateColorInputs(sizeId, sizeType, selectedSize);
 
       sizeBlock.innerHTML = `
-      <div class="grid grid-cols-1 sm:grid-cols-3 items-center mb-5 gap-4 p-4">
-        <div class="w-full col-span-2">
-          <label class="font-medium 3xl:text-xl 3xl:font-semibold">Size <span class="text-red-600">*</span></label>
-          <div class="relative mt-2">
-            <select name="sizes[${sizeId}][name]" id="sizes[${sizeId}][name]"
-                    class="size-select cursor-pointer mt-2 block appearance-none w-full border border-gray-300 rounded-md shadow-sm py-2 pl-3 pr-8 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-              <option value="">Select size</option>
-              ${sizeOptions
+    <div class="grid grid-cols-1 sm:grid-cols-3 items-center mb-5 gap-4 p-4">
+      <div class="w-full col-span-2">
+        <label class="font-medium 3xl:text-xl 3xl:font-semibold">Size <span class="text-red-600">*</span></label>
+        <div class="relative mt-2">
+          <select name="sizes[${sizeId}][name]" id="sizes[${sizeId}][name]"
+                  class="size-select cursor-pointer mt-2 block appearance-none w-full border border-gray-300 rounded-md shadow-sm py-2 pl-3 pr-8 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            <option value="">Select size</option>
+            ${sizeOptions
           .map(
             (size) =>
               `<option value="${size}" ${selectedSize === size ? "selected" : ""
               }>${size}</option>`
           )
           .join("")}
-              <option value="custom" ${isCustomSize ? "selected" : ""
+            <option value="custom" ${isCustomSize ? "selected" : ""
         }>Custom Size</option>
-            </select>
-            <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">chevron_right</span>
-          </div>
-          <input
-            type="text"
-            name="sizes[${sizeId}][custom_size]"
-            id="sizes[${sizeId}][custom_size]"
-            value="${isCustomSize && selectedSize !== "custom" ? selectedSize : ""
+          </select>
+          <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 rotate-90 pointer-events-none">chevron_right</span>
+        </div>
+        <input
+          type="text"
+          name="sizes[${sizeId}][custom_size]"
+          id="sizes[${sizeId}][custom_size]"
+          value="${isCustomSize && selectedSize !== "custom" ? selectedSize : ""
         }"
-            placeholder="Enter custom size"
-            class="custom-size-input mt-3 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 ${!isCustomSize ? "hidden" : ""
+          placeholder="Enter custom size"
+          class="custom-size-input mt-3 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 ${!isCustomSize ? "hidden" : ""
         } focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-          >
-          <p class="size-error mt-1 text-sm font-medium text-red-600 hidden"></p>
-        </div>
-        <div class="flex sm:justify-end">
-          <button type="button" class="w-fit cursor-pointer font-medium remove-size-btn px-5 py-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200">Remove</button>
-        </div>
+        >
+        <p class="size-error mt-1 text-sm font-medium text-red-600 hidden"></p>
       </div>
-      <div class="standard-colors mb-5 p-4">
-        <label class="font-medium 3xl:text-xl 3xl:font-semibold">Standard Colors</label>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">${colorInputs}</div>
-        <p class="color-error mt-1 text-sm font-medium text-red-600 hidden"></p>
+      <div class="flex sm:justify-end">
+        <button type="button" class="w-fit cursor-pointer font-medium remove-size-btn px-5 py-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200">Remove</button>
       </div>
-      <div class="custom-colors mb-5 px-4">
-        <div class="flex items-center text-center gap-4 mb-4">
-          <p class="font-medium 3xl:text-xl 3xl:font-semibold pb-2">Custom Colors</p>
-          <button type="button" class="add-custom-color-btn cursor-pointer">
-            <span class="material-symbols-outlined text-blue-500">add_circle</span>
-          </button>
-        </div>
-        <div class="custom-color-container mx-2"></div>
+    </div>
+    <div class="standard-colors mb-5 p-4">
+      <label class="font-medium 3xl:text-xl 3xl:font-semibold">Standard Colors</label>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">${colorInputs}</div>
+      <p class="color-error mt-1 text-sm font-medium text-red-600 hidden"></p>
+    </div>
+    <div class="custom-colors mb-5 px-4">
+      <div class="flex items-center text-center gap-4 mb-4">
+        <p class="font-medium 3xl:text-xl 3xl:font-semibold pb-2">Custom Colors</p>
+        <button type="button" class="add-custom-color-btn cursor-pointer">
+          <span class="material-symbols-outlined text-blue-500">add_circle</span>
+        </button>
       </div>
-    `;
+      <div class="custom-color-container mx-2"></div>
+    </div>
+  `;
 
       return sizeBlock;
     };
@@ -463,25 +462,25 @@ admin_content %}
           const quantity = sizeDataForColor ? sizeDataForColor.stock_quantity : 0;
 
           return `
-          <div class="flex items-center justify-between w-full gap-4">
-            <div class="flex items-center">
-              <input type="checkbox" id="${sizeId}_${color.name}"
-                     name="sizes[${sizeId}][colors][standard][${color.hex}][enabled]"
-                     value="1" class="color-checkbox h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                     ${isColorAvailableForSize ? "checked" : ""}>
-              <label for="${sizeId}_${color.name}" class="ml-3 flex items-center font-medium text-gray-700">
-                <span class="w-6 h-6 mr-2 rounded-full border border-gray-300" style="background-color:${color.hex}"></span>
-                ${color.name}
-              </label>
-              <input type="hidden" name="sizes[${sizeId}][colors][standard][${color.hex}][name]" value="${color.name}">
-            </div>
-            <input type="number" name="sizes[${sizeId}][colors][standard][${color.hex}][quantity]"
-                   value="${quantity}"
-                   class="quantity-input ml-2 block w-2/3 border border-gray-300 rounded-md shadow-sm py-1 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${!isColorAvailableForSize ? "hidden" : ""
-            }"
-                   placeholder="Enter quantity" min="0">
+        <div class="flex items-center justify-between w-full gap-4">
+          <div class="flex items-center">
+            <input type="checkbox" id="${sizeId}_${color.name}"
+                   name="sizes[${sizeId}][colors][standard][${color.hex}][enabled]"
+                   value="1" class="color-checkbox h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                   ${isColorAvailableForSize ? "checked" : ""}>
+            <label for="${sizeId}_${color.name}" class="ml-3 flex items-center font-medium text-gray-700">
+              <span class="w-6 h-6 mr-2 rounded-full border border-gray-300" style="background-color:${color.hex}"></span>
+              ${color.name}
+            </label>
+            <input type="hidden" name="sizes[${sizeId}][colors][standard][${color.hex}][name]" value="${color.name}">
           </div>
-        `;
+          <input type="number" name="sizes[${sizeId}][colors][standard][${color.hex}][quantity]"
+                 value="${quantity}"
+                 class="quantity-input ml-2 block w-2/3 border border-gray-300 rounded-md sheet-sm py-1 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${!isColorAvailableForSize ? "hidden" : ""
+            }"
+                 placeholder="Enter quantity" min="0">
+        </div>
+      `;
         })
         .join("");
 
@@ -490,21 +489,21 @@ admin_content %}
       const colorField = document.createElement("div");
       colorField.className = "flex items-center mb-2 space-x-4 lg:w-2/3";
       colorField.innerHTML = `
-      <div class="border cursor-pointer border-gray-300 rounded-md shadow-sm py-1 px-3 flex items-center text-center w-1/2">
-        <div class="color-picker-wrapper flex items-center text-center">
-          <input type="color" name="sizes[${sizeId}][colors][custom][${colorId}][hex]"
-                 value="${colorData.hex}" class="h-8 w-8 border border-gray-300 rounded-lg">
-          <span class="hex-value text-sm ml-1">${colorData.hex}</span>
-        </div>
-        <input type="text" name="sizes[${sizeId}][colors][custom][${colorId}][name]"
-               placeholder="Color name" value="${colorData.name}" class="custom-color-name ml-2 block w-1/2 border-none focus:outline-none">
+    <div class="border cursor-pointer border-gray-300 rounded-md shadow-sm py-1 px-3 flex items-center text-center w-1/2">
+      <div class="color-picker-wrapper flex items-center text-center">
+        <input type="color" name="sizes[${sizeId}][colors][custom][${colorId}][hex]"
+               value="${colorData.hex}" class="h-8 w-8 border border-gray-300 rounded-lg">
+        <span class="hex-value text-sm ml-1">${colorData.hex}</span>
       </div>
-      <input type="number" name="sizes[${sizeId}][colors][custom][${colorId}][quantity]"
-             min="0" value="${colorData.quantity}" class="custom-color-quantity block w-1/2 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter Quantity">
-      <button type="button" class="remove-color-btn ml-2">
-        <span class="material-symbols-outlined text-red-600 bg-red-100 rounded-full">cancel</span>
-      </button>
-    `;
+      <input type="text" name="sizes[${sizeId}][colors][custom][${colorId}][name]"
+             placeholder="Color name" value="${colorData.name}" class="custom-color-name ml-2 block w-1/2 border-none focus:outline-none">
+    </div>
+    <input type="number" name="sizes[${sizeId}][colors][custom][${colorId}][quantity]"
+           min="0" value="${colorData.quantity}" class="custom-color-quantity block w-1/2 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter Quantity">
+    <button type="button" class="remove-color-btn ml-2">
+      <span class="material-symbols-outlined text-red-600 bg-red-100 rounded-full">cancel</span>
+    </button>
+  `;
       container.appendChild(colorField);
 
       const colorInputDiv = colorField.querySelector(".color-picker-wrapper");
@@ -654,7 +653,9 @@ admin_content %}
 
         // Handle standard colors
         if (element.type === 'checkbox') {
-          colorHex = element.name.match(/\[standard\]\[(.*?)\]/)[1];
+          const match = element.name.match(/\[standard\]\[(.*?)\]/);
+          if (!match) return;
+          colorHex = match[1];
           const colorNameInput = element.closest("div").querySelector(`input[name*="[${colorHex}][name]"]`);
           colorName = colorNameInput ? colorNameInput.value : colorHex;
         }
@@ -680,9 +681,17 @@ admin_content %}
           };
 
           // Find existing images for this color from product data
-          const colorData = productData.colors.find(c => c.value === colorHex && c.name === colorName);
-          if (colorData?.images) {
-            colorGroups[colorKey].existingImages = colorData.images;
+          if (productData?.colors) {
+            const colorData = productData.colors.find(c =>
+              (c.value === colorHex || c.value === colorHex.toLowerCase()) &&
+              c.name === colorName
+            );
+            if (colorData?.images) {
+              colorGroups[colorKey].existingImages = colorData.images.map(img => ({
+                url: img.url || img, // Handle both object and string formats
+                id: img.id || null   // Include image ID if available
+              }));
+            }
           }
         }
 
@@ -696,8 +705,11 @@ admin_content %}
             if (isChecked) colorGroups[colorKey].sizes.add(sizeName);
           } else {
             const customColorInput = sizeBlock.querySelector(`.custom-color-container input[value="${colorHex}"]`);
-            if (customColorInput && customColorInput.closest("div").querySelector('input[placeholder="Color name"]').value.trim() === colorName) {
-              colorGroups[colorKey].sizes.add(sizeName);
+            if (customColorInput) {
+              const colorNameInput = customColorInput.closest("div").querySelector('input[placeholder="Color name"]');
+              if (colorNameInput?.value.trim() === colorName) {
+                colorGroups[colorKey].sizes.add(sizeName);
+              }
             }
           }
         });
@@ -708,6 +720,7 @@ admin_content %}
         if (colorGroup.sizes.size > 0) {
           const sizesList = Array.from(colorGroup.sizes).join(', ');
           const uploadId = `upload_${colorGroup.colorHex.replace('#', '')}_${colorGroup.colorName.replace(/\s+/g, '_')}`;
+
           createImageUploadSection(
             uploadId,
             `${colorGroup.colorName} (Sizes: ${sizesList})`,
@@ -724,61 +737,58 @@ admin_content %}
         : sizeBlock.querySelector(".size-select").value;
     };
 
-    const processStandardColorImages = (sizeBlock, sizeName, sizeId) => {
-      sizeBlock
-        .querySelectorAll('.standard-colors input[type="checkbox"]:checked')
-        .forEach((checkbox) => {
-          const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1];
-          const colorNameInput = checkbox
-            .closest("div")
-            .querySelector(`input[name*="[${colorHex}][name]"]`);
-          const colorName = colorNameInput ? colorNameInput.value : colorHex;
-          const uploadId = `upload_${sizeId}_${colorHex}`;
-          const colorData = productData.colors.find((c) => c.value === colorHex);
-          createImageUploadSection(uploadId, `${sizeName} - ${colorName}`, colorData?.images || []);
-        });
-    };
-
-    const processCustomColorImages = (sizeBlock, sizeName, sizeId) => {
-      sizeBlock
-        .querySelectorAll(".custom-color-container > div")
-        .forEach((customColorDiv) => {
-          const hexInput = customColorDiv.querySelector('input[type="color"]');
-          const nameInput = customColorDiv.querySelector('input[placeholder="Color name"]');
-          if (hexInput && nameInput?.value.trim()) {
-            const colorHex = hexInput.value;
-            const colorName = nameInput.value.trim();
-            const customColorId = nameInput.name.match(/\[custom\]\[(.*?)\]/)[1];
-            const uploadId = `upload_${sizeId}_custom_${customColorId}`;
-            const colorData = productData.colors.find((c) => c.value === colorHex);
-            createImageUploadSection(uploadId, `${sizeName} - ${colorName}`, colorData?.images || []);
-          }
-        });
-    };
-
-    const createImageUploadSection = (uploadId, title, existingImages) => {
+    const createImageUploadSection = (uploadId, title, existingImages = []) => {
       const imageUploadDiv = document.createElement("div");
       imageUploadDiv.className = "mb-6 p-4 border border-gray-300 rounded-xl shadow-sm";
+
+      // Extract clean color name for form data keys
+      const colorMatch = title.match(/(.*?)\s*\(/);
+      const colorName = colorMatch ? colorMatch[1].trim() : 'unknown';
+
       imageUploadDiv.innerHTML = `
-    <h4 class="text-md font-semibold text-gray-700 mb-2">${title}</h4>
-    <div class="flex flex-col space-y-4">
-      <div class="flex items-center space-x-4">
-        <label for="${uploadId}" class="cursor-pointer flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition duration-150 ease-in-out">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-          </svg>
-          Select Images
-        </label>
-        <span class="text-sm text-gray-500">Max ${CONFIG.maxImagesPerVariant} images</span>
-      </div>
-      <input type="file" id="${uploadId}" multiple class="hidden" accept="image/*">
-      <div id="preview_${uploadId}" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2"></div>
-    </div>
-  `;
+        <h4 class="text-md font-semibold text-gray-700 mb-2">${title}</h4>
+        <div class="flex flex-col space-y-4">
+            <div class="flex items-center space-x-4">
+                <label for="${uploadId}" class="cursor-pointer flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 transition duration-150 ease-in-out">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    Select Images
+                </label>
+                <span class="text-sm text-gray-500">Max ${CONFIG.maxImagesPerVariant} images</span>
+            </div>
+            <input type="file" id="${uploadId}" name="images[${colorName}]" multiple class="hidden" accept="image/*">
+            <div id="preview_${uploadId}" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2"></div>
+        </div>
+    `;
+
+      // Add existing images to preview
+      const previewContainer = imageUploadDiv.querySelector(`#preview_${uploadId}`);
+
+      existingImages.forEach(image => {
+        // Handle both string (URL only) and object (URL + ID) formats
+        const imageUrl = typeof image === 'string' ? image : image.url;
+        const imageId = typeof image === 'string' ? null : image.id;
+
+        const imgWrapper = document.createElement("div");
+        imgWrapper.className = "relative group";
+        imgWrapper.innerHTML = `
+            <img src="${imageUrl}" class="w-full h-32 object-cover rounded-lg shadow">
+            <input type="hidden" name="existing_images[${colorName}][${imageId || ''}]" value="${imageUrl}">
+            <button type="button" class="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full text-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition">×</button>
+        `;
+        previewContainer.appendChild(imgWrapper);
+
+        // Add remove functionality
+        imgWrapper.querySelector('button').addEventListener('click', () => {
+          imgWrapper.remove();
+          updateSaveButtonState();
+        });
+      });
+
       DOM.variantImagesContainer.appendChild(imageUploadDiv);
       setupCustomUpload(uploadId, existingImages);
     };
-
     const setupCustomUpload = (uploadId, existingImages = []) => {
       const fileInput = document.getElementById(uploadId);
       const previewContainer = document.getElementById(`preview_${uploadId}`);
@@ -821,22 +831,73 @@ admin_content %}
         const img = document.createElement("img");
         img.className = "w-full h-32 object-cover rounded-lg shadow";
 
+        // Handle both existing and new files
         if (item.isExisting) {
-          img.src = `${item.url}`;
+          // Corrected path to access URL and ID
+          const imageUrl = item.url?.url || item.url;
+          const imageId = item.url?.id;
+
+          img.src = imageUrl;
+
+          // Store the ID in a data attribute if available
+          if (imageId) {
+            imgWrapper.dataset.imageId = imageId;
+            imgWrapper.dataset.isExisting = "true";
+          }
+
+          // Add hidden input for form submission
+          const hiddenInput = document.createElement("input");
+          hiddenInput.type = "hidden";
+          hiddenInput.name = `existing_images[${imageId || 'no-id'}]`;
+          hiddenInput.value = imageUrl;
+          imgWrapper.appendChild(hiddenInput);
         } else {
+          // Handle new file uploads
           const reader = new FileReader();
           reader.onload = (e) => (img.src = e.target.result);
           reader.readAsDataURL(item.file);
+
+          // Mark as new upload
+          imgWrapper.dataset.isExisting = "false";
         }
 
         const removeBtn = document.createElement("button");
         removeBtn.innerHTML = "×";
-        removeBtn.className =
-          "absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full text-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition";
-        removeBtn.addEventListener("click", () => {
-          files.splice(index, 1);
-          updatePreview(container, files);
-          updateSaveButtonState();
+        removeBtn.className = "absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full text-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition";
+        removeBtn.title = "Remove image";
+
+        removeBtn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          try {
+            if (item.isExisting) {
+              const imageId = imgWrapper.dataset.imageId;
+              const formData = new FormData();
+              formData.append('image_id', imageId);
+              formData.append('product_id', "{{ product.id }}");
+              if (imageId) {
+                const response = await sendPostRequest('/api/products/remove-image', formData, 'DELETE')
+                if (response) {
+                  files.splice(index, 1);
+                  updatePreview(container, files);
+                  updateSaveButtonState();
+                  showToast("Image removed successfully", "success");
+                } else {
+                  showToast("Failed to remove image", "error");
+                }
+              } else {
+                showToast("Cannot remove image: Missing ID", "error");
+              }
+            } else {
+              files.splice(index, 1);
+              updatePreview(container, files);
+              updateSaveButtonState();
+            }
+          } catch (error) {
+            console.error("Error removing image:", error);
+            showToast("Error removing image", "error");
+          }
         });
 
         imgWrapper.appendChild(img);
@@ -854,15 +915,12 @@ admin_content %}
 
       try {
         setLoadingState(true);
-
         const response = await sendPostRequest("/api/products/edit", formData, 'PUT');
         if (!response.success) {
-          throw new Error(response.message || "Failed to update product");
+          showToast(response.message || "Failed to update product", 'error');
         }
         showToast(response.message, "success");
-      
         window.location.href = "/products/list";
-
       } catch (error) {
         handleSubmissionError(error);
       } finally {
@@ -914,9 +972,9 @@ admin_content %}
 
       uploadContainers.forEach((container) => {
         if (container.querySelectorAll("img").length === 0) {
-          const title =
-            container.previousElementSibling?.previousElementSibling?.textContent;
-          showToast(`Please upload at least one image for ${title}`, "error");
+          const idParts = container.id.split('_');
+          const colorName = idParts[idParts.length - 1];
+          showToast(`Please upload at least one image for ${colorName}`, "error");
           isValid = false;
         }
       });
@@ -968,43 +1026,47 @@ admin_content %}
       return isDetailsValid && isSizesValid && isColorsValid && areQuantitiesValid && areImagesValid && areSizesUnique;
     };
 
-    function prepareFormData() {
+    const prepareFormData = () => {
       const formData = new FormData();
       const variations = [];
       const sizeBlocks = document.querySelectorAll('.size-block');
+      const processedColors = new Set();
 
+      // Get basic form values
       const formValues = {
+        product_id: "{{ product.id }}",
         name: document.getElementById('title').value,
         description: document.getElementById('description').value,
-        details: document.getElementById('product-details').value,
+        details: quill.root.innerHTML,
         price: document.getElementById('price').value,
         discount_price: document.getElementById('discount_price').value,
         stock_quantity: document.getElementById('stock').value,
         category_id: "{{ product.category.id }}",
         subcategory_id: "{{ product.sub_category.id }}",
-        subsubcategory_id: "{{ product.sub_sub_category.id }}",
-        product_id: "{{ product.id }}"
+        subsubcategory_id: "{{ product.sub_sub_category.id }}"
       };
 
+      // Append basic form values to FormData
       for (const key in formValues) {
         if (formValues[key] !== undefined && formValues[key] !== null) {
           formData.append(key, formValues[key]);
         }
       }
 
-      const brandSelect = document.getElementById('brand');
+      // Handle brand
+      const brandSelect = DOM.brandSelect;
       if (brandSelect) {
         const brandValue = brandSelect.value;
-        formData.append('brand_id', brandValue === 'other' ? document.getElementById('other-brand').value : brandValue);
+        formData.append('brand_id', brandValue === 'other' ? DOM.otherBrandInput.value : brandValue);
       }
 
+      // Handle thumbnail upload
       const thumbnailInput = document.getElementById('thumbnail');
       if (thumbnailInput && thumbnailInput.files.length > 0) {
         formData.append('thumbnail', thumbnailInput.files[0]);
       }
 
-      const processedColors = new Set();
-
+      // Process all standard colors
       document.querySelectorAll('.standard-colors input[type="checkbox"]:checked').forEach(checkbox => {
         const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1];
         const colorNameInput = checkbox.closest('div').querySelector(`input[name*="[${colorHex}][name]"]`);
@@ -1013,28 +1075,44 @@ admin_content %}
         if (processedColors.has(colorName)) return;
         processedColors.add(colorName);
 
-        const uploadId = `upload_color_${colorHex}`;
+        // Generate uploadId consistent with createImageUploadSection
+        const uploadId = `upload_${colorHex.replace('#', '')}_${colorName.replace(/\s+/g, '_')}`;
         const fileInput = document.getElementById(uploadId);
+        const previewContainer = document.getElementById(`preview_${uploadId}`);
 
-        if (fileInput && fileInput.files && fileInput.files.length > 0) {
-          const sizesWithThisColor = [];
-          sizeBlocks.forEach(sizeBlock => {
-            const sizeName = sizeBlock.querySelector('.size-select').value === 'custom'
-              ? sizeBlock.querySelector('.custom-size-input').value
-              : sizeBlock.querySelector('.size-select').value;
+        // Get all sizes that have this color
+        const sizesWithThisColor = [];
+        sizeBlocks.forEach(sizeBlock => {
+          const sizeName = getSizeNameFromBlock(sizeBlock);
+          const isChecked = sizeBlock.querySelector(`.standard-colors input[name*="[standard][${colorHex}]"]:checked`);
+          if (isChecked && sizeName) sizesWithThisColor.push(sizeName);
+        });
 
-            const isChecked = sizeBlock.querySelector(`.standard-colors input[name*="[standard][${colorHex}]"]:checked`);
-            if (isChecked) sizesWithThisColor.push(sizeName);
+        // Append existing images
+        if (previewContainer) {
+          const existingImages = previewContainer.querySelectorAll(`input[name="existing_images[${colorName}][]"]`);
+          existingImages.forEach(input => {
+            sizesWithThisColor.forEach(size => {
+              if (input.value) {
+                formData.append(`existing_images[${colorName}][${size}]`, input.value);
+              }
+            });
           });
+        }
 
+        // Append new images
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
           Array.from(fileInput.files).forEach((file, fileIndex) => {
             sizesWithThisColor.forEach(size => {
               formData.append(`images[${colorName}][${size}]`, file, `image_${fileIndex}_${size}.${file.name.split('.').pop()}`);
             });
           });
+        } else {
+          console.warn(`No file input found for uploadId: ${uploadId}`);
         }
       });
 
+      // Process all custom colors
       document.querySelectorAll('.custom-color-container > div').forEach(customColorDiv => {
         const hexInput = customColorDiv.querySelector('input[type="color"]');
         const nameInput = customColorDiv.querySelector('input[placeholder="Color name"]');
@@ -1047,37 +1125,51 @@ admin_content %}
           if (processedColors.has(colorName)) return;
           processedColors.add(colorName);
 
-          const uploadId = `upload_custom_${customColorId}`;
+          // Generate uploadId consistent with createImageUploadSection
+          const uploadId = `upload_${colorHex.replace('#', '')}_${colorName.replace(/\s+/g, '_')}`;
           const fileInput = document.getElementById(uploadId);
+          const previewContainer = document.getElementById(`preview_${uploadId}`);
 
-          if (fileInput && fileInput.files && fileInput.files.length > 0) {
-            const sizesWithThisColor = [];
-            sizeBlocks.forEach(sizeBlock => {
-              const sizeName = sizeBlock.querySelector('.size-select').value === 'custom'
-                ? sizeBlock.querySelector('.custom-size-input').value
-                : sizeBlock.querySelector('.size-select').value;
+          // Get all sizes that have this color
+          const sizesWithThisColor = [];
+          sizeBlocks.forEach(sizeBlock => {
+            const sizeName = getSizeNameFromBlock(sizeBlock);
+            const customColorInput = sizeBlock.querySelector(`.custom-color-container input[value="${colorHex}"]`);
+            if (customColorInput && customColorInput.closest('div').querySelector('input[placeholder="Color name"]').value.trim() === colorName && sizeName) {
+              sizesWithThisColor.push(sizeName);
+            }
+          });
 
-              const customColorDiv = sizeBlock.querySelector(`.custom-color-container input[value="${colorHex}"]`);
-              if (customColorDiv && customColorDiv.closest('div').querySelector('input[placeholder="Color name"]').value.trim() === colorName) {
-                sizesWithThisColor.push(sizeName);
-              }
+          // Append existing images
+          if (previewContainer) {
+            const existingImages = previewContainer.querySelectorAll(`input[name="existing_images[${colorName}][]"]`);
+            existingImages.forEach(input => {
+              sizesWithThisColor.forEach(size => {
+                if (input.value) {
+                  formData.append(`existing_images[${colorName}][${size}]`, input.value);
+                }
+              });
             });
+          }
 
+          // Append new images
+          if (fileInput && fileInput.files && fileInput.files.length > 0) {
             Array.from(fileInput.files).forEach((file, fileIndex) => {
               sizesWithThisColor.forEach(size => {
                 formData.append(`images[${colorName}][${size}]`, file, `image_${fileIndex}_${size}.${file.name.split('.').pop()}`);
               });
             });
+          } else {
+            console.warn(`No file input found for uploadId: ${uploadId}`);
           }
         }
       });
 
+      // Process variations
       sizeBlocks.forEach(sizeBlock => {
-        const sizeName = sizeBlock.querySelector('.size-select').value === 'custom'
-          ? sizeBlock.querySelector('.custom-size-input').value
-          : sizeBlock.querySelector('.size-select').value;
-        const sizeId = sizeBlock.dataset.sizeId;
+        const sizeName = getSizeNameFromBlock(sizeBlock);
 
+        // Standard colors
         sizeBlock.querySelectorAll('.standard-colors input[type="checkbox"]:checked').forEach(checkbox => {
           const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1];
           const colorNameInput = checkbox.closest('div').querySelector(`input[name*="[${colorHex}][name]"]`);
@@ -1095,6 +1187,7 @@ admin_content %}
           }
         });
 
+        // Custom colors
         sizeBlock.querySelectorAll('.custom-color-container > div').forEach(customColorDiv => {
           const hexInput = customColorDiv.querySelector('input[type="color"]');
           const nameInput = customColorDiv.querySelector('input[placeholder="Color name"]');
@@ -1116,84 +1209,7 @@ admin_content %}
       });
 
       formData.append('variations', JSON.stringify(variations));
-
-      for (const pair of formData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-
       return formData;
-    }
-
-    const processStandardColorVariations = (
-      sizeBlock,
-      sizeName,
-      sizeId,
-      variations,
-      formData
-    ) => {
-      sizeBlock
-        .querySelectorAll('.standard-colors input[type="checkbox"]:checked')
-        .forEach((checkbox) => {
-          const colorHex = checkbox.name.match(/\[standard\]\[(.*?)\]/)[1];
-          const colorNameInput = checkbox
-            .closest("div")
-            .querySelector(`input[name*="[${colorHex}][name]"]`);
-          const colorName = colorNameInput ? colorNameInput.value : colorHex;
-          const quantity = parseInt(checkbox.closest("div").nextElementSibling.value) || 0;
-
-          variations.push({
-            size: sizeName,
-            color: colorName,
-            stock_quantity: quantity,
-            color_hexa_code: colorHex,
-          });
-
-          const uploadId = `upload_${sizeId}_${colorHex}`;
-          const fileInput = document.getElementById(uploadId);
-          if (fileInput?.files) {
-            Array.from(fileInput.files).forEach((file) =>
-              formData.append(`images[${colorName}][${sizeName}]`, file)
-            );
-          }
-        });
-    };
-
-    const processCustomColorVariations = (
-      sizeBlock,
-      sizeName,
-      sizeId,
-      variations,
-      formData
-    ) => {
-      sizeBlock
-        .querySelectorAll(".custom-color-container > div")
-        .forEach((customColorDiv) => {
-          const hexInput = customColorDiv.querySelector('input[type="color"]');
-          const nameInput = customColorDiv.querySelector('input[placeholder="Color name"]');
-          const quantityInput = customColorDiv.querySelector(".custom-color-quantity");
-
-          if (hexInput && nameInput?.value.trim()) {
-            const colorHex = hexInput.value;
-            const colorName = nameInput.value.trim();
-            const quantity = parseInt(quantityInput.value) || 0;
-            const customColorId = nameInput.name.match(/\[custom\]\[(.*?)\]/)[1];
-
-            variations.push({
-              size: sizeName,
-              color: colorName,
-              stock_quantity: quantity,
-              color_hexa_code: colorHex,
-            });
-
-            const uploadId = `upload_${sizeId}_custom_${customColorId}`;
-            const fileInput = document.getElementById(uploadId);
-            if (fileInput?.files) {
-              Array.from(fileInput.files).forEach((file) =>
-                formData.append(`images[${colorName}][${sizeName}]`, file)
-              );
-            }
-          }
-        });
     };
 
     const handleSubmissionError = (error) => {
@@ -1208,7 +1224,6 @@ admin_content %}
         : "Save Changes";
     };
 
-    // Form State Tracking
     const getFormState = () => {
       return {
         title: document.getElementById("title").value,
