@@ -269,7 +269,7 @@ admin_content %}
     // Product Data Initialization
     const initializeProductData = () => {
       try {
-        productData = JSON.parse(`{{product | tojson}}`);
+        productData = {{ product | tojson | safe }}
         quill.root.innerHTML = productData.details;
         initializeForm();
         generateImageUploadFields();
