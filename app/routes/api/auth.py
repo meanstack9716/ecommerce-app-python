@@ -63,7 +63,6 @@ def register():
     if not role:
         return create_error_response({"error": "Default user role not found"}, 500)
 
-    OTP code (commented for now)
     otp = str(random.randint(100000, 999999))
     otp_expiry = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
 
