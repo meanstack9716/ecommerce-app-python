@@ -6,26 +6,22 @@
 <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 max-w-full mx-auto">
   <h1 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6 text-center">Order Management</h1>
 
-  <!-- Toast Container -->
   <div id="loader" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
     <div class="w-6 h-6 sm:w-8 sm:h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
   </div>
 
-  <!-- Search and Filter Form -->
   <form id="search-form" class="flex flex-col md:flex-row items-end justify-between gap-4 mb-8">
     <div class="flex flex-col md:flex-row gap-4 w-full md:w-2/3">
       <div class="w-full md:w-1/3">
         <label for="orderSearch" class="block text-base font-medium mb-1.5">Search Orders</label>
         <input type="text" id="orderSearch" name="orderSearch" placeholder="Search by order number"
-          class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150"
-          aria-label="Search orders by number">
+          class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150">
       </div>
       <div class="w-full md:w-1/3">
         <label for="statusFilter" class="block text-base font-medium mb-1.5">Status Filter</label>
         <div class="relative">
           <select id="statusFilter" name="statusFilter"
-            class="w-full px-4 appearance-none py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150"
-            aria-label="Filter orders by status">
+            class="w-full px-4 appearance-none py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150">
             <option value="">All Statuses</option>
             <option value="pending">Pending</option>
             <option value="confirmed">Confirmed</option>
@@ -45,14 +41,12 @@
       <div class="w-full md:w-1/3">
         <label for="fromDate" class="block text-base font-medium mb-1.5">From Date</label>
         <input type="date" id="fromDate" name="fromDate"
-          class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150"
-          aria-label="Filter orders by start date">
+          class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150">
       </div>
       <div class="w-full md:w-1/3">
         <label for="toDate" class="block text-base font-medium mb-1.5">To Date</label>
         <input type="date" id="toDate" name="toDate"
-          class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150"
-          aria-label="Filter orders by end date">
+          class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150">
       </div>
     </div>
     <div class="flex gap-4 w-full md:w-auto">
@@ -67,18 +61,29 @@
     </div>
   </form>
 
-  <!-- Orders Table -->
   <div class="overflow-x-auto border border-gray-200 rounded-lg">
     {% set order_list_header = ['Order #', 'Date', 'Total', 'Status', 'Payment'] %}
     <table class="min-w-full divide-y divide-gray-200 table-auto">
       <thead class="bg-gray-50 text-xs sm:table-header-group hidden">
         <tr>
-          {% for header in order_list_header %}
-          <th class="px-2 py-2 border sm:px-4 sm:py-3 font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap"
-              data-label="{{ header }}">
-            {{ header }}
-          </th>
-          {% endfor %}
+          <th
+            class="px-2 py-2 border sm:px-4 sm:py-3 font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
+            Order #</th>
+          <th
+            class="px-2 py-2 border sm:px-4 sm:py-3 font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
+            Date</th>
+          <th
+            class="px-2 py-2 border sm:px-4 sm:py-3 font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
+            Total</th>
+          <th
+            class="px-2 py-2 border sm:px-4 sm:py-3 font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
+            Status</th>
+          <th
+            class="px-2 py-2 border sm:px-4 sm:py-3 font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
+            Payment</th>
+          <th
+            class="px-2 py-2 border sm:px-4 sm:py-3 font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
+            Actions</th>
         </tr>
       </thead>
       <tbody id="orders-table-body" class="bg-white divide-y divide-gray-200 text-center text-xs">
@@ -103,14 +108,12 @@
     </table>
   </div>
 
-  <!-- Pagination -->
   <div class="flex flex-col sm:flex-row items-center justify-between mt-4 sm:mt-6 gap-4">
     <div class="flex items-center gap-2 sm:gap-3">
       <span class="text-xs sm:text-sm font-medium text-gray-600">Orders per page:</span>
       <div class="relative">
         <select id="items-per-page"
-          class="py-1.5 px-2 w-16 sm:w-20 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150 appearance-none"
-          aria-label="Select orders per page">
+          class="py-1.5 px-2 w-16 sm:w-20 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150 appearance-none">
           <option value="10" selected>10</option>
           <option value="20">20</option>
           <option value="50">50</option>
@@ -157,14 +160,60 @@
     let itemsPerPage = 10;
     let totalPages = 1;
 
-    // Function to close all dropdowns
     const closeAllDropdowns = () => {
       document.querySelectorAll('.dropdown-menu').forEach(menu => {
         menu.style.display = 'none';
       });
     };
 
-    // Function to fetch orders
+    const renderOrderRow = (order) => {
+      return `
+        <tr class="sm:table-row block mb-4 sm:mb-0 border border-gray-200 sm:border-0 rounded-lg sm:rounded-none">
+          <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200"
+              >${order.order_number}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200"
+              >${new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200"
+              >$${parseFloat(order.total_amount).toFixed(2)}</td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200"
+              >
+            <div class="relative">
+              <button class="status-btn w-full sm:w-50 inline-flex items-center justify-between px-2 py-2 sm:px-3 sm:py-3 text-xs sm:text-sm font-medium text-gray-700 border border-sky-400 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150">
+                <span class="text-gray-700 px-2 py-0.5 rounded">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
+                <svg class="w-3 h-3 sm:w-4 sm:h-4 ml-1 sm:ml-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </button>
+              <div class="dropdown-menu absolute left-0 mt-1 w-full sm:w-36 rounded-md shadow-lg bg-white ring-1 ring-gray-200 z-20 transition-all duration-150" style="display: none;">
+                <div class="py-1">
+                  ${['pending', 'confirmed', 'processing', 'shipped', 'outOfDelivery', 'delivered', 'cancelled', 'return', 'refund'].map(status => `
+                    <form class="status-form block w-full" data-order-id="${order.id}">
+                      <input type="hidden" name="status" value="${status}">
+                      <button type="submit" class="block w-full px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-100 text-left ${order.status === status ? 'bg-blue-50 text-blue-700 font-medium' : ''}">
+                        ${status.charAt(0).toUpperCase() + status.slice(1)}
+                      </button>
+                    </form>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+            <div class="flex flex-col items-center gap-2">
+            <span class="text-xs font-medium bg-yellow-100 py-2 w-20 rounded-2xl">
+              ${order.payment_method}
+            </span>
+            <span class="text-xs sm:text-sm font-medium">
+              ${order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
+            </span>
+              </div>
+           
+          </td>
+          <td class="px-3 py-3 md:px-6 md:py-4 text-sm border border-gray-200">
+            <a href="/order-details/${order.id}" class="text-indigo-600 hover:text-indigo-800">View</a>
+          </td>
+        </tr>
+      `;
+    };
+
     const fetchOrders = async () => {
       loader.classList.remove('hidden');
       const search = searchForm.querySelector('input[name="orderSearch"]').value;
@@ -185,9 +234,9 @@
           }),
         });
 
-        if (data.error) {
-          throw new Error(data.error);
-        }
+        ordersTableBody.innerHTML = data.orders.length ?
+          data.orders.map(order => renderOrderRow(order)).join('') :
+          `<tr><td colspan="6" class="px-4 py-3 text-center text-sm text-gray-500">No orders found</td></tr>`;
 
         ordersTableBody.innerHTML = '';
         if (data.orders.length === 0) {
@@ -249,31 +298,22 @@
         document.querySelectorAll('.status-btn').forEach(button => {
           button.addEventListener('click', (e) => {
             e.preventDefault();
-            const dropdown = button.nextElementSibling;
-            const isOpen = dropdown.style.display === 'block';
+            const dropdown = btn.nextElementSibling;
             closeAllDropdowns();
-            dropdown.style.display = isOpen ? 'none' : 'block';
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
           });
         });
 
         document.querySelectorAll('.status-form').forEach(form => {
           form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const orderId = form.dataset.orderId;
-            const status = form.querySelector('input[name="status"]').value;
+            const formData = new FormData(form);
             loader.classList.remove('hidden');
 
             try {
-              const formData = new FormData();
-              formData.append('status', status);
-
-              const result = await sendPostRequest(`/orders/${orderId}/update-status`, formData);
-
-              if (!result.success) {
-                throw new Error(result.errors || result.message);
-              }
-
-              showToast(`Order status updated to ${status}`, 'success');
+              const result = await sendPostRequest(`/orders/${form.dataset.orderId}/update-status`, formData);
+              if (!result.success) throw new Error(result.errors || result.message);
+              showToast(`Order status updated`, 'success');
               fetchOrders();
             } catch (error) {
               showToast(`Error: ${error.message}`, 'error');
@@ -284,72 +324,53 @@
           });
         });
 
-        document.addEventListener('click', (e) => {
-          if (!e.target.closest('.status-btn') && !e.target.closest('.dropdown-menu')) {
-            closeAllDropdowns();
-          }
-        });
-
         totalPages = data.total_pages;
         pageInfo.textContent = `Page ${data.current_page} of ${data.total_pages}`;
         prevPageBtn.disabled = data.current_page === 1;
         nextPageBtn.disabled = data.current_page === data.total_pages;
         currentPage = data.current_page;
       } catch (error) {
-        console.error('Error fetching orders:', error);
         ordersTableBody.innerHTML = `
           <tr>
-            <td colspan="6" class="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm text-red-500">Error loading orders. Please try again.</td>
+            <td colspan="6" class="px-4 py-3 text-center text-sm text-red-500">Error loading orders</td>
           </tr>
         `;
-        showToast('Error loading orders. Please try again.', 'error');
+        showToast('Error loading orders', 'error');
       } finally {
         loader.classList.add('hidden');
       }
     };
 
-    fetchOrders();
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.status-btn') && !e.target.closest('.dropdown-menu')) {
+        closeAllDropdowns();
+      }
+    });
 
-    // Form submission
     searchForm.addEventListener('submit', (e) => {
       e.preventDefault();
       currentPage = 1;
       fetchOrders();
     });
 
-    // Clear search
     clearSearchBtn.addEventListener('click', () => {
-      searchForm.querySelector('input[name="orderSearch"]').value = '';
-      searchForm.querySelector('select[name="statusFilter"]').value = '';
-      searchForm.querySelector('input[name="fromDate"]').value = '';
-      searchForm.querySelector('input[name="toDate"]').value = '';
+      searchForm.reset();
       itemsPerPageSelect.value = '10';
       itemsPerPage = 10;
       currentPage = 1;
       fetchOrders();
     });
 
-    // Items per page change
     itemsPerPageSelect.addEventListener('change', () => {
       itemsPerPage = parseInt(itemsPerPageSelect.value);
       currentPage = 1;
       fetchOrders();
     });
 
-    // Pagination buttons
-    prevPageBtn.addEventListener('click', () => {
-      if (currentPage > 1) {
-        currentPage--;
-        fetchOrders();
-      }
-    });
+    prevPageBtn.addEventListener('click', () => currentPage > 1 && (currentPage--, fetchOrders()));
+    nextPageBtn.addEventListener('click', () => currentPage < totalPages && (currentPage++, fetchOrders()));
 
-    nextPageBtn.addEventListener('click', () => {
-      if (currentPage < totalPages) {
-        currentPage++;
-        fetchOrders();
-      }
-    });
+    fetchOrders();
   });
 </script>
 {% endblock %}

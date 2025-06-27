@@ -232,7 +232,7 @@ def order_details_page(order_id):
             customer = User.objects(id=order.customer_id).first()
 
         return render_template(
-            "admin/orderPage/orderDetails.html",
+            "admin/orderPage/order_details.html",
             order=order,
             customer=customer,
             is_admin=user.is_admin
