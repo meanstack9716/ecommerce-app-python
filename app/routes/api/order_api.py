@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import Address, Seller, User, ProductCart, Products, ProductVariant, ProductVariantImage, Order, OrderItem, ProductPurchaseStats
 from datetime import datetime, timedelta
 import decimal
+import os
 from app.utils.utils import create_error_response
 from constants import ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, ORDER_STATUS, GET_PRODUCT_PURCHASE_STATS, PAYMENT_CALLBACK_API, ORDER_SUCCESS_ROUTE, VERIFY_PAYMENT
 from app.utils.jwt_handlers import jwt_error_handler
@@ -143,34 +144,84 @@ def payment_callback():
     payment_link_id = request.args.get('razorpay_payment_link_id')
     payment_link_reference_id = request.args.get('razorpay_payment_link_reference_id')
     order_number = request.args.get('order_number')
+    signature = request.args.get('razorpay_signature')
+    status = request.args.get('razorpay_payment_link_status')
+    
+    # Debug print (corrected variable name)
+    print(payment_id, payment_link_id, payment_link_reference_id, order_number, ">>>>>>>>>>>")
 
+    # Validate required parameters
     if not all([payment_id, payment_link_id, payment_link_reference_id, order_number]):
-        return create_error_response({
-            'error': 'Invalid callback parameters',
-            'message': 'Missing required callback parameters'
-        }, 400)
+        return redirect(
+            f"{os.getenv('APP_BASE_URL')}/order-failed?error=missing_parameters",
+            code=302
+        )
 
     try:
-        url = f"https://api.razorpay.com/v1/payments/{payment_id}"
-        auth = (os.getenv('RAZORPAY_KEY_ID'), os.getenv('RAZORPAY_KEY_SECRET'))
-        response = requests.get(url, auth=auth)
-        response.raise_for_status()
-        payment_data = response.json()
+        # Verify payment with Razorpay API
+        razorpay_client = razorpay.Client(
+            auth=(os.getenv('RAZORPAY_KEY_ID'), os.getenv('RAZORPAY_KEY_SECRET')))
+        
+        # Verify the payment signature first for security
+        params = {
+            'razorpay_payment_id': payment_id,
+            'razorpay_payment_link_id': payment_link_id,
+            'razorpay_payment_link_reference_id': payment_link_reference_id,
+            'razorpay_payment_link_status': status,
+            'razorpay_signature': signature
+        }
+        
+        razorpay_client.utility.verify_payment_link_signature(params)
+        
+        # Fetch payment details
+        payment = razorpay_client.payment.fetch(payment_id)
+        
+        # Check if payment was successful
+        if payment['status'] != 'captured':
+            return redirect(
+                f"{os.getenv('APP_BASE_URL')}/order-failed?order_number={order_number}&error=payment_not_captured",
+                code=302
+            )
 
-        order, error = handle_payment_callback(payment_id, payment_link_id, payment_link_reference_id, order_number)
-        if error:
-            redirect_url = f"{os.getenv('APP_BASE_URL')}/order-failed?error={error.get('message')}"
-            return redirect(redirect_url, code=302)
+        # Update order status in your database
+        order = Order.objects(order_number=order_number).first()
+        if not order:
+            return redirect(
+                f"{os.getenv('APP_BASE_URL')}/order-failed?order_number={order_number}&error=order_not_found",
+                code=302
+            )
 
-        redirect_url = payment_data.get('notes', {}).get('redirect_url')
-        if not redirect_url:
-            redirect_url = f"{os.getenv('APP_BASE_URL')}/order-success?order_number={order_number}"
+        # Update order status and payment details
+        order.payment_status = 'completed'
+        order.payment_id = payment_id
+        order.payment_details = payment
+        order.status = 'confirmed'
+        order.save()
 
-        return redirect(redirect_url, code=302)
+        # Get the redirect URL from the payment notes or use default
+        redirect_url = payment.get('notes', {}).get('redirect_url', 
+                   f"{os.getenv('APP_BASE_URL')}/order-success?order_number={order_number}")
 
+        # Add any additional parameters you want to pass to the app
+        success_url = f"{redirect_url}&payment_id={payment_id}&amount={payment['amount']/100}"
+
+        return redirect(success_url, code=302)
+
+    except razorpay.errors.SignatureVerificationError as e:
+        return redirect(
+            f"{os.getenv('APP_BASE_URL')}/order-failed?order_number={order_number}&error=invalid_signature",
+            code=302
+        )
+    except razorpay.errors.BadRequestError as e:
+        return redirect(
+            f"{os.getenv('APP_BASE_URL')}/order-failed?order_number={order_number}&error=invalid_payment",
+            code=302
+        )
     except Exception as e:
-        redirect_url = f"{os.getenv('APP_BASE_URL')}/order-failed?error={str(e)}"
-        return redirect(redirect_url, code=302)
+        return redirect(
+            f"{os.getenv('APP_BASE_URL')}/order-failed?order_number={order_number}&error=processing_error&details={str(e)}",
+            code=302
+        )
 
 @order_bp.route(ORDER_SUCCESS_ROUTE)
 def order_success():
