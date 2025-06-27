@@ -14,6 +14,7 @@ from app.utils.utils import create_error_response
 from constants import OTP_EXPIRY_MINUTES, REGISTER, LOGIN, FORGOT_PASSWORD, VERIFY_OTP, RESET_PASSWORD, LOGOUT, RESEND_OTP, AUTHENTICATE_USER
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
+
 @auth_bp.route(REGISTER, methods=['POST'])
 def register():
     data = request.get_json()
@@ -23,10 +24,7 @@ def register():
     email = data.get('email')
     password = data.get('password')
     password_confirmation = data.get('password_confirmation')
-
-    print(f"Email: {email}")
-    print(f"Password: {password}")
-    print(f"Password Confirmation: {password_confirmation}")
+    fcm_token = data.get('fcm_token')
 
     is_valid, errors = validate_required_fields(
         {'email': email, 'password': password, 'password_confirmation': password_confirmation},
@@ -65,7 +63,8 @@ def register():
         password=password,
         reset_otp=otp,
         otp_expiry=otp_expiry,
-        role=role
+        role=role,
+        fcm_token=fcm_token
     )
     user.hash_password()
     user.save()
