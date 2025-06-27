@@ -20,6 +20,7 @@ class User(db.Document):
     reset_otp = db.StringField()
     otp_expiry = db.DateTimeField()
     profile_pic = db.StringField()
+    fcm_token = db.ListField(db.StringField()) 
     cloudinary_id = db.StringField()
     is_admin = db.BooleanField(default=False)
     is_email_verified = db.BooleanField(default=False)

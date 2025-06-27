@@ -4,6 +4,7 @@ from app.models import Address, Seller, User, ProductCart, Products, ProductVari
 from datetime import datetime, timedelta
 import decimal
 import os
+import razorpay
 from app.utils.utils import create_error_response
 from constants import ORDER_PLACE_API, ORDER_LIST_API, GET_ORDER_STATUS_TYPES, ORDER_STATUS, GET_PRODUCT_PURCHASE_STATS, PAYMENT_CALLBACK_API, ORDER_SUCCESS_ROUTE, VERIFY_PAYMENT
 from app.utils.jwt_handlers import jwt_error_handler
@@ -16,6 +17,8 @@ from app.utils.order_helpers import (
     create_order_object, verify_order_payment, 
     handle_payment_callback, create_razorpay_payment_link
 )
+from firebase_admin import messaging
+from app.utils.notifications import send_fcm_notification
 
 order_bp = Blueprint('order', __name__)
 
@@ -31,24 +34,29 @@ def place_order():
     if not data:
         return create_error_response({'error': 'No data provided'}, 400)
 
+    # Validate required fields
     required_fields = ['cart_items_ids', 'shipping_address_id', 'payment_method']
     is_valid, validation_errors = validate_required_fields(data, required_fields)
     if not is_valid:
         return create_error_response(validation_errors, 400)
 
+    # Validate payment method
     if data['payment_method'] not in ['cod', 'card']:
         return create_error_response({'error': 'Invalid payment method'}, 400)
 
+    # Validate shipping address
     shipping_address, error = validate_shipping_address(user_id, data['shipping_address_id'])
     if error:
         return create_error_response(error, error.get('status', 400))
 
+    # Get and validate cart items
     cart_items, error = get_cart_items(user_id, data.get('cart_items_ids', []))
     if error:
         return create_error_response(error, 400)
     if not cart_items:
         return create_error_response({'error': 'No cart items found'}, 400)
 
+    # Process promo code if provided
     promo_code = None
     promo_discount = decimal.Decimal('0.00')
     if 'promo_code' in data and data['promo_code']:
@@ -60,15 +68,18 @@ def place_order():
         if not promo_code:
             return create_error_response(promo_discount, 400)
 
+    # Prepare order data
     seller_items = group_cart_items_by_seller(cart_items)
     order_numbers = generate_order_numbers(len(seller_items))
     orders = []
     payment_links = []
 
     try:
+        # Process each seller's items
         for i, (seller_id, seller_data) in enumerate(seller_items.items()):
             order_items = create_order_items(seller_data['items'])
             
+            # Calculate seller-specific promo discount
             seller_promo_discount = decimal.Decimal('0.00')
             if promo_code:
                 seller_ratio = sum(
@@ -80,6 +91,7 @@ def place_order():
                 ) if orders else decimal.Decimal('1.00')
                 seller_promo_discount = promo_discount * seller_ratio
 
+            # Create order object
             order = create_order_object(
                 user=user,
                 seller_data=seller_data,
@@ -91,8 +103,10 @@ def place_order():
                 promo_discount=seller_promo_discount,
                 order_note=data.get('order_note', '')
             )
-            redirect_url = data.get('redirect_url')
+
+            # Handle payment method
             if data['payment_method'] == 'card':
+                redirect_url = data.get('redirect_url')
                 payment_link = create_razorpay_payment_link(order, user, redirect_url)
                 payment_links.append({
                     'order_number': order_numbers[i],
@@ -102,6 +116,19 @@ def place_order():
                 })
                 order.payment_link_id = payment_link['id']
 
+                # Send payment pending notification
+                send_fcm_notification(
+                    user_id=user_id,
+                    title="Payment Pending",
+                    message=f"Please complete payment for order #{order.order_number}",
+                    data={
+                        'type': 'payment_pending',
+                        'order_id': str(order.id),
+                        'payment_link': payment_link['short_url']
+                    }
+                )
+
+            # Save the order
             order.save()
             orders.append({
                 'order_id': str(order.id),
@@ -111,31 +138,65 @@ def place_order():
                 'promo_discount': float(seller_promo_discount)
             })
 
+            # Send order confirmation to buyer
+            send_fcm_notification(
+                user_id=user_id,
+                title="Order Confirmed",
+                message=f"Your order #{order.order_number} has been placed successfully",
+                data={
+                    'type': 'order_confirmed',
+                    'order_id': str(order.id),
+                    'order_number': order.order_number
+                }
+            )
+
+            # Notify seller (if different from buyer)
+            if str(seller_id) != str(user_id):
+                send_fcm_notification(
+                    user_id=seller_id,
+                    title="New Order Received",
+                    message=f"New order #{order.order_number} from {user.first_name}",
+                    data={
+                        'type': 'new_order',
+                        'order_id': str(order.id),
+                        'order_number': order.order_number,
+                        'buyer_name': user.first_name
+                    }
+                )
+
+        # Update promo code usage
         if promo_code:
             promo_code.used_count += 1
             promo_code.save()
 
+        # Prepare success response
         response_data = {
-            'message': f"{'Payment links and orders' if data['payment_method'] == 'card' else 'Orders'} created successfully",
+            'success': True,
+            'message': 'Order placed successfully',
             'orders': orders,
+            'payment_links': payment_links,
             'promo_code': promo_code.code if promo_code else None,
-            'total_promo_discount': float(promo_discount) if promo_code else 0,
-            'payment_links': [{
-                'payment_link_id': pl['payment_link_id'],
-                'payment_link_url': pl['payment_link_url'],
-                'amount': float(pl['amount']),
-                'order_number': pl['order_number']
-            } for pl in payment_links] if data['payment_method'] == 'card' else []
+            'total_discount': float(promo_discount) if promo_code else 0
         }
 
         return jsonify(response_data), 201
 
     except Exception as e:
+        # Cleanup failed orders
         for order in Order.objects(order_number__in=[o['order_number'] for o in orders]):
             order.delete()
+
+        # Notify user of failure
+        send_fcm_notification(
+            user_id=user_id,
+            title="Order Failed",
+            message="Could not process your order. Please try again.",
+            data={'type': 'order_failed'}
+        )
+
         return create_error_response({
-            'error': 'Failed to create order',
-            'message': str(e)
+            'error': 'Order processing failed',
+            'details': str(e)
         }, 500)
 
 @order_bp.route(PAYMENT_CALLBACK_API, methods=['GET'])
@@ -143,26 +204,22 @@ def payment_callback():
     payment_id = request.args.get('razorpay_payment_id')
     payment_link_id = request.args.get('razorpay_payment_link_id')
     payment_link_reference_id = request.args.get('razorpay_payment_link_reference_id')
-    order_number = request.args.get('order_number')
     signature = request.args.get('razorpay_signature')
     status = request.args.get('razorpay_payment_link_status')
     
-    # Debug print (corrected variable name)
-    print(payment_id, payment_link_id, payment_link_reference_id, order_number, ">>>>>>>>>>>")
-
     # Validate required parameters
-    if not all([payment_id, payment_link_id, payment_link_reference_id, order_number]):
+    if not all([payment_id, payment_link_id, payment_link_reference_id]):
         return redirect(
             f"{os.getenv('APP_BASE_URL')}/order-failed?error=missing_parameters",
             code=302
         )
 
     try:
-        # Verify payment with Razorpay API
+        # Initialize Razorpay client
         razorpay_client = razorpay.Client(
             auth=(os.getenv('RAZORPAY_KEY_ID'), os.getenv('RAZORPAY_KEY_SECRET')))
         
-        # Verify the payment signature first for security
+        # Verify the payment signature
         params = {
             'razorpay_payment_id': payment_id,
             'razorpay_payment_link_id': payment_link_id,
@@ -176,6 +233,9 @@ def payment_callback():
         # Fetch payment details
         payment = razorpay_client.payment.fetch(payment_id)
         
+        # Get order_number from payment notes (where we stored it when creating the payment link)
+        order_number = payment.get('notes', {}).get('order_number', payment_link_reference_id)
+        
         # Check if payment was successful
         if payment['status'] != 'captured':
             return redirect(
@@ -187,7 +247,7 @@ def payment_callback():
         order = Order.objects(order_number=order_number).first()
         if not order:
             return redirect(
-                f"{os.getenv('APP_BASE_URL')}/order-failed?order_number={order_number}&error=order_not_found",
+                f"{os.getenv('APP_BASE_URL')}/order-failed?error=order_not_found&reference={payment_link_reference_id}",
                 code=302
             )
 
@@ -198,28 +258,21 @@ def payment_callback():
         order.status = 'confirmed'
         order.save()
 
-        # Get the redirect URL from the payment notes or use default
+        # Get the redirect URL
         redirect_url = payment.get('notes', {}).get('redirect_url', 
-                   f"{os.getenv('APP_BASE_URL')}/order-success?order_number={order_number}")
-
-        # Add any additional parameters you want to pass to the app
-        success_url = f"{redirect_url}&payment_id={payment_id}&amount={payment['amount']/100}"
-
+                   f"{os.getenv('APP_BASE_URL')}/order-success")
+        
+        success_url = f"{redirect_url}?order_number={order_number}&payment_id={payment_id}&amount={payment['amount']/100}"
         return redirect(success_url, code=302)
 
     except razorpay.errors.SignatureVerificationError as e:
         return redirect(
-            f"{os.getenv('APP_BASE_URL')}/order-failed?order_number={order_number}&error=invalid_signature",
-            code=302
-        )
-    except razorpay.errors.BadRequestError as e:
-        return redirect(
-            f"{os.getenv('APP_BASE_URL')}/order-failed?order_number={order_number}&error=invalid_payment",
+            f"{os.getenv('APP_BASE_URL')}/order-failed?error=invalid_signature&reference={payment_link_reference_id}",
             code=302
         )
     except Exception as e:
         return redirect(
-            f"{os.getenv('APP_BASE_URL')}/order-failed?order_number={order_number}&error=processing_error&details={str(e)}",
+            f"{os.getenv('APP_BASE_URL')}/order-failed?error=processing_error&reference={payment_link_reference_id}&details={str(e)}",
             code=302
         )
 

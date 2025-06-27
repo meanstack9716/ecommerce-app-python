@@ -80,6 +80,7 @@ def login():
 
     email = data.get('email', '').strip()
     password = data.get('password', '').strip()
+    fcm_token = request.form.get('fcm_token')
     errors = {}
     if not email:
         errors['email'] = 'Email is required.'
@@ -87,6 +88,9 @@ def login():
         errors['password'] = 'Password is required.'
     if errors:
         return create_error_response({"error": errors}, 400)
+
+    if fcm_token:
+        user.fcm_token = fcm_token
 
     is_valid_email, email_error = validate_email(email)
     if not is_valid_email:

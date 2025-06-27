@@ -115,3 +115,16 @@ def delete_profile_picture():
     except Exception as e:
         return create_error_response({"error": "Deletion failed", "details": str(e)}, 500)
 
+@user_bp.route('/register_fcm_token', methods=['POST'])
+@jwt_required()
+def register_fcm_token():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    if not data or 'fcm_token' not in data:
+        return jsonify({"error": "FCM token missing"}), 400
+    
+    user = User.objects.get(id=user_id)
+    user.update(fcm_token=data['fcm_token'])
+    
+    return jsonify({"message": "FCM token saved successfully"}), 200

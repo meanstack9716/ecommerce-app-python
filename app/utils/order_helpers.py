@@ -4,6 +4,7 @@ import string
 import decimal
 import requests
 import json
+import razorpay
 from datetime import datetime, timedelta
 from bson import ObjectId
 from flask import jsonify, redirect, request
@@ -148,8 +149,7 @@ def create_order_object(user, seller_data, order_number, order_items, shipping_a
 
 def create_razorpay_payment_link(order, user, redirect_url):
     customer_name = f"{user.first_name or ''} {user.last_name or ''}".strip() or "Customer"
-    # Use a static URL for testing
-    static_redirect_url = "https://your-frontend-domain.com/order-success"  # Change this to your actual frontend URL
+    static_redirect_url = f"{os.getenv('API_BASE_URL')}/order-success"
     return generate_razorpay_payment_link(
         amount=float(order.total_amount),
         reference_id=order.order_number,
@@ -157,7 +157,7 @@ def create_razorpay_payment_link(order, user, redirect_url):
         customer_email=user.email,
         customer_phone=user.phone_number if hasattr(user, 'phone_number') and user.phone_number else '',
         description=f"Order {order.order_number}",
-        redirect_url=static_redirect_url  # Use static URL here
+        redirect_url=static_redirect_url
     )
 
 def generate_razorpay_payment_link(amount, reference_id, customer_name, customer_email, customer_phone='', description=None, redirect_url=None):
