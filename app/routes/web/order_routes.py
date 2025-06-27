@@ -200,7 +200,6 @@ def update_order_status(order_id):
         previous_status = order.status
         order.status = status
         order.save()
-        
         if previous_status != status:
             send_order_status_notifications(order, status, user)
         

@@ -116,18 +116,6 @@ def place_order():
                 })
                 order.payment_link_id = payment_link['id']
 
-                # Send payment pending notification
-                send_fcm_notification(
-                    user_id=user_id,
-                    title="Payment Pending",
-                    message=f"Please complete payment for order #{order.order_number}",
-                    data={
-                        'type': 'payment_pending',
-                        'order_id': str(order.id),
-                        'payment_link': payment_link['short_url']
-                    }
-                )
-
             # Save the order
             order.save()
             orders.append({
@@ -233,7 +221,7 @@ def payment_callback():
         # Fetch payment details
         payment = razorpay_client.payment.fetch(payment_id)
         
-        # Get order_number from payment notes (where we stored it when creating the payment link)
+        # Get order_number from payment notes
         order_number = payment.get('notes', {}).get('order_number', payment_link_reference_id)
         
         # Check if payment was successful
@@ -257,6 +245,36 @@ def payment_callback():
         order.payment_details = payment
         order.status = 'confirmed'
         order.save()
+
+        # Send notifications after successful payment
+        try:
+            # Notification data
+            data = {
+                "order_id": str(order.id),
+                "type": "payment_success",
+                "status": "confirmed"
+            }
+            
+            # 1. Notify customer
+            if order.user_id.fcm_token:
+                send_fcm_notification(
+                    user_id=order.user_id.id,
+                    title=f"Payment Successful for Order #{order.order_number}",
+                    message=f"Your payment of ₹{payment['amount']/100} for order #{order.order_number} was successful",
+                    data=data
+                )
+            
+            # 2. Notify seller
+            if order.seller_id and order.seller_id.user_id and order.seller_id.user_id.fcm_token:
+                send_fcm_notification(
+                    user_id=order.seller_id.user_id.id,
+                    title=f"New Payment for Order #{order.order_number}",
+                    message=f"Payment received for order #{order.order_number} from {order.user_id.name}",
+                    data=data
+                )
+            
+        except Exception as e:
+            print(f"Error sending notifications: {str(e)}")
 
         # Get the redirect URL
         redirect_url = payment.get('notes', {}).get('redirect_url', 
