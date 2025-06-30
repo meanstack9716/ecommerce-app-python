@@ -298,8 +298,6 @@ def handle_otp_verification(include_token):
                 reason=REFERRAL_REWARDS['referred']['reason']
             ).save()
             
-            # Mark rewards as processed
-            user.referral_rewards_processed = True
         except Exception as e:
             create_error_response({'error': str(e)})
 
