@@ -12,7 +12,6 @@ from app.utils.utils import create_error_response
 from app.utils.validation import validate_required_fields
 from . import admin_api
 from app.utils.image_upload import get_local_ip
-from apscheduler.schedulers.background import BackgroundScheduler
 
 local_ip = get_local_ip()
 
@@ -788,50 +787,3 @@ def remove_product_image():
     except Exception as error:
         print(f"Error in remove_product_image: {str(error)}")
         return create_error_response({'error': 'Internal server error'}, 500)
-
-def check_stock_levels():
-    print(f"Running daily stock check at {datetime.utcnow()}")
-    
-    products_with_variants = Products.objects(variants__exists=True)
-    
-    for product in products_with_variants:
-        total_stock = 0
-        
-        for variant_id in product.variants:
-            variant = ProductVariant.objects(id=variant_id.id).first()
-            if variant:
-                total_stock += variant.stock_quantity
-        
-        product.stock_quantity = total_stock
-        
-        if total_stock <= 0 and product.status != 'inactive':
-            product.status = 'inactive'
-            print(f"Product {product.name} (ID: {product.id}) is out of stock, marking as inactive")
-        elif total_stock > 0 and product.status == 'inactive':
-            product.status = 'active'
-            print(f"Product {product.name} (ID: {product.id}) is back in stock, marking as active")
-        
-        product.save()
-    
-    products_without_variants = Products.objects(variants__exists=False)
-    
-    for product in products_without_variants:
-        if product.stock_quantity <= 0 and product.status != 'inactive':
-            product.status = 'inactive'
-            print(f"Product {product.name} (ID: {product.id}) is out of stock, marking as inactive")
-            product.save()
-        elif product.stock_quantity > 0 and product.status == 'inactive':
-            product.status = 'active'
-            print(f"Product {product.name} (ID: {product.id}) is back in stock, marking as active")
-            product.save()
-
-def init_scheduler(app):
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(
-        func=check_stock_levels,
-        trigger='interval',
-        seconds=10,
-        id='frequent_stock_check',
-        replace_existing=True
-    )
-    scheduler.start()

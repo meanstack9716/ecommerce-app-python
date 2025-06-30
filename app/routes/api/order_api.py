@@ -139,18 +139,18 @@ def place_order():
             )
 
             # Notify seller (if different from buyer)
-            if str(seller_id) != str(user_id):
-                send_fcm_notification(
-                    user_id=seller_id,
-                    title="New Order Received",
-                    message=f"New order #{order.order_number} from {user.first_name}",
-                    data={
-                        'type': 'new_order',
-                        'order_id': str(order.id),
-                        'order_number': order.order_number,
-                        'buyer_name': user.first_name
-                    }
-                )
+            # if str(seller_id) != str(user_id):
+            #     send_fcm_notification(
+            #         user_id=seller_id,
+            #         title="New Order Received",
+            #         message=f"New order #{order.order_number} from {user.first_name}",
+            #         data={
+            #             'type': 'new_order',
+            #             'order_id': str(order.id),
+            #             'order_number': order.order_number,
+            #             'buyer_name': user.first_name
+            #         }
+            #     )
 
         # Update promo code usage
         if promo_code:
