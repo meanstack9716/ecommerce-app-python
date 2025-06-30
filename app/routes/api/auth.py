@@ -36,14 +36,14 @@ def register():
         if not is_valid:
             return create_error_response({"error": errors}, 400)
 
-        # Check if email already exists
-        if User.objects(email=email).first():
-            return create_error_response({"error": "Email already registered"}, 409)
-
         # Validate email format
         is_valid_email, email_error = validate_email(email)
         if not is_valid_email:
             return create_error_response({"error": email_error}, 400)
+            
+        # Check if email already exists
+        if User.objects(email=email).first():
+            return create_error_response({"error": "Email already registered"}, 409)
 
         # Validate password strength
         is_valid_password, password_error = validate_password(password)
