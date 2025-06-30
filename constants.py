@@ -32,6 +32,17 @@ INDIAN_STATES = [
         "Uttarakhand", "West Bengal"
     ];
 
+REFERRAL_REWARDS = {
+    'referrer': {
+        'points': 100,
+        'reason': 'Referral bonus for inviting a user'
+    },
+    'referred': {
+        'points': 50,
+        'reason': 'Referral bonus for signing up with a code'
+    }
+}
+
 RAZOR_PAY_PAYMENT_LINK = f'https://api.razorpay.com/v1/payment_links'
 
 PROMO_CODE_TYPES = ['percentage', 'fixed_amount']
