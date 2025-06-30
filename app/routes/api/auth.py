@@ -40,18 +40,18 @@ def register():
         is_valid_email, email_error = validate_email(email)
         if not is_valid_email:
             return create_error_response({"error": email_error}, 400)
-            
-        # Check if email already exists
-        if User.objects(email=email).first():
-            return create_error_response({"error": "Email already registered"}, 409)
 
-        # Validate password strength
+         # Validate password strength
         is_valid_password, password_error = validate_password(password)
         if not is_valid_password:
             return create_error_response({"error": password_error}, 400)
 
         if password != password_confirmation:
             return create_error_response({"error": "Password and confirmation do not match"}, 400)
+            
+        # Check if email already exists
+        if User.objects(email=email).first():
+            return create_error_response({"error": "Email already registered"}, 409)
 
         # Generate referral code for new user
         generated_referral_code = generate_referral_code()
