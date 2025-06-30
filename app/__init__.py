@@ -1,10 +1,13 @@
 from flask import Flask, redirect, url_for, session, g, current_app
-from app.extensions import db, jwt, mail, bcrypt
+from app.extensions import db, jwt, mail, bcrypt, scheduler
 from .config import Config
 from app.models import User
 import os
 from app.utils.sidebar import sidebar_context
 from flask_cors import CORS
+from flask_apscheduler import APScheduler
+
+scheduler = APScheduler()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -18,7 +21,8 @@ def create_app(config_class=Config):
     jwt.init_app(app)
     mail.init_app(app)
     bcrypt.init_app(app)
-
+    app.scheduler = scheduler
+    scheduler.init_app(app)
     # Import models here
     from app.models.user import User
     from app.models.role import Role
@@ -39,6 +43,15 @@ def create_app(config_class=Config):
         Role.initialize_roles()
         User.create_default_admin()
         seed_data()
+    scheduler.init_app(app)
+
+    with app.app_context():
+        if not scheduler.running:
+            print("\n🚀 Starting APScheduler...")
+            scheduler.start()
+            from app.utils.tasks import schedule_stock_checks
+            schedule_stock_checks(app)
+            print("🟢 Scheduler successfully started\n")
 
     # Import routes and blueprints
     from app.routes.api.auth import auth_bp
