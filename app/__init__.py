@@ -5,9 +5,6 @@ from app.models import User
 import os
 from app.utils.sidebar import sidebar_context
 from flask_cors import CORS
-from flask_apscheduler import APScheduler
-
-scheduler = APScheduler()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
