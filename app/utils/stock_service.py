@@ -1,6 +1,7 @@
 from datetime import datetime
 from app.extensions import db
 from app.models import Products, ProductVariant
+from constants import TOTAL_PRODUCT_STOCK, TOTAL_PRODUCT_VARIANT_STOCK
 
 class StockService:
     @staticmethod
@@ -12,13 +13,13 @@ class StockService:
             
             try:
                 # Check products with low stock
-                low_stock_products = Products.objects(stock_quantity__lte=20)
+                low_stock_products = Products.objects(stock_quantity__lte=TOTAL_PRODUCT_STOCK)
                 print(f"\nFound {len(low_stock_products)} products with low stock:")
                 for product in low_stock_products:
                     print(f"- {product.name}: {product.stock_quantity} left")
                 
                 # Check variants with detailed color/size info
-                low_stock_variants = ProductVariant.objects(stock_quantity__lte=10)
+                low_stock_variants = ProductVariant.objects(stock_quantity__lte=TOTAL_PRODUCT_VARIANT_STOCK)
                 print(f"\nFound {len(low_stock_variants)} variants with low stock:")
                 
                 for variant in low_stock_variants:
