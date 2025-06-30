@@ -81,29 +81,10 @@ def register():
             referred_by=referred_by_user,
             reset_otp=otp,
             otp_expiry=otp_expiry,
-            is_email_verified=False
+            is_email_verified=False,
         )
         user.hash_password()
-        user.save()  # This will raise NotUniqueError if email exists (though we already checked)
-
-        # Handle referral rewards if applicable
-        if referred_by_user:
-            try:
-                # Give points to referrer
-                RewardPoint(
-                    user_id=referred_by_user,
-                    points=REFERRAL_REWARDS['referrer']['points'],
-                    reason=REFERRAL_REWARDS['referrer']['reason']
-                ).save()
-
-                # Give points to referred user
-                RewardPoint(
-                    user_id=user,
-                    points=REFERRAL_REWARDS['referred']['points'],
-                    reason=REFERRAL_REWARDS['referred']['reason']
-                ).save()
-            except Exception as e:
-                create_error_response({'error': str(e)})
+        user.save()
 
         # Send OTP email
         try:
@@ -300,9 +281,36 @@ def handle_otp_verification(include_token):
     if not role:
         return jsonify({'status': 'error', 'message': 'Role not found'}), 400
 
+    # Apply referral rewards if applicable (only on first verification)
+    if user.referred_by:
+        try:
+            # Give points to referrer
+            RewardPoint(
+                user_id=user.referred_by,
+                points=REFERRAL_REWARDS['referrer']['points'],
+                reason=REFERRAL_REWARDS['referrer']['reason']
+            ).save()
+
+            # Give points to referred user
+            RewardPoint(
+                user_id=user,
+                points=REFERRAL_REWARDS['referred']['points'],
+                reason=REFERRAL_REWARDS['referred']['reason']
+            ).save()
+            
+            # Mark rewards as processed
+            user.referral_rewards_processed = True
+        except Exception as e:
+            create_error_response({'error': str(e)})
+
+    # Mark email as verified
+    user.is_email_verified = True
+    
+    # Assign role if not already assigned
     if not user.role:
         user.role = role
-        user.save()
+    
+    user.save()
 
     session['user_id'] = str(user.id)
     user_data = {
@@ -311,7 +319,8 @@ def handle_otp_verification(include_token):
         'role': {
             'id': str(role.id),
             'name': role.name
-        }
+        },
+        'referral_code': user.referral_code
     }
 
     response_data = {
