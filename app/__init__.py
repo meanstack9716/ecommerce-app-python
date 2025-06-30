@@ -40,7 +40,6 @@ def create_app(config_class=Config):
         Role.initialize_roles()
         User.create_default_admin()
         seed_data()
-    scheduler.init_app(app)
 
     with app.app_context():
         if not scheduler.running:
