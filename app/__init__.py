@@ -59,6 +59,7 @@ def create_app(config_class=Config):
     from app.routes.api.dashboard_sales_api import sales_api
     from app.routes.api.product_review_api import reviews_bp
     from app.routes.api.promo_code_api import promo_bp
+    
     # Register blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_api)
