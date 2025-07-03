@@ -18,6 +18,8 @@ class User(db.Document):
     created_at = db.DateTimeField(default=datetime.utcnow)
     reset_token = db.StringField()
     reset_otp = db.StringField()
+    referral_code = db.StringField(unique=True, sparse=True)
+    referred_by = db.ReferenceField('self')
     otp_expiry = db.DateTimeField()
     profile_pic = db.StringField()
     fcm_token = db.StringField()

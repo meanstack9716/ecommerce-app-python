@@ -14,3 +14,4 @@ from .promo_codes import PromoCode
 from .product_review import ProductReview
 from .search_keyword_analytics import SearchKeywordAnalytics
 from .product_purchase_stats import ProductPurchaseStats
+from .reward_point import RewardPoint

@@ -32,6 +32,17 @@ INDIAN_STATES = [
         "Uttarakhand", "West Bengal"
     ];
 
+REFERRAL_REWARDS = {
+    'referrer': {
+        'points': 100,
+        'reason': 'Referral bonus for inviting a user'
+    },
+    'referred': {
+        'points': 50,
+        'reason': 'Referral bonus for signing up with a code'
+    }
+}
+
 RAZOR_PAY_PAYMENT_LINK = f'https://api.razorpay.com/v1/payment_links'
 
 PROMO_CODE_TYPES = ['percentage', 'fixed_amount']
@@ -214,6 +225,6 @@ RECENT_SALES_API = f'/api/sales/recent'
 TOP_PRODUCT_SALES_API = f'/api/sales/top-products'
 GET_SALES_SELLER = f'/api/sales/sellers'
 
-
+# Generate Referral Code Enpoint End
 RAZORPAY_BASE_URL = 'https://api.razorpay.com/v1/'
 CREATE_RAZORPAY_PAYMENT_LINK = 'https://api.razorpay.com/v1/payment_links'

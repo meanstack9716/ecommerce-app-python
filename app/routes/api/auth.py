@@ -3,73 +3,105 @@ from flask_jwt_extended import create_access_token
 from flask_mail import Message
 from app import bcrypt, mail
 import random
+import secrets
+import string
 from datetime import datetime, timedelta
 from app.routes.auth_decorator import role_required
 import cloudinary
 import cloudinary.uploader
-from app.models.user import User
-from app.models.role import Role
+from app.models import User, RewardPoint, Role
 from app.utils.validation import validate_email, validate_password, validate_required_fields
-from app.utils.utils import create_error_response
-from constants import OTP_EXPIRY_MINUTES, REGISTER, LOGIN, FORGOT_PASSWORD, VERIFY_OTP, RESET_PASSWORD, LOGOUT, RESEND_OTP, AUTHENTICATE_USER
+from app.utils.utils import create_error_response, generate_referral_code
+from constants import OTP_EXPIRY_MINUTES, REGISTER, LOGIN, FORGOT_PASSWORD, VERIFY_OTP, RESET_PASSWORD, LOGOUT, RESEND_OTP, AUTHENTICATE_USER, REFERRAL_REWARDS
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
 @auth_bp.route(REGISTER, methods=['POST'])
 def register():
-    data = request.get_json()
-    if not data:
-        return create_error_response({"error": "Invalid JSON or no data provided"}, 400)
+    try:
+        data = request.get_json()
+        if not data:
+            return create_error_response({"error": "Invalid JSON or no data provided"}, 400)
 
-    email = data.get('email')
-    password = data.get('password')
-    password_confirmation = data.get('password_confirmation')
-    fcm_token = data.get('fcm_token')
+        email = data.get('email')
+        password = data.get('password')
+        password_confirmation = data.get('password_confirmation')
+        referral_code_input = data.get('referral_code')  
+        
+        # Validate required fields
+        is_valid, errors = validate_required_fields(
+            {'email': email, 'password': password, 'password_confirmation': password_confirmation},
+            ['email', 'password', 'password_confirmation']
+        )
+        if not is_valid:
+            return create_error_response({"error": errors}, 400)
 
-    is_valid, errors = validate_required_fields(
-        {'email': email, 'password': password, 'password_confirmation': password_confirmation},
-        ['email', 'password', 'password_confirmation']
-    )
-    if not is_valid:
-        return create_error_response({"error": errors}, 400)
+        # Validate email format
+        is_valid_email, email_error = validate_email(email)
+        if not is_valid_email:
+            return create_error_response({"error": email_error}, 400)
 
-    is_valid_email, email_error = validate_email(email)
-    if not is_valid_email:
-        return create_error_response({"error": email_error}, 400)
+         # Validate password strength
+        is_valid_password, password_error = validate_password(password)
+        if not is_valid_password:
+            return create_error_response({"error": password_error}, 400)
 
-    is_valid_password, password_error = validate_password(password)
-    if not is_valid_password:
-        return create_error_response({"error": password_error}, 400)
+        if password != password_confirmation:
+            return create_error_response({"error": "Password and confirmation do not match"}, 400)
+            
+        # Check if email already exists
+        if User.objects(email=email).first():
+            return create_error_response({"error": "Email already registered"}, 409)
 
-    if password != password_confirmation:
-        return create_error_response({"error": "Password and confirmation do not match."}, 400)
+        # Generate referral code for new user
+        generated_referral_code = generate_referral_code()
 
-    if User.objects(email=email).first():
-        return create_error_response({"error": "Email already exists"}, 409)
+        # Handle referral code if provided
+        referred_by_user = None
+        if referral_code_input:
+            referred_by_user = User.objects(referral_code=referral_code_input).first()
+            if not referred_by_user:
+                return create_error_response({"error": "Invalid referral code"}, 400)
 
-    otp = str(random.randint(100000, 999999))
-    otp_expiry = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
+        # Get default user role
+        role = Role.objects(name='user').first()
+        if not role:
+            return create_error_response({"error": "Default user role not found"}, 500)
 
-    role = Role.objects(name='user').first()
-    if not role:
-        return create_error_response({"error": "Default user role not found"}, 500)
+        # Generate OTP
+        otp = str(random.randint(100000, 999999))
+        otp_expiry = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
 
-    msg = Message("Your OTP Code", recipients=[email])
-    msg.body = f"Your OTP is {otp}. It will expire in 10 minutes."
-    mail.send(msg)
+        # Create and save user
+        user = User(
+            email=email,
+            password=password,
+            role=role,
+            referral_code=generated_referral_code,
+            referred_by=referred_by_user,
+            reset_otp=otp,
+            otp_expiry=otp_expiry,
+            is_email_verified=False,
+        )
+        user.hash_password()
+        user.save()
 
-    user = User(
-        email=email,
-        password=password,
-        reset_otp=otp,
-        otp_expiry=otp_expiry,
-        role=role,
-        fcm_token=fcm_token
-    )
-    user.hash_password()
-    user.save()
+        # Send OTP email
+        try:
+            msg = Message("Your OTP Code", recipients=[email])
+            msg.body = f"Your OTP is {otp}. It will expire in 10 minutes."
+            mail.send(msg)
+        except Exception as e:
+            return create_error_response({"error": "User created but failed to send OTP"}, 201)
 
-    return jsonify({'message': 'OTP sent to email. Please verify to complete registration.'}), 200
+        return jsonify({
+            'message': 'User registered successfully. Please verify your email.',
+            'referral_code': generated_referral_code
+        }), 200
+
+    except Exception as e:
+        return create_error_response({"error": "An unexpected error occurred during registration"}, 500)
+
 
 @auth_bp.route(LOGIN, methods=['POST'])
 def login():
@@ -253,9 +285,34 @@ def handle_otp_verification(include_token):
     if not role:
         return jsonify({'status': 'error', 'message': 'Role not found'}), 400
 
+    # Apply referral rewards if applicable (only on first verification)
+    if user.referred_by:
+        try:
+            # Give points to referrer
+            RewardPoint(
+                user_id=user.referred_by,
+                points=REFERRAL_REWARDS['referrer']['points'],
+                reason=REFERRAL_REWARDS['referrer']['reason']
+            ).save()
+
+            # Give points to referred user
+            RewardPoint(
+                user_id=user,
+                points=REFERRAL_REWARDS['referred']['points'],
+                reason=REFERRAL_REWARDS['referred']['reason']
+            ).save()
+            
+        except Exception as e:
+            create_error_response({'error': str(e)})
+
+    # Mark email as verified
+    user.is_email_verified = True
+    
+    # Assign role if not already assigned
     if not user.role:
         user.role = role
-        user.save()
+    
+    user.save()
 
     session['user_id'] = str(user.id)
     user_data = {
@@ -264,7 +321,8 @@ def handle_otp_verification(include_token):
         'role': {
             'id': str(role.id),
             'name': role.name
-        }
+        },
+        'referral_code': user.referral_code
     }
 
     response_data = {

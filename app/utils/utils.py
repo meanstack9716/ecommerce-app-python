@@ -13,3 +13,9 @@ def generate_random_password(length=12):
     # Generate a random password of the given length
     password = ''.join(secrets.choice(alphabet) for i in range(length))
     return password
+
+def generate_referral_code():
+    prefix = "REF-"
+    chars = string.ascii_uppercase + string.digits
+    random_part = ''.join(secrets.choice(chars) for _ in range(12))
+    return prefix + random_part
