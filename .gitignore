@@ -3,4 +3,5 @@ venv
 node_m
 .DS_Store
 uploads
+product_images
 __pycache__

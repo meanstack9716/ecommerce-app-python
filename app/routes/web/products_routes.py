@@ -1,17 +1,21 @@
 import json
 import random
 import string
+import os
 
 from datetime import datetime
 from bson import ObjectId
 from flask import render_template, redirect, url_for, session, request, jsonify
-from constants import ( ADD_PRODUCT_PAGE_WEB_URL, ADD_NEW_PRODUCT_WEB_URL, GET_PRODUCT_LIST_WEB_URL, GET_PRODUCT_DETAILS_WEB_URL, GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL, EDIT_PRODUCT_WEB_URL, ALLOWED_SIZES, ALLOWED_GENDERS, REMOVE_PRODUCT_IMAGE_WEB_URL)
+from constants import ( ADD_PRODUCT_PAGE_WEB_URL, ADD_NEW_PRODUCT_WEB_URL, GET_PRODUCT_LIST_WEB_URL, GET_PRODUCT_DETAILS_WEB_URL, GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL, EDIT_PRODUCT_WEB_URL, ALLOWED_SIZES, ALLOWED_GENDERS, REMOVE_PRODUCT_IMAGE_WEB_URL, ADD_PRODUCT_BULK_API, PRODUCT_COLORS)
 from app.models import ( Category, SubCategory, SubSubCategory, Products, ProductVariant, ProductVariantImage, User, Seller, ProductBrands)
 from app.utils.image_upload import upload_image, get_local_ip
 from app.utils.utils import create_error_response
 from app.utils.validation import validate_required_fields
 from . import admin_api
 from app.utils.image_upload import get_local_ip
+from app.utils.jwt_handlers import jwt_error_handler
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import current_app
 
 local_ip = get_local_ip()
 
@@ -787,3 +791,182 @@ def remove_product_image():
     except Exception as error:
         print(f"Error in remove_product_image: {str(error)}")
         return create_error_response({'error': 'Internal server error'}, 500)
+
+@admin_api.route(ADD_PRODUCT_BULK_API, methods=['POST'])
+@jwt_error_handler
+@jwt_required()
+def generate_random_products(count):
+    try:
+        user_id = get_jwt_identity()
+        user = User.objects(id=user_id).first()
+
+        if not user:
+            return create_error_response({'status': 'error', 'message': 'User not found', 'data': None}, 404)
+        try:
+            user_object_id = ObjectId(user_id)
+        except Exception:
+            return create_error_response({'error': 'Invalid user ID'}, 400)
+
+        user = User.objects(id=user_object_id).first()
+        if not user:
+            return create_error_response({'error': 'User not found'}, 404)
+
+        seller = Seller.objects(user_id=user_object_id).first()
+        if not seller:
+            return create_error_response({'error': 'Seller profile not found'}, 400)
+
+        # Validate count parameter
+        if count < 1 or count > 100:
+            return create_error_response({'error': 'Count must be between 1 and 100'}, 400)
+
+        # Get all available categories
+        categories = list(Category.objects.all())
+        
+        # Get all available brands
+        brands = list(ProductBrands.objects.all())
+        genders = ALLOWED_GENDERS
+        colors = list(PRODUCT_COLORS.keys())
+        color_hex_codes = PRODUCT_COLORS
+        sizes = ALLOWED_SIZES
+
+        # Get random images from the images directory
+        images_dir = os.path.join(current_app.root_path, 'static', 'product_images')
+        all_images = [f for f in os.listdir(images_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        
+        if not all_images:
+            return create_error_response({'error': 'No product images found'}, 400)
+
+        generated_products = []
+
+        for _ in range(count):
+            # Initialize all reference fields as None
+            category = None
+            subcategory = None
+            subsubcategory = None
+            brand = None
+            
+            # Only try to set references if they exist
+            if categories:
+                category = random.choice(categories)
+                subcategories = list(SubCategory.objects(category=category))
+                if subcategories:
+                    subcategory = random.choice(subcategories)
+                    subsubcategories = list(SubSubCategory.objects(
+                        category_id=category,
+                        sub_category_id=subcategory
+                    ))
+                    if subsubcategories:
+                        subsubcategory = random.choice(subsubcategories)
+
+            # Only set brand if brands exist and with 80% probability
+            brand = random.choice(brands)
+
+            # Generate product name
+            product_name = " ".join([
+                category.name if category else random.choice(['Fashion', 'Style', 'Trendy']),
+                random.choice(['Premium', 'Classic', 'Modern', 'Elegant', 'Sporty']),
+                random.choice(['Shirt', 'Pants', 'Dress', 'Jacket', 'Shoes'])
+            ])
+
+            price = round(random.uniform(10.0, 500.0), 2)
+            discount = random.choice([0, 0, 0, 0, 5, 10, 15, 20])
+            final_price = round(price * (1 - discount/100), 2)
+            stock = random.randint(10, 1000)
+            gender = random.choice(genders)
+            description = f"A{product_name.split()[-1].lower()} for {gender}."
+            details = ""
+
+            # Generate SKU
+            timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S')
+            random_chars = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            sku_number = f"SKU-RND-{timestamp}-{random_chars}"
+
+            # Create variants (1-3 variants per product)
+            variants = []
+            num_variants = random.randint(1, 3)
+            selected_colors = random.sample(colors, min(num_variants, len(colors)))
+            
+            # Select 3 random images for the product
+            product_images = random.sample(all_images, min(3, len(all_images)))
+            
+            for color in selected_colors:
+                variant = ProductVariant(
+                    size=random.choice(sizes),
+                    color=color,
+                    color_hexa_code=color_hex_codes.get(color),
+                    stock_quantity=random.randint(5, 50),
+                    product_id=None
+                )
+                variant.save()
+                
+                # Assign images to variant
+                variant_images = []
+                for img in product_images:
+                    image = ProductVariantImage(
+                        variant_id=variant.id,
+                        image_url=f"{img}",
+                        alt_text=f"{product_name} - {color}",
+                    )
+                    image.save()
+                    variant_images.append(image)
+                
+                variant.images = variant_images
+                variant.save()
+                variants.append(variant)
+
+            # Create the product with optional references
+            product_data = {
+                'seller_id': seller.id,
+                'name': product_name,
+                'description': description,
+                'details': details,
+                'sku_number': sku_number,
+                'price': price,
+                'stock_quantity': stock,
+                'discount_price': discount,
+                'final_price': final_price,
+                'gender': gender,
+                'status': 'active',
+                'variants': variants,
+                'created_at': datetime.utcnow(),
+                'updated_at': datetime.utcnow()
+            }
+            
+            # Only add reference fields if they exist
+            if category:
+                product_data['category_id'] = category
+            if subcategory:
+                product_data['subcategory_id'] = subcategory
+            if subsubcategory:
+                product_data['subsubcategory_id'] = subsubcategory
+            if brand:
+                product_data['brand_id'] = brand
+
+            product = Products(**product_data)
+            product.save()
+
+            # Update references
+            for variant in variants:
+                variant.product_id = product
+                variant.save()
+                for image in variant.images:
+                    image.product_id = product.id
+                    image.save()
+
+            generated_products.append({
+                "id": str(product.id),
+                "name": product.name,
+                "price": float(product.price),
+                "category": category.name if category else None,
+                "subcategory": subcategory.name if subcategory else None,
+                "subsubcategory": subsubcategory.name if subsubcategory else None,
+                "brand": brand.name if brand else None
+            })
+
+        return jsonify({
+            "message": f"Successfully generated {count} random products",
+            "products": generated_products
+        }), 201
+
+    except Exception as error:
+        return create_error_response({'error': str(error)}, 500)
