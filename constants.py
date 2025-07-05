@@ -43,6 +43,73 @@ REFERRAL_REWARDS = {
     }
 }
 
+# constants.py
+PRODUCT_COLORS = {
+    # Basic colors
+    'Red': '#FF0000',
+    'Blue': '#0000FF',
+    'Green': '#00FF00',
+    'Black': '#000000',
+    'White': '#FFFFFF',
+    'Yellow': '#FFFF00',
+    'Pink': '#FFC0CB',
+    
+    # Extended color palette
+    'Navy': '#000080',
+    'Royal Blue': '#4169E1',
+    'Sky Blue': '#87CEEB',
+    'Teal': '#008080',
+    'Turquoise': '#40E0D0',
+    'Emerald': '#50C878',
+    'Olive': '#808000',
+    'Lime': '#00FF00',
+    'Gold': '#FFD700',
+    'Orange': '#FFA500',
+    'Coral': '#FF7F50',
+    'Salmon': '#FA8072',
+    'Maroon': '#800000',
+    'Burgundy': '#800020',
+    'Purple': '#800080',
+    'Lavender': '#E6E6FA',
+    'Violet': '#EE82EE',
+    'Indigo': '#4B0082',
+    'Magenta': '#FF00FF',
+    'Peach': '#FFE5B4',
+    'Mint': '#98FF98',
+    'Cyan': '#00FFFF',
+    'Beige': '#F5F5DC',
+    'Tan': '#D2B48C',
+    'Brown': '#A52A2A',
+    'Chocolate': '#D2691E',
+    'Coffee': '#6F4E37',
+    'Ivory': '#FFFFF0',
+    'Silver': '#C0C0C0',
+    'Gray': '#808080',
+    'Charcoal': '#36454F',
+    
+    # Fashion-specific colors
+    'Blush': '#DE5D83',
+    'Rose Gold': '#B76E79',
+    'Dusty Rose': '#DCAE96',
+    'Mauve': '#E0B0FF',
+    'Taupe': '#483C32',
+    'Khaki': '#C3B091',
+    'Cream': '#FFFDD0',
+    'Eggshell': '#F0EAD6',
+    'Pearl': '#EAE0C8',
+    'Plum': '#8E4585',
+    'Ruby': '#E0115F',
+    'Sapphire': '#0F52BA',
+    'Amber': '#FFBF00',
+    'Jade': '#00A86B',
+    'Onyx': '#353839'
+}
+
+# You might also want to add some color groupings
+BASIC_COLORS = ['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Pink']
+METALLIC_COLORS = ['Gold', 'Silver', 'Rose Gold', 'Copper', 'Bronze']
+NEUTRAL_COLORS = ['Beige', 'Tan', 'Brown', 'Gray', 'Ivory', 'Taupe', 'Khaki']
+
 RAZOR_PAY_PAYMENT_LINK = f'https://api.razorpay.com/v1/payment_links'
 
 PROMO_CODE_TYPES = ['percentage', 'fixed_amount']
@@ -105,7 +172,7 @@ GET_PRODUCT_DETAILS_WEB_URL = f'/products/<product_id>'
 GET_PROUDCT_EDIT_PAGE_BY_ID_WEB_URL = f'/products/edit/<product_id>'
 EDIT_PRODUCT_WEB_URL = f'/api/products/edit'
 REMOVE_PRODUCT_IMAGE_WEB_URL = f'/api/products/remove-image'
-
+ADD_PRODUCT_BULK_API = '/api/products/generate-random/<int:count>'
 GET_BRANDS_WEB_URL = f'/brands/list'
 ADD_BRAND_WEB_URL = f'/brands/add'
 UPDATE_BRAND_WEB_URL = f'/brands/edit/<brand_id>'

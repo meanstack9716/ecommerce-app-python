@@ -468,7 +468,6 @@
         params += `start_date=${todayStr}&end_date=${todayStr}`;
       }
 
-      console.log(params, ">>>>");
       return params;
     },
 
