@@ -200,12 +200,10 @@ def get_all_products():
         else:
             response = {
                 'data': products_data,
-                'pagination': {
-                    'page': page,
-                    'per_page': per_page,
-                    'total_pages': paginated_products.pages,
-                    'total_items': paginated_products.total
-                }
+                'current_page': page,
+                'per_page': per_page,
+                'last_page': paginated_products.pages,
+                'total_items': paginated_products.total
             }
 
         return jsonify(response), 200
