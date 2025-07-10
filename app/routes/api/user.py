@@ -29,7 +29,7 @@ def get_user_profile():
         "first_name": user.first_name,
         "last_name": user.last_name,
         "phone_number": user.phone_number,
-        "image": url_for('serve_uploaded_files', filename=user.profile_pic, _external=True) if user.profile_pic else None,
+        "profile_url": url_for('serve_uploaded_files', filename=user.profile_pic, _external=True) if user.profile_pic else None,
         "id": str(user.id),
         "role": {
             "name": user.role.name if user.role else None,
@@ -53,7 +53,7 @@ def update_profile():
     data = request.get_json()
     user.first_name = data.get('first_name', user.first_name)
     user.last_name = data.get('last_name', user.last_name)
-    user.phone_number = data.get('mobile', user.phone_number)
+    user.phone_number = data.get('phone_number', user.phone_number)
     user.gender = data.get('gender', user.gender)
     user.save()
 
