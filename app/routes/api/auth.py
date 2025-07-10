@@ -27,7 +27,8 @@ def register():
         password = data.get('password')
         password_confirmation = data.get('password_confirmation')
         referral_code_input = data.get('referral_code')  
-        
+        fcm_token = data.get('fcm_token', '').strip()  # ← Get FCM token
+
         # Validate required fields
         is_valid, errors = validate_required_fields(
             {'email': email, 'password': password, 'password_confirmation': password_confirmation},
@@ -41,14 +42,14 @@ def register():
         if not is_valid_email:
             return create_error_response({"error": email_error}, 400)
 
-         # Validate password strength
+        # Validate password strength
         is_valid_password, password_error = validate_password(password)
         if not is_valid_password:
             return create_error_response({"error": password_error}, 400)
 
         if password != password_confirmation:
             return create_error_response({"error": "Password and confirmation do not match"}, 400)
-            
+
         # Check if email already exists
         if User.objects(email=email).first():
             return create_error_response({"error": "Email already registered"}, 409)
@@ -82,6 +83,7 @@ def register():
             reset_otp=otp,
             otp_expiry=otp_expiry,
             is_email_verified=False,
+            fcm_token=fcm_token if fcm_token else None  # ← Save FCM token
         )
         user.hash_password()
         user.save()
