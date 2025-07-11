@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session, url_for
 from datetime import datetime
-from constants import PRODUCT_LISTS_API, PRODUCT_LISTS_BY_ID_API, GET_SIMILAR_PRODUCT_API, POPULAR_PRODUCT
+from constants import PRODUCT_LISTS_API, PRODUCT_LISTS_BY_ID_API, GET_SIMILAR_PRODUCT_API
 from app.models import Products, Category, SubCategory, SubSubCategory, Seller, User
 from app.models.products import ProductVariant, ProductVariantImage
 from app.utils.image_upload import upload_image
@@ -481,75 +481,75 @@ def get_similar_products(product_id):
     except Exception as e:
         return create_error_response({'error': 'Internal server error'}, 500)
 
-@products_bp.route(POPULAR_PRODUCT, methods=['GET'])
-def get_popular_products():
-    try:
-        # Get optional parameters
-        limit = int(request.args.get('limit', 10))
-        category_id = request.args.get('category_id')
-        days = int(request.args.get('days', 30))  # Time window
+# @products_bp.route(POPULAR_PRODUCT, methods=['GET'])
+# def get_popular_products():
+#     try:
+#         # Get optional parameters
+#         limit = int(request.args.get('limit', 10))
+#         category_id = request.args.get('category_id')
+#         days = int(request.args.get('days', 30))  # Time window
         
-        # Calculate cutoff date
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+#         # Calculate cutoff date
+#         cutoff_date = datetime.utcnow() - timedelta(days=days)
         
-        # Base query
-        query = {
-            'status': 'active',
-            'last_updated__gte': cutoff_date
-        }
+#         # Base query
+#         query = {
+#             'status': 'active',
+#             'last_updated__gte': cutoff_date
+#         }
         
-        # Add category filter if provided
-        if category_id and ObjectId.is_valid(category_id):
-            query['category_id'] = ObjectId(category_id)
+#         # Add category filter if provided
+#         if category_id and ObjectId.is_valid(category_id):
+#             query['category_id'] = ObjectId(category_id)
         
-        # Get popular products
-        popular_products = Products.objects(**query).order_by(
-            '-popularity_score',
-            '-purchase_count'
-        ).limit(limit)
+#         # Get popular products
+#         popular_products = Products.objects(**query).order_by(
+#             '-popularity_score',
+#             '-purchase_count'
+#         ).limit(limit)
         
-        # Prepare response
-        results = []
-        for product in popular_products:
-            # Get primary image
-            primary_image = None
-            if product.variants and product.variants[0].images:
-                image = ProductVariantImage.objects(
-                    id=product.variants[0].images[0]
-                ).first()
-                if image:
-                    primary_image = url_for(
-                        'serve_uploaded_files',
-                        filename=image.image_url,
-                        _external=True
-                    )
+#         # Prepare response
+#         results = []
+#         for product in popular_products:
+#             # Get primary image
+#             primary_image = None
+#             if product.variants and product.variants[0].images:
+#                 image = ProductVariantImage.objects(
+#                     id=product.variants[0].images[0]
+#                 ).first()
+#                 if image:
+#                     primary_image = url_for(
+#                         'serve_uploaded_files',
+#                         filename=image.image_url,
+#                         _external=True
+#                     )
             
-            results.append({
-                'product_id': str(product.id),
-                'name': product.name,
-                'price': float(product.price),
-                'final_price': float(product.final_price),
-                'image_url': primary_image,
-                'popularity_score': product.popularity_score,
-                'metrics': {
-                    'views': product.view_count,
-                    'cart_adds': product.cart_add_count,
-                    'purchases': product.purchase_count
-                },
-                'category': {
-                    'id': str(product.category_id.id),
-                    'name': product.category_id.name
-                } if product.category_id else None
-            })
+#             results.append({
+#                 'product_id': str(product.id),
+#                 'name': product.name,
+#                 'price': float(product.price),
+#                 'final_price': float(product.final_price),
+#                 'image_url': primary_image,
+#                 'popularity_score': product.popularity_score,
+#                 'metrics': {
+#                     'views': product.view_count,
+#                     'cart_adds': product.cart_add_count,
+#                     'purchases': product.purchase_count
+#                 },
+#                 'category': {
+#                     'id': str(product.category_id.id),
+#                     'name': product.category_id.name
+#                 } if product.category_id else None
+#             })
         
-        return jsonify({
-            'data': results,
-            'meta': {
-                'time_window_days': days,
-                'category_filter': category_id or 'all',
-                'last_updated': datetime.utcnow().isoformat()
-            }
-        })
+#         return jsonify({
+#             'data': results,
+#             'meta': {
+#                 'time_window_days': days,
+#                 'category_filter': category_id or 'all',
+#                 'last_updated': datetime.utcnow().isoformat()
+#             }
+#         })
         
-    except Exception as e:
-        return create_error_response({'error': str(e)}, 500)
+#     except Exception as e:
+#         return create_error_response({'error': str(e)}, 500)
