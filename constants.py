@@ -12,6 +12,9 @@ GENDER_CHOICES = [GENDER_MALE, GENDER_FEMALE, GENDER_OTHER]
 
 OTP_EXPIRY_MINUTES = 10
 
+TOTAL_PRODUCT_STOCK = 20
+TOTAL_PRODUCT_VARIANT_STOCK = 10
+
 # Allowed Size and Allowed Gender constants 
 ALLOWED_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
 ALLOWED_GENDERS = ['Men', 'Women', 'Unisex', 'Kids']
